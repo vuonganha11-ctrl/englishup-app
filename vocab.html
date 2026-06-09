@@ -868,6 +868,28 @@ aside.sidebar {
 .examples-table tr:last-child td { border-bottom: none; }
 .examples-table tr:hover td { background: var(--card); }
 
+.ex-audio-bar {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+  align-items: center;
+}
+.ex-spd-btn {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.ex-spd-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ex-spd-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ex-spd-btn.playing { background: var(--a3) !important; color: #fff !important; border-color: var(--a3) !important; }
+
 .type-badge {
   display: inline-block;
   font-size: 10px;
@@ -1608,6 +1630,7 @@ function renderWordExamples(w) {
     const sentenceHtml = highlightTerm(esc(r.sentence||''), w.term);
     const altsHtml = r.alternatives ? formatAlternatives(r.alternatives) : '';
     const oppsHtml = r.opposites    ? formatOpposites(r.opposites)       : '';
+    const sentAttr = (r.sentence||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `
       <tr>
         <td style="width:90px"><span class="type-badge ${tc}">${esc(r.type||'')}</span></td>
@@ -1616,6 +1639,12 @@ function renderWordExamples(w) {
           ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
           ${altsHtml  ? `<div class="ex-alts">🔄 ${altsHtml}</div>` : ''}
           ${oppsHtml  ? `<div class="ex-oppos">↔ ${oppsHtml}</div>` : ''}
+          <div class="ex-audio-bar" data-sentence="${sentAttr}">
+            <span style="font-size:12px;color:var(--muted);line-height:1;">🔊</span>
+            <button class="ex-spd-btn" data-rate="0.7" onclick="exSpeak(this)">🐢 Chậm</button>
+            <button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">▶ Vừa</button>
+            <button class="ex-spd-btn" data-rate="1.5" onclick="exSpeak(this)">⚡ Nhanh</button>
+          </div>
         </td>
       </tr>`;
   }).join('');
@@ -1694,6 +1723,24 @@ function speakParagraph() {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US'; u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+function exSpeak(btn) {
+  const bar = btn.closest('.ex-audio-bar');
+  // Reset all buttons in this bar
+  bar.querySelectorAll('.ex-spd-btn').forEach(b => b.classList.remove('active', 'playing'));
+  btn.classList.add('active', 'playing');
+  const text = bar.getAttribute('data-sentence');
+  const rate = parseFloat(btn.dataset.rate);
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = rate;
+    u.onend = () => btn.classList.remove('playing');
+    u.onerror = () => btn.classList.remove('playing');
     window.speechSynthesis.speak(u);
   }
 }
