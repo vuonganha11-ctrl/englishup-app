@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnglishUp — Từ vựng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:      #08090d;
+  --surface: #0e1018;
+  --card:    #151a25;
+  --card2:   #1b2133;
+  --border:  #232d42;
+  --border2: #2e3a55;
+  --accent:  #4f8ef7;
+  --a2:      #a78bfa;
+  --a3:      #34d399;
+  --a4:      #fb923c;
+  --a5:      #f472b6;
+  --danger:  #f87171;
+  --text:    #dde3f0;
+  --muted:   #64748b;
+  --mono:    'JetBrains Mono', monospace;
+  --radius:  10px;
+  --radius-lg: 16px;
+  --sidebar-w: 260px;
+  --topbar-h:  58px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── TOPBAR ─────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+.topbar .logo {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--accent);
+  letter-spacing: -.4px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.topbar .logo span { color: var(--a2); }
+
+.top-search {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+}
+.top-search input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px 8px 38px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border .2s;
+}
+.top-search input:focus { border-color: var(--accent); }
+.top-search input::placeholder { color: var(--muted); }
+.top-search .search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 15px;
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.xp-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--a4);
+}
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--a5);
+}
+.btn-login {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.btn-login:hover { opacity: .85; }
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px 4px 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.user-chip:hover { border-color: var(--border2); }
+.user-av {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── SIDEBAR ─────────────────────────────────────── */
+aside.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 16px 16px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.sidebar-scroll::-webkit-scrollbar { width: 4px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* "Tất cả" row */
+.topic-row-all {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background .15s;
+  border-radius: 0;
+}
+.topic-row-all:hover { background: var(--card); }
+.topic-row-all.active { background: var(--card2); }
+.topic-row-all .all-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--a2));
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.topic-row-all .all-label { font-size: 14px; font-weight: 600; flex: 1; }
+.topic-row-all .all-count {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--card);
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+
+/* Individual topic rows */
+.topic-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.topic-row:hover { background: var(--card); }
+.topic-row.active { background: var(--card2); border-right: 2px solid var(--accent); }
+.topic-thumb {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--card2);
+  flex-shrink: 0;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.topic-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+.topic-info { flex: 1; min-width: 0; }
+.topic-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topic-count { font-size: 11px; color: var(--muted); }
+
+/* Level filter */
+.level-section {
+  padding: 12px 16px 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.level-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+.level-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.level-chip {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--mono);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--muted);
+  background: transparent;
+}
+.level-chip:hover { border-color: var(--border2); color: var(--text); }
+.level-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ─── MAIN ─────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Hero */
+.page-hero {
+  padding: 20px 24px 0;
+  flex-shrink: 0;
+}
+.hero-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  height: 130px;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(135deg, #1b2133, #0e1018);
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  opacity: .3;
+  filter: blur(1px);
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(8,9,13,.9) 0%, rgba(8,9,13,.4) 100%);
+}
+.hero-content {
+  position: relative;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hero-icon {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.hero-text h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+}
+.hero-text p {
+  font-size: 13px;
+  color: rgba(221,227,240,.7);
+  margin-top: 2px;
+}
+.hero-stats {
+  margin-left: auto;
+  display: flex;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--mono);
+  line-height: 1.1;
+}
+.hero-stat-lbl { font-size: 11px; color: var(--muted); }
+
+/* Toolbar */
+.toolbar {
+  padding: 16px 24px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.toolbar-search {
+  flex: 1;
+  max-width: 320px;
+  position: relative;
+}
+.toolbar-search input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px 8px 36px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border .2s;
+}
+.toolbar-search input:focus { border-color: var(--accent); }
+.toolbar-search input::placeholder { color: var(--muted); }
+.toolbar-search .si {
+  position: absolute;
+  left: 10px;
+  top: 50%; transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+.view-btn {
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all .15s;
+  line-height: 1;
+}
+.view-btn.active { background: var(--card2); color: var(--text); }
+
+.word-count-badge {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.word-count-badge strong { color: var(--text); }
+
+/* Words area */
+.words-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+.words-area::-webkit-scrollbar { width: 5px; }
+.words-area::-webkit-scrollbar-track { background: transparent; }
+.words-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* Grid view */
+#words-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.word-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .18s, border-color .18s, box-shadow .18s;
+  position: relative;
+}
+.word-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border2);
+  box-shadow: 0 6px 24px rgba(0,0,0,.35);
+}
+
+.word-card-img {
+  width: 100%;
+  height: 120px;
+  background: var(--card2);
+  overflow: hidden;
+  position: relative;
+}
+.word-card-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform .3s;
+}
+.word-card:hover .word-card-img img { transform: scale(1.05); }
+.word-card-img .img-placeholder {
+  width: 100%; height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  color: var(--border2);
+  background: var(--card2);
+}
+
+.word-card-body {
+  padding: 10px 12px;
+}
+.word-card-term {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+}
+.word-card-phonetic {
+  font-size: 12px;
+  color: var(--a3);
+  font-family: var(--mono);
+  margin: 1px 0 4px;
+}
+.word-card-def {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.word-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 8px;
+}
+.level-tag {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--card2);
+  color: var(--muted);
+}
+.level-tag.A1, .level-tag.A2 { color: var(--a3); }
+.level-tag.B1, .level-tag.B2 { color: var(--a4); }
+.level-tag.C1, .level-tag.C2 { color: var(--a5); }
+.audio-btn-sm {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  transition: background .15s;
+}
+.audio-btn-sm:hover { background: var(--border); }
+
+/* List view */
+#words-grid.list-view {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+#words-grid.list-view .word-card {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+#words-grid.list-view .word-card-img {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+#words-grid.list-view .word-card-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+}
+#words-grid.list-view .word-card-term {
+  font-size: 15px;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+#words-grid.list-view .word-card-phonetic {
+  min-width: 100px;
+  flex-shrink: 0;
+  margin: 0;
+}
+#words-grid.list-view .word-card-def {
+  flex: 1;
+}
+#words-grid.list-view .word-card-footer {
+  padding: 0 14px 0 0;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+/* Empty state */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.empty-state svg { opacity: .3; margin-bottom: 16px; }
+.empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; }
+.empty-state p { font-size: 14px; }
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { 0%{ background-position: 200% 0 } 100%{ background-position: -200% 0 } }
+
+.word-card-skeleton {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fadeIn .3s;
+}
+.skel-img { height: 120px; width: 100%; }
+.skel-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+.skel-title { height: 18px; width: 70%; }
+.skel-sub { height: 12px; width: 45%; }
+.skel-def { height: 12px; width: 90%; }
+
+/* ─── WORD MODAL ────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.modal-word {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 760px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(.97) translateY(10px);
+  transition: transform .2s;
+}
+.overlay.open .modal-word { transform: scale(1) translateY(0); }
+
+/* Word modal header with image */
+.wm-hero {
+  position: relative;
+  height: 160px;
+  background: var(--card2);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.wm-hero-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.wm-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(8,9,13,.95) 0%, rgba(8,9,13,.2) 100%);
+}
+.wm-hero-placeholder {
+  width: 100%; height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 64px;
+  color: var(--border2);
+}
+.wm-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.5);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  transition: background .15s;
+  z-index: 2;
+}
+.wm-close:hover { background: rgba(0,0,0,.8); }
+
+.wm-term-row {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 12px 20px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  z-index: 2;
+}
+.wm-term {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.5);
+  flex: 1;
+}
+.wm-phonetic {
+  font-size: 16px;
+  color: var(--a3);
+  font-family: var(--mono);
+  padding-bottom: 3px;
+}
+.wm-audio-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: opacity .2s, transform .2s;
+  flex-shrink: 0;
+}
+.wm-audio-btn:hover { opacity: .85; transform: scale(1.05); }
+.wm-audio-btn.playing { background: var(--a3); animation: pulse-ring 1s infinite; }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(52,211,153,.4); }
+  70%  { box-shadow: 0 0 0 10px rgba(52,211,153,0); }
+  100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+}
+
+/* Word modal body */
+.wm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+.wm-body::-webkit-scrollbar { width: 5px; }
+.wm-body::-webkit-scrollbar-track { background: transparent; }
+.wm-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+.wm-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.wm-section:last-child { border-bottom: none; }
+
+.wm-defs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.wm-def-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.wm-def-lang {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.wm-def-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.wm-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.badge.pos { color: var(--a4); border-color: rgba(251,146,60,.3); background: rgba(251,146,60,.08); }
+.badge.level-b { color: var(--accent); border-color: rgba(79,142,247,.3); background: rgba(79,142,247,.08); font-family: var(--mono); }
+.badge.topic-b { color: var(--a2); border-color: rgba(167,139,250,.3); background: rgba(167,139,250,.08); }
+
+/* Paragraph */
+.wm-paragraph-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.wm-paragraph-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.wm-paragraph-text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(221,227,240,.85);
+  background: var(--card);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+}
+.wm-paragraph-tts {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-tts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.btn-tts:hover { border-color: var(--border2); }
+
+/* Examples table */
+.wm-examples-section {}
+.examples-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.examples-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--card2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.examples-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.examples-table tr:last-child td { border-bottom: none; }
+.examples-table tr:hover td { background: var(--card); }
+
+.type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.type-ts  { background: rgba(79,142,247,.15);  color: var(--accent); }
+.type-mt  { background: rgba(52,211,153,.15);  color: var(--a3); }
+.type-bc  { background: rgba(167,139,250,.15); color: var(--a2); }
+.type-tm  { background: rgba(251,146,60,.15);  color: var(--a4); }
+.type-nl  { background: rgba(244,114,182,.15); color: var(--a5); }
+
+.ex-sentence { font-size: 13px; line-height: 1.5; }
+.ex-sentence .highlight { color: var(--accent); font-weight: 700; }
+.ex-meaning { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ex-alts { font-size: 11px; color: var(--a3); margin-top: 4px; }
+.ex-oppos { font-size: 11px; color: var(--a5); margin-top: 2px; }
+
+/* SRS button */
+.wm-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.btn-srs {
+  flex: 1;
+  padding: 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.btn-srs:hover { opacity: .85; }
+.btn-srs.added { background: var(--a3); }
+.btn-srs:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ─── LOGIN MODAL ─────────────────────────────── */
+.modal-login {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 380px;
+  padding: 32px;
+  transform: scale(.96);
+  transition: transform .2s;
+}
+.overlay.open .modal-login { transform: scale(1); }
+
+.login-logo {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.login-logo span { color: var(--a2); }
+.login-sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.form-group input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border .2s;
+}
+.form-group input:focus { border-color: var(--accent); }
+.btn-submit {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity .2s;
+}
+.btn-submit:hover { opacity: .85; }
+.btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+.login-err {
+  font-size: 13px;
+  color: var(--danger);
+  margin-top: 10px;
+  text-align: center;
+  min-height: 18px;
+}
+
+/* ─── MISC ─────────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.no-auth-notice {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.no-auth-notice a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+/* Responsive basic */
+@media (max-width: 768px) {
+  aside.sidebar { display: none; }
+  .main { overflow-y: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ─────────────────────────────────────── -->
+<header class="topbar">
+  <div class="logo">English<span>Up</span></div>
+
+  <div class="topbar-right">
+    <div class="xp-badge" id="xp-display" style="display:none">
+      ⚡ <span id="xp-val">0</span> XP
+    </div>
+    <div class="streak-badge" id="streak-display" style="display:none">
+      🔥 <span id="streak-val">0</span> ngày
+    </div>
+    <button class="btn-login" id="btn-login-top" onclick="openLogin()">Đăng nhập</button>
+    <div class="user-chip" id="user-chip" style="display:none" onclick="handleLogout()">
+      <div class="user-av" id="user-av">?</div>
+      <span id="user-email-display">user</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── LAYOUT ─────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">Chủ đề</div>
+    <div class="sidebar-scroll" id="topics-list">
+      <!-- Skeleton -->
+      <div class="topic-row-all active" onclick="selectTopic(null, this)">
+        <div class="all-icon">📚</div>
+        <div class="all-label">Tất cả</div>
+        <div class="all-count" id="all-count">...</div>
+      </div>
+      <div id="topic-rows"></div>
+    </div>
+
+    <!-- Level filter -->
+    <div class="level-section">
+      <span class="level-label">Cấp độ</span>
+      <div class="level-chips" id="level-chips">
+        <div class="level-chip active" data-level="" onclick="selectLevel('')">Tất cả</div>
+        <div class="level-chip" data-level="A1" onclick="selectLevel('A1')">A1</div>
+        <div class="level-chip" data-level="A2" onclick="selectLevel('A2')">A2</div>
+        <div class="level-chip" data-level="B1" onclick="selectLevel('B1')">B1</div>
+        <div class="level-chip" data-level="B2" onclick="selectLevel('B2')">B2</div>
+        <div class="level-chip" data-level="C1" onclick="selectLevel('C1')">C1</div>
+        <div class="level-chip" data-level="C2" onclick="selectLevel('C2')">C2</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Hero -->
+    <div class="page-hero" id="page-hero">
+      <div class="hero-card">
+        <img id="hero-bg-img" class="hero-bg" src="" alt="" style="display:none">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-icon" id="hero-icon">📚</div>
+          <div class="hero-text">
+            <h2 id="hero-title">Tất cả từ vựng</h2>
+            <p id="hero-desc">Khám phá toàn bộ từ vựng trong kho học liệu</p>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-num" id="hero-word-count">—</div>
+              <div class="hero-stat-lbl">từ vựng</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-search">
+        <span class="si">🔍</span>
+        <input type="text" id="search-input" placeholder="Tìm từ vựng..." oninput="onSearch(this.value)">
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-grid-btn" onclick="setView('grid')" title="Grid">⊞</button>
+        <button class="view-btn" id="view-list-btn" onclick="setView('list')" title="List">☰</button>
+      </div>
+      <span class="word-count-badge">Hiển thị <strong id="shown-count">0</strong> từ</span>
+    </div>
+
+    <!-- Words -->
+    <div class="words-area">
+      <div id="words-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WORD MODAL ─────────────────────────────────── -->
+<div class="overlay" id="overlay-word" onclick="handleOverlayClick(event, 'overlay-word')">
+  <div class="modal-word" id="modal-word">
+    <!-- Hero image -->
+    <div class="wm-hero" id="wm-hero">
+      <div class="wm-hero-placeholder" id="wm-hero-placeholder">🔤</div>
+      <img id="wm-hero-img" class="wm-hero-img" src="" alt="" style="display:none">
+      <div class="wm-hero-overlay"></div>
+      <button class="wm-close" onclick="closeWord()">✕</button>
+      <div class="wm-term-row">
+        <div class="wm-term" id="wm-term">—</div>
+        <div class="wm-phonetic" id="wm-phonetic"></div>
+        <button class="wm-audio-btn" id="wm-audio-btn" onclick="playWordAudio()" title="Nghe phát âm">▶</button>
+      </div>
+    </div>
+
+    <div class="wm-body" id="wm-body">
+      <!-- Definitions -->
+      <div class="wm-section">
+        <div class="wm-defs">
+          <div class="wm-def-box">
+            <div class="wm-def-lang">🇻🇳 Tiếng Việt</div>
+            <div class="wm-def-text" id="wm-def-vi">—</div>
+          </div>
+          <div class="wm-def-box">
+            <div class="wm-def-lang">🇬🇧 English</div>
+            <div class="wm-def-text" id="wm-def-en">—</div>
+          </div>
+        </div>
+        <div class="wm-badges" id="wm-badges"></div>
+      </div>
+
+      <!-- Topic paragraph -->
+      <div class="wm-section" id="wm-paragraph-section" style="display:none">
+        <div class="wm-paragraph-label">Đoạn văn mẫu trong chủ đề</div>
+        <div class="wm-paragraph-text" id="wm-paragraph-text"></div>
+        <div class="wm-paragraph-tts">
+          <button class="btn-tts" onclick="speakParagraph()">
+            🔊 Nghe đoạn văn
+          </button>
+          <span style="font-size:12px; color:var(--muted)">Text-to-speech</span>
+        </div>
+      </div>
+
+      <!-- Examples table -->
+      <div class="wm-section wm-examples-section" id="wm-examples-section" style="display:none">
+        <div class="wm-paragraph-label">Câu mẫu theo 5 loại</div>
+        <div id="wm-examples-table-wrap"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="wm-footer">
+      <button class="btn-srs" id="btn-srs" onclick="addToSRS()">
+        ➕ Thêm vào Flashcard SRS
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOGIN MODAL ────────────────────────────────── -->
+<div class="overlay" id="overlay-login" onclick="handleOverlayClick(event, 'overlay-login')">
+  <div class="modal-login">
+    <div class="login-logo">English<span>Up</span></div>
+    <div class="login-sub">Đăng nhập để lưu tiến trình học</div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>Mật khẩu</label>
+      <input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-submit" id="btn-submit-login" onclick="doLogin()">Đăng nhập</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ── SCRIPT ─────────────────────────────────────── -->
+<script>
+// ── SUPABASE ────────────────────────────────────────
+const SB_URL = 'https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY = 'sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+let sb = null;
+
+// ── STATE ───────────────────────────────────────────
+let allTopics      = [];
+let currentTopic   = null;   // null = tất cả
+let currentLevel   = '';     // '' = tất cả
+let currentSearch  = '';
+let currentView    = 'grid'; // 'grid' | 'list'
+let currentWords   = [];
+let openedWord     = null;
+let currentUser    = null;
+let _srsAdded      = new Set(); // word IDs đã thêm
+let _searchTimer   = null;
+let _paragraphMap  = {};     // topicId → paragraph text
+
+// ── INIT ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  sb = supabase.createClient(SB_URL, SB_KEY);
+  await checkAuth();
+  await Promise.all([loadTopics(), loadWords()]);
+});
+
+// ── AUTH ─────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
+      await loadUserProfile(session.user.id);
+    }
+    sb.auth.onAuthStateChange((_evt, sess) => {
+      if (sess?.user) { setUser(sess.user); loadUserProfile(sess.user.id); }
+      else clearUser();
+    });
+  } catch(e) { console.warn('Auth check failed:', e.message); }
+}
+
+function setUser(u) {
+  currentUser = u;
+  const email = u.email || '';
+  const initials = email.slice(0,2).toUpperCase();
+  document.getElementById('btn-login-top').style.display = 'none';
+  const chip = document.getElementById('user-chip');
+  chip.style.display = 'flex';
+  document.getElementById('user-av').textContent = initials;
+  document.getElementById('user-email-display').textContent = email.split('@')[0];
+}
+
+function clearUser() {
+  currentUser = null;
+  document.getElementById('btn-login-top').style.display = 'block';
+  document.getElementById('user-chip').style.display = 'none';
+  document.getElementById('xp-display').style.display = 'none';
+  document.getElementById('streak-display').style.display = 'none';
+}
+
+async function loadUserProfile(userId) {
+  try {
+    const { data } = await sb.from('user_profiles').select('xp,streak').eq('id', userId).single();
+    if (!data) return;
+    if (data.xp !== undefined) {
+      document.getElementById('xp-val').textContent = data.xp;
+      document.getElementById('xp-display').style.display = 'flex';
+    }
+    if (data.streak !== undefined) {
+      document.getElementById('streak-val').textContent = data.streak;
+      document.getElementById('streak-display').style.display = 'flex';
+    }
+  } catch(e) {}
+}
+
+function openLogin() {
+  document.getElementById('overlay-login').classList.add('open');
+  setTimeout(() => document.getElementById('login-email').focus(), 100);
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const btn   = document.getElementById('btn-submit-login');
+  const err   = document.getElementById('login-err');
+  if (!email || !pw) { err.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
+  btn.disabled = true; btn.textContent = 'Đang đăng nhập…';
+  err.textContent = '';
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (error) throw error;
+    document.getElementById('overlay-login').classList.remove('open');
+  } catch(e) {
+    err.textContent = e.message || 'Đăng nhập thất bại';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Đăng nhập';
+  }
+}
+
+async function handleLogout() {
+  if (!confirm('Đăng xuất?')) return;
+  await sb.auth.signOut();
+  clearUser();
+}
+
+// ── TOPICS ──────────────────────────────────────────
+async function loadTopics() {
+  try {
+    const { data, error } = await sb.from('topics')
+      .select('id,name,description,level,image_url,paragraph')
+      .order('name');
+    if (error) throw error;
+    allTopics = data || [];
+    // Build paragraph map
+    _paragraphMap = {};
+    allTopics.forEach(t => { if(t.paragraph) _paragraphMap[t.id] = t.paragraph; });
+    renderTopicSidebar();
+  } catch(e) {
+    console.warn('loadTopics error:', e.message);
+    document.getElementById('topic-rows').innerHTML =
+      '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">Không thể tải chủ đề</div>';
+  }
+}
+
+function renderTopicSidebar() {
+  const container = document.getElementById('topic-rows');
+  if (!allTopics.length) {
+    container.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">Chưa có chủ đề</div>';
+    return;
+  }
+  container.innerHTML = allTopics.map(t => `
+    <div class="topic-row" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
+      <div class="topic-thumb">
+        ${t.image_url
+          ? `<img src="${esc(t.image_url)}" alt="${esc(t.name)}" loading="lazy">`
+          : topicEmoji(t.name)}
+      </div>
+      <div class="topic-info">
+        <div class="topic-name">${esc(t.name)}</div>
+        <div class="topic-count level-tag" style="background:transparent;border:none;padding:0;font-size:11px;color:var(--muted)">${t.level||''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function topicEmoji(name) {
+  const n = (name||'').toLowerCase();
+  if (n.includes('trái cây') || n.includes('fruit'))   return '🍎';
+  if (n.includes('động vật') || n.includes('animal'))  return '🐾';
+  if (n.includes('màu'))                                return '🎨';
+  if (n.includes('gia đình') || n.includes('family'))  return '👨‍👩‍👧';
+  if (n.includes('thức ăn') || n.includes('food'))     return '🍜';
+  if (n.includes('du lịch') || n.includes('travel'))   return '✈️';
+  if (n.includes('công nghệ') || n.includes('tech'))   return '💻';
+  if (n.includes('y tế') || n.includes('health'))      return '🏥';
+  return '📖';
+}
+
+// ── SELECT TOPIC / LEVEL ─────────────────────────────
+function selectTopic(topicId, el) {
+  currentTopic = topicId || null;
+  // Update active class
+  document.querySelectorAll('.topic-row, .topic-row-all').forEach(r => r.classList.remove('active'));
+  if (el) el.classList.add('active');
+  updateHero();
+  loadWords();
+}
+
+function selectLevel(level) {
+  currentLevel = level;
+  document.querySelectorAll('.level-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.level === level);
+  });
+  loadWords();
+}
+
+function onSearch(val) {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => {
+    currentSearch = val.trim();
+    loadWords();
+  }, 300);
+}
+
+function updateHero() {
+  if (!currentTopic) {
+    document.getElementById('hero-icon').textContent = '📚';
+    document.getElementById('hero-title').textContent = 'Tất cả từ vựng';
+    document.getElementById('hero-desc').textContent = 'Khám phá toàn bộ từ vựng trong kho học liệu';
+    const bg = document.getElementById('hero-bg-img');
+    bg.style.display = 'none'; bg.src = '';
+    return;
+  }
+  const t = allTopics.find(x => x.id === currentTopic);
+  if (!t) return;
+  document.getElementById('hero-icon').textContent = topicEmoji(t.name);
+  document.getElementById('hero-title').textContent = t.name;
+  document.getElementById('hero-desc').textContent = t.description || '';
+  const bg = document.getElementById('hero-bg-img');
+  if (t.image_url) { bg.src = t.image_url; bg.style.display = 'block'; }
+  else bg.style.display = 'none';
+}
+
+// ── LOAD WORDS ───────────────────────────────────────
+async function loadWords() {
+  const grid = document.getElementById('words-grid');
+  grid.innerHTML = renderSkeletons(8);
+
+  try {
+    let q = sb.from('words')
+      .select('id,term,phonetic,definition_vi,definition_en,part_of_speech,level,topic,image_url,audio_url,examples,example_sentence')
+      .order('term');
+
+    if (currentTopic) q = q.eq('topic', getTopicName(currentTopic));
+    if (currentLevel) q = q.eq('level', currentLevel);
+    if (currentSearch) q = q.ilike('term', `%${currentSearch}%`);
+
+    const { data, error } = await q;
+    if (error) throw error;
+    currentWords = data || [];
+
+    document.getElementById('all-count').textContent = currentTopic ? currentWords.length : (await getTotalCount());
+    document.getElementById('hero-word-count').textContent = currentWords.length;
+    document.getElementById('shown-count').textContent = currentWords.length;
+
+    renderWords(currentWords);
+  } catch(e) {
+    console.error('loadWords error:', e);
+    grid.innerHTML = `<div class="empty-state"><h3>Lỗi tải dữ liệu</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function getTopicName(id) {
+  const t = allTopics.find(x => x.id === id);
+  return t ? t.name : id;
+}
+
+async function getTotalCount() {
+  try {
+    const { count } = await sb.from('words').select('id', { count: 'exact', head: true });
+    document.getElementById('all-count').textContent = count || 0;
+    return count;
+  } catch(e) { return '?'; }
+}
+
+// ── RENDER WORDS ─────────────────────────────────────
+function renderWords(words) {
+  const grid = document.getElementById('words-grid');
+  if (!words.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:48px;margin-bottom:12px;opacity:.3">🔍</div>
+        <h3>Không tìm thấy từ vựng</h3>
+        <p>Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm</p>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = words.map(w => renderWordCard(w)).join('');
+  // Restore view class
+  if (currentView === 'list') grid.classList.add('list-view');
+  else grid.classList.remove('list-view');
+}
+
+function renderWordCard(w) {
+  const img = w.image_url
+    ? `<img src="${esc(w.image_url)}" alt="${esc(w.term)}" loading="lazy">`
+    : `<div class="img-placeholder">📝</div>`;
+  const levelClass = (w.level||'').replace(/\s/g,'');
+  return `
+    <div class="word-card" onclick="openWord('${esc(w.id)}')">
+      <div class="word-card-img">${img}</div>
+      <div class="word-card-body">
+        <div class="word-card-term">${esc(w.term)}</div>
+        <div class="word-card-phonetic">${w.phonetic ? `/${esc(w.phonetic)}/` : ''}</div>
+        <div class="word-card-def">${esc(w.definition_vi || w.definition_en || '')}</div>
+      </div>
+      <div class="word-card-footer">
+        <span class="level-tag ${levelClass}">${esc(w.level||'')}</span>
+        ${w.audio_url
+          ? `<button class="audio-btn-sm" onclick="event.stopPropagation();playAudio('${esc(w.audio_url)}')" title="Nghe phát âm">▶</button>`
+          : `<button class="audio-btn-sm" onclick="event.stopPropagation();speakTerm('${esc(w.term)}')" title="TTS">🔊</button>`
+        }
+      </div>
+    </div>`;
+}
+
+function renderSkeletons(n) {
+  return Array(n).fill('').map(() => `
+    <div class="word-card-skeleton">
+      <div class="skeleton skel-img"></div>
+      <div class="skel-body">
+        <div class="skeleton skel-title"></div>
+        <div class="skeleton skel-sub"></div>
+        <div class="skeleton skel-def"></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── VIEW TOGGLE ──────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  const grid = document.getElementById('words-grid');
+  if (v === 'list') grid.classList.add('list-view');
+  else grid.classList.remove('list-view');
+  document.getElementById('view-grid-btn').classList.toggle('active', v === 'grid');
+  document.getElementById('view-list-btn').classList.toggle('active', v === 'list');
+}
+
+// ── WORD MODAL ───────────────────────────────────────
+function openWord(id) {
+  const w = currentWords.find(x => x.id == id);
+  if (!w) return;
+  openedWord = w;
+
+  // Hero image
+  const heroImg = document.getElementById('wm-hero-img');
+  const heroPlaceholder = document.getElementById('wm-hero-placeholder');
+  if (w.image_url) {
+    heroImg.src = w.image_url;
+    heroImg.style.display = 'block';
+    heroPlaceholder.style.display = 'none';
+  } else {
+    heroImg.style.display = 'none';
+    heroPlaceholder.style.display = 'grid';
+    heroPlaceholder.textContent = '🔤';
+  }
+
+  // Term + phonetic
+  document.getElementById('wm-term').textContent = w.term;
+  document.getElementById('wm-phonetic').textContent = w.phonetic ? `/${w.phonetic}/` : '';
+
+  // Audio btn state
+  const audioBtn = document.getElementById('wm-audio-btn');
+  audioBtn.classList.remove('playing');
+  audioBtn.title = w.audio_url ? 'Nghe phát âm' : 'Text-to-speech';
+
+  // Definitions
+  document.getElementById('wm-def-vi').textContent = w.definition_vi || '—';
+  document.getElementById('wm-def-en').textContent = w.definition_en || '—';
+
+  // Badges
+  const badgesEl = document.getElementById('wm-badges');
+  badgesEl.innerHTML = [
+    w.part_of_speech ? `<span class="badge pos">📝 ${esc(w.part_of_speech)}</span>` : '',
+    w.level          ? `<span class="badge level-b">🎯 ${esc(w.level)}</span>` : '',
+    w.topic          ? `<span class="badge topic-b">📂 ${esc(w.topic)}</span>` : '',
+  ].join('');
+
+  // Topic paragraph
+  const topicObj = allTopics.find(t => t.name === w.topic);
+  const para = topicObj?.paragraph || null;
+  const paraSection = document.getElementById('wm-paragraph-section');
+  if (para) {
+    document.getElementById('wm-paragraph-text').innerHTML = highlightTerm(para, w.term);
+    paraSection.style.display = 'block';
+  } else {
+    paraSection.style.display = 'none';
+  }
+
+  // Examples
+  renderWordExamples(w);
+
+  // SRS button
+  const srsBtn = document.getElementById('btn-srs');
+  if (_srsAdded.has(w.id)) {
+    srsBtn.textContent = '✓ Đã thêm vào Flashcard';
+    srsBtn.classList.add('added');
+  } else {
+    srsBtn.innerHTML = '➕ Thêm vào Flashcard SRS';
+    srsBtn.classList.remove('added');
+    srsBtn.disabled = false;
+  }
+
+  document.getElementById('overlay-word').classList.add('open');
+  document.getElementById('wm-body').scrollTop = 0;
+}
+
+function closeWord() {
+  document.getElementById('overlay-word').classList.remove('open');
+  stopAudio();
+}
+
+function renderWordExamples(w) {
+  const section = document.getElementById('wm-examples-section');
+  const wrap    = document.getElementById('wm-examples-table-wrap');
+
+  const examples = w.examples;
+  if (!examples || !examples.length || !examples[0]?.rows?.length) {
+    // Fallback: show example_sentence if exists
+    if (w.example_sentence) {
+      section.style.display = 'block';
+      wrap.innerHTML = `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Câu mẫu</div>
+          <div style="font-size:14px;line-height:1.65;">${highlightTerm(esc(w.example_sentence), w.term)}</div>
+        </div>`;
+    } else {
+      section.style.display = 'none';
+    }
+    return;
+  }
+
+  section.style.display = 'block';
+  const exGroup = examples[0];
+  const situation = exGroup.situation || '';
+  const rows = exGroup.rows || [];
+
+  const typeClass = {
+    'Tự sự':      'type-ts',
+    'Miêu tả':    'type-mt',
+    'Biểu cảm':   'type-bc',
+    'Thuyết minh':'type-tm',
+    'Nghị luận':  'type-nl',
+  };
+
+  const rowsHtml = rows.map(r => {
+    const tc = typeClass[r.type] || 'type-ts';
+    const sentenceHtml = highlightTerm(esc(r.sentence||''), w.term);
+    const altsHtml = r.alternatives ? formatAlternatives(r.alternatives) : '';
+    const oppsHtml = r.opposites    ? formatOpposites(r.opposites)       : '';
+    return `
+      <tr>
+        <td style="width:90px"><span class="type-badge ${tc}">${esc(r.type||'')}</span></td>
+        <td>
+          <div class="ex-sentence">${sentenceHtml}</div>
+          ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
+          ${altsHtml  ? `<div class="ex-alts">🔄 ${altsHtml}</div>` : ''}
+          ${oppsHtml  ? `<div class="ex-oppos">↔ ${oppsHtml}</div>` : ''}
+        </td>
+      </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    ${situation ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 ${esc(situation)}</div>` : ''}
+    <table class="examples-table">
+      <thead>
+        <tr>
+          <th>Loại câu</th>
+          <th>Câu mẫu & giải thích</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+}
+
+function formatAlternatives(str) {
+  // "từ (nghĩa) → thay1 / thay2 • từ2 → thay3"
+  return esc(str).replace(/→/g, '<span style="color:var(--a3)">→</span>').replace(/•/g, ' &bull; ');
+}
+
+function formatOpposites(str) {
+  // "từ1 ↔ trái1 • từ2 ↔ trái2"
+  return esc(str).replace(/↔/g, '<span style="color:var(--a5)">↔</span>').replace(/•/g, ' &bull; ');
+}
+
+function highlightTerm(text, term) {
+  if (!term) return text;
+  const re = new RegExp(`(${escRegex(term)})`, 'gi');
+  return text.replace(re, '<span class="highlight">$1</span>');
+}
+
+// ── AUDIO ────────────────────────────────────────────
+let _audio = null;
+let _ttsUtterance = null;
+
+function playAudio(url) {
+  if (_audio) { _audio.pause(); _audio = null; }
+  _audio = new Audio(url);
+  _audio.play().catch(e => console.warn('Audio error:', e));
+}
+
+function speakTerm(term) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(term);
+    u.lang = 'en-US'; u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+function playWordAudio() {
+  if (!openedWord) return;
+  const btn = document.getElementById('wm-audio-btn');
+  if (openedWord.audio_url) {
+    if (_audio) { _audio.pause(); _audio.currentTime = 0; }
+    _audio = new Audio(openedWord.audio_url);
+    btn.classList.add('playing');
+    _audio.onended = () => btn.classList.remove('playing');
+    _audio.onerror = () => { btn.classList.remove('playing'); speakTerm(openedWord.term); };
+    _audio.play();
+  } else {
+    speakTerm(openedWord.term);
+    btn.classList.add('playing');
+    setTimeout(() => btn.classList.remove('playing'), 1200);
+  }
+}
+
+function speakParagraph() {
+  if (!openedWord) return;
+  const topicObj = allTopics.find(t => t.name === openedWord.topic);
+  const text = topicObj?.paragraph || '';
+  if (!text) return;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+function stopAudio() {
+  if (_audio) { _audio.pause(); _audio = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  const btn = document.getElementById('wm-audio-btn');
+  if (btn) btn.classList.remove('playing');
+}
+
+// ── SRS ──────────────────────────────────────────────
+async function addToSRS() {
+  if (!openedWord) return;
+  const btn = document.getElementById('btn-srs');
+
+  if (!currentUser) {
+    openLogin();
+    return;
+  }
+
+  if (_srsAdded.has(openedWord.id)) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Đang thêm…';
+  try {
+    const { error } = await sb.from('srs_cards').upsert({
+      user_id:     currentUser.id,
+      word_id:     openedWord.id,
+      due_date:    new Date().toISOString(),
+      interval:    1,
+      ease_factor: 2.5,
+      repetitions: 0
+    }, { onConflict: 'user_id,word_id' });
+
+    if (error) throw error;
+    _srsAdded.add(openedWord.id);
+    btn.textContent = '✓ Đã thêm vào Flashcard';
+    btn.classList.add('added');
+
+    // Award XP
+    await awardXP(5);
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '➕ Thêm vào Flashcard SRS';
+    alert('Lỗi: ' + e.message);
+  }
+}
+
+async function awardXP(amount) {
+  if (!currentUser) return;
+  try {
+    const { data } = await sb.from('user_profiles').select('xp').eq('id', currentUser.id).single();
+    const newXP = (data?.xp || 0) + amount;
+    await sb.from('user_profiles').upsert({
+      id: currentUser.id,
+      email: currentUser.email,
+      xp: newXP,
+      last_study: new Date().toISOString()
+    });
+    document.getElementById('xp-val').textContent = newXP;
+    document.getElementById('xp-display').style.display = 'flex';
+  } catch(e) {}
+}
+
+// ── OVERLAY HELPERS ───────────────────────────────────
+function handleOverlayClick(evt, overlayId) {
+  if (evt.target.id === overlayId) {
+    document.getElementById(overlayId).classList.remove('open');
+    if (overlayId === 'overlay-word') stopAudio();
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escRegex(s) {
+  return String(s||'').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+</script>
+
+</body>
+</html>
