@@ -889,6 +889,8 @@ aside.sidebar {
 .ex-spd-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 .ex-spd-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .ex-spd-btn.playing { background: var(--a3) !important; color: #fff !important; border-color: var(--a3) !important; }
+.ex-audio-section { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.ex-voice-label { font-size: 13px; width: 22px; flex-shrink: 0; line-height: 1; }
 
 .type-badge {
   display: inline-block;
@@ -1639,11 +1641,19 @@ function renderWordExamples(w) {
           ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
           ${altsHtml  ? `<div class="ex-alts">🔄 ${altsHtml}</div>` : ''}
           ${oppsHtml  ? `<div class="ex-oppos">↔ ${oppsHtml}</div>` : ''}
-          <div class="ex-audio-bar" data-sentence="${sentAttr}">
-            <span style="font-size:12px;color:var(--muted);line-height:1;">🔊</span>
-            <button class="ex-spd-btn" data-rate="0.7" onclick="exSpeak(this)">🐢 Chậm</button>
-            <button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">▶ Vừa</button>
-            <button class="ex-spd-btn" data-rate="1.5" onclick="exSpeak(this)">⚡ Nhanh</button>
+          <div class="ex-audio-section">
+            <div class="ex-audio-bar" data-sentence="${sentAttr}" data-gender="male">
+              <span class="ex-voice-label">👨</span>
+              <button class="ex-spd-btn" data-rate="0.5" onclick="exSpeak(this)">🐢 Chậm</button>
+              <button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">▶ Vừa</button>
+              <button class="ex-spd-btn" data-rate="1.5" onclick="exSpeak(this)">⚡ Nhanh</button>
+            </div>
+            <div class="ex-audio-bar" data-sentence="${sentAttr}" data-gender="female">
+              <span class="ex-voice-label">👩</span>
+              <button class="ex-spd-btn" data-rate="0.5" onclick="exSpeak(this)">🐢 Chậm</button>
+              <button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">▶ Vừa</button>
+              <button class="ex-spd-btn" data-rate="1.5" onclick="exSpeak(this)">⚡ Nhanh</button>
+            </div>
           </div>
         </td>
       </tr>`;
@@ -1729,16 +1739,26 @@ function speakParagraph() {
 
 function exSpeak(btn) {
   const bar = btn.closest('.ex-audio-bar');
-  // Reset all buttons in this bar
   bar.querySelectorAll('.ex-spd-btn').forEach(b => b.classList.remove('active', 'playing'));
   btn.classList.add('active', 'playing');
   const text = bar.getAttribute('data-sentence');
   const rate = parseFloat(btn.dataset.rate);
+  const gender = bar.getAttribute('data-gender'); // 'male' | 'female'
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
     u.rate = rate;
+    // Pick voice by gender
+    const voices = window.speechSynthesis.getVoices();
+    const enVoices = voices.filter(v => v.lang.startsWith('en'));
+    if (gender === 'female') {
+      const fv = enVoices.find(v => /female|zira|samantha|karen|moira|fiona|victoria|allison|susan|hazel/i.test(v.name));
+      if (fv) u.voice = fv; else u.pitch = 1.4;
+    } else {
+      const mv = enVoices.find(v => /male|david|mark|daniel|alex|thomas|fred|george|arthur/i.test(v.name));
+      if (mv) u.voice = mv; else u.pitch = 0.8;
+    }
     u.onend = () => btn.classList.remove('playing');
     u.onerror = () => btn.classList.remove('playing');
     window.speechSynthesis.speak(u);
