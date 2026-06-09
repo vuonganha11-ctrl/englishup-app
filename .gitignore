@@ -1,0 +1,7 @@
+*.xlsx
+*.xls
+*.csv
+Thumbs.db
+.DS_Store
+desktop.ini
+START_SERVER.bat
