@@ -65,6 +65,10 @@ body {
   text-decoration: none;
 }
 .topbar .logo span { color: var(--a2); }
+.top-nav { display:flex; gap:4px; margin-left:14px; }
+.top-nav a { font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; padding:7px 12px; border-radius:8px; }
+.top-nav a:hover { color:var(--text); background:var(--card); }
+.top-nav a.active { color:var(--accent); background:rgba(79,142,247,.12); }
 
 .top-search {
   flex: 1;
@@ -1043,6 +1047,10 @@ aside.sidebar {
 <!-- ── TOPBAR ─────────────────────────────────────── -->
 <header class="topbar">
   <div class="logo">English<span>Up</span></div>
+  <nav class="top-nav">
+    <a href="vocab.html" class="active">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+  </nav>
 
   <div class="topbar-right">
     <div class="xp-badge" id="xp-display" style="display:none">
