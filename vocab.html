@@ -1785,12 +1785,12 @@ async function addToSRS() {
   btn.textContent = 'Đang thêm…';
   try {
     const { error } = await sb.from('srs_cards').upsert({
-      user_id:     currentUser.id,
-      word_id:     openedWord.id,
-      due_date:    new Date().toISOString(),
-      interval:    1,
-      ease_factor: 2.5,
-      repetitions: 0
+      user_id:       currentUser.id,
+      word_id:       openedWord.id,
+      due_date:      new Date().toISOString(),
+      interval_days: 1,
+      ease_factor:   2.5,
+      review_count:  0
     }, { onConflict: 'user_id,word_id' });
 
     if (error) throw error;
