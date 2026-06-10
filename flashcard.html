@@ -324,6 +324,7 @@ function nextCard(){
   if(!queue.length){ finishSession(); return; }
   _cur = queue.shift();
   flipped = false;
+  show('card-area');
   renderCard();
   updateProgress();
 }
