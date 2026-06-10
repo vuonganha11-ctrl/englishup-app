@@ -1635,7 +1635,6 @@ function renderWordExamples(w) {
     const sentAttr = (r.sentence||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `
       <tr>
-        <td style="width:90px"><span class="type-badge ${tc}">${esc(r.type||'')}</span></td>
         <td>
           <div class="ex-sentence">${sentenceHtml}</div>
           ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
@@ -1660,11 +1659,9 @@ function renderWordExamples(w) {
   }).join('');
 
   wrap.innerHTML = `
-    ${situation ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 ${esc(situation)}</div>` : ''}
     <table class="examples-table">
       <thead>
         <tr>
-          <th>Loại câu</th>
           <th>Câu mẫu & giải thích</th>
         </tr>
       </thead>
