@@ -120,6 +120,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   <nav>
     <a href="vocab.html">Từ vựng</a>
     <a href="flashcard.html" class="active">Flashcard</a>
+    <a href="report.html">📊 Báo cáo</a>
   </nav>
   <div class="topbar-right">
     <div class="chip" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>
@@ -503,6 +504,4 @@ function toast(msg){
   const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2600);
 }
-</script>
-</body>
-</html>
+</scr
