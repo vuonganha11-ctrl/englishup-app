@@ -81,9 +81,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 </head>
 <body>
 <header class="topbar">
-  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <a href="report.html" class="logo">English<span>Up</span></a>
   <nav class="top-nav">
     <a href="vocab.html">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
     <a href="game.html">🎮 Game</a>
     <a href="video.html">🎬 Video</a>
     <a href="posts.html" class="active">📰 Bài viết</a>
@@ -340,6 +341,7 @@ async function doLogin(){
   btn.disabled=true; btn.textContent='Đang đăng nhập…'; err.textContent='';
   try{ const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) throw error;
     document.getElementById('overlay-login').classList.remove('open');
+    location.href='report.html';
   }catch(e){ err.textContent=e.message||'Thất bại'; }
   finally{ btn.disabled=false; btn.textContent='Đăng nhập'; }
 }
