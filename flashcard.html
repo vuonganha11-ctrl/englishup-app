@@ -225,6 +225,13 @@ const MIN_EF = 1.3;
 window.addEventListener('DOMContentLoaded', async () => {
   // lock no-op: tránh treo getSession do Supabase Web Locks khi refresh token
   sb = supabase.createClient(SB_URL, SB_KEY, { auth: { lock: (_n, _t, fn) => fn() } });
+  // An toàn: không bao giờ kẹt ở màn "Đang tải…"
+  setTimeout(() => {
+    const loading = document.getElementById('state-loading');
+    if (loading && !loading.classList.contains('hidden')) {
+      show(currentUser ? 'state-empty' : 'state-login');
+    }
+  }, 8000);
   await checkAuth();
 });
 
