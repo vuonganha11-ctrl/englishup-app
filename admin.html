@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EnglishUp · Admin Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;--border:#232d42;--border2:#2e3a55;--accent:#4f8ef7;--accent2:#a78bfa;--accent3:#34d399;--accent4:#fb923c;--accent5:#f472b6;--danger:#f87171;--text:#dde3f0;--muted:#64748b;--mono:'JetBrains Mono',monospace}
@@ -215,9 +216,7 @@ select.input{cursor:pointer}
     <div class="topbar-badge">ADMIN</div>
     <div class="topbar-db" id="topbar-db">⚡ Supabase</div>
     <div class="topbar-spacer"></div>
-    <div class="topbar-user">Xin chào, <strong id="admin-name">Admin</strong>
-      <button class="btn" style="padding:5px 12px;font-size:12px" onclick="doLogout()">Đăng xuất</button>
-    </div>
+    <div class="topbar-right"></div>
   </div>
   <div class="shell-body">
     <nav class="sidebar">
@@ -852,7 +851,7 @@ function showApp(){
   document.getElementById('app-shell').style.display='flex';
   const url=localStorage.getItem('sb_url')||'';
   document.getElementById('topbar-db').textContent='⚡ '+url.replace('https://','').replace('.supabase.co','');
-  document.getElementById('admin-name').textContent=_user?.email?.split('@')[0]||'Admin';
+  var _an=document.getElementById('admin-name'); if(_an) _an.textContent=_user?.email?.split('@')[0]||'Admin';
   loadDashboard(); loadNavCounts();
 }
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement.id==='login-pw')doLogin();});

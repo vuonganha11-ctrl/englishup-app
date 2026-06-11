@@ -1,0 +1,150 @@
+/* EnglishUp · Thanh thông tin người dùng dùng chung cho MỌI trang.
+   Hiển thị: ⚡ XP · 🔥 streak · avatar + HỌ TÊN đầy đủ + menu (Trang tài khoản / Đăng xuất).
+   Tự đọc phiên đăng nhập + hồ sơ; tái sử dụng các id cũ để không phá code sẵn có của từng trang. */
+(function () {
+  "use strict";
+  var SB_URL = "https://fyglubimflzsetcovgqx.supabase.co";
+  var SB_KEY = "sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_";
+  var _sb = null;
+  var _fullName = "";
+
+  function sb() {
+    if (!_sb && window.supabase) {
+      _sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { lock: function (_n, _t, fn) { return fn(); } } });
+    }
+    return _sb;
+  }
+
+  function injectCSS() {
+    if (document.getElementById("eu-topbar-css")) return;
+    var css =
+      ".topbar-right{display:flex;align-items:center;gap:10px}" +
+      ".eu-badge{display:flex;align-items:center;gap:6px;background:var(--card,#151a25);border:1px solid var(--border,#232d42);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;white-space:nowrap}" +
+      ".eu-xp{color:var(--a4,#fb923c)}.eu-streak{color:var(--a5,#f472b6)}" +
+      ".eu-login{background:var(--accent,#4f8ef7);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}" +
+      ".eu-login:hover{opacity:.88}" +
+      ".eu-userwrap{position:relative}" +
+      ".eu-chip{display:flex;align-items:center;gap:8px;background:var(--card,#151a25);border:1px solid var(--border,#232d42);border-radius:20px;padding:4px 12px 4px 6px;font-size:13px;cursor:pointer;color:var(--text,#dde3f0)}" +
+      ".eu-chip:hover{border-color:var(--border2,#2e3a55)}" +
+      ".eu-av{width:26px;height:26px;border-radius:50%;background:var(--accent,#4f8ef7);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}" +
+      ".eu-name{font-weight:600;white-space:nowrap}" +
+      ".eu-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;background:var(--surface,#0e1018);border:1px solid var(--border2,#2e3a55);border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.5);display:none;z-index:500}" +
+      ".eu-menu.open{display:block}" +
+      ".eu-menu-head{padding:8px 10px 10px;border-bottom:1px solid var(--border,#232d42);margin-bottom:6px}" +
+      ".eu-menu-head b{display:block;font-size:13px;color:var(--text,#dde3f0)}.eu-menu-head small{font-size:11px;color:var(--muted,#64748b)}" +
+      ".eu-menu a,.eu-menu .eu-logout{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;color:var(--text,#dde3f0);font-family:inherit;font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;text-decoration:none;box-sizing:border-box}" +
+      ".eu-menu a:hover,.eu-menu .eu-logout:hover{background:var(--card,#151a25)}" +
+      ".eu-menu .eu-logout{color:var(--danger,#f87171)}";
+    var st = document.createElement("style");
+    st.id = "eu-topbar-css";
+    st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  function mount() {
+    return document.querySelector(".topbar-right");
+  }
+
+  function widgetHTML() {
+    return (
+      '<div class="eu-badge eu-xp" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>' +
+      '<div class="eu-badge eu-streak" id="streak-display" style="display:none">🔥 <span id="streak-val">0</span> ngày</div>' +
+      '<button class="eu-login" id="btn-login-top" onclick="__euLogin()">Đăng nhập</button>' +
+      '<div class="eu-userwrap" id="user-chip" style="display:none">' +
+      '  <div class="eu-chip" onclick="__euToggleMenu(event)">' +
+      '    <div class="eu-av" id="eu-av">?</div><span class="eu-name" id="eu-name">—</span>' +
+      '  </div>' +
+      '  <div class="eu-menu" id="eu-menu">' +
+      '    <div class="eu-menu-head"><b id="menu-name">—</b><small id="menu-email">—</small></div>' +
+      '    <a href="tai-khoan.html">👤 Trang tài khoản</a>' +
+      '    <button type="button" class="eu-logout" onclick="__euLogout()">🚪 Đăng xuất</button>' +
+      '  </div>' +
+      '  <span id="user-av" style="display:none"></span><span id="user-email-display" style="display:none"></span>' +
+      '</div>'
+    );
+  }
+
+  function initials(name, email) {
+    var base = (name && name.trim()) ? name.trim() : (email || "").split("@")[0];
+    var parts = base.trim().split(/\s+/).map(function (s) { return s[0] || ""; });
+    var ini = parts.slice(0, 2).join("").toUpperCase();
+    return ini || (email || "?").slice(0, 2).toUpperCase();
+  }
+
+  function set(id, fn) { var el = document.getElementById(id); if (el) fn(el); }
+
+  function showLoggedOut() {
+    set("btn-login-top", function (e) { e.style.display = ""; });
+    set("user-chip", function (e) { e.style.display = "none"; });
+    set("xp-display", function (e) { e.style.display = "none"; });
+    set("streak-display", function (e) { e.style.display = "none"; });
+  }
+
+  function showLoggedIn(user, prof) {
+    var email = (prof && prof.email) || user.email || "";
+    var name = (prof && prof.full_name) ? prof.full_name : (email.split("@")[0] || "Học viên");
+    _fullName = name;
+    set("btn-login-top", function (e) { e.style.display = "none"; });
+    set("user-chip", function (e) { e.style.display = "flex"; });
+    set("eu-av", function (e) { e.textContent = initials(name, email); });
+    set("eu-name", function (e) { e.textContent = name; });
+    set("menu-name", function (e) { e.textContent = name; });
+    set("menu-email", function (e) { e.textContent = email; });
+    var xp = (prof && prof.xp != null) ? prof.xp : 0;
+    set("xp-val", function (e) { e.textContent = xp; });
+    set("xp-display", function (e) { e.style.display = "flex"; });
+    var streak = (prof && prof.streak != null) ? prof.streak : 0;
+    set("streak-val", function (e) { e.textContent = streak; });
+    set("streak-display", function (e) { e.style.display = "flex"; });
+  }
+
+  window.__euLogin = function () {
+    if (typeof window.openLogin === "function") { try { window.openLogin(); return; } catch (e) {} }
+    location.href = "tai-khoan.html";
+  };
+  window.__euToggleMenu = function (e) {
+    if (e) e.stopPropagation();
+    var m = document.getElementById("eu-menu");
+    if (m) m.classList.toggle("open");
+  };
+  window.__euLogout = function () {
+    if (!confirm("Đăng xuất?")) return;
+    var c = sb();
+    if (!c) { location.reload(); return; }
+    c.auth.signOut().then(function () { location.reload(); }).catch(function () { location.reload(); });
+  };
+  document.addEventListener("click", function () {
+    var m = document.getElementById("eu-menu");
+    if (m) m.classList.remove("open");
+  });
+
+  function loadAndRender() {
+    var c = sb();
+    if (!c) return;
+    c.auth.getSession().then(function (r) {
+      var u = r.data && r.data.session && r.data.session.user;
+      if (!u) { showLoggedOut(); return; }
+      c.from("user_profiles").select("email,full_name,xp,streak").eq("id", u.id).maybeSingle()
+        .then(function (res) { showLoggedIn(u, res.data || {}); })
+        .catch(function () { showLoggedIn(u, {}); });
+    }).catch(function () {});
+    c.auth.onAuthStateChange(function (_e, sess) {
+      var u = sess && sess.user;
+      if (!u) { showLoggedOut(); return; }
+      c.from("user_profiles").select("email,full_name,xp,streak").eq("id", u.id).maybeSingle()
+        .then(function (res) { showLoggedIn(u, res.data || {}); })
+        .catch(function () { showLoggedIn(u, {}); });
+    });
+  }
+
+  function boot() {
+    var host = mount();
+    if (!host) return;
+    injectCSS();
+    host.innerHTML = widgetHTML();
+    loadAndRender();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();

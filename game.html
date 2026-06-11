@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
 <style>
 :root{
   --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
@@ -815,7 +816,7 @@ async function awardXP(amount){
   try{
     const {data}=await sb.from('user_profiles').select('xp').eq('id',currentUser.id).single();
     const newXP=(data?.xp||0)+amount;
-    await sb.from('user_profiles').upsert({id:currentUser.id,email:currentUser.email,xp:newXP});
+    await sb.from('user_profiles').upsert({id:currentUser.id,email:currentUser.email,xp:newXP,last_study:new Date().toISOString()});
     document.getElementById('xp-val').textContent=newXP;
     document.getElementById('xp-display').style.display='flex';
   }catch(e){ console.warn('xp',e.message); }
