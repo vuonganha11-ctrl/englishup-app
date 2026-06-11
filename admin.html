@@ -43,6 +43,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .page-header h1{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;flex:1}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.qa-card{display:flex;flex-direction:column;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px 18px;text-decoration:none;color:var(--text);transition:all .15s}
+.qa-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.qa-ic{font-size:24px;margin-bottom:4px}
+.qa-t{font-size:14px;font-weight:700}
+.qa-d{font-size:11px;color:var(--muted)}
 .stat-card .st-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700}
 .stat-card .st-lbl{font-size:11px;color:var(--muted);margin-top:3px}
 /* TABLE */
@@ -223,9 +228,19 @@ select.input{cursor:pointer}
       <button class="nav-btn" data-section="topics" onclick="nav('topics',this)"><span class="nbi">🗂️</span>Chủ đề<span class="nav-count" id="nav-count-topics">—</span></button>
       <button class="nav-btn" data-section="courses" onclick="nav('courses',this)"><span class="nbi">🎓</span>Khoá học<span class="nav-count" id="nav-count-courses">—</span></button>
       <button class="nav-btn" data-section="shadowing" onclick="nav('shadowing',this)"><span class="nbi">🎤</span>Shadowing<span class="nav-count" id="nav-count-shadowing">—</span></button>
+      <button class="nav-btn" data-section="video" onclick="nav('video',this)"><span class="nbi">🎬</span>Video<span class="nav-count" id="nav-count-video">—</span></button>
       <button class="nav-btn" data-section="import" onclick="nav('import',this)"><span class="nbi">📥</span>Import CSV</button>
       <div class="nav-group-label">Người dùng</div>
       <button class="nav-btn" data-section="users" onclick="nav('users',this)"><span class="nbi">👥</span>Học viên<span class="nav-count" id="nav-count-users">—</span></button>
+      <div class="nav-group-label">Quản lý</div>
+      <a class="nav-btn" href="accounts.html" style="text-decoration:none"><span class="nbi">👤</span>Tài khoản &amp; phân quyền</a>
+      <a class="nav-btn" href="report.html" style="text-decoration:none"><span class="nbi">📊</span>Báo cáo học tập</a>
+      <a class="nav-btn" href="posts.html" style="text-decoration:none"><span class="nbi">📰</span>Bài viết</a>
+      <a class="nav-btn" href="tai-khoan.html" style="text-decoration:none"><span class="nbi">⚙️</span>Hồ sơ cá nhân</a>
+      <div class="nav-group-label">Trang học viên</div>
+      <a class="nav-btn" href="vocab.html" style="text-decoration:none"><span class="nbi">📚</span>Học từ vựng</a>
+      <a class="nav-btn" href="flashcard.html" style="text-decoration:none"><span class="nbi">🃏</span>Flashcard</a>
+      <a class="nav-btn" href="game.html" style="text-decoration:none"><span class="nbi">🎮</span>Game</a>
     </nav>
     <div class="main">
 
@@ -241,6 +256,18 @@ select.input{cursor:pointer}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div class="table-wrap"><div class="table-toolbar"><span class="table-toolbar-title">📝 Từ mới nhất</span></div><div id="dash-recent-words" style="padding:12px 18px;font-size:13px;color:var(--muted)">Đang tải…</div></div>
           <div class="table-wrap"><div class="table-toolbar"><span class="table-toolbar-title">👥 Học viên gần đây</span></div><div id="dash-recent-users" style="padding:12px 18px;font-size:13px;color:var(--muted)">Đang tải…</div></div>
+        </div>
+        <div style="margin-top:22px">
+          <h2 style="font-size:14px;font-weight:700;margin-bottom:12px">⚡ Truy cập nhanh — Quản lý tập trung</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px">
+            <a class="qa-card" href="accounts.html"><span class="qa-ic">👤</span><span class="qa-t">Tài khoản</span><span class="qa-d">Quản lý &amp; phân quyền</span></a>
+            <a class="qa-card" href="report.html"><span class="qa-ic">📊</span><span class="qa-t">Báo cáo học tập</span><span class="qa-d">Điểm · XP · đánh giá</span></a>
+            <a class="qa-card" href="posts.html"><span class="qa-ic">📰</span><span class="qa-t">Bài viết</span><span class="qa-d">Đăng &amp; quản lý bài</span></a>
+            <a class="qa-card" href="tai-khoan.html"><span class="qa-ic">⚙️</span><span class="qa-t">Hồ sơ cá nhân</span><span class="qa-d">Thông tin · mật khẩu</span></a>
+            <a class="qa-card" href="vocab.html"><span class="qa-ic">📚</span><span class="qa-t">Học từ vựng</span><span class="qa-d">Trang học viên</span></a>
+            <a class="qa-card" href="flashcard.html"><span class="qa-ic">🃏</span><span class="qa-t">Flashcard</span><span class="qa-d">Ôn tập SRS</span></a>
+            <a class="qa-card" href="game.html"><span class="qa-ic">🎮</span><span class="qa-t">Game</span><span class="qa-d">Trò chơi từ vựng</span></a>
+          </div>
         </div>
       </div>
 
@@ -282,6 +309,12 @@ select.input{cursor:pointer}
       <div class="section-page" id="sec-shadowing">
         <div class="page-header"><h1>🎤 Shadowing</h1><button class="btn primary" onclick="openShadowModal()">＋ Thêm bài</button></div>
         <div id="shadowing-list"></div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="section-page" id="sec-video">
+        <div class="page-header"><h1>🎬 Video</h1><button class="btn primary" onclick="openVideoModal()">＋ Thêm video</button></div>
+        <div id="video-list"></div>
       </div>
 
       <!-- IMPORT -->
@@ -597,6 +630,65 @@ select.input{cursor:pointer}
   </div>
 </div>
 
+<!-- MODAL: VIDEO -->
+<div class="modal-overlay" id="modal-video">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header"><span style="font-size:20px">🎬</span><h2 id="video-modal-title">Thêm video</h2><button class="btn-icon" onclick="closeModal('modal-video')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="vf-id">
+      <div class="field">
+        <label>Link YouTube hoặc ID *</label>
+        <div style="display:flex;gap:8px">
+          <input class="input" id="vf-url" placeholder="https://www.youtube.com/watch?v=…  hoặc  UDdkgOoeNcQ" oninput="vfThumb()">
+          <button class="btn" onclick="fetchVideoMeta()" style="white-space:nowrap">↧ Lấy thông tin</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <img id="vf-thumb" alt="" style="width:160px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:none">
+        <div style="flex:1">
+          <div class="field"><label>Tiêu đề *</label><input class="input" id="vf-title" placeholder="Do artists really write…"></div>
+          <div class="field-row">
+            <div class="field"><label>Kênh</label><input class="input" id="vf-channel" placeholder="TED-Ed"></div>
+            <div class="field"><label>Thời lượng (giây)</label><input class="input" id="vf-duration" type="number" placeholder="464"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Cấp độ</label><select class="input" id="vf-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
+        <div class="field"><label>Ngôn ngữ phụ đề</label><input class="input" id="vf-lang" value="en"></div>
+        <div class="field"><label>Chủ đề</label><input class="input" id="vf-topic" placeholder="Music…"></div>
+      </div>
+      <div class="field">
+        <label>Transcript (phụ đề)</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <button class="btn" onclick="fetchTranscriptAuto()">⚡ Lấy tự động (Edge Function)</button>
+          <span id="vf-tr-status" style="font-size:12px;color:var(--muted);align-self:center"></span>
+        </div>
+        <textarea class="input" id="vf-transcript" style="min-height:120px;font-size:12px;line-height:1.7" placeholder="Dán transcript vào đây — sẽ tự tách thành câu theo thời lượng. Hoặc bấm 'Lấy tự động' nếu đã deploy Edge Function fetch-transcript."></textarea>
+      </div>
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          <span>Trắc nghiệm (JSON)</span>
+          <button class="btn" id="vf-quiz-btn" onclick="genVideoQuizAI()" style="font-size:12px;color:var(--a2);border-color:rgba(167,139,250,.3)">🤖 Tạo quiz bằng AI</button>
+        </label>
+        <textarea class="input" id="vf-quiz-json" style="min-height:100px;font-size:11px;font-family:var(--mono);line-height:1.6" placeholder='[{&quot;q&quot;:&quot;Câu hỏi?&quot;,&quot;o&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;,&quot;D&quot;],&quot;a&quot;:1,&quot;e&quot;:&quot;Giải thích&quot;}]' oninput="previewVideoQuiz()"></textarea>
+        <div id="vf-quiz-preview" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+      </div>
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          <span>Từ vựng (JSON · tuỳ chọn)</span>
+          <button class="btn" id="vf-vocab-btn" onclick="genVideoVocabAI()" style="font-size:12px;color:var(--a2);border-color:rgba(167,139,250,.3)">🤖 Gợi ý từ vựng AI</button>
+        </label>
+        <textarea class="input" id="vf-vocab-json" style="min-height:80px;font-size:11px;font-family:var(--mono);line-height:1.6" placeholder='[{&quot;t&quot;:&quot;term&quot;,&quot;ph&quot;:&quot;/…/&quot;,&quot;vi&quot;:&quot;nghĩa&quot;,&quot;ex&quot;:&quot;ví dụ&quot;}]'></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-video')">Huỷ</button>
+      <button class="btn primary" onclick="saveVideo()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: IMPORT CÂU MẪU -->
 <div class="modal-overlay" id="modal-examples-import">
   <div class="modal" style="max-width:620px">
@@ -771,7 +863,7 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,topics:loadTopics,courses:loadCourses,shadowing:loadShadowing,users:loadUsers})[section]?.();
+  ({words:loadWords,topics:loadTopics,courses:loadCourses,shadowing:loadShadowing,video:loadVideos,users:loadUsers})[section]?.();
 }
 
 // ── DASHBOARD ──
@@ -788,7 +880,7 @@ async function loadDashboard(){
   document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${u.display_name||u.email||'—'}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
 }
 async function loadNavCounts(){
-  for(const[tbl,id]of[['words','words'],['topics','topics'],['courses','courses'],['shadowing','shadowing'],['user_profiles','users']]){
+  for(const[tbl,id]of[['words','words'],['topics','topics'],['courses','courses'],['shadowing','shadowing'],['video_lessons','video'],['user_profiles','users']]){
     const {count}=await _sb.from(tbl).select('*',{count:'exact',head:true}).catch(()=>({count:0}));
     const el=document.getElementById('nav-count-'+id);
     if(el) el.textContent=count??'—';
@@ -1086,7 +1178,7 @@ function confirmDel(table,id,name){
       const{error}=await _sb.from(table).delete().eq('id',id);
       if(error)throw error;
       toast(`🗑 Đã xoá "${name}"`, 'success');
-      ({words:loadWords,topics:loadTopics,courses:loadCourses,shadowing:loadShadowing})[table]?.();
+      ({words:loadWords,topics:loadTopics,courses:loadCourses,shadowing:loadShadowing,video_lessons:loadVideos})[table]?.();
       loadNavCounts();
     }catch(e){toast('❌ '+e.message,'error');}
     closeConfirm();
@@ -1103,6 +1195,201 @@ function ttsSay(text){window.speechSynthesis.cancel();const u=new SpeechSynthesi
 // ── MODAL ──
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── VIDEO ──
+let _videos=[];
+let _videoSeg={text:'',segments:[]};
+
+function parseYoutubeId(s){
+  s=(s||'').trim();
+  if(/^[\w-]{11}$/.test(s))return s;
+  const m=s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+  return m?m[1]:'';
+}
+function vfThumb(){
+  const id=parseYoutubeId(document.getElementById('vf-url').value);
+  const img=document.getElementById('vf-thumb');
+  if(id){img.src=`https://i.ytimg.com/vi/${id}/hqdefault.jpg`;img.style.display='block';}
+  else img.style.display='none';
+}
+function segmentTranscript(text,duration){
+  text=(text||'').replace(/\s+/g,' ').trim();
+  if(!text)return [];
+  const parts=text.match(/[^.?!]*[.?!]+/g)||[text];
+  let sents=parts.map(p=>p.trim()).filter(Boolean);
+  const merged=[];
+  for(const s of sents){ if(merged.length&&s.split(' ').length<=2)merged[merged.length-1]+=' '+s; else merged.push(s); }
+  sents=merged;
+  const dur=parseFloat(duration)||sents.length*4;
+  const wc=sents.map(s=>s.split(' ').length); const total=wc.reduce((a,b)=>a+b,0)||1;
+  let t=0; const segs=[];
+  sents.forEach((s,i)=>{ const start=+t.toFixed(1); t+=dur*wc[i]/total; segs.push({start,text:s}); });
+  segs.forEach((s,i)=>{ s.end=i+1<segs.length?+segs[i+1].start.toFixed(1):+(parseFloat(dur).toFixed(1)); });
+  return segs;
+}
+async function loadVideos(){
+  document.getElementById('video-list').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
+  const {data,error}=await _sb.from('video_lessons').select('*').order('created_at',{ascending:false});
+  if(error){document.getElementById('video-list').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}<br><span style="font-size:12px;color:var(--muted)">Chạy migration_video.sql để tạo bảng video_lessons.</span></p></div>`;return;}
+  _videos=data||[];renderVideos();
+}
+function renderVideos(){
+  if(!_videos.length){document.getElementById('video-list').innerHTML='<div class="empty-state"><div class="es-icon">🎬</div><p>Chưa có video nào</p><button class="btn primary" onclick="openVideoModal()">＋ Thêm video đầu tiên</button></div>';return;}
+  document.getElementById('video-list').innerHTML=`<div class="table-wrap"><table><thead><tr><th></th><th>Tiêu đề</th><th>Kênh</th><th>Cấp độ</th><th>Câu</th><th>Quiz</th><th style="text-align:right">Thao tác</th></tr></thead><tbody>${_videos.map(v=>{
+    const segN=Array.isArray(v.segments)?v.segments.length:0;
+    const quizN=Array.isArray(v.quiz)?v.quiz.length:0;
+    const thumb=v.thumbnail||(v.youtube_id?`https://i.ytimg.com/vi/${v.youtube_id}/default.jpg`:'');
+    return `<tr>
+      <td>${thumb?`<img src="${thumb}" alt="" style="width:64px;aspect-ratio:16/9;object-fit:cover;border-radius:5px">`:'🎬'}</td>
+      <td><strong>${v.title||'—'}</strong><br><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${v.youtube_id||''}</span></td>
+      <td style="color:var(--muted);font-size:12px">${v.channel||'—'}</td>
+      <td><span class="badge badge-blue">${v.level||'—'}</span></td>
+      <td style="font-family:var(--mono)">${segN}</td>
+      <td style="font-family:var(--mono)">${quizN}</td>
+      <td style="text-align:right"><div class="row-actions" style="justify-content:flex-end">
+        <button class="btn-icon" title="Mở trang học" onclick="window.open('video.html?id=${v.id}','_blank')">▶</button>
+        <button class="btn-icon" onclick="editVideo('${v.id}')">✏️</button>
+        <button class="btn-icon del" onclick="confirmDel('video_lessons','${v.id}','${(v.title||'').replace(/'/g,"\\'")}')">🗑</button>
+      </div></td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+function openVideoModal(v){
+  _videoSeg={text:'',segments:[]};
+  document.getElementById('vf-id').value=v?.id||'';
+  document.getElementById('vf-url').value=v?.youtube_id||'';
+  document.getElementById('vf-title').value=v?.title||'';
+  document.getElementById('vf-channel').value=v?.channel||'';
+  document.getElementById('vf-duration').value=v?.duration||'';
+  document.getElementById('vf-level').value=v?.level||'B1';
+  document.getElementById('vf-lang').value=v?.lang||'en';
+  document.getElementById('vf-topic').value=v?.topic||'';
+  const segs=Array.isArray(v?.segments)?v.segments:[];
+  const tr=segs.map(s=>s.text).join('\n');
+  _videoSeg={text:tr.replace(/\n/g,' '),segments:segs};
+  document.getElementById('vf-transcript').value=tr;
+  document.getElementById('vf-quiz-json').value=Array.isArray(v?.quiz)&&v.quiz.length?JSON.stringify(v.quiz,null,1):'';
+  document.getElementById('vf-vocab-json').value=Array.isArray(v?.vocab)&&v.vocab.length?JSON.stringify(v.vocab,null,1):'';
+  document.getElementById('vf-tr-status').textContent=segs.length?`${segs.length} câu`:'';
+  document.getElementById('video-modal-title').textContent=v?'Sửa video':'Thêm video';
+  vfThumb(); previewVideoQuiz();
+  openModal('modal-video');
+}
+function editVideo(id){const v=_videos.find(x=>String(x.id)===String(id));if(v)openVideoModal(v);}
+async function fetchVideoMeta(){
+  const id=parseYoutubeId(document.getElementById('vf-url').value);
+  if(!id){toast('Link/ID YouTube không hợp lệ.','warn');return;}
+  vfThumb();
+  try{
+    const r=await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+    if(!r.ok)throw new Error('oEmbed '+r.status);
+    const d=await r.json();
+    if(!document.getElementById('vf-title').value)document.getElementById('vf-title').value=d.title||'';
+    if(!document.getElementById('vf-channel').value)document.getElementById('vf-channel').value=d.author_name||'';
+    toast('✅ Đã lấy tiêu đề & kênh. Nhập thời lượng (giây) nếu tách transcript thủ công.','success');
+  }catch(e){toast('⚠️ Không lấy được thông tin: '+e.message,'warn');}
+}
+async function fetchTranscriptAuto(){
+  const id=parseYoutubeId(document.getElementById('vf-url').value);
+  if(!id){toast('Nhập link/ID YouTube trước.','warn');return;}
+  const lang=document.getElementById('vf-lang').value.trim()||'en';
+  const url=(localStorage.getItem('sb_url')||'').replace(/\/$/,'')+`/functions/v1/fetch-transcript?v=${id}&lang=${lang}`;
+  const key=localStorage.getItem('sb_key')||'';
+  const st=document.getElementById('vf-tr-status'); st.textContent='⏳ Đang lấy…';
+  try{
+    const r=await fetch(url,{headers:{Authorization:'Bearer '+key}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    const segs=d.segments||[];
+    _videoSeg={text:(d.text||segs.map(s=>s.text).join(' ')),segments:segs};
+    document.getElementById('vf-transcript').value=segs.map(s=>s.text).join('\n');
+    st.textContent=`✅ ${segs.length} câu (timing chính xác)`;
+    toast('✅ Đã lấy transcript tự động.','success');
+  }catch(e){
+    st.textContent='';
+    toast('⚠️ Chưa lấy tự động được ('+e.message+'). Hãy dán transcript thủ công — vẫn dùng tốt.','warn');
+  }
+}
+async function genVideoQuizAI(){
+  const tr=document.getElementById('vf-transcript').value.trim();
+  if(!tr){toast('Cần có transcript trước khi tạo quiz.','warn');return;}
+  const btn=document.getElementById('vf-quiz-btn'); btn.disabled=true; const old=btn.innerHTML; btn.innerHTML='⏳ Đang tạo…';
+  try{
+    const prompt=`Dựa vào transcript video tiếng Anh dưới đây, tạo 8 câu hỏi trắc nghiệm kiểm tra mức độ HIỂU NỘI DUNG. Câu hỏi và lựa chọn viết bằng tiếng Việt.
+Trả về JSON THUẦN (không markdown, không text thừa): một MẢNG gồm 8 phần tử dạng
+{"q":"câu hỏi","o":["lựa chọn A","B","C","D"],"a":<chỉ số đáp án đúng 0-3>,"e":"giải thích ngắn"}.
+
+TRANSCRIPT:
+"""${tr}"""`;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    if(!res.ok)throw new Error('API '+res.status);
+    const data=await res.json();
+    let text=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    const s=text.indexOf('['),e=text.lastIndexOf(']')+1;
+    const arr=JSON.parse(text.slice(s,e));
+    document.getElementById('vf-quiz-json').value=JSON.stringify(arr,null,1);
+    previewVideoQuiz();
+    toast('✅ Đã tạo '+arr.length+' câu hỏi. Có thể sửa tay rồi Lưu.','success');
+  }catch(e){toast('❌ Lỗi tạo quiz: '+e.message+' (AI cần chạy qua localhost).','error');}
+  finally{btn.disabled=false;btn.innerHTML=old;}
+}
+async function genVideoVocabAI(){
+  const tr=document.getElementById('vf-transcript').value.trim();
+  if(!tr){toast('Cần có transcript trước.','warn');return;}
+  const btn=document.getElementById('vf-vocab-btn'); btn.disabled=true; const old=btn.innerHTML; btn.innerHTML='⏳ Đang tạo…';
+  try{
+    const prompt=`Từ transcript video tiếng Anh dưới đây, chọn 12 từ/cụm từ hữu ích để học. Trả về JSON THUẦN (không markdown): MẢNG các phần tử {"t":"từ/cụm","ph":"phiên âm IPA","vi":"nghĩa tiếng Việt","ex":"một câu ví dụ lấy hoặc phỏng theo transcript"}.
+
+TRANSCRIPT:
+"""${tr}"""`;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    if(!res.ok)throw new Error('API '+res.status);
+    const data=await res.json();
+    let text=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    const s=text.indexOf('['),e=text.lastIndexOf(']')+1;
+    const arr=JSON.parse(text.slice(s,e));
+    document.getElementById('vf-vocab-json').value=JSON.stringify(arr,null,1);
+    toast('✅ Đã gợi ý '+arr.length+' từ. Có thể sửa tay rồi Lưu.','success');
+  }catch(e){toast('❌ Lỗi: '+e.message+' (AI cần chạy qua localhost).','error');}
+  finally{btn.disabled=false;btn.innerHTML=old;}
+}
+function previewVideoQuiz(){
+  const el=document.getElementById('vf-quiz-preview');
+  const raw=document.getElementById('vf-quiz-json').value.trim();
+  if(!raw){el.textContent='';return;}
+  try{const arr=JSON.parse(raw);if(!Array.isArray(arr))throw 0;el.innerHTML=`<span style="color:var(--a3)">✓ ${arr.length} câu hỏi hợp lệ</span>`;}
+  catch(e){el.innerHTML='<span style="color:var(--a5)">✕ JSON chưa hợp lệ</span>';}
+}
+async function saveVideo(){
+  const id=parseYoutubeId(document.getElementById('vf-url').value);
+  const title=document.getElementById('vf-title').value.trim();
+  if(!id){toast('Link/ID YouTube không hợp lệ.','warn');return;}
+  if(!title){toast('Vui lòng nhập tiêu đề.','warn');return;}
+  const duration=parseInt(document.getElementById('vf-duration').value)||0;
+  const txt=document.getElementById('vf-transcript').value.trim();
+  const normTxt=txt.replace(/\s+/g,' ').trim();
+  let segments;
+  if(normTxt && normTxt===(_videoSeg.text||'').replace(/\s+/g,' ').trim() && _videoSeg.segments.length){
+    segments=_videoSeg.segments;
+  }else{
+    segments=segmentTranscript(txt,duration);
+  }
+  let quiz=[],vocab=[];
+  const qraw=document.getElementById('vf-quiz-json').value.trim();
+  const vraw=document.getElementById('vf-vocab-json').value.trim();
+  try{if(qraw){quiz=JSON.parse(qraw);if(!Array.isArray(quiz))throw 0;}}catch(e){toast('❌ JSON Trắc nghiệm chưa hợp lệ.','error');return;}
+  try{if(vraw){vocab=JSON.parse(vraw);if(!Array.isArray(vocab))throw 0;}}catch(e){toast('❌ JSON Từ vựng chưa hợp lệ.','error');return;}
+  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),segments,vocab,quiz};
+  try{
+    const rid=document.getElementById('vf-id').value;
+    let err;
+    if(rid){({error:err}=await _sb.from('video_lessons').update(data).eq('id',rid));}
+    else{({error:err}=await _sb.from('video_lessons').insert(data));}
+    if(err)throw err;
+    toast(`✅ Đã lưu "${title}" (${segments.length} câu · ${quiz.length} quiz)`,'success');
+    closeModal('modal-video');loadVideos();loadNavCounts();
+  }catch(e){toast('❌ '+e.message,'error');}
+}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));closeConfirm();}});
 
