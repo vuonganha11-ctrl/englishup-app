@@ -2157,8 +2157,7 @@ async function awardXP(amount) {
     await sb.from('user_profiles').upsert({
       id: currentUser.id,
       email: currentUser.email,
-      xp: newXP,
-      last_study: new Date().toISOString()
+      xp: newXP
     });
     document.getElementById('xp-val').textContent = newXP;
     document.getElementById('xp-display').style.display = 'flex';

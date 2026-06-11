@@ -466,7 +466,7 @@ async function awardXP(amount){
   try{
     const { data } = await sb.from('user_profiles').select('xp').eq('id',currentUser.id).single();
     const newXP=(data?.xp||0)+amount;
-    await sb.from('user_profiles').upsert({ id:currentUser.id, email:currentUser.email, xp:newXP, last_study:new Date().toISOString() });
+    await sb.from('user_profiles').upsert({ id:currentUser.id, email:currentUser.email, xp:newXP });
     document.getElementById('xp-val').textContent=newXP;
     document.getElementById('xp-display').style.display='flex';
   }catch(e){}
