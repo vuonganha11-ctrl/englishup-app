@@ -217,11 +217,6 @@ table.tbl tbody tr:hover{background:var(--card2)}
 
     <div class="cards" id="s-stats"></div>
 
-    <div class="two-col">
-      <div class="panel"><h2>🎯 Điểm theo kỹ năng</h2><div class="chart-box"><canvas id="chart-skill-self"></canvas></div><div id="s-nogr" class="muted hidden" style="text-align:center;padding:30px 0">Chưa có điểm đánh giá.</div></div>
-      <div class="panel"><h2>📝 Nhận xét từ giáo viên</h2><div id="s-evals"></div></div>
-    </div>
-
     <!-- Thống kê từ theo 5 cấp độ SSR -->
     <div class="panel">
       <h2>🧩 Thống kê từ đã học theo cấp độ <span class="muted" id="ssr-sum" style="font-size:12px;font-weight:500"></span></h2>
@@ -250,6 +245,12 @@ table.tbl tbody tr:hover{background:var(--card2)}
         <span class="lg" style="background:rgba(52,211,153,.88)"></span>
         <span>Nhiều</span>
       </div>
+    </div>
+
+    <!-- Điểm kỹ năng + nhận xét (đưa xuống cuối) -->
+    <div class="two-col">
+      <div class="panel"><h2>🎯 Điểm theo kỹ năng</h2><div class="chart-box"><canvas id="chart-skill-self"></canvas></div><div id="s-nogr" class="muted hidden" style="text-align:center;padding:30px 0">Chưa có điểm đánh giá.</div></div>
+      <div class="panel"><h2>📝 Nhận xét từ giáo viên</h2><div id="s-evals"></div></div>
     </div>
   </div>
 </div>
