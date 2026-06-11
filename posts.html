@@ -108,6 +108,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   <div class="state" id="state-loading"><div class="ico">⏳</div><h2>Đang tải…</h2><p>Đang lấy bài viết.</p></div>
   <div class="state hidden" id="state-empty"><div class="ico">📭</div><h2>Chưa có bài viết</h2><p id="empty-desc">Hãy quay lại sau nhé.</p></div>
   <div class="feed hidden" id="feed"></div>
+  <div class="state hidden" id="state-login"><div class="ico">🔒</div><h2>Cần đăng nhập</h2><p>Đăng nhập để đọc bài viết.</p><button class="btn btn-primary" onclick="openLogin()">Đăng nhập</button></div>
 </div>
 
 <!-- READ MODAL -->
@@ -175,18 +176,23 @@ let _posts=[], _editingId=null;
 
 window.addEventListener('DOMContentLoaded', async ()=>{
   await checkAuth();
-  await loadPosts();
 });
 
 async function checkAuth(){
   try{
     const { data:{session} }=await sb.auth.getSession();
-    if(session?.user){ setUser(session.user); await loadRole(session.user.id); }
+    if(session?.user){ setUser(session.user); await loadRole(session.user.id); await loadPosts(); }
+    else { showGate(); }
     sb.auth.onAuthStateChange((_e,sess)=>{
       if(sess?.user){ setUser(sess.user); loadRole(sess.user.id).then(loadPosts); }
       else { clearUser(); location.reload(); }
     });
-  }catch(e){ console.warn(e); }
+  }catch(e){ console.warn(e); showGate(); }
+}
+// Đăng xuất → chỉ thấy trang đăng nhập
+function showGate(){
+  ['state-loading','state-empty','feed'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('hidden'); });
+  const g=document.getElementById('state-login'); if(g) g.classList.remove('hidden');
 }
 function setUser(u){
   currentUser=u;
@@ -214,6 +220,7 @@ async function loadRole(id){
 }
 
 async function loadPosts(){
+  const _sl=document.getElementById('state-login'); if(_sl) _sl.classList.add('hidden');
   document.getElementById('state-loading').classList.remove('hidden');
   document.getElementById('state-empty').classList.add('hidden');
   document.getElementById('feed').classList.add('hidden');

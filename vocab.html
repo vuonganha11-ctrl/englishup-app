@@ -172,6 +172,19 @@ body {
   overflow: hidden;
 }
 
+/* Cổng đăng nhập — đăng xuất chỉ thấy trang đăng nhập */
+.auth-gate { display: none; flex: 1; align-items: center; justify-content: center; padding: 30px; }
+.auth-gate.open { display: flex; }
+.auth-gate-card {
+  max-width: 380px; width: 100%; text-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 36px 28px;
+}
+.auth-gate .login-logo { font-size: 26px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
+.auth-gate .login-logo span { color: var(--a2); }
+.auth-gate-title { font-size: 20px; font-weight: 700; margin: 16px 0 6px; }
+.auth-gate-desc { font-size: 14px; color: var(--muted); margin-bottom: 22px; line-height: 1.5; }
+
 /* ─── SIDEBAR ─────────────────────────────────────── */
 aside.sidebar {
   width: var(--sidebar-w);
@@ -1170,7 +1183,17 @@ aside.sidebar {
 </header>
 
 <!-- ── LAYOUT ─────────────────────────────────────── -->
-<div class="layout">
+<!-- ── AUTH GATE (đăng xuất → chỉ thấy đăng nhập) ── -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-gate-card">
+    <div class="login-logo">English<span>Up</span></div>
+    <h2 class="auth-gate-title">Đăng nhập để tiếp tục</h2>
+    <p class="auth-gate-desc">Bạn cần đăng nhập để xem nội dung học tập của EnglishUp.</p>
+    <button class="btn-submit" onclick="openLogin()">Đăng nhập</button>
+  </div>
+</div>
+
+<div class="layout" id="app-layout" style="display:none">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -1350,7 +1373,6 @@ let myAllowedTopics= null;    // null = không giới hạn (GV/Admin hoặc kh�
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SB_URL, SB_KEY, { auth: { lock: (_n, _t, fn) => fn() } });
   await checkAuth();
-  await Promise.all([loadTopics(), loadWords()]);
 });
 
 // ── AUTH ─────────────────────────────────────────────
@@ -1360,12 +1382,24 @@ async function checkAuth() {
     if (session?.user) {
       setUser(session.user);
       await loadUserProfile(session.user.id);
+    } else {
+      showGate();
     }
     sb.auth.onAuthStateChange((_evt, sess) => {
       if (sess?.user) { setUser(sess.user); loadUserProfile(sess.user.id); }
       else clearUser();
     });
-  } catch(e) { console.warn('Auth check failed:', e.message); }
+  } catch(e) { console.warn('Auth check failed:', e.message); showGate(); }
+}
+
+// Cổng đăng nhập: đăng xuất → chỉ thấy trang đăng nhập, ẩn toàn bộ nội dung
+function showGate() {
+  const g = document.getElementById('auth-gate'); if (g) g.classList.add('open');
+  const l = document.getElementById('app-layout'); if (l) l.style.display = 'none';
+}
+function enterApp() {
+  const g = document.getElementById('auth-gate'); if (g) g.classList.remove('open');
+  const l = document.getElementById('app-layout'); if (l) l.style.display = '';
 }
 
 function setUser(u) {
@@ -1375,6 +1409,7 @@ function setUser(u) {
   document.getElementById('user-chip').style.display = 'block';
   const me = document.getElementById('menu-email'); if (me) me.textContent = email;
   applyUserName(null, email);   // tạm hiển thị, cập nhật họ tên đầy đủ khi tải hồ sơ
+  enterApp();                   // có phiên đăng nhập → hiện nội dung
 }
 
 // Hiển thị họ tên đầy đủ (fallback: phần đầu email)
@@ -1412,7 +1447,11 @@ function clearUser() {
   document.getElementById('streak-display').style.display = 'none';
   const navAcc = document.getElementById('nav-accounts');
   if (navAcc) navAcc.style.display = 'none';
-  if (allTopics.length) { renderTopicSidebar(); loadWords(); }
+  // Ẩn toàn bộ nội dung học, chỉ hiện cổng đăng nhập
+  allTopics = []; currentWords = []; currentTopic = null; currentGroup = null;
+  const _tr = document.getElementById('topic-rows'); if (_tr) _tr.innerHTML = '';
+  const _wg = document.getElementById('words-grid'); if (_wg) _wg.innerHTML = '';
+  showGate();
 }
 
 async function loadUserProfile(userId) {
@@ -1444,7 +1483,9 @@ async function loadUserProfile(userId) {
     } else {
       myAllowedTopics = null;
     }
-    if (allTopics.length) { renderTopicSidebar(); loadWords(); }
+    if (!allTopics.length) await loadTopics();
+    renderTopicSidebar();
+    loadWords();
   } catch(e) { console.warn('profile/access', e.message); }
 }
 
