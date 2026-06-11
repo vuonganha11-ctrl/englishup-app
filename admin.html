@@ -679,7 +679,12 @@ let _imgFile=null,_audioFile=null,_topicImgFile=null,_shadowAudioFile=null;
 let _editingWordId=null;
 
 function initSB(url,key){
-  try{ _sb=supabase.createClient(url,key); return true; }catch(e){ return false; }
+  try{
+    _sb=supabase.createClient(url,key);
+    /* Tương thích supabase-js v2: thêm .catch() cho query builder (v2 chỉ có .then) */
+    (function(){try{var o=_sb.from('user_profiles').select('id'),p=Object.getPrototypeOf(o);while(p){if(Object.prototype.hasOwnProperty.call(p,'then')){if(typeof p.catch!=='function'){p.catch=function(f){return this.then(undefined,f);};}break;}p=Object.getPrototypeOf(p);}}catch(_e){}})();
+    return true;
+  }catch(e){ return false; }
 }
 
 // ✅ Config — englishup-app (fyglubimflzsetcovgqx)
