@@ -1246,7 +1246,7 @@ let myAllowedTopics= null;    // null = không giới hạn (GV/Admin hoặc kh�
 
 // ── INIT ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  sb = supabase.createClient(SB_URL, SB_KEY);
+  sb = supabase.createClient(SB_URL, SB_KEY, { auth: { lock: (_n, _t, fn) => fn() } });
   await checkAuth();
   await Promise.all([loadTopics(), loadWords()]);
 });

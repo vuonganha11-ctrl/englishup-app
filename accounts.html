@@ -209,9 +209,9 @@ table.tbl tbody tr:hover{background:var(--card2)}
 const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
 const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 // Client chính (phiên Admin)
-const sb=supabase.createClient(SB_URL,SB_KEY);
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
 // Client phụ để TẠO tài khoản mà KHÔNG làm mất phiên Admin
-const sbCreate=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,storageKey:'eu-admin-create'}});
+const sbCreate=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,storageKey:'eu-admin-create',lock:(_n,_t,fn)=>fn()}});
 
 let currentUser=null, myRole='student';
 let _users=[], _topics=[], _activeStudent=null;

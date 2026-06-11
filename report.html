@@ -241,7 +241,7 @@ let _chartClass=null, _chartSkill=null, _chartSelf=null;
 let _topicsCache=null;
 
 window.addEventListener('DOMContentLoaded', async ()=>{
-  sb=supabase.createClient(SB_URL,SB_KEY);
+  sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
   await checkAuth();
 });
 
