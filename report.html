@@ -95,6 +95,46 @@ table.tbl tbody tr:hover{background:var(--card2)}
 .muted{color:var(--muted)}
 .search{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:13px;width:220px}
 .search:focus{outline:none;border-color:var(--accent)}
+
+/* ── Thông tin học viên ── */
+.info-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.info-av{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0}
+.info-head .nm{font-size:18px;font-weight:700;line-height:1.2}
+.info-head .em{font-size:13px;color:var(--muted)}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.info-item .il{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.info-item .iv{font-size:15px;font-weight:600}
+
+/* ── 5 cấp độ SSR ── */
+.ssr-list{display:flex;flex-direction:column;gap:9px}
+.ssr-row{display:flex;align-items:center;gap:12px}
+.ssr-tag{display:flex;align-items:center;gap:7px;width:178px;flex-shrink:0;font-size:13px;font-weight:600}
+.ssr-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.ssr-track{flex:1;height:22px;background:var(--card2);border-radius:6px;overflow:hidden}
+.ssr-fill{height:100%;border-radius:6px;min-width:2px;transition:width .45s}
+.ssr-cnt{width:104px;flex-shrink:0;text-align:right;font-size:12px;color:var(--muted)}
+.ssr-cnt b{color:var(--text);font-size:14px;font-variant-numeric:tabular-nums}
+.ssr-words{margin:1px 0 5px 190px;line-height:1.9}
+.ssr-words .w{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:1px 8px;margin:0 5px 5px 0;font-size:12px;color:#aeb8cc}
+@media(max-width:600px){.ssr-tag{width:130px}.ssr-cnt{width:78px}.ssr-words{margin-left:0}}
+
+/* ── Lịch học theo tháng ── */
+.cal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.cal-title{font-size:14px;font-weight:700}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{min-width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);cursor:pointer;font-size:14px;line-height:1}
+.cal-nav button:hover{border-color:var(--border2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{font-size:10px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.3px;padding-bottom:2px}
+.cal-cell{aspect-ratio:1;border-radius:8px;background:var(--card2);border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+.cal-cell.empty{background:transparent}
+.cal-cell.i1{background:rgba(52,211,153,.22);color:var(--text)}
+.cal-cell.i2{background:rgba(52,211,153,.5);color:#06281d;font-weight:600}
+.cal-cell.i3{background:rgba(52,211,153,.88);color:#06281d;font-weight:700}
+.cal-cell.today{border-color:var(--accent)}
+.cal-cell .cal-n{font-size:9px;line-height:1;margin-top:1px;font-weight:600}
+.cal-legend{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:12px;font-size:11px;color:var(--muted)}
+.cal-legend .lg{width:14px;height:14px;border-radius:4px;border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -158,10 +198,55 @@ table.tbl tbody tr:hover{background:var(--card2)}
         <div class="sub" id="s-sub">—</div>
       </div>
     </div>
+
+    <!-- Thông tin học viên -->
+    <div class="panel">
+      <h2>👤 Thông tin học viên</h2>
+      <div class="info-head">
+        <div class="info-av" id="s-av">?</div>
+        <div>
+          <div class="nm" id="s-name">—</div>
+          <div class="em" id="s-email">—</div>
+        </div>
+      </div>
+      <div class="info-grid" id="s-info"></div>
+    </div>
+
     <div class="cards" id="s-stats"></div>
+
     <div class="two-col">
       <div class="panel"><h2>🎯 Điểm theo kỹ năng</h2><div class="chart-box"><canvas id="chart-skill-self"></canvas></div><div id="s-nogr" class="muted hidden" style="text-align:center;padding:30px 0">Chưa có điểm đánh giá.</div></div>
       <div class="panel"><h2>📝 Nhận xét từ giáo viên</h2><div id="s-evals"></div></div>
+    </div>
+
+    <!-- Thống kê từ theo 5 cấp độ SSR -->
+    <div class="panel">
+      <h2>🧩 Thống kê từ đã học theo cấp độ <span class="muted" id="ssr-sum" style="font-size:12px;font-weight:500"></span></h2>
+      <div class="ssr-list" id="ssr-list"></div>
+      <div id="ssr-empty" class="muted hidden" style="text-align:center;padding:24px 0">Chưa có từ nào trong Flashcard. Thêm từ ở trang Từ vựng để bắt đầu.</div>
+    </div>
+
+    <!-- Lịch học theo tháng -->
+    <div class="panel">
+      <h2>📅 Lịch học theo tháng</h2>
+      <div class="cards" id="cal-stats" style="margin-bottom:16px"></div>
+      <div class="cal-top">
+        <div class="cal-title" id="cal-title">—</div>
+        <div class="cal-nav">
+          <button onclick="calPrev()" title="Tháng trước">‹</button>
+          <button onclick="calToday()" title="Về tháng hiện tại">Hôm nay</button>
+          <button onclick="calNext()" title="Tháng sau">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend">
+        <span>Ít</span>
+        <span class="lg" style="background:var(--card2)"></span>
+        <span class="lg" style="background:rgba(52,211,153,.22)"></span>
+        <span class="lg" style="background:rgba(52,211,153,.5)"></span>
+        <span class="lg" style="background:rgba(52,211,153,.88)"></span>
+        <span>Nhiều</span>
+      </div>
     </div>
   </div>
 </div>
@@ -485,27 +570,75 @@ function renderDetailEvals(){
 }
 
 // ── STUDENT SELF VIEW ──
+let _dayCounts={}, _calYear, _calMonth;
+const SSR_META=[
+  {lv:1,name:'Lại',sub:'cần ôn gấp',color:'#f87171'},
+  {lv:2,name:'Khó',sub:'1 ngày',color:'#fb923c'},
+  {lv:3,name:'Nhớ',sub:'3 ngày',color:'#4f8ef7'},
+  {lv:4,name:'Thuộc',sub:'5 ngày',color:'#a78bfa'},
+  {lv:5,name:'Dễ',sub:'thành thạo',color:'#34d399'}
+];
+
 async function loadStudentSelf(){
   show('state-loading');
   const uid=currentUser.id;
   const [{data:prof},{data:cards},{data:grades},{data:evals}]=await Promise.all([
     sb.from('user_profiles').select('email,full_name,xp,streak,last_study').eq('id',uid).maybeSingle(),
-    sb.from('srs_cards').select('review_count').eq('user_id',uid),
+    sb.from('srs_cards').select('word_id,interval_days,review_count,last_reviewed,due_date').eq('user_id',uid),
     sb.from('grades').select('*').eq('student_id',uid).maybeSingle(),
     sb.from('evaluations').select('*').eq('student_id',uid).order('created_at',{ascending:false})
   ]);
-  const xp=prof?.xp||0, streak=prof?.streak||0;
-  const words=(cards||[]).length, reviews=(cards||[]).reduce((s,c)=>s+(c.review_count||0),0);
+  const cardList=cards||[];
+  const xp=prof?.xp||0;
+  const words=cardList.length, reviews=cardList.reduce((s,c)=>s+(c.review_count||0),0);
+
+  // Lấy nội dung từ để liệt kê theo cấp độ (bảng words mở quyền đọc)
+  const wordIds=[...new Set(cardList.map(c=>c.word_id).filter(Boolean))];
+  let wmap={};
+  if(wordIds.length){
+    try{ const {data:ws}=await sb.from('words').select('id,term').in('id',wordIds); (ws||[]).forEach(w=>wmap[w.id]=w.term); }catch(e){}
+  }
+
+  // Đếm ngày học (từ last_reviewed) cho lịch + chuỗi
+  _dayCounts={};
+  cardList.forEach(c=>{ if(c.last_reviewed){ const k=dayKeyOf(new Date(c.last_reviewed)); _dayCounts[k]=(_dayCounts[k]||0)+1; } });
+  const daysSet=new Set(Object.keys(_dayCounts));
+  const sk=streakInfo(daysSet);
+
   const cl=classify(xp);
   show('view-student');
-  document.getElementById('s-sub').textContent=(prof?.full_name||currentUser.email||'')+' · Xếp loại tự động theo XP';
+
+  const nm=prof?.full_name||(prof?.email||currentUser.email||'').split('@')[0];
+  const email=prof?.email||currentUser.email||'—';
+  document.getElementById('s-sub').textContent=email+' · Xếp loại tự động theo XP';
+
+  // Thông tin học viên
+  document.getElementById('s-av').textContent=(nm||'?').slice(0,2).toUpperCase();
+  document.getElementById('s-name').textContent=nm||'—';
+  document.getElementById('s-email').textContent=email;
+  document.getElementById('s-info').innerHTML=
+    infoItem('Họ và tên', esc(prof?.full_name)||'<span class="muted">(chưa cập nhật)</span>')+
+    infoItem('Email', esc(email))+
+    infoItem('Vai trò', 'Học sinh')+
+    infoItem('Ngày tham gia', fmtDate(currentUser.created_at))+
+    infoItem('Học gần nhất', fmtDate(prof?.last_study))+
+    infoItem('Xếp loại hiện tại', `<span class="grade-pill ${cl.c}">${cl.t}</span>`);
+
+  // Thẻ thống kê
+  const mastered=cardList.filter(c=>(c.review_count||0)>0 && (c.interval_days||0)>=14).length;
   document.getElementById('s-stats').innerHTML=
-    statCard('XP',xp)+statCard('Streak',streak+' <small>ngày</small>')+statCard('Số từ flashcard',words)+
-    statCard('Lượt ôn',reviews)+`<div class="stat"><div class="k">Xếp loại</div><div class="v" style="font-size:20px"><span class="grade-pill ${cl.c}" style="font-size:14px">${cl.t}</span></div></div>`;
-  // skill chart
+    statCard('XP',xp)+
+    statCard('Chuỗi hiện tại',sk.current+' <small>ngày</small>')+
+    statCard('Tổng số từ',words)+
+    statCard('Lượt ôn',reviews)+
+    statCard('Thành thạo',mastered)+
+    `<div class="stat"><div class="k">Xếp loại</div><div class="v" style="font-size:20px"><span class="grade-pill ${cl.c}" style="font-size:14px">${cl.t}</span></div></div>`;
+
+  // Biểu đồ kỹ năng
   const g=grades;
   if(g){
     document.getElementById('s-nogr').classList.add('hidden');
+    document.getElementById('chart-skill-self').style.display='';
     if(_chartSelf) _chartSelf.destroy();
     _chartSelf=new Chart(document.getElementById('chart-skill-self'),{
       type:'radar',
@@ -518,9 +651,98 @@ async function loadStudentSelf(){
     document.getElementById('chart-skill-self').style.display='none';
     document.getElementById('s-nogr').classList.remove('hidden');
   }
+
   const list=evals||[];
   document.getElementById('s-evals').innerHTML = list.length? list.map(e=>evalItem(e)).join('') : '<div class="muted" style="font-size:13px">Chưa có nhận xét từ giáo viên.</div>';
+
+  // Thống kê 5 cấp độ SSR
+  renderSSR(cardList, wmap);
+
+  // Lịch học + chuỗi
+  const now=new Date(); _calYear=now.getFullYear(); _calMonth=now.getMonth();
+  renderCalendar();
+  document.getElementById('cal-stats').innerHTML=
+    statCard('Chuỗi hiện tại',sk.current+' <small>ngày</small>')+
+    statCard('Chuỗi dài nhất',sk.longest+' <small>ngày</small>')+
+    statCard('Số ngày đã học',sk.total);
 }
+
+// ── 5 CẤP ĐỘ SSR ──
+function ssrLevel(c){
+  const d=c.interval_days==null?1:c.interval_days;
+  if(d>=14) return 5;
+  if(d>=5)  return 4;
+  if(d>=3)  return 3;
+  if(d>=1)  return 2;
+  return 1;
+}
+function renderSSR(cardList, wmap){
+  const list=document.getElementById('ssr-list');
+  const empty=document.getElementById('ssr-empty');
+  const sum=document.getElementById('ssr-sum');
+  if(!cardList.length){ list.innerHTML=''; sum.textContent=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  const reviewed=cardList.filter(c=>(c.review_count||0)>0);
+  const unreviewed=cardList.length-reviewed.length;
+  const buckets={1:[],2:[],3:[],4:[],5:[]};
+  reviewed.forEach(c=>{ buckets[ssrLevel(c)].push(wmap[c.word_id]||'(từ)'); });
+  const maxc=Math.max(1,unreviewed,...Object.values(buckets).map(a=>a.length));
+  const total=reviewed.length||1;
+  sum.textContent=`· ${reviewed.length} từ đã ôn`+(unreviewed?` · ${unreviewed} từ chưa ôn`:'');
+  let html=SSR_META.map(m=>{
+    const arr=buckets[m.lv].slice().sort((a,b)=>String(a).localeCompare(b)), n=arr.length;
+    const pct=Math.round(n/maxc*100), share=Math.round(n/total*100);
+    const w=n?`<div class="ssr-words">${arr.slice(0,40).map(t=>`<span class="w">${esc(t)}</span>`).join('')}${n>40?` <span class="muted" style="font-size:12px">+${n-40} từ khác</span>`:''}</div>`:'';
+    return `<div class="ssr-row">
+      <div class="ssr-tag"><span class="ssr-dot" style="background:${m.color}"></span>Cấp ${m.lv} · ${m.name}<span class="muted" style="font-weight:400;font-size:11px">&nbsp;${m.sub}</span></div>
+      <div class="ssr-track"><div class="ssr-fill" style="width:${pct}%;background:${m.color}"></div></div>
+      <div class="ssr-cnt"><b>${n}</b> từ · ${share}%</div>
+    </div>${w}`;
+  }).join('');
+  if(unreviewed){
+    html+=`<div class="ssr-row" style="margin-top:5px;padding-top:9px;border-top:1px dashed var(--border)">
+      <div class="ssr-tag"><span class="ssr-dot" style="background:var(--muted)"></span>Chưa ôn<span class="muted" style="font-weight:400;font-size:11px">&nbsp;mới thêm</span></div>
+      <div class="ssr-track"><div class="ssr-fill" style="width:${Math.round(unreviewed/maxc*100)}%;background:var(--muted)"></div></div>
+      <div class="ssr-cnt"><b>${unreviewed}</b> từ</div>
+    </div>`;
+  }
+  list.innerHTML=html;
+}
+
+// ── LỊCH HỌC THEO THÁNG ──
+function dayKeyOf(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+function streakInfo(daysSet){
+  const days=[...daysSet].sort();
+  if(!days.length) return {current:0,longest:0,total:0};
+  let longest=1, run=1;
+  for(let i=1;i<days.length;i++){
+    const a=new Date(days[i-1]+'T00:00:00'), b=new Date(days[i]+'T00:00:00');
+    if(Math.round((b-a)/86400000)===1){ run++; if(run>longest)longest=run; } else run=1;
+  }
+  let cur=0; const probe=new Date(); probe.setHours(0,0,0,0);
+  if(!daysSet.has(dayKeyOf(probe))) probe.setDate(probe.getDate()-1);
+  while(daysSet.has(dayKeyOf(probe))){ cur++; probe.setDate(probe.getDate()-1); }
+  return {current:cur, longest, total:days.length};
+}
+function renderCalendar(){
+  const first=new Date(_calYear,_calMonth,1);
+  const startDow=(first.getDay()+6)%7;            // Thứ 2 = 0
+  const dim=new Date(_calYear,_calMonth+1,0).getDate();
+  document.getElementById('cal-title').textContent=`Tháng ${_calMonth+1} / ${_calYear}`;
+  const todayK=dayKeyOf(new Date());
+  let html=['T2','T3','T4','T5','T6','T7','CN'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++) html+='<div class="cal-cell empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const key=`${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const n=_dayCounts[key]||0;
+    const lvl=n===0?0:(n<=2?1:(n<=5?2:3));
+    html+=`<div class="cal-cell i${lvl}${key===todayK?' today':''}" title="${key}: ${n} lượt ôn">${d}${n?`<span class="cal-n">${n}</span>`:''}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+function calPrev(){ if(--_calMonth<0){_calMonth=11;_calYear--;} renderCalendar(); }
+function calNext(){ if(++_calMonth>11){_calMonth=0;_calYear++;} renderCalendar(); }
+function calToday(){ const n=new Date(); _calYear=n.getFullYear(); _calMonth=n.getMonth(); renderCalendar(); }
 
 // ── HELPERS ──
 function gradeAvg(g){ if(!g)return null; const v=['vocabulary','listening','speaking','reading','writing'].map(k=>g[k]).filter(x=>x!=null&&x!==''); return v.length? v.reduce((a,b)=>a+ +b,0)/v.length : null; }
@@ -532,6 +754,7 @@ function classify(xp){
 }
 function isActive(last){ if(!last)return false; return (Date.now()-new Date(last).getTime())<7*86400000; }
 function statCard(k,v){ return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
+function infoItem(k,v){ return `<div class="info-item"><div class="il">${k}</div><div class="iv">${v}</div></div>`; }
 function evalItem(e){
   return `<div class="eval-item"><div class="eval-meta">${fmtDate(e.created_at)}${e.rating?' · <b>'+esc(e.rating)+'</b>':''}</div><div>${esc(e.content)}</div></div>`;
 }
