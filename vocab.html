@@ -259,6 +259,95 @@ aside.sidebar {
 .topic-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topic-count { font-size: 11px; color: var(--muted); }
 
+/* Multi-level topic groups */
+.topic-group { margin-bottom: 2px; }
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background .15s;
+  user-select: none;
+}
+.group-header:hover { background: var(--card); }
+.group-header.active { background: var(--card2); border-right: 2px solid var(--a2); }
+.group-chevron {
+  font-size: 10px;
+  color: var(--muted);
+  width: 12px;
+  flex-shrink: 0;
+  transition: transform .18s;
+  display: inline-block;
+}
+.topic-group.collapsed .group-chevron { transform: rotate(-90deg); }
+.group-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--card2);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.group-label { font-size: 13px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group-count {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--card);
+  border-radius: 10px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+}
+.group-children { overflow: hidden; }
+.topic-group.collapsed .group-children { display: none; }
+.topic-row.child { padding-left: 34px; }
+.topic-row.child .topic-thumb { width: 26px; height: 26px; font-size: 15px; }
+.topic-row .topic-lv {
+  font-size: 10px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 0 5px; flex-shrink: 0;
+}
+
+/* Account dropdown menu */
+.user-menu-wrap { position: relative; }
+.user-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  display: none;
+  z-index: 200;
+}
+.user-menu.open { display: block; }
+.user-menu-name {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.user-menu-name b { display: block; font-size: 13px; color: var(--text); }
+.user-menu-name small { font-size: 11px; color: var(--muted); }
+.user-menu a, .user-menu button {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text);
+  background: none; border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: left;
+  font-family: inherit;
+}
+.user-menu a:hover, .user-menu button:hover { background: var(--card); }
+.user-menu button.danger { color: var(--danger); }
+
 /* Level filter */
 .level-section {
   padding: 12px 16px 8px;
@@ -1063,9 +1152,19 @@ aside.sidebar {
       🔥 <span id="streak-val">0</span> ngày
     </div>
     <button class="btn-login" id="btn-login-top" onclick="openLogin()">Đăng nhập</button>
-    <div class="user-chip" id="user-chip" style="display:none" onclick="handleLogout()">
-      <div class="user-av" id="user-av">?</div>
-      <span id="user-email-display">user</span>
+    <div class="user-menu-wrap" id="user-chip" style="display:none">
+      <div class="user-chip" onclick="toggleUserMenu(event)">
+        <div class="user-av" id="user-av">?</div>
+        <span id="user-email-display">user</span>
+      </div>
+      <div class="user-menu" id="user-menu">
+        <div class="user-menu-name">
+          <b id="menu-name">—</b>
+          <small id="menu-email">—</small>
+        </div>
+        <a href="tai-khoan.html">👤 Trang tài khoản</a>
+        <button type="button" class="danger" onclick="handleLogout()">🚪 Đăng xuất</button>
+      </div>
     </div>
   </div>
 </header>
@@ -1232,6 +1331,9 @@ let sb = null;
 // ── STATE ───────────────────────────────────────────
 let allTopics      = [];
 let currentTopic   = null;   // null = tất cả
+let currentGroup   = null;   // null = không lọc theo nhóm; string = tên nhóm cha
+let _groupList     = [];     // [{prefix, topics:[...]}] cho sidebar nhiều cấp
+let _collapsedGroups = new Set(); // nhóm đang thu gọn
 let currentLevel   = '';     // '' = tất cả
 let currentSearch  = '';
 let currentView    = 'grid'; // 'grid' | 'list'
@@ -1269,13 +1371,35 @@ async function checkAuth() {
 function setUser(u) {
   currentUser = u;
   const email = u.email || '';
-  const initials = email.slice(0,2).toUpperCase();
   document.getElementById('btn-login-top').style.display = 'none';
-  const chip = document.getElementById('user-chip');
-  chip.style.display = 'flex';
-  document.getElementById('user-av').textContent = initials;
-  document.getElementById('user-email-display').textContent = email.split('@')[0];
+  document.getElementById('user-chip').style.display = 'block';
+  const me = document.getElementById('menu-email'); if (me) me.textContent = email;
+  applyUserName(null, email);   // tạm hiển thị, cập nhật họ tên đầy đủ khi tải hồ sơ
 }
+
+// Hiển thị họ tên đầy đủ (fallback: phần đầu email)
+function applyUserName(fullName, email) {
+  const name = (fullName && fullName.trim())
+    ? fullName.trim()
+    : (email || '').split('@')[0];
+  const initials = name.trim().split(/\s+/).map(s => s[0] || '').slice(0,2).join('').toUpperCase()
+    || (email || '?').slice(0,2).toUpperCase();
+  document.getElementById('user-av').textContent = initials;
+  document.getElementById('user-email-display').textContent = name;
+  const mn = document.getElementById('menu-name'); if (mn) mn.textContent = name;
+}
+
+function toggleUserMenu(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('user-menu').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('user-chip');
+  if (wrap && !wrap.contains(e.target)) {
+    const m = document.getElementById('user-menu');
+    if (m) m.classList.remove('open');
+  }
+});
 
 function clearUser() {
   currentUser = null;
@@ -1283,6 +1407,7 @@ function clearUser() {
   myAllowedTopics = null;   // khách: xem toàn bộ chủ đề (chế độ xem trước)
   document.getElementById('btn-login-top').style.display = 'block';
   document.getElementById('user-chip').style.display = 'none';
+  const _um = document.getElementById('user-menu'); if (_um) _um.classList.remove('open');
   document.getElementById('xp-display').style.display = 'none';
   document.getElementById('streak-display').style.display = 'none';
   const navAcc = document.getElementById('nav-accounts');
@@ -1292,7 +1417,9 @@ function clearUser() {
 
 async function loadUserProfile(userId) {
   try {
-    const { data } = await sb.from('user_profiles').select('xp,streak,role,status').eq('id', userId).maybeSingle();
+    const { data } = await sb.from('user_profiles').select('xp,streak,role,status,full_name').eq('id', userId).maybeSingle();
+    // Họ tên đầy đủ
+    if (data && currentUser) applyUserName(data.full_name, currentUser.email);
     // Khóa mềm: tài khoản bị khóa -> đăng xuất, quay về chế độ khách
     if (data && data.status === 'locked') {
       alert('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ giáo viên hoặc quản trị viên.');
@@ -1380,12 +1507,26 @@ async function loadTopics() {
   }
 }
 
-function renderTopicSidebar() {
-  const container = document.getElementById('topic-rows');
-  const topics = (myAllowedTopics !== null)
+// Chủ đề chỉ học viên được cấp mới thấy (GV/Admin/khách: thấy tất cả)
+function visibleTopics() {
+  return (myAllowedTopics !== null)
     ? allTopics.filter(t => myAllowedTopics.has(t.id))
     : allTopics;
+}
+
+// Tách "Food - Fruit" → { group:"Food", child:"Fruit" }; không có " - " → nhóm null
+function splitTopic(name) {
+  const s = name || '';
+  const i = s.indexOf(' - ');
+  if (i === -1) return { group: null, child: s };
+  return { group: s.slice(0, i).trim(), child: s.slice(i + 3).trim() };
+}
+
+function renderTopicSidebar() {
+  const container = document.getElementById('topic-rows');
+  const topics = visibleTopics();
   if (!topics.length) {
+    _groupList = [];
     container.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.5">'
       + (myAllowedTopics !== null
           ? 'Bạn chưa được cấp chủ đề nào.<br>Liên hệ giáo viên để mở quyền học.'
@@ -1393,19 +1534,86 @@ function renderTopicSidebar() {
       + '</div>';
     return;
   }
-  container.innerHTML = topics.map(t => `
-    <div class="topic-row" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
-      <div class="topic-thumb">
-        ${t.image_url
+
+  // Gom nhóm theo tên cha; giữ thứ tự xuất hiện
+  const groupMap = new Map();   // prefix → [topics]
+  const standalone = [];        // chủ đề không có nhóm cha
+  topics.forEach(t => {
+    const { group } = splitTopic(t.name);
+    if (!group) { standalone.push(t); return; }
+    if (!groupMap.has(group)) groupMap.set(group, []);
+    groupMap.get(group).push(t);
+  });
+  _groupList = [...groupMap.entries()].map(([prefix, ts]) => ({ prefix, topics: ts }));
+
+  let html = '';
+
+  // Các nhóm nhiều cấp
+  _groupList.forEach((g, gi) => {
+    const collapsed = _collapsedGroups.has(g.prefix);
+    const activeGroup = (currentGroup === g.prefix && !currentTopic) ? ' active' : '';
+    const children = g.topics.map(t => {
+      const { child } = splitTopic(t.name);
+      const active = (currentTopic === t.id) ? ' active' : '';
+      return `
+        <div class="topic-row child${active}" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
+          <div class="topic-thumb">${t.image_url
+            ? `<img src="${esc(t.image_url)}" alt="${esc(child)}" loading="lazy">`
+            : topicEmoji(t.name)}</div>
+          <div class="topic-info"><div class="topic-name">${esc(child)}</div></div>
+          ${t.level ? `<span class="topic-lv">${esc(t.level)}</span>` : ''}
+        </div>`;
+    }).join('');
+    html += `
+      <div class="topic-group${collapsed ? ' collapsed' : ''}" data-gi="${gi}">
+        <div class="group-header${activeGroup}" onclick="selectGroup(${gi})">
+          <span class="group-chevron" onclick="toggleGroup(event, ${gi})">▼</span>
+          <div class="group-icon">${topicEmoji(g.prefix)}</div>
+          <div class="group-label">${esc(g.prefix)}</div>
+          <span class="group-count">${g.topics.length}</span>
+        </div>
+        <div class="group-children">${children}</div>
+      </div>`;
+  });
+
+  // Chủ đề lẻ (không thuộc nhóm nào)
+  standalone.forEach(t => {
+    const active = (currentTopic === t.id) ? ' active' : '';
+    html += `
+      <div class="topic-row${active}" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
+        <div class="topic-thumb">${t.image_url
           ? `<img src="${esc(t.image_url)}" alt="${esc(t.name)}" loading="lazy">`
-          : topicEmoji(t.name)}
-      </div>
-      <div class="topic-info">
-        <div class="topic-name">${esc(t.name)}</div>
-        <div class="topic-count level-tag" style="background:transparent;border:none;padding:0;font-size:11px;color:var(--muted)">${t.level||''}</div>
-      </div>
-    </div>
-  `).join('');
+          : topicEmoji(t.name)}</div>
+        <div class="topic-info"><div class="topic-name">${esc(t.name)}</div></div>
+        ${t.level ? `<span class="topic-lv">${esc(t.level)}</span>` : ''}
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// Thu gọn / mở rộng một nhóm (không đổi lựa chọn lọc)
+function toggleGroup(e, gi) {
+  if (e) e.stopPropagation();
+  const g = _groupList[gi]; if (!g) return;
+  if (_collapsedGroups.has(g.prefix)) _collapsedGroups.delete(g.prefix);
+  else _collapsedGroups.add(g.prefix);
+  const el = document.querySelector(`.topic-group[data-gi="${gi}"]`);
+  if (el) el.classList.toggle('collapsed');
+}
+
+// Chọn cả nhóm → xem mọi từ thuộc các chủ đề con
+function selectGroup(gi) {
+  const g = _groupList[gi]; if (!g) return;
+  currentTopic = null;
+  currentGroup = g.prefix;
+  _collapsedGroups.delete(g.prefix);   // mở nhóm khi chọn
+  const el = document.querySelector(`.topic-group[data-gi="${gi}"]`);
+  if (el) el.classList.remove('collapsed');
+  document.querySelectorAll('.topic-row, .topic-row-all, .group-header').forEach(r => r.classList.remove('active'));
+  if (el) { const h = el.querySelector('.group-header'); if (h) h.classList.add('active'); }
+  updateHero();
+  loadWords();
 }
 
 function topicEmoji(name) {
@@ -1424,8 +1632,9 @@ function topicEmoji(name) {
 // ── SELECT TOPIC / LEVEL ─────────────────────────────
 function selectTopic(topicId, el) {
   currentTopic = topicId || null;
+  currentGroup = null;   // chọn chủ đề lẻ → bỏ lọc theo nhóm
   // Update active class
-  document.querySelectorAll('.topic-row, .topic-row-all').forEach(r => r.classList.remove('active'));
+  document.querySelectorAll('.topic-row, .topic-row-all, .group-header').forEach(r => r.classList.remove('active'));
   if (el) el.classList.add('active');
   updateHero();
   loadWords();
@@ -1448,6 +1657,14 @@ function onSearch(val) {
 }
 
 function updateHero() {
+  const bg0 = document.getElementById('hero-bg-img');
+  if (currentGroup && !currentTopic) {
+    document.getElementById('hero-icon').textContent = topicEmoji(currentGroup);
+    document.getElementById('hero-title').textContent = currentGroup;
+    document.getElementById('hero-desc').textContent = 'Tất cả chủ đề trong nhóm ' + currentGroup;
+    bg0.style.display = 'none'; bg0.src = '';
+    return;
+  }
   if (!currentTopic) {
     document.getElementById('hero-icon').textContent = '📚';
     document.getElementById('hero-title').textContent = 'Tất cả từ vựng';
@@ -1478,6 +1695,20 @@ async function loadWords() {
 
     if (currentTopic) {
       q = q.eq('topic', getTopicName(currentTopic));
+    } else if (currentGroup) {
+      // Lọc theo nhóm cha: gồm mọi chủ đề con (đã lọc theo quyền)
+      const names = visibleTopics()
+        .filter(t => splitTopic(t.name).group === currentGroup)
+        .map(t => t.name);
+      if (!names.length) {
+        currentWords = [];
+        document.getElementById('all-count').textContent = 0;
+        document.getElementById('hero-word-count').textContent = 0;
+        document.getElementById('shown-count').textContent = 0;
+        renderWords([]);
+        return;
+      }
+      q = q.in('topic', names);
     } else if (myAllowedTopics !== null) {
       // Học viên bị giới hạn: "tất cả" chỉ gồm các chủ đề được cấp
       const names = allTopics.filter(t => myAllowedTopics.has(t.id)).map(t => t.name);
@@ -1492,13 +1723,17 @@ async function loadWords() {
       q = q.in('topic', names);
     }
     if (currentLevel) q = q.eq('level', currentLevel);
-    if (currentSearch) q = q.ilike('term', `%${currentSearch}%`);
+    if (currentSearch) {
+      // Tìm theo từ, theo chủ đề nhiều cấp (cha/con) và theo nghĩa
+      const s = currentSearch.replace(/[,()]/g, ' ').trim();
+      if (s) q = q.or(`term.ilike.%${s}%,topic.ilike.%${s}%,definition_vi.ilike.%${s}%,definition_en.ilike.%${s}%`);
+    }
 
     const { data, error } = await q;
     if (error) throw error;
     currentWords = data || [];
 
-    const allCount = (currentTopic || myAllowedTopics !== null) ? currentWords.length : (await getTotalCount());
+    const allCount = (currentTopic || currentGroup || myAllowedTopics !== null) ? currentWords.length : (await getTotalCount());
     document.getElementById('all-count').textContent = allCount;
     document.getElementById('hero-word-count').textContent = currentWords.length;
     document.getElementById('shown-count').textContent = currentWords.length;

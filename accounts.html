@@ -315,6 +315,7 @@ function rowHtml(u){
     <td class="muted">${fmtDate(u.created_at)}</td>
     <td>
       <div class="row-actions">
+        <a class="btn btn-ghost btn-sm" href="tai-khoan.html?id=${u.id}" style="text-decoration:none;display:inline-flex;align-items:center">✏️ Chi tiết</a>
         ${u.role==='student'?`<button class="btn btn-ghost btn-sm" onclick="openTopics('${u.id}')">📚 Chủ đề</button>`:''}
         ${isSelf?'' : (locked
           ? `<button class="btn btn-ok btn-sm" onclick="toggleLock('${u.id}',false)">🔓 Mở khóa</button>`

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnglishUp — Trang tài khoản</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
+  --border:#232d42; --border2:#2e3a55;
+  --accent:#4f8ef7; --a2:#a78bfa; --a3:#34d399; --a4:#fb923c; --a5:#f472b6;
+  --danger:#f87171; --text:#dde3f0; --muted:#64748b;
+  --radius:10px; --radius-lg:16px; --topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+a{color:inherit}
+
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+.top-nav a.active{color:var(--accent);background:rgba(79,142,247,.12)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn-logout{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;
+  padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-logout:hover{border-color:var(--border2)}
+
+.wrap{max-width:760px;margin:0 auto;padding:26px 20px 60px}
+
+/* Banner chế độ admin */
+.admin-banner{display:flex;align-items:center;gap:10px;background:rgba(167,139,250,.1);
+  border:1px solid rgba(167,139,250,.35);border-radius:var(--radius);padding:10px 14px;
+  font-size:13px;color:var(--a2);margin-bottom:18px}
+
+/* Header hồ sơ */
+.profile-head{display:flex;align-items:center;gap:16px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:18px}
+.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a2));
+  display:grid;place-items:center;font-size:24px;font-weight:700;color:#fff;flex-shrink:0}
+.profile-head h1{font-size:20px;font-weight:700}
+.profile-head .ph-email{font-size:13px;color:var(--muted);margin-top:2px}
+.role-badge{display:inline-block;margin-top:7px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;
+  border:1px solid var(--border2);color:var(--muted)}
+.role-badge.admin{color:var(--a4);border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.08)}
+.role-badge.teacher{color:var(--a3);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.role-badge.student{color:var(--accent);border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.08)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:20px;margin-bottom:18px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:4px}
+.card .sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:500;color:var(--muted)}
+.field input,.field textarea{background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;width:100%}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field input:disabled{opacity:.6;cursor:not-allowed}
+.field textarea{resize:vertical;min-height:64px}
+.hint{font-size:11px;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.stat .v{font-size:20px;font-weight:700;color:var(--text)}
+.stat .l{font-size:11px;color:var(--muted);margin-top:2px}
+
+.btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 18px;
+  font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-row{margin-top:16px;display:flex;align-items:center;gap:12px}
+.msg{font-size:13px;min-height:18px}
+.msg.ok{color:var(--a3)} .msg.err{color:var(--danger)}
+
+.note{font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;line-height:1.5}
+
+/* Gate đăng nhập */
+.gate{max-width:380px;margin:60px auto;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:28px;text-align:center}
+.gate h2{font-size:18px;margin-bottom:8px}
+.gate p{font-size:13px;color:var(--muted);margin-bottom:18px}
+.gate input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:11px;color:var(--text);font-size:14px;margin-bottom:10px}
+.gate input:focus{outline:none;border-color:var(--accent)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="vocab.html">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="posts.html">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" class="hidden">👥 Tài khoản</a>
+    <a href="tai-khoan.html" class="active">👤 Tài khoản</a>
+  </nav>
+  <div class="topbar-right">
+    <button class="btn-logout hidden" id="btn-logout" onclick="doLogout()">Đăng xuất</button>
+  </div>
+</header>
+
+<!-- Gate: chưa đăng nhập -->
+<div class="gate hidden" id="gate">
+  <h2>Đăng nhập</h2>
+  <p>Vui lòng đăng nhập để xem và quản lý tài khoản của bạn.</p>
+  <input type="email" id="g-email" placeholder="Email">
+  <input type="password" id="g-pw" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter')gateLogin()">
+  <div class="msg err" id="g-err"></div>
+  <button class="btn" style="width:100%" id="g-btn" onclick="gateLogin()">Đăng nhập</button>
+</div>
+
+<!-- Nội dung chính -->
+<div class="wrap hidden" id="content">
+
+  <div class="admin-banner hidden" id="admin-banner">
+    🛠️ Bạn đang quản lý hồ sơ của học viên khác (chế độ quản trị).
+    <a href="accounts.html" style="color:var(--a2);text-decoration:underline;margin-left:auto;font-weight:500">← Về danh sách</a>
+  </div>
+
+  <div class="profile-head">
+    <div class="avatar" id="p-avatar">?</div>
+    <div>
+      <h1 id="p-name">—</h1>
+      <div class="ph-email" id="p-email">—</div>
+      <span class="role-badge" id="p-role">—</span>
+    </div>
+  </div>
+
+  <!-- Hồ sơ cá nhân -->
+  <div class="card">
+    <h2>Hồ sơ cá nhân</h2>
+    <div class="sub">Cập nhật họ tên đầy đủ và thông tin liên hệ.</div>
+    <div class="grid2">
+      <div class="field full">
+        <label for="f-name">Họ và tên đầy đủ</label>
+        <input type="text" id="f-name" placeholder="VD: Phạm Huỳnh Yến Nhi">
+      </div>
+      <div class="field">
+        <label for="f-email">Email</label>
+        <input type="email" id="f-email" disabled>
+      </div>
+      <div class="field" id="wrap-phone">
+        <label for="f-phone">Số điện thoại</label>
+        <input type="text" id="f-phone" placeholder="VD: 09xx xxx xxx">
+      </div>
+      <div class="field" id="wrap-birthday">
+        <label for="f-birthday">Ngày sinh</label>
+        <input type="date" id="f-birthday">
+      </div>
+      <div class="field full" id="wrap-note">
+        <label for="f-note">Ghi chú</label>
+        <textarea id="f-note" placeholder="Ghi chú thêm (tuỳ chọn)"></textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="save-profile" onclick="saveProfile()">Lưu thay đổi</button>
+      <span class="msg" id="profile-msg"></span>
+    </div>
+  </div>
+
+  <!-- Thông tin học tập -->
+  <div class="card">
+    <h2>Thông tin học tập</h2>
+    <div class="sub">Tổng quan tiến độ và khoá học (chỉ xem).</div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="s-xp">—</div><div class="l">Điểm XP</div></div>
+      <div class="stat"><div class="v" id="s-streak">—</div><div class="l">Chuỗi ngày học</div></div>
+      <div class="stat"><div class="v" id="s-topics">—</div><div class="l">Chủ đề được học</div></div>
+      <div class="stat"><div class="v" id="s-status">—</div><div class="l">Trạng thái</div></div>
+    </div>
+  </div>
+
+  <!-- Đổi mật khẩu -->
+  <div class="card" id="card-password">
+    <h2>Đổi mật khẩu</h2>
+    <div class="sub">Đặt mật khẩu mới cho tài khoản của bạn (ít nhất 6 ký tự).</div>
+    <div class="grid2">
+      <div class="field">
+        <label for="f-pw1">Mật khẩu mới</label>
+        <input type="password" id="f-pw1" placeholder="••••••">
+      </div>
+      <div class="field">
+        <label for="f-pw2">Nhập lại mật khẩu</label>
+        <input type="password" id="f-pw2" placeholder="••••••">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="save-pw" onclick="changePassword()">Đổi mật khẩu</button>
+      <span class="msg" id="pw-msg"></span>
+    </div>
+  </div>
+
+  <!-- Ghi chú admin (không đổi được mật khẩu người khác) -->
+  <div class="card hidden" id="card-password-note">
+    <h2>Đổi mật khẩu</h2>
+    <div class="note">
+      Vì lý do bảo mật, không thể đặt lại mật khẩu của học viên khác từ trang web.
+      Học viên tự đổi mật khẩu tại trang tài khoản của họ, hoặc dùng chức năng
+      “Quên mật khẩu” khi đăng nhập.
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
+
+const OPTIONAL_COLS=['phone','birthday','note'];
+let me=null;             // user đăng nhập
+let myRole='student';
+let targetId=null;       // hồ sơ đang xem/sửa (mặc định = mình)
+let adminEdit=false;     // true = admin sửa hồ sơ người khác
+let hasOptional=true;    // DB có cột phone/birthday/note?
+
+function $(id){return document.getElementById(id)}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function initials(name,email){
+  const n=(name&&name.trim())?name.trim():(email||'').split('@')[0];
+  return n.trim().split(/\s+/).map(s=>s[0]||'').slice(0,2).join('').toUpperCase()||(email||'?').slice(0,2).toUpperCase();
+}
+
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const params=new URLSearchParams(location.search);
+  targetId=params.get('id');
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session?.user){ $('gate').classList.remove('hidden'); return; }
+  me=session.user;
+
+  // Vai trò của mình
+  const { data:meProf } = await sb.from('user_profiles').select('role').eq('id', me.id).maybeSingle();
+  myRole=(meProf&&meProf.role)||'student';
+  if(myRole==='admin') $('nav-accounts').classList.remove('hidden');
+
+  // Chế độ admin sửa hồ sơ người khác
+  if(targetId && targetId!==me.id){
+    if(myRole!=='admin'){ alert('Bạn không có quyền sửa hồ sơ này.'); location.href='vocab.html'; return; }
+    adminEdit=true;
+  } else {
+    targetId=me.id;
+  }
+
+  $('btn-logout').classList.remove('hidden');
+  $('content').classList.remove('hidden');
+  if(adminEdit){
+    $('admin-banner').classList.remove('hidden');
+    $('card-password').classList.add('hidden');
+    $('card-password-note').classList.remove('hidden');
+  }
+  await loadProfile();
+});
+
+async function loadProfile(){
+  // Thử cả cột tuỳ chọn; nếu DB thiếu thì fallback
+  let prof=null;
+  let r=await sb.from('user_profiles')
+    .select('id,email,full_name,role,status,xp,streak,phone,birthday,note').eq('id',targetId).maybeSingle();
+  if(r.error){
+    hasOptional=false;
+    r=await sb.from('user_profiles').select('id,email,full_name,role,status,xp,streak').eq('id',targetId).maybeSingle();
+  }
+  prof=r.data||{};
+
+  const email=prof.email||(adminEdit?'':me.email)||'';
+  const name=prof.full_name||'';
+  $('p-avatar').textContent=initials(name,email);
+  $('p-name').textContent=name||email.split('@')[0]||'(chưa đặt tên)';
+  $('p-email').textContent=email;
+  const role=prof.role||'student';
+  const roleLbl={admin:'Quản trị',teacher:'Giáo viên',student:'Học viên'}[role]||role;
+  const rb=$('p-role'); rb.textContent=roleLbl; rb.className='role-badge '+role;
+
+  $('f-name').value=name;
+  $('f-email').value=email;
+  if(hasOptional){
+    $('f-phone').value=prof.phone||'';
+    $('f-birthday').value=prof.birthday||'';
+    $('f-note').value=prof.note||'';
+  } else {
+    ['wrap-phone','wrap-birthday','wrap-note'].forEach(id=>$(id).classList.add('hidden'));
+  }
+
+  // Thống kê học tập
+  $('s-xp').textContent=(prof.xp!=null)?prof.xp:0;
+  $('s-streak').textContent=(prof.streak!=null)?prof.streak:0;
+  $('s-status').textContent=(prof.status==='locked')?'Đã khoá':'Hoạt động';
+  if(role==='student'){
+    const { count }=await sb.from('topic_access').select('topic_id',{count:'exact',head:true}).eq('student_id',targetId);
+    $('s-topics').textContent=(count!=null)?count:0;
+  } else {
+    $('s-topics').textContent='Tất cả';
+  }
+}
+
+async function saveProfile(){
+  const btn=$('save-profile'), msg=$('profile-msg');
+  msg.className='msg'; msg.textContent='';
+  const name=$('f-name').value.trim();
+  if(!name){ msg.className='msg err'; msg.textContent='Vui lòng nhập họ tên.'; return; }
+  const upd={ full_name:name };
+  if(hasOptional){
+    upd.phone=$('f-phone').value.trim()||null;
+    upd.birthday=$('f-birthday').value||null;
+    upd.note=$('f-note').value.trim()||null;
+  }
+  btn.disabled=true; btn.textContent='Đang lưu…';
+  try{
+    let { error }=await sb.from('user_profiles').update(upd).eq('id',targetId);
+    // Nếu cột tuỳ chọn không tồn tại → lưu lại chỉ họ tên
+    if(error && hasOptional){
+      const r2=await sb.from('user_profiles').update({ full_name:name }).eq('id',targetId);
+      if(r2.error) throw r2.error;
+      hasOptional=false;
+      ['wrap-phone','wrap-birthday','wrap-note'].forEach(id=>$(id).classList.add('hidden'));
+    } else if(error){ throw error; }
+    msg.className='msg ok'; msg.textContent='✓ Đã lưu thay đổi.';
+    $('p-name').textContent=name;
+    $('p-avatar').textContent=initials(name,$('f-email').value);
+  }catch(e){
+    msg.className='msg err'; msg.textContent='Lỗi: '+(e.message||'không lưu được');
+  }finally{
+    btn.disabled=false; btn.textContent='Lưu thay đổi';
+  }
+}
+
+async function changePassword(){
+  const btn=$('save-pw'), msg=$('pw-msg');
+  msg.className='msg'; msg.textContent='';
+  const p1=$('f-pw1').value, p2=$('f-pw2').value;
+  if(p1.length<6){ msg.className='msg err'; msg.textContent='Mật khẩu phải có ít nhất 6 ký tự.'; return; }
+  if(p1!==p2){ msg.className='msg err'; msg.textContent='Mật khẩu nhập lại không khớp.'; return; }
+  btn.disabled=true; btn.textContent='Đang đổi…';
+  try{
+    const { error }=await sb.auth.updateUser({ password:p1 });
+    if(error) throw error;
+    msg.className='msg ok'; msg.textContent='✓ Đã đổi mật khẩu.';
+    $('f-pw1').value=''; $('f-pw2').value='';
+  }catch(e){
+    msg.className='msg err'; msg.textContent='Lỗi: '+(e.message||'không đổi được');
+  }finally{
+    btn.disabled=false; btn.textContent='Đổi mật khẩu';
+  }
+}
+
+async function gateLogin(){
+  const email=$('g-email').value.trim(), pw=$('g-pw').value, err=$('g-err'), btn=$('g-btn');
+  err.textContent='';
+  if(!email||!pw){ err.textContent='Vui lòng nhập email và mật khẩu.'; return; }
+  btn.disabled=true; btn.textContent='Đang đăng nhập…';
+  try{
+    const { error }=await sb.auth.signInWithPassword({ email, password:pw });
+    if(error) throw error;
+    location.reload();
+  }catch(e){
+    err.textContent=e.message||'Đăng nhập thất bại'; btn.disabled=false; btn.textContent='Đăng nhập';
+  }
+}
+
+async function doLogout(){
+  if(!confirm('Đăng xuất?')) return;
+  await sb.auth.signOut();
+  location.href='vocab.html';
+}
+</script>
+</body>
+</html>
