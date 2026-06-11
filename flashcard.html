@@ -120,7 +120,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   <nav>
     <a href="vocab.html">Từ vựng</a>
     <a href="flashcard.html" class="active">Flashcard</a>
+    <a href="posts.html">📰 Bài viết</a>
     <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
   </nav>
   <div class="topbar-right">
     <div class="chip" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>
@@ -250,12 +252,19 @@ function clearUser(){
   document.getElementById('btn-login-top').style.display='block';
   document.getElementById('user-chip').style.display='none';
   document.getElementById('xp-display').style.display='none';
+  const navAcc=document.getElementById('nav-accounts'); if(navAcc) navAcc.style.display='none';
   show('state-login');
 }
 async function loadProfile(id){
   try{
-    const { data } = await sb.from('user_profiles').select('xp').eq('id',id).single();
-    if(data && data.xp!==undefined){
+    const { data } = await sb.from('user_profiles').select('xp,role,status').eq('id',id).maybeSingle();
+    if(data && data.status==='locked'){
+      alert('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ giáo viên hoặc quản trị viên.');
+      await sb.auth.signOut(); clearUser(); return;
+    }
+    const navAcc=document.getElementById('nav-accounts');
+    if(navAcc) navAcc.style.display=(data && data.role==='admin')?'':'none';
+    if(data && data.xp!==undefined && data.xp!==null){
       document.getElementById('xp-val').textContent=data.xp;
       document.getElementById('xp-display').style.display='flex';
     }

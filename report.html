@@ -103,7 +103,9 @@ table.tbl tbody tr:hover{background:var(--card2)}
   <nav class="top-nav">
     <a href="vocab.html">Từ vựng</a>
     <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="posts.html">📰 Bài viết</a>
     <a href="report.html" class="active">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
   </nav>
   <div class="topbar-right">
     <div class="chip" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>
@@ -203,6 +205,17 @@ table.tbl tbody tr:hover{background:var(--card2)}
         <div style="margin-top:14px" id="d-evals"></div>
       </div>
     </div>
+    <div class="panel" style="margin-top:14px">
+      <h2>📚 Chủ đề được phép học</h2>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="taToggleAll(true)">Chọn tất cả</button>
+        <button class="btn btn-ghost btn-sm" onclick="taToggleAll(false)">Bỏ chọn tất cả</button>
+        <span class="muted" id="ta-count" style="margin-left:auto;font-size:12px;align-self:center"></span>
+      </div>
+      <div id="ta-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;max-height:220px;overflow:auto"></div>
+      <div class="err" id="ta-err"></div>
+      <button class="btn btn-primary btn-sm" id="ta-save" style="margin-top:10px" onclick="saveTopicAccess()">💾 Lưu quyền chủ đề</button>
+    </div>
   </div>
 </div>
 
@@ -225,6 +238,7 @@ const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 let sb=null, currentUser=null, myRole='student';
 let _students=[], _gradesMap={}, _evalsMap={}, _activeStudent=null;
 let _chartClass=null, _chartSkill=null, _chartSelf=null;
+let _topicsCache=null;
 
 window.addEventListener('DOMContentLoaded', async ()=>{
   sb=supabase.createClient(SB_URL,SB_KEY);
@@ -277,9 +291,11 @@ function show(id){
 async function boot(){
   show('state-loading');
   try{
-    const { data:me } = await sb.from('user_profiles').select('role,xp').eq('id',currentUser.id).single();
+    const { data:me } = await sb.from('user_profiles').select('role,xp,status').eq('id',currentUser.id).maybeSingle();
+    if(me && me.status==='locked'){ alert('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'); await sb.auth.signOut(); clearUser(); show('state-login'); return; }
     myRole = (me && me.role) || 'student';
-    if(me && me.xp!==undefined){ document.getElementById('xp-val').textContent=me.xp; document.getElementById('xp-display').style.display='flex'; }
+    const navAcc=document.getElementById('nav-accounts'); if(navAcc) navAcc.style.display=(myRole==='admin')?'':'none';
+    if(me && me.xp!==undefined && me.xp!==null){ document.getElementById('xp-val').textContent=me.xp; document.getElementById('xp-display').style.display='flex'; }
     if(myRole==='teacher') await loadTeacher();
     else await loadStudentSelf();
   }catch(e){
@@ -374,8 +390,49 @@ async function openDetail(id){
   renderDetailEvals();
   document.getElementById('overlay-detail').classList.add('open');
   drawSkillChart(g);
+  loadTopicAccess(id);
 }
 function closeDetail(){ document.getElementById('overlay-detail').classList.remove('open'); }
+
+// ── QUYỀN CHỦ ĐỀ (giáo viên cấp cho học sinh) ──
+async function loadTopicAccess(studentId){
+  const list=document.getElementById('ta-list'), err=document.getElementById('ta-err');
+  err.textContent=''; list.innerHTML='<div class="muted" style="grid-column:1/-1">Đang tải…</div>';
+  try{
+    if(!_topicsCache){
+      const { data:tp }=await sb.from('topics').select('id,name,level').order('name');
+      _topicsCache=tp||[];
+    }
+    const { data:acc }=await sb.from('topic_access').select('topic_id').eq('student_id',studentId);
+    const granted=new Set((acc||[]).map(a=>a.topic_id));
+    if(!_topicsCache.length){ list.innerHTML='<div class="muted" style="grid-column:1/-1">Chưa có chủ đề nào.</div>'; taCount(); return; }
+    list.innerHTML=_topicsCache.map(t=>`
+      <label style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13px">
+        <input type="checkbox" value="${t.id}" ${granted.has(t.id)?'checked':''} onchange="taCount()" style="width:15px;height:15px;accent-color:var(--accent)">
+        <span>${esc(t.name)}</span><span style="margin-left:auto;font-size:10px;color:var(--muted)">${esc(t.level||'')}</span>
+      </label>`).join('');
+    taCount();
+  }catch(e){ err.textContent=e.message; }
+}
+function taToggleAll(on){ document.querySelectorAll('#ta-list input[type=checkbox]').forEach(c=>c.checked=on); taCount(); }
+function taCount(){ const n=document.querySelectorAll('#ta-list input:checked').length; const tot=_topicsCache?_topicsCache.length:0; document.getElementById('ta-count').textContent=`Đã chọn ${n}/${tot}`; }
+async function saveTopicAccess(){
+  if(!_activeStudent)return;
+  const id=_activeStudent.id;
+  const desired=[...document.querySelectorAll('#ta-list input:checked')].map(c=>c.value);
+  const btn=document.getElementById('ta-save'), err=document.getElementById('ta-err');
+  btn.disabled=true; btn.textContent='Đang lưu…'; err.textContent='';
+  try{
+    await sb.from('topic_access').delete().eq('student_id',id);
+    if(desired.length){
+      const rows=desired.map(tid=>({student_id:id,topic_id:tid,granted_by:currentUser.id}));
+      const { error }=await sb.from('topic_access').insert(rows);
+      if(error) throw error;
+    }
+    toast('Đã lưu quyền chủ đề ✓');
+  }catch(e){ err.textContent=e.message; }
+  finally{ btn.disabled=false; btn.textContent='💾 Lưu quyền chủ đề'; }
+}
 
 function drawSkillChart(g){
   if(_chartSkill) _chartSkill.destroy();

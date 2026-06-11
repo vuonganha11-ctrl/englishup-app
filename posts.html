@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnglishUp — Bài viết</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+.top-nav a.active{color:var(--accent);background:rgba(79,142,247,.12)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.user-chip{display:none;align-items:center;gap:8px;cursor:pointer;background:var(--card);border:1px solid var(--border);padding:5px 10px 5px 5px;border-radius:20px}
+.user-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--a2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.btn{font-family:inherit;font-weight:600;border:none;border-radius:8px;cursor:pointer;font-size:13px;padding:8px 16px;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3b7de8}
+.btn-ghost{background:var(--card);color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--border2)}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--danger);border:1px solid rgba(248,113,113,.3)}.btn-danger:hover{background:rgba(248,113,113,.2)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.wrap{flex:1;width:100%;max-width:900px;margin:0 auto;padding:24px 18px 60px}
+.page-h{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.page-h h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.page-h .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.feed{display:flex;flex-direction:column;gap:14px}
+.post{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;cursor:pointer;transition:.15s}
+.post:hover{border-color:var(--border2)}
+.post .ptitle{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.post .pmeta{font-size:12px;color:var(--muted);margin:5px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.post .pbody{font-size:14px;color:var(--text);opacity:.92;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+.pill-lv{color:var(--a2);background:rgba(167,139,250,.13)}
+.pill-tp{color:var(--accent);background:rgba(79,142,247,.13)}
+.pill-draft{color:var(--a4);background:rgba(251,146,60,.14)}
+.pstaff{display:flex;gap:6px;margin-top:12px}
+.cover{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:12px;border:1px solid var(--border)}
+.state{width:100%;max-width:520px;margin:50px auto;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:42px 30px}
+.state .ico{font-size:50px;margin-bottom:12px}
+.state h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.state p{color:var(--muted);font-size:14px;margin-bottom:20px}
+.hidden{display:none!important}
+.overlay{position:fixed;inset:0;background:rgba(4,6,12,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;z-index:100;padding:20px}
+.overlay.open{opacity:1;pointer-events:auto}
+.modal{width:680px;max-width:96vw;max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px;transform:scale(.97);transition:.2s}
+.modal-login{width:360px}
+.overlay.open .modal{transform:scale(1)}
+.modal-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+.modal-h h2{font-size:21px;font-weight:700;letter-spacing:-.2px}
+.x{background:var(--card);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px;flex-shrink:0}
+.read-meta{font-size:12px;color:var(--muted);margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.read-body{font-size:15px;line-height:1.75;white-space:pre-wrap}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px}
+.field textarea{min-height:200px;resize:vertical;line-height:1.7}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.frow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:560px){.frow{grid-template-columns:1fr}}
+.err{color:var(--danger);font-size:12px;min-height:16px;margin-bottom:8px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="vocab.html">Từ vựng</a>
+    <a href="posts.html" class="active">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
+  </nav>
+  <div class="topbar-right">
+    <button class="btn btn-primary" id="btn-login-top" onclick="openLogin()">Đăng nhập</button>
+    <div class="user-chip" id="user-chip" onclick="handleLogout()" title="Đăng xuất">
+      <div class="user-av" id="user-av">?</div>
+      <span id="user-email-display" style="font-size:12px;font-weight:600"></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="page-h">
+    <div>
+      <h1>Bài viết &amp; thông báo</h1>
+      <div class="sub" id="p-sub">Nội dung và bài học từ giáo viên.</div>
+    </div>
+    <button class="btn btn-primary hidden" id="btn-new" onclick="openEditor()">＋ Bài viết mới</button>
+  </div>
+
+  <div class="state" id="state-loading"><div class="ico">⏳</div><h2>Đang tải…</h2><p>Đang lấy bài viết.</p></div>
+  <div class="state hidden" id="state-empty"><div class="ico">📭</div><h2>Chưa có bài viết</h2><p id="empty-desc">Hãy quay lại sau nhé.</p></div>
+  <div class="feed hidden" id="feed"></div>
+</div>
+
+<!-- READ MODAL -->
+<div class="overlay" id="overlay-read" onclick="if(event.target.id==='overlay-read')closeRead()">
+  <div class="modal">
+    <div class="modal-h">
+      <h2 id="r-title">—</h2>
+      <button class="x" onclick="closeRead()">✕</button>
+    </div>
+    <div class="read-meta" id="r-meta"></div>
+    <img id="r-cover" class="cover hidden" alt="">
+    <div class="read-body" id="r-body"></div>
+  </div>
+</div>
+
+<!-- EDITOR MODAL (staff) -->
+<div class="overlay" id="overlay-edit" onclick="if(event.target.id==='overlay-edit')closeEditor()">
+  <div class="modal">
+    <div class="modal-h">
+      <h2 id="e-title-h">Bài viết mới</h2>
+      <button class="x" onclick="closeEditor()">✕</button>
+    </div>
+    <div class="field"><label>Tiêu đề</label><input type="text" id="e-title" placeholder="Tiêu đề bài viết"></div>
+    <div class="frow">
+      <div class="field"><label>Chủ đề (tuỳ chọn)</label><input type="text" id="e-topic" placeholder="VD: Trái cây"></div>
+      <div class="field"><label>Cấp độ</label>
+        <select id="e-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select>
+      </div>
+      <div class="field"><label>Trạng thái</label>
+        <select id="e-status"><option value="published">Xuất bản</option><option value="draft">Nháp</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Ảnh bìa — URL (tuỳ chọn)</label><input type="text" id="e-cover" placeholder="https://…"></div>
+    <div class="field"><label>Nội dung</label><textarea id="e-body" placeholder="Viết nội dung bài học / thông báo…"></textarea></div>
+    <div class="err" id="e-err"></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger hidden" id="e-delete" onclick="deletePost()">🗑 Xóa</button>
+      <button class="btn btn-ghost" onclick="closeEditor()">Hủy</button>
+      <button class="btn btn-primary" id="e-save" onclick="savePost()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="overlay" id="overlay-login" onclick="if(event.target.id==='overlay-login')this.classList.remove('open')">
+  <div class="modal modal-login">
+    <h2 style="font-size:19px;font-weight:700">Đăng nhập</h2>
+    <p class="muted" style="font-size:13px;margin:4px 0 16px">Đăng nhập để tương tác.</p>
+    <div class="field"><label>Email</label><input type="email" id="login-email" autocomplete="username"></div>
+    <div class="field"><label>Mật khẩu</label><input type="password" id="login-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="err" id="login-err"></div>
+    <button class="btn btn-primary" id="btn-submit-login" style="width:100%" onclick="doLogin()">Đăng nhập</button>
+    <p class="muted" style="font-size:12px;text-align:center;margin-top:12px">Chưa có tài khoản? <a href="register.html" style="color:var(--accent);text-decoration:none;font-weight:600">Đăng ký</a></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+let currentUser=null, myRole='student', isStaff=false, myName='';
+let _posts=[], _editingId=null;
+
+window.addEventListener('DOMContentLoaded', async ()=>{
+  await checkAuth();
+  await loadPosts();
+});
+
+async function checkAuth(){
+  try{
+    const { data:{session} }=await sb.auth.getSession();
+    if(session?.user){ setUser(session.user); await loadRole(session.user.id); }
+    sb.auth.onAuthStateChange((_e,sess)=>{
+      if(sess?.user){ setUser(sess.user); loadRole(sess.user.id).then(loadPosts); }
+      else { clearUser(); location.reload(); }
+    });
+  }catch(e){ console.warn(e); }
+}
+function setUser(u){
+  currentUser=u;
+  document.getElementById('btn-login-top').style.display='none';
+  const chip=document.getElementById('user-chip'); chip.style.display='flex';
+  document.getElementById('user-av').textContent=(u.email||'').slice(0,2).toUpperCase();
+  document.getElementById('user-email-display').textContent=(u.email||'').split('@')[0];
+  myName=(u.email||'').split('@')[0];
+}
+function clearUser(){
+  currentUser=null; isStaff=false; myRole='student';
+  document.getElementById('btn-login-top').style.display='block';
+  document.getElementById('user-chip').style.display='none';
+}
+async function loadRole(id){
+  try{
+    const { data:me }=await sb.from('user_profiles').select('role,status,full_name').eq('id',id).single();
+    if(me && me.status==='locked'){ alert('Tài khoản của bạn đã bị khóa.'); await sb.auth.signOut(); clearUser(); return; }
+    myRole=(me&&me.role)||'student';
+    myName=(me&&me.full_name)||myName;
+    isStaff=(myRole==='teacher'||myRole==='admin');
+    document.getElementById('btn-new').classList.toggle('hidden', !isStaff);
+    document.getElementById('nav-accounts').style.display = (myRole==='admin')?'block':'none';
+  }catch(e){}
+}
+
+async function loadPosts(){
+  document.getElementById('state-loading').classList.remove('hidden');
+  document.getElementById('state-empty').classList.add('hidden');
+  document.getElementById('feed').classList.add('hidden');
+  try{
+    // RLS tự lọc: HV chỉ thấy bài đã xuất bản; GV/Admin thấy cả nháp.
+    const { data, error }=await sb.from('posts').select('*').order('created_at',{ascending:false});
+    if(error) throw error;
+    _posts=data||[];
+  }catch(e){ _posts=[]; }
+  document.getElementById('state-loading').classList.add('hidden');
+  if(!_posts.length){
+    document.getElementById('empty-desc').textContent = isStaff ? 'Bấm "Bài viết mới" để đăng bài đầu tiên.' : 'Hãy quay lại sau nhé.';
+    document.getElementById('state-empty').classList.remove('hidden');
+    return;
+  }
+  renderFeed();
+}
+
+function renderFeed(){
+  document.getElementById('feed').classList.remove('hidden');
+  document.getElementById('feed').innerHTML=_posts.map(p=>{
+    const draft = p.status==='draft';
+    return `<div class="post" onclick="openRead('${p.id}')">
+      <div class="ptitle">${esc(p.title)}</div>
+      <div class="pmeta">
+        <span>✍️ ${esc(p.author_name||'Giáo viên')}</span>
+        <span>· ${fmtDate(p.created_at)}</span>
+        ${p.topic?`<span class="pill pill-tp">${esc(p.topic)}</span>`:''}
+        ${p.level?`<span class="pill pill-lv">${esc(p.level)}</span>`:''}
+        ${draft?'<span class="pill pill-draft">Nháp</span>':''}
+      </div>
+      <div class="pbody">${esc(p.body||'')}</div>
+      ${isStaff?`<div class="pstaff"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditor('${p.id}')">✏️ Sửa</button></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openRead(id){
+  const p=_posts.find(x=>x.id===id); if(!p)return;
+  document.getElementById('r-title').textContent=p.title;
+  document.getElementById('r-meta').innerHTML=
+    `<span>✍️ ${esc(p.author_name||'Giáo viên')}</span><span>· ${fmtDate(p.created_at)}</span>`+
+    (p.topic?` <span class="pill pill-tp">${esc(p.topic)}</span>`:'')+
+    (p.level?` <span class="pill pill-lv">${esc(p.level)}</span>`:'')+
+    (p.status==='draft'?' <span class="pill pill-draft">Nháp</span>':'');
+  const cov=document.getElementById('r-cover');
+  if(p.cover_url){ cov.src=p.cover_url; cov.classList.remove('hidden'); } else { cov.classList.add('hidden'); cov.src=''; }
+  document.getElementById('r-body').textContent=p.body||'';
+  document.getElementById('overlay-read').classList.add('open');
+}
+function closeRead(){ document.getElementById('overlay-read').classList.remove('open'); }
+
+// ── EDITOR (staff) ──
+function openEditor(id){
+  if(!isStaff)return;
+  _editingId=id||null;
+  const p=id?_posts.find(x=>x.id===id):null;
+  document.getElementById('e-title-h').textContent=p?'Sửa bài viết':'Bài viết mới';
+  document.getElementById('e-title').value=p?p.title:'';
+  document.getElementById('e-topic').value=p?(p.topic||''):'';
+  document.getElementById('e-level').value=p?(p.level||'B1'):'B1';
+  document.getElementById('e-status').value=p?(p.status||'published'):'published';
+  document.getElementById('e-cover').value=p?(p.cover_url||''):'';
+  document.getElementById('e-body').value=p?(p.body||''):'';
+  document.getElementById('e-err').textContent='';
+  document.getElementById('e-delete').classList.toggle('hidden', !p);
+  document.getElementById('overlay-edit').classList.add('open');
+}
+function closeEditor(){ document.getElementById('overlay-edit').classList.remove('open'); }
+
+async function savePost(){
+  const title=document.getElementById('e-title').value.trim();
+  const err=document.getElementById('e-err');
+  if(!title){ err.textContent='Vui lòng nhập tiêu đề.'; return; }
+  const payload={
+    title,
+    topic:document.getElementById('e-topic').value.trim()||null,
+    level:document.getElementById('e-level').value,
+    status:document.getElementById('e-status').value,
+    cover_url:document.getElementById('e-cover').value.trim()||null,
+    body:document.getElementById('e-body').value,
+    author_id:currentUser.id, author_name:myName, updated_at:new Date().toISOString()
+  };
+  const btn=document.getElementById('e-save'); btn.disabled=true; btn.textContent='Đang lưu…'; err.textContent='';
+  try{
+    if(_editingId){
+      const { error }=await sb.from('posts').update(payload).eq('id',_editingId);
+      if(error) throw error;
+    } else {
+      const { error }=await sb.from('posts').insert(payload);
+      if(error) throw error;
+    }
+    closeEditor(); toast('Đã lưu bài viết ✓'); await loadPosts();
+  }catch(e){ err.textContent=e.message; }
+  finally{ btn.disabled=false; btn.textContent='💾 Lưu'; }
+}
+
+async function deletePost(){
+  if(!_editingId)return;
+  if(!confirm('Xóa bài viết này?'))return;
+  try{
+    const { error }=await sb.from('posts').delete().eq('id',_editingId);
+    if(error) throw error;
+    closeEditor(); toast('Đã xóa ✓'); await loadPosts();
+  }catch(e){ document.getElementById('e-err').textContent=e.message; }
+}
+
+// ── LOGIN ──
+function openLogin(){ document.getElementById('overlay-login').classList.add('open'); setTimeout(()=>document.getElementById('login-email').focus(),100); }
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim(), pw=document.getElementById('login-pw').value;
+  const btn=document.getElementById('btn-submit-login'), err=document.getElementById('login-err');
+  if(!email||!pw){ err.textContent='Nhập email và mật khẩu.'; return; }
+  btn.disabled=true; btn.textContent='Đang đăng nhập…'; err.textContent='';
+  try{ const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) throw error;
+    document.getElementById('overlay-login').classList.remove('open');
+  }catch(e){ err.textContent=e.message||'Thất bại'; }
+  finally{ btn.disabled=false; btn.textContent='Đăng nhập'; }
+}
+async function handleLogout(){ if(!confirm('Đăng xuất?'))return; await sb.auth.signOut(); clearUser(); location.reload(); }
+
+// ── HELPERS ──
+function fmtDate(d){ if(!d)return ''; return new Date(d).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let _tT=null; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(_tT); _tT=setTimeout(()=>t.classList.remove('show'),2600); }
+</script>
+</body>
+</html>

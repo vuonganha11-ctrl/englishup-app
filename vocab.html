@@ -1050,7 +1050,9 @@ aside.sidebar {
   <nav class="top-nav">
     <a href="vocab.html" class="active">Từ vựng</a>
     <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="posts.html">📰 Bài viết</a>
     <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
   </nav>
 
   <div class="topbar-right">
@@ -1239,6 +1241,8 @@ let currentUser    = null;
 let _srsAdded      = new Set(); // word IDs đã thêm
 let _searchTimer   = null;
 let _paragraphMap  = {};     // topicId → paragraph text
+let myRole         = 'student';
+let myAllowedTopics= null;    // null = không giới hạn (GV/Admin hoặc khách); Set(topic_id) = HV bị giới hạn
 
 // ── INIT ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1275,25 +1279,46 @@ function setUser(u) {
 
 function clearUser() {
   currentUser = null;
+  myRole = 'student';
+  myAllowedTopics = null;   // khách: xem toàn bộ chủ đề (chế độ xem trước)
   document.getElementById('btn-login-top').style.display = 'block';
   document.getElementById('user-chip').style.display = 'none';
   document.getElementById('xp-display').style.display = 'none';
   document.getElementById('streak-display').style.display = 'none';
+  const navAcc = document.getElementById('nav-accounts');
+  if (navAcc) navAcc.style.display = 'none';
+  if (allTopics.length) { renderTopicSidebar(); loadWords(); }
 }
 
 async function loadUserProfile(userId) {
   try {
-    const { data } = await sb.from('user_profiles').select('xp,streak').eq('id', userId).single();
-    if (!data) return;
-    if (data.xp !== undefined) {
+    const { data } = await sb.from('user_profiles').select('xp,streak,role,status').eq('id', userId).maybeSingle();
+    // Khóa mềm: tài khoản bị khóa -> đăng xuất, quay về chế độ khách
+    if (data && data.status === 'locked') {
+      alert('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ giáo viên hoặc quản trị viên.');
+      await sb.auth.signOut(); clearUser();
+      return;
+    }
+    myRole = (data && data.role) || 'student';
+    const navAcc = document.getElementById('nav-accounts');
+    if (navAcc) navAcc.style.display = (myRole === 'admin') ? '' : 'none';
+    if (data && data.xp !== undefined && data.xp !== null) {
       document.getElementById('xp-val').textContent = data.xp;
       document.getElementById('xp-display').style.display = 'flex';
     }
-    if (data.streak !== undefined) {
+    if (data && data.streak !== undefined && data.streak !== null) {
       document.getElementById('streak-val').textContent = data.streak;
       document.getElementById('streak-display').style.display = 'flex';
     }
-  } catch(e) {}
+    // Quyền chủ đề: học viên chỉ học chủ đề được cấp; GV/Admin học tất cả
+    if (myRole === 'student') {
+      const { data: acc } = await sb.from('topic_access').select('topic_id').eq('student_id', userId);
+      myAllowedTopics = new Set((acc || []).map(a => a.topic_id));
+    } else {
+      myAllowedTopics = null;
+    }
+    if (allTopics.length) { renderTopicSidebar(); loadWords(); }
+  } catch(e) { console.warn('profile/access', e.message); }
 }
 
 function openLogin() {
@@ -1347,11 +1372,18 @@ async function loadTopics() {
 
 function renderTopicSidebar() {
   const container = document.getElementById('topic-rows');
-  if (!allTopics.length) {
-    container.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">Chưa có chủ đề</div>';
+  const topics = (myAllowedTopics !== null)
+    ? allTopics.filter(t => myAllowedTopics.has(t.id))
+    : allTopics;
+  if (!topics.length) {
+    container.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.5">'
+      + (myAllowedTopics !== null
+          ? 'Bạn chưa được cấp chủ đề nào.<br>Liên hệ giáo viên để mở quyền học.'
+          : 'Chưa có chủ đề')
+      + '</div>';
     return;
   }
-  container.innerHTML = allTopics.map(t => `
+  container.innerHTML = topics.map(t => `
     <div class="topic-row" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
       <div class="topic-thumb">
         ${t.image_url
@@ -1434,7 +1466,21 @@ async function loadWords() {
       .select('id,term,phonetic,definition_vi,definition_en,part_of_speech,level,topic,image_url,audio_url,examples,example_sentence')
       .order('term');
 
-    if (currentTopic) q = q.eq('topic', getTopicName(currentTopic));
+    if (currentTopic) {
+      q = q.eq('topic', getTopicName(currentTopic));
+    } else if (myAllowedTopics !== null) {
+      // Học viên bị giới hạn: "tất cả" chỉ gồm các chủ đề được cấp
+      const names = allTopics.filter(t => myAllowedTopics.has(t.id)).map(t => t.name);
+      if (!names.length) {
+        currentWords = [];
+        document.getElementById('all-count').textContent = 0;
+        document.getElementById('hero-word-count').textContent = 0;
+        document.getElementById('shown-count').textContent = 0;
+        renderWords([]);
+        return;
+      }
+      q = q.in('topic', names);
+    }
     if (currentLevel) q = q.eq('level', currentLevel);
     if (currentSearch) q = q.ilike('term', `%${currentSearch}%`);
 
@@ -1442,7 +1488,8 @@ async function loadWords() {
     if (error) throw error;
     currentWords = data || [];
 
-    document.getElementById('all-count').textContent = currentTopic ? currentWords.length : (await getTotalCount());
+    const allCount = (currentTopic || myAllowedTopics !== null) ? currentWords.length : (await getTotalCount());
+    document.getElementById('all-count').textContent = allCount;
     document.getElementById('hero-word-count').textContent = currentWords.length;
     document.getElementById('shown-count').textContent = currentWords.length;
 

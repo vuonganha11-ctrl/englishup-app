@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnglishUp — Đăng ký tài khoản</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+.wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 18px 60px}
+.auth-card{width:440px;max-width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px 28px}
+.auth-card h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.auth-card .sub{font-size:13px;color:var(--muted);margin:4px 0 22px}
+.role-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.role-opt{cursor:pointer;border:1px solid var(--border);background:var(--card2);border-radius:var(--radius);padding:14px;text-align:center;transition:.15s}
+.role-opt:hover{border-color:var(--border2)}
+.role-opt.active{border-color:var(--accent);background:rgba(79,142,247,.10)}
+.role-opt .ico{font-size:26px}
+.role-opt .lbl{font-weight:700;font-size:14px;margin-top:6px}
+.role-opt .dsc{font-size:11px;color:var(--muted);margin-top:2px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:14px}
+.field input:focus{outline:none;border-color:var(--accent)}
+.btn{font-family:inherit;font-weight:600;border:none;border-radius:8px;cursor:pointer;font-size:14px;padding:12px 16px;transition:.15s;width:100%}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3b7de8}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.msg{font-size:13px;min-height:18px;margin:4px 0 12px}
+.msg.err{color:var(--danger)}
+.msg.ok{color:var(--a3)}
+.foot{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}
+.foot a{color:var(--accent);text-decoration:none;font-weight:600}
+.hint{font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:14px}
+.success-box{display:none;text-align:center;padding:10px 0}
+.success-box .ico{font-size:46px;margin-bottom:10px}
+.success-box h2{font-size:18px;font-weight:700;margin-bottom:6px}
+.success-box p{font-size:13px;color:var(--muted);margin-bottom:18px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="vocab.html">Từ vựng</a>
+    <a href="posts.html">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="auth-card">
+    <!-- FORM -->
+    <div id="form-view">
+      <h1>Tạo tài khoản</h1>
+      <div class="sub">Đăng ký để bắt đầu học cùng EnglishUp.</div>
+
+      <div class="role-pick">
+        <div class="role-opt active" id="role-student" onclick="pickRole('student')">
+          <div class="ico">🎓</div>
+          <div class="lbl">Học viên</div>
+          <div class="dsc">Học theo lộ trình được giao</div>
+        </div>
+        <div class="role-opt" id="role-teacher" onclick="pickRole('teacher')">
+          <div class="ico">🧑‍🏫</div>
+          <div class="lbl">Giáo viên</div>
+          <div class="dsc">Đăng bài, chấm điểm, nhận xét</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Họ và tên</label>
+        <input type="text" id="r-name" placeholder="Nguyễn Văn A" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="r-email" placeholder="email@example.com" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Mật khẩu</label>
+        <input type="password" id="r-pw" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Nhập lại mật khẩu</label>
+        <input type="password" id="r-pw2" placeholder="Nhập lại mật khẩu" autocomplete="new-password"
+               onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+
+      <div class="msg" id="msg"></div>
+      <button class="btn btn-primary" id="btn-register" onclick="doRegister()">Đăng ký</button>
+
+      <div class="foot">Đã có tài khoản? <a href="vocab.html">Đăng nhập</a></div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-box" id="success-view">
+      <div class="ico">✅</div>
+      <h2 id="s-title">Đăng ký thành công!</h2>
+      <p id="s-desc">—</p>
+      <a href="vocab.html"><button class="btn btn-primary">Vào học ngay</button></a>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+let selectedRole='student';
+
+function pickRole(r){
+  selectedRole=r;
+  document.getElementById('role-student').classList.toggle('active', r==='student');
+  document.getElementById('role-teacher').classList.toggle('active', r==='teacher');
+}
+function setMsg(t,type){ const m=document.getElementById('msg'); m.textContent=t||''; m.className='msg'+(type?' '+type:''); }
+
+async function doRegister(){
+  const name=document.getElementById('r-name').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const pw=document.getElementById('r-pw').value;
+  const pw2=document.getElementById('r-pw2').value;
+  if(!name){ setMsg('Vui lòng nhập họ tên.','err'); return; }
+  if(!email){ setMsg('Vui lòng nhập email.','err'); return; }
+  if(pw.length<6){ setMsg('Mật khẩu tối thiểu 6 ký tự.','err'); return; }
+  if(pw!==pw2){ setMsg('Mật khẩu nhập lại không khớp.','err'); return; }
+
+  const btn=document.getElementById('btn-register');
+  btn.disabled=true; btn.textContent='Đang tạo tài khoản…'; setMsg('');
+  try{
+    const { data, error } = await sb.auth.signUp({
+      email, password:pw,
+      options:{ data:{ role:selectedRole, full_name:name } }
+    });
+    if(error) throw error;
+
+    const roleLabel = selectedRole==='teacher' ? 'Giáo viên' : 'Học viên';
+    document.getElementById('form-view').classList.add('hidden');
+    document.getElementById('success-view').style.display='block';
+    if(data.session){
+      // Email confirmation TẮT → đã đăng nhập luôn
+      document.getElementById('s-title').textContent='Chào mừng bạn! 🎉';
+      document.getElementById('s-desc').textContent=`Tài khoản ${roleLabel} đã sẵn sàng. Bạn đã được đăng nhập.`;
+    } else {
+      // Email confirmation BẬT → cần xác nhận email
+      document.getElementById('s-title').textContent='Kiểm tra email của bạn 📧';
+      document.getElementById('s-desc').textContent=`Đã gửi liên kết xác nhận tới ${email}. Xác nhận xong là có thể đăng nhập (vai trò: ${roleLabel}).`;
+    }
+  }catch(e){
+    btn.disabled=false; btn.textContent='Đăng ký';
+    let m=e.message||'Đăng ký thất bại';
+    if(/already registered|already exists/i.test(m)) m='Email này đã được đăng ký. Hãy đăng nhập.';
+    setMsg(m,'err');
+  }
+}
+</script>
+</body>
+</html>
