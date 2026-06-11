@@ -98,6 +98,7 @@ table.tbl tbody tr:hover{background:var(--card2)}
   <a href="vocab.html" class="logo">English<span>Up</span></a>
   <nav class="top-nav">
     <a href="vocab.html">Từ vựng</a>
+    <a href="game.html">🎮 Game</a>
     <a href="posts.html">📰 Bài viết</a>
     <a href="report.html">📊 Báo cáo</a>
     <a href="accounts.html" class="active">👥 Tài khoản</a>
@@ -188,6 +189,30 @@ table.tbl tbody tr:hover{background:var(--card2)}
       <button class="btn btn-ghost" onclick="closeTopics()">Hủy</button>
       <button class="btn btn-primary" id="t-save" onclick="saveTopics()">💾 Lưu quyền</button>
     </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="overlay" id="overlay-pw" onclick="if(event.target.id==='overlay-pw')closePw()">
+  <div class="modal" style="width:450px">
+    <h2>Mật khẩu học viên</h2>
+    <div class="sub" id="pw-sub">—</div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">① Gửi link đặt lại qua email</div>
+      <div class="muted" style="font-size:12px;margin-bottom:10px">Học viên nhận email và tự đặt mật khẩu mới. An toàn, dùng được ngay.</div>
+      <button class="btn btn-primary btn-sm" id="pw-reset-btn" onclick="sendResetLink()">✉️ Gửi link đặt lại</button>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">② Đặt mật khẩu mới trực tiếp</div>
+      <div class="muted" style="font-size:12px;margin-bottom:10px">Cần triển khai Edge Function <b>admin-set-password</b> (xem file hướng dẫn). Sau khi triển khai, admin nhập mật khẩu mới ở đây.</div>
+      <div class="field" style="margin-bottom:8px"><input type="text" id="pw-new" placeholder="Mật khẩu mới (≥ 6 ký tự)" autocomplete="off"></div>
+      <button class="btn btn-ok btn-sm" id="pw-set-btn" onclick="setPwDirect()">🔑 Đặt mật khẩu</button>
+    </div>
+
+    <div class="err" id="pw-err" style="margin-top:10px"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closePw()">Đóng</button></div>
   </div>
 </div>
 
@@ -317,6 +342,7 @@ function rowHtml(u){
       <div class="row-actions">
         <a class="btn btn-ghost btn-sm" href="tai-khoan.html?id=${u.id}" style="text-decoration:none;display:inline-flex;align-items:center">✏️ Chi tiết</a>
         ${u.role==='student'?`<button class="btn btn-ghost btn-sm" onclick="openTopics('${u.id}')">📚 Chủ đề</button>`:''}
+        ${isSelf?'' : `<button class="btn btn-ghost btn-sm" onclick="openPw('${u.id}')">🔑 Mật khẩu</button>`}
         ${isSelf?'' : (locked
           ? `<button class="btn btn-ok btn-sm" onclick="toggleLock('${u.id}',false)">🔓 Mở khóa</button>`
           : `<button class="btn btn-danger btn-sm" onclick="toggleLock('${u.id}',true)">🔒 Khóa</button>`)}
@@ -420,6 +446,50 @@ async function saveTopics(){
     closeTopics(); toast('Đã lưu quyền chủ đề ✓');
   }catch(e){ document.getElementById('t-err').textContent=e.message; }
   finally{ btn.disabled=false; btn.textContent='💾 Lưu quyền'; }
+}
+
+// ── MẬT KHẨU HỌC VIÊN ──
+const FN_SET_PW = SB_URL + '/functions/v1/admin-set-password';
+let _pwTarget=null;
+function openPw(id){
+  const u=_users.find(x=>x.id===id); if(!u)return; _pwTarget=u;
+  document.getElementById('pw-sub').textContent=`${u.full_name||(u.email||'').split('@')[0]} · ${u.email||''}`;
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-err').textContent='';
+  document.getElementById('overlay-pw').classList.add('open');
+}
+function closePw(){ document.getElementById('overlay-pw').classList.remove('open'); }
+async function sendResetLink(){
+  if(!_pwTarget)return;
+  const btn=document.getElementById('pw-reset-btn'), err=document.getElementById('pw-err');
+  err.textContent=''; btn.disabled=true; btn.textContent='Đang gửi…';
+  try{
+    const redirectTo=new URL('tai-khoan.html', location.href).href;
+    const { error }=await sb.auth.resetPasswordForEmail(_pwTarget.email, { redirectTo });
+    if(error) throw error;
+    toast('Đã gửi email đặt lại mật khẩu ✓');
+  }catch(e){ err.textContent='Lỗi: '+(e.message||e); }
+  finally{ btn.disabled=false; btn.textContent='✉️ Gửi link đặt lại'; }
+}
+async function setPwDirect(){
+  if(!_pwTarget)return;
+  const pw=document.getElementById('pw-new').value;
+  const btn=document.getElementById('pw-set-btn'), err=document.getElementById('pw-err');
+  err.textContent='';
+  if((pw||'').length<6){ err.textContent='Mật khẩu phải có ít nhất 6 ký tự.'; return; }
+  if(!confirm(`Đặt mật khẩu mới cho ${_pwTarget.email}?`)) return;
+  btn.disabled=true; btn.textContent='Đang đặt…';
+  try{
+    const { data:{session} }=await sb.auth.getSession();
+    const res=await fetch(FN_SET_PW,{ method:'POST',
+      headers:{ 'Authorization':'Bearer '+(session?.access_token||''), 'apikey':SB_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({ user_id:_pwTarget.id, new_password:pw }) });
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(out.error || ('HTTP '+res.status+' — Edge Function chưa được triển khai?'));
+    toast('Đã đặt mật khẩu mới ✓');
+    document.getElementById('pw-new').value='';
+  }catch(e){ err.textContent='Lỗi: '+(e.message||e); }
+  finally{ btn.disabled=false; btn.textContent='🔑 Đặt mật khẩu'; }
 }
 
 // ── LOGIN ──
