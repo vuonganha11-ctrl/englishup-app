@@ -1,0 +1,152 @@
+/* ============================================================
+   EnglishUp · mobile.css — Tối ưu trải nghiệm trên điện thoại
+   Dùng chung cho MỌI trang. Nạp SAU <style> của từng trang.
+   Kèm theo mobile-nav.js để có nút ☰ + ngăn kéo điều hướng.
+   Breakpoint chính: 768px (máy tính bảng dọc & điện thoại).
+   ============================================================ */
+
+/* ---- Chống tràn ngang & ổn định cỡ chữ trên iOS/Android ---- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+img, video, iframe, canvas, svg, table { max-width: 100%; }
+
+/* ===== Hamburger + Drawer (ẩn trên desktop, hiện trên mobile) ===== */
+.eu-hamburger {
+  display: none;
+  width: 40px; height: 40px;
+  flex: 0 0 auto;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 4px;
+  background: var(--card, #151a25);
+  border: 1px solid var(--border, #232d42);
+  border-radius: 10px;
+  cursor: pointer; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.eu-hamburger span {
+  display: block; width: 18px; height: 2px; border-radius: 2px;
+  background: var(--text, #dde3f0);
+  transition: transform .25s, opacity .2s;
+}
+.eu-drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  opacity: 0; visibility: hidden;
+  transition: opacity .25s, visibility .25s;
+  z-index: 1099;
+}
+.eu-drawer-overlay.open { opacity: 1; visibility: visible; }
+.eu-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 80%; max-width: 300px;
+  background: var(--surface, #0e1018);
+  border-right: 1px solid var(--border2, #2e3a55);
+  box-shadow: 4px 0 32px rgba(0,0,0,.5);
+  transform: translateX(-100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  z-index: 1100;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.eu-drawer.open { transform: translateX(0); }
+.eu-drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--border, #232d42);
+}
+.eu-drawer-logo {
+  font-weight: 700; font-size: 19px; letter-spacing: -.4px;
+  color: var(--accent, #4f8ef7);
+}
+.eu-drawer-logo span { color: var(--a2, #a78bfa); }
+.eu-drawer-close {
+  width: 36px; height: 36px;
+  background: var(--card, #151a25);
+  border: 1px solid var(--border, #232d42);
+  border-radius: 9px;
+  color: var(--text, #dde3f0);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.eu-drawer-nav { display: flex; flex-direction: column; padding: 10px; gap: 2px; }
+.eu-drawer-nav a {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 12px 14px;
+  font-size: 16px; font-weight: 500;
+  color: var(--text, #dde3f0); text-decoration: none;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.eu-drawer-nav a:active { background: var(--card, #151a25); }
+.eu-drawer-nav a.active {
+  color: var(--accent, #4f8ef7);
+  background: rgba(79,142,247,.12);
+}
+body.eu-noscroll { overflow: hidden !important; }
+
+/* =====================  MOBILE  (≤ 768px)  ===================== */
+@media (max-width: 768px) {
+
+  .eu-hamburger { display: flex; }
+
+  /* Ẩn thanh nav ngang gốc — đã thay bằng ngăn kéo ☰ */
+  .topbar nav, .topbar .top-nav, .topbar .topnav { display: none !important; }
+
+  /* Topbar gọn lại, logo co về vừa phải */
+  .topbar { padding-left: 12px !important; padding-right: 12px !important; gap: 10px !important; }
+  .topbar .logo { font-size: 18px !important; margin-left: 2px; }
+  .topbar .spacer { flex: 1 1 auto; }
+
+  /* Cụm phải: bỏ tên dài, giữ avatar/nút để đỡ chật */
+  .topbar-right { gap: 8px !important; margin-left: auto; }
+  .eu-name, #user-email-display, #eu-name { display: none !important; }
+
+  /* Nút bấm & vùng chạm tối thiểu ~40px cho ngón tay */
+  .btn-login, .eu-login, .btn-logout, .btn.btn-primary { min-height: 40px; }
+  .user-av, .eu-av { width: 34px !important; height: 34px !important; }
+
+  /* Inputs ≥16px để iOS không tự phóng to khi focus */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* Đệm 2 bên hợp lý cho khung nội dung phổ biến */
+  .wrap { padding-left: 14px !important; padding-right: 14px !important; }
+
+  /* ---- Trang Từ vựng: biến sidebar lọc thành ngăn kéo trượt ----
+     (ghi đè rule cũ aside.sidebar{display:none}) */
+  aside.sidebar {
+    display: flex !important;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 84%; max-width: 300px;
+    z-index: 1100;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 32px rgba(0,0,0,.5);
+  }
+  aside.sidebar.eu-filter-open { transform: translateX(0); }
+
+  /* Nút mở bộ lọc (FAB) — chỉ tạo trên trang có sidebar */
+  .eu-filter-fab {
+    position: fixed; right: 16px; bottom: 18px;
+    z-index: 1090;
+    display: flex; align-items: center; gap: 7px;
+    height: 46px; padding: 0 18px;
+    background: var(--accent, #4f8ef7); color: #fff;
+    border: none; border-radius: 24px;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4);
+    cursor: pointer;
+  }
+}
+
+/* Màn rất hẹp: giấu badge streak (và XP nếu cần) để khỏi tràn */
+@media (max-width: 430px) {
+  .streak-badge, #streak-display, .eu-streak { display: none !important; }
+}
+@media (max-width: 360px) {
+  .xp-badge, #xp-display, .eu-xp { display: none !important; }
+}
+
+/* Desktop: đảm bảo ngăn kéo không bao giờ chắn nội dung */
+@media (min-width: 769px) {
+  .eu-drawer, .eu-drawer-overlay { display: none !important; }
+}

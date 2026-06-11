@@ -8,6 +8,25 @@
   var _sb = null;
   var _fullName = "";
 
+  /* ── Tự nạp gói tối ưu điện thoại (mobile.css + mobile-nav.js) ──
+     Nhờ vậy mọi trang đã gắn topbar.js đều có ☰ + responsive mà KHÔNG
+     phải sửa HTML. Có khoá chống nạp trùng. */
+  (function injectMobileAssets() {
+    try {
+      var head = document.head || document.getElementsByTagName("head")[0];
+      if (head && !document.getElementById("eu-mobile-css")) {
+        var l = document.createElement("link");
+        l.id = "eu-mobile-css"; l.rel = "stylesheet"; l.href = "mobile.css";
+        head.appendChild(l);
+      }
+      if (head && !document.getElementById("eu-mobile-nav-js")) {
+        var s = document.createElement("script");
+        s.id = "eu-mobile-nav-js"; s.src = "mobile-nav.js";
+        head.appendChild(s);
+      }
+    } catch (e) {}
+  })();
+
   function sb() {
     if (!_sb && window.supabase) {
       _sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { lock: function (_n, _t, fn) { return fn(); } } });
