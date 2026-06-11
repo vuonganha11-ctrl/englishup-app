@@ -202,7 +202,7 @@ select.inp:focus{border-color:var(--accent)}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <a href="report.html" class="logo">English<span>Up</span></a>
   <nav class="top-nav">
     <a href="vocab.html">Từ vựng</a>
     <a href="flashcard.html">🃏 Flashcard</a>
@@ -434,6 +434,7 @@ async function doLogin(){
   btn.disabled=true; btn.textContent='Đang đăng nhập…'; err.textContent='';
   try{ const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error)throw error;
     document.getElementById('overlay-login').classList.remove('open');
+    location.href='report.html';
   }catch(e){ err.textContent=e.message||'Đăng nhập thất bại'; }
   finally{ btn.disabled=false; btn.textContent='Đăng nhập'; }
 }
