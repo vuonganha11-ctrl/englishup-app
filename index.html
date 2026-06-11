@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Học tiếng Anh thông minh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
+<style>
+:root{
+  --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
+  --border:#232d42; --border2:#2e3a55;
+  --accent:#4f8ef7; --a2:#a78bfa; --a3:#34d399; --a4:#fb923c; --a5:#f472b6;
+  --danger:#f87171; --text:#dde3f0; --muted:#64748b;
+  --mono:'JetBrains Mono',monospace; --radius:10px; --radius-lg:16px; --topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;white-space:nowrap;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+.top-nav a.active{color:var(--accent);background:rgba(79,142,247,.12)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+
+/* HERO */
+.app{flex:1;width:100%;max-width:960px;margin:0 auto;padding:40px 20px 60px}
+.hero{border-radius:var(--radius-lg);background:linear-gradient(135deg,#1b2133,#0e1018);border:1px solid var(--border);padding:44px 36px;text-align:center;margin-bottom:34px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% -20%,rgba(79,142,247,.22),transparent 55%);pointer-events:none}
+.hero .badge{display:inline-block;font-size:12px;font-weight:700;color:var(--a3);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:20px;padding:5px 14px;margin-bottom:18px;letter-spacing:.3px}
+.hero h1{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1.15}
+.hero h1 span{color:var(--accent)}.hero h1 span em{font-style:normal;color:var(--a2)}
+.hero p{font-size:16px;color:rgba(221,227,240,.72);margin:14px auto 26px;max-width:560px}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
+.btn-cta.primary{background:var(--accent);color:#fff}.btn-cta.primary:hover{opacity:.9}
+.btn-cta.ghost{background:var(--card);color:var(--text);border:1px solid var(--border)}.btn-cta.ghost:hover{border-color:var(--border2)}
+
+/* SECTIONS */
+.sect-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.sect-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;text-decoration:none;color:var(--text);transition:all .15s;display:block}
+.fcard:hover{border-color:var(--border2);transform:translateY(-3px);background:var(--card2)}
+.fcard .ico{font-size:30px;line-height:1;margin-bottom:12px}
+.fcard h3{font-size:16px;font-weight:700;letter-spacing:-.2px}
+.fcard p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
+.fcard .arrow{color:var(--accent);font-size:13px;font-weight:600;margin-top:12px;display:inline-block}
+
+/* FOOTER */
+.foot{text-align:center;color:var(--muted);font-size:12.5px;padding:26px 20px;border-top:1px solid var(--border)}
+.foot a{color:var(--muted);text-decoration:none}.foot a:hover{color:var(--text)}
+
+@media(max-width:640px){
+  .hero{padding:34px 22px}
+  .hero h1{font-size:28px}
+  .hero p{font-size:14.5px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="index.html" class="active">Trang chủ</a>
+    <a href="vocab.html">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="game.html">🎮 Game</a>
+    <a href="video.html">🎬 Video</a>
+    <a href="posts.html">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
+  </nav>
+  <div class="topbar-right"></div>
+</header>
+
+<main class="app">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge">✦ Nền tảng học tiếng Anh</div>
+    <h1>Học tiếng Anh <span>thông<em> minh</em></span> hơn mỗi ngày</h1>
+    <p>Từ vựng theo chủ đề, flashcard ghi nhớ lâu, trò chơi luyện phản xạ, video shadowing và theo dõi tiến trình — tất cả trong một nơi.</p>
+    <div class="hero-actions">
+      <a href="vocab.html" class="btn-cta primary">🚀 Bắt đầu học</a>
+      <a href="game.html" class="btn-cta ghost">🎮 Chơi game từ vựng</a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <div class="sect-label">Khám phá</div>
+  <div class="grid">
+    <a href="vocab.html" class="fcard">
+      <div class="ico">📚</div>
+      <h3>Từ vựng</h3>
+      <p>Kho từ vựng theo chủ đề &amp; cấp độ, kèm phát âm, ví dụ và câu mẫu.</p>
+      <span class="arrow">Vào học →</span>
+    </a>
+    <a href="flashcard.html" class="fcard">
+      <div class="ico">🃏</div>
+      <h3>Flashcard SRS</h3>
+      <p>Ôn tập lặp lại ngắt quãng giúp ghi nhớ từ lâu dài, hiệu quả.</p>
+      <span class="arrow">Ôn tập →</span>
+    </a>
+    <a href="game.html" class="fcard">
+      <div class="ico">🎮</div>
+      <h3>Game từ vựng</h3>
+      <p>Nhiều chế độ chơi luyện phản xạ, nhận XP cho mỗi câu đúng.</p>
+      <span class="arrow">Chơi ngay →</span>
+    </a>
+    <a href="video.html" class="fcard">
+      <div class="ico">🎬</div>
+      <h3>Video shadowing</h3>
+      <p>Học qua video, luyện nói theo transcript và làm quiz.</p>
+      <span class="arrow">Xem video →</span>
+    </a>
+    <a href="posts.html" class="fcard">
+      <div class="ico">📰</div>
+      <h3>Bài viết</h3>
+      <p>Nội dung &amp; thông báo mới nhất từ giáo viên và nền tảng.</p>
+      <span class="arrow">Đọc bài →</span>
+    </a>
+    <a href="report.html" class="fcard">
+      <div class="ico">📊</div>
+      <h3>Báo cáo</h3>
+      <p>Theo dõi điểm số, tiến trình và nhận xét của giáo viên.</p>
+      <span class="arrow">Xem báo cáo →</span>
+    </a>
+  </div>
+</main>
+
+<footer class="foot">
+  © <span id="yr"></span> EnglishUp · Học tiếng Anh thông minh ·
+  <a href="tai-khoan.html">Tài khoản</a>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  // Hiện link "Tài khoản" cho admin (đồng bộ với các trang khác)
+  (function(){
+    try{
+      var c = window.supabase && window.supabase.createClient(
+        "https://fyglubimflzsetcovgqx.supabase.co",
+        "sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_",
+        { auth:{ lock:function(_n,_t,fn){ return fn(); } } });
+      if(!c) return;
+      c.auth.getSession().then(function(r){
+        var u = r.data && r.data.session && r.data.session.user;
+        if(!u) return;
+        c.from("user_profiles").select("role").eq("id",u.id).maybeSingle().then(function(res){
+          var role = res.data && res.data.role;
+          if(role==='admin' || role==='teacher'){
+            var nav = document.getElementById('nav-accounts');
+            if(nav) nav.style.display = '';
+          }
+        }).catch(function(){});
+      }).catch(function(){});
+    }catch(e){}
+  })();
+</script>
+</body>
+</html>
