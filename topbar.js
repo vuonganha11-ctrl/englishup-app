@@ -27,6 +27,20 @@
     } catch (e) {}
   })();
 
+  /* ── Ẩn ngay link "Trang chủ" (href .../index.html) để tránh nháy khi tải ──
+     Logo sẽ đóng vai trò "về trang chủ". CSS nạp ở <head> trước khi body render. */
+  (function injectInstantCSS() {
+    try {
+      var head = document.head || document.getElementsByTagName("head")[0];
+      if (head && !document.getElementById("eu-instant-css")) {
+        var st = document.createElement("style");
+        st.id = "eu-instant-css";
+        st.textContent = '.topbar nav a[href$="index.html"]{display:none!important}';
+        head.appendChild(st);
+      }
+    } catch (e) {}
+  })();
+
   function sb() {
     if (!_sb && window.supabase) {
       _sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { lock: function (_n, _t, fn) { return fn(); } } });
@@ -42,6 +56,8 @@
       ".eu-xp{color:var(--a4,#fb923c)}.eu-streak{color:var(--a5,#f472b6)}" +
       ".eu-login{background:var(--accent,#4f8ef7);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}" +
       ".eu-login:hover{opacity:.88}" +
+      ".eu-register{display:inline-flex;align-items:center;background:transparent;color:var(--accent,#4f8ef7);border:1px solid var(--accent,#4f8ef7);border-radius:8px;padding:6px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;white-space:nowrap}" +
+      ".eu-register:hover{background:rgba(79,142,247,.12)}" +
       ".eu-userwrap{position:relative}" +
       ".eu-chip{display:flex;align-items:center;gap:8px;background:var(--card,#151a25);border:1px solid var(--border,#232d42);border-radius:20px;padding:4px 12px 4px 6px;font-size:13px;cursor:pointer;color:var(--text,#dde3f0)}" +
       ".eu-chip:hover{border-color:var(--border2,#2e3a55)}" +
@@ -69,6 +85,7 @@
       '<div class="eu-badge eu-xp" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>' +
       '<div class="eu-badge eu-streak" id="streak-display" style="display:none">🔥 <span id="streak-val">0</span> ngày</div>' +
       '<button class="eu-login" id="btn-login-top" onclick="__euLogin()">Đăng nhập</button>' +
+      '<a class="eu-register" id="btn-register-top" href="register.html">Đăng ký</a>' +
       '<div class="eu-userwrap" id="user-chip" style="display:none">' +
       '  <div class="eu-chip" onclick="__euToggleMenu(event)">' +
       '    <div class="eu-av" id="eu-av">?</div><span class="eu-name" id="eu-name">—</span>' +
@@ -94,6 +111,7 @@
 
   function showLoggedOut() {
     set("btn-login-top", function (e) { e.style.display = ""; });
+    set("btn-register-top", function (e) { e.style.display = ""; });
     set("user-chip", function (e) { e.style.display = "none"; });
     set("xp-display", function (e) { e.style.display = "none"; });
     set("streak-display", function (e) { e.style.display = "none"; });
@@ -104,6 +122,7 @@
     var name = (prof && prof.full_name) ? prof.full_name : (email.split("@")[0] || "Học viên");
     _fullName = name;
     set("btn-login-top", function (e) { e.style.display = "none"; });
+    set("btn-register-top", function (e) { e.style.display = "none"; });
     set("user-chip", function (e) { e.style.display = "flex"; });
     set("eu-av", function (e) { e.textContent = initials(name, email); });
     set("eu-name", function (e) { e.textContent = name; });
@@ -156,7 +175,31 @@
     });
   }
 
+  /* Chuẩn hoá header trên MỌI trang: logo → index.html, gỡ link "Trang chủ".
+     Gỡ hẳn khỏi DOM để ngăn kéo mobile (đọc nav trực tiếp lúc mở) cũng sạch. */
+  function fixHeader() {
+    try {
+      var bar = document.querySelector(".topbar");
+      if (!bar) return;
+      var logo = bar.querySelector(".logo");
+      if (logo) logo.setAttribute("href", "index.html");
+      var nav = bar.querySelector("nav");
+      if (nav) {
+        var links = nav.querySelectorAll("a");
+        for (var i = 0; i < links.length; i++) {
+          var a = links[i];
+          var href = a.getAttribute("href") || "";
+          var txt = (a.textContent || "").trim();
+          if (/index\.html$/.test(href) || txt === "Trang chủ") {
+            if (a.parentNode) a.parentNode.removeChild(a);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
   function boot() {
+    fixHeader();
     var host = mount();
     if (!host) return;
     injectCSS();
