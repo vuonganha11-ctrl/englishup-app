@@ -247,10 +247,13 @@
 
     injectCSS();
     buildModals();
-    if (!mountInto()) return;
-
     var now = new Date(); S.year = now.getFullYear(); S.month = now.getMonth();
-    if (S.isStaff) { await Promise.all([loadWords(), loadTopics(), loadStudents()]); }
+    if (S.isStaff) {
+      if (!mountInto()) return;                 // GV/Admin: panel lịch riêng (view không có lịch sẵn)
+      await Promise.all([loadWords(), loadTopics(), loadStudents()]);
+    } else {
+      setupStudentOverlay();                    // HV: gộp chip buổi học vào lịch học theo tháng sẵn có
+    }
     await loadLessons();
   }
 
@@ -280,8 +283,9 @@
   async function loadLessons() {
     try { var r = await sb.from("lessons").select("*, lesson_students(*)").order("scheduled_date"); if (r.error) throw r.error; S.lessons = r.data || []; }
     catch (e) { S.lessons = []; toast("Lỗi tải buổi học: " + (e.message || e)); }
-    renderCalendar();
+    renderAll();
   }
+  function renderAll() { if (S.isStaff) renderCalendar(); else lxOverlayChips(); }
 
   /* ───── lịch lưới tháng ───── */
   function visibleLessons() {
@@ -328,6 +332,63 @@
     }
   }
   function shiftMonth(n) { var m = S.month + n, y = S.year; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } S.month = m; S.year = y; renderCalendar(); }
+
+  /* ───── HỌC VIÊN: gộp chip buổi học vào lịch "Lịch học theo tháng" của report.html ─────
+     Không vẽ lịch riêng. Đọc ngày từ thuộc tính title của từng ô (.cal-cell),
+     chèn chip buổi học, và theo dõi mọi lần report.html vẽ lại để chèn lại. */
+  function injectStudentCSS() {
+    if ($("lx-css-student")) return;
+    var css =
+      "#cal-grid .cal-cell:not(.empty){aspect-ratio:auto;min-height:90px;justify-content:flex-start;align-items:stretch;padding:6px;gap:3px;line-height:1.2}" +
+      "#cal-grid .cal-cell .cal-n{align-self:flex-start;margin-top:0}" +
+      ".lx-onchips{display:flex;flex-direction:column;gap:3px;margin-top:3px}" +
+      ".lx-onchips .lx-chip{cursor:pointer}";
+    var st = document.createElement("style"); st.id = "lx-css-student"; st.textContent = css; document.head.appendChild(st);
+  }
+  function setupStudentOverlay() {
+    injectStudentCSS();
+    var grid = $("cal-grid");
+    var panel = grid ? grid.closest(".panel") : null;
+    if (panel) {
+      var h = panel.querySelector("h2");
+      if (h && /Lịch học theo tháng/.test(h.textContent)) h.textContent = "📅 Lịch học & buổi học";
+      if (!$("lx-leg-student")) {
+        panel.appendChild(el('<div class="lx-legend" id="lx-leg-student" style="margin-top:8px">' +
+          '<span style="color:var(--text);font-weight:600;margin-right:2px">Buổi học:</span>' +
+          '<span><i style="background:var(--a4)"></i>Chờ duyệt</span>' +
+          '<span><i style="background:var(--a3)"></i>Đã duyệt</span>' +
+          '<span><i style="background:var(--accent)"></i>Hoàn thành</span></div>'));
+      }
+    }
+    if (grid && !window.__lxCalObs) {
+      window.__lxCalObs = new MutationObserver(function () { lxOverlayChips(); });
+      window.__lxCalObs.observe(grid, { childList: true });
+    }
+    lxOverlayChips();
+  }
+  function lxOverlayChips() {
+    var grid = $("cal-grid"); if (!grid) return;
+    var byDate = {};
+    S.lessons.forEach(function (l) { (byDate[l.scheduled_date] = byDate[l.scheduled_date] || []).push(l); });
+    Object.keys(byDate).forEach(function (k) { byDate[k].sort(function (a, b) { return (a.start_time || "").localeCompare(b.start_time || ""); }); });
+    var cells = grid.querySelectorAll(".cal-cell:not(.empty)");
+    Array.prototype.forEach.call(cells, function (cell) {
+      var old = cell.querySelector(".lx-onchips"); if (old) old.parentNode.removeChild(old);
+      var t = cell.getAttribute("title") || ""; var m = t.match(/(\d{4}-\d{2}-\d{2})/); if (!m) return;
+      var list = byDate[m[1]]; if (!list || !list.length) return;
+      var box = document.createElement("div"); box.className = "lx-onchips";
+      list.slice(0, 3).forEach(function (l) {
+        var stt = STATUS[l.status] || STATUS.draft;
+        var ch = document.createElement("div"); ch.className = "lx-chip " + stt.cls;
+        ch.innerHTML = '<span class="tm">' + fmtTime(l.start_time) + '</span>' + esc(l.title);
+        ch.title = stt.label + " · " + (l.title || "");
+        ch.addEventListener("click", function (e) { e.stopPropagation(); openDetail(l.id); });
+        box.appendChild(ch);
+      });
+      if (list.length > 3) box.appendChild(el('<div class="lx-more">+' + (list.length - 3) + '</div>'));
+      cell.appendChild(box);
+    });
+  }
 
   /* ───── tạo / sửa ───── */
   function openCreate(dateStr) {
