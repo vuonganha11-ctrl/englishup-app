@@ -198,27 +198,31 @@
     } catch (e) {}
   }
 
-  /* Thêm link "Lịch học" vào thanh điều hướng trên MỌI trang (nếu chưa có),
-     để trang lich.html luôn truy cập được mà không phải sửa từng file. */
-  function injectNavLink() {
+  /* Lịch lên buổi học giờ NẰM TRONG trang Báo cáo (report.html), không tách
+     trang riêng. Vì vậy: (1) gỡ mọi link "Lịch học" cũ khỏi nav; (2) khi đang
+     ở report.html thì nạp module report-lessons.js để hiện panel lịch. */
+  function setupLessons() {
     try {
       var bar = document.querySelector(".topbar");
-      if (!bar) return;
-      var nav = bar.querySelector("nav");
-      if (!nav) return;
-      if (nav.querySelector('a[href$="lich.html"]')) return; // đã có
-      var a = document.createElement("a");
-      a.href = "lich.html";
-      a.textContent = "Lịch học";
+      if (bar) {
+        var nav = bar.querySelector("nav");
+        if (nav) {
+          var olds = nav.querySelectorAll('a[href$="lich.html"]');
+          for (var i = 0; i < olds.length; i++) { if (olds[i].parentNode) olds[i].parentNode.removeChild(olds[i]); }
+        }
+      }
       var path = (location.pathname || "").toLowerCase();
-      if (/lich\.html$/.test(path)) a.className = "active";
-      nav.appendChild(a);
+      if (/report\.html$/.test(path) && !document.getElementById("eu-report-lessons-js")) {
+        var s = document.createElement("script");
+        s.id = "eu-report-lessons-js"; s.src = "report-lessons.js";
+        (document.head || document.documentElement).appendChild(s);
+      }
     } catch (e) {}
   }
 
   function boot() {
     fixHeader();
-    injectNavLink();
+    setupLessons();
     var host = mount();
     if (!host) return;
     injectCSS();
