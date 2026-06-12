@@ -35,7 +35,8 @@
       if (head && !document.getElementById("eu-instant-css")) {
         var st = document.createElement("style");
         st.id = "eu-instant-css";
-        st.textContent = '.topbar nav a[href$="index.html"]{display:none!important}';
+        st.textContent = '.topbar nav a[href$="index.html"]{display:none!important}'
+          + '.topbar nav a[href$="accounts.html"]{display:none!important}';
         head.appendChild(st);
       }
     } catch (e) {}
@@ -109,12 +110,25 @@
 
   function set(id, fn) { var el = document.getElementById(id); if (el) fn(el); }
 
+  /* Thẻ "Tài khoản" (accounts.html) chỉ dành cho Admin.
+     Ẩn với học viên/giáo viên & khách; hiện lại cho Admin. */
+  function gateAccountsNav(isAdmin) {
+    try {
+      var links = document.querySelectorAll('.topbar nav a[href$="accounts.html"]');
+      for (var i = 0; i < links.length; i++) {
+        if (isAdmin) links[i].style.setProperty("display", "inline-block", "important");
+        else links[i].style.setProperty("display", "none", "important");
+      }
+    } catch (e) {}
+  }
+
   function showLoggedOut() {
     set("btn-login-top", function (e) { e.style.display = ""; });
     set("btn-register-top", function (e) { e.style.display = ""; });
     set("user-chip", function (e) { e.style.display = "none"; });
     set("xp-display", function (e) { e.style.display = "none"; });
     set("streak-display", function (e) { e.style.display = "none"; });
+    gateAccountsNav(false);
   }
 
   function showLoggedIn(user, prof) {
@@ -162,16 +176,16 @@
     c.auth.getSession().then(function (r) {
       var u = r.data && r.data.session && r.data.session.user;
       if (!u) { showLoggedOut(); return; }
-      c.from("user_profiles").select("email,full_name,xp,streak").eq("id", u.id).maybeSingle()
-        .then(function (res) { showLoggedIn(u, res.data || {}); })
-        .catch(function () { showLoggedIn(u, {}); });
+      c.from("user_profiles").select("email,full_name,xp,streak,role").eq("id", u.id).maybeSingle()
+        .then(function (res) { showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
+        .catch(function () { showLoggedIn(u, {}); gateAccountsNav(false); });
     }).catch(function () {});
     c.auth.onAuthStateChange(function (_e, sess) {
       var u = sess && sess.user;
       if (!u) { showLoggedOut(); return; }
-      c.from("user_profiles").select("email,full_name,xp,streak").eq("id", u.id).maybeSingle()
-        .then(function (res) { showLoggedIn(u, res.data || {}); })
-        .catch(function () { showLoggedIn(u, {}); });
+      c.from("user_profiles").select("email,full_name,xp,streak,role").eq("id", u.id).maybeSingle()
+        .then(function (res) { showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
+        .catch(function () { showLoggedIn(u, {}); gateAccountsNav(false); });
     });
   }
 
