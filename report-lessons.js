@@ -472,6 +472,8 @@
     var stt = STATUS[l.status] || STATUS.draft;
     var owner = S.isAdmin || l.teacher_id === S.me.id;
     var canDelete = S.isAdmin || (l.teacher_id === S.me.id && ["draft", "pending", "rejected"].indexOf(l.status) >= 0);
+    // Sửa nội dung: Admin mọi trạng thái; GV chỉ khi Nháp hoặc Chờ duyệt
+    var canEdit = S.isAdmin || (l.teacher_id === S.me.id && (l.status === "draft" || l.status === "pending"));
     $("lx-dTitle").innerHTML = esc(l.title) + ' <span class="lx-badge ' + stt.cls + '" style="margin-left:6px">' + stt.label + '</span>';
     $("lx-dSub").textContent = fmtDateVN(l.scheduled_date) + " · " + fmtTime(l.start_time) + " · " + (l.duration_minutes || 120) + " phút · GV: " + (l.teacher_name || "—");
     var body = $("lx-dBody"); body.innerHTML = '<div class="lx-muted" style="font-size:13px">Đang tải…</div>';
@@ -511,9 +513,10 @@
       h += '<div class="lx-sec"><h4>⭐ Đánh giá của giáo viên</h4>' + evalRO(mine) + '</div>';
     }
 
-    if (owner || canDelete) {
+    if (owner || canDelete || canEdit) {
       h += '<div class="lx-acts">';
-      if (owner && (l.status === "draft" || l.status === "rejected")) h += '<button class="lx-btn lx-primary" id="lx-submit">Gửi Admin duyệt</button><button class="lx-btn lx-ghost" id="lx-edit">Sửa</button>';
+      if (owner && (l.status === "draft" || l.status === "rejected")) h += '<button class="lx-btn lx-primary" id="lx-submit">Gửi Admin duyệt</button>';
+      if (canEdit) h += '<button class="lx-btn lx-ghost" id="lx-edit">Sửa nội dung</button>';
       if (owner && l.status === "approved") h += '<button class="lx-btn lx-success" id="lx-complete">Đánh dấu hoàn thành</button>';
       h += '<span class="lx-grow"></span>';
       if (canDelete) h += '<button class="lx-btn lx-danger" id="lx-delete">Xóa</button>';
