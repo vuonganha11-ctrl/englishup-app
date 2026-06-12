@@ -198,8 +198,27 @@
     } catch (e) {}
   }
 
+  /* Thêm link "Lịch học" vào thanh điều hướng trên MỌI trang (nếu chưa có),
+     để trang lich.html luôn truy cập được mà không phải sửa từng file. */
+  function injectNavLink() {
+    try {
+      var bar = document.querySelector(".topbar");
+      if (!bar) return;
+      var nav = bar.querySelector("nav");
+      if (!nav) return;
+      if (nav.querySelector('a[href$="lich.html"]')) return; // đã có
+      var a = document.createElement("a");
+      a.href = "lich.html";
+      a.textContent = "Lịch học";
+      var path = (location.pathname || "").toLowerCase();
+      if (/lich\.html$/.test(path)) a.className = "active";
+      nav.appendChild(a);
+    } catch (e) {}
+  }
+
   function boot() {
     fixHeader();
+    injectNavLink();
     var host = mount();
     if (!host) return;
     injectCSS();
