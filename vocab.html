@@ -1724,6 +1724,7 @@ function highlightTerm(text, term) {
 // ── TAP-A-WORD trong câu mẫu: phát âm + hiện nghĩa tiếng Việt ──────────
 let _exGloss = null;
 let _exTipEl = null, _exTipHideT = null, _exTipToken = 0;
+const _trCache = new Map();
 const _EX_STOP = new Set(['a','an','the','of','in','on','at','to','and','or','is','are','was','were','be','been','with','for','it','its','some','none','as','by','that','this','these','those','from','into','out']);
 
 function cleanWord(w) {
@@ -1797,7 +1798,7 @@ function clickableGloss(str, kind) {
       for (let i = 0; i < toks.length; i++) {
         const tk = toks[i];
         if (!tk) continue;
-        if (i % 2 === 1) html += `<span class="ex-word" data-w="${esc(tk)}">${esc(tk)}</span>`;
+        if (i % 2 === 1) html += `<span class="ex-word" data-tr="1" data-w="${esc(tk)}">${esc(tk)}</span>`;
         else html += esc(tk);
       }
     }
@@ -1847,7 +1848,10 @@ async function exWordTap(el) {
   setTimeout(() => el.classList.remove('speaking'), 700);
 
   const token = ++_exTipToken;
-  const cached = lookupGloss(word);
+  // Dòng gợi ý/trái nghĩa (data-tr) → luôn dịch tự động, bỏ qua nghĩa trong mẫu
+  const translateOnly = el.dataset.tr === '1';
+  const key = cleanWord(word);
+  const cached = translateOnly ? _trCache.get(key) : lookupGloss(word);
   if (cached) {
     showExTip(el, word, cached, false);
   } else {
@@ -1855,7 +1859,10 @@ async function exWordTap(el) {
     const t = await translateWord(word);
     if (token !== _exTipToken) return; // người dùng đã chạm từ khác
     const vi = t || '(chưa có nghĩa)';
-    if (t && _exGloss) _exGloss.words.set(cleanWord(word), vi);
+    if (t) {
+      if (translateOnly) _trCache.set(key, vi);
+      else if (_exGloss) _exGloss.words.set(key, vi);
+    }
     showExTip(el, word, vi, false);
   }
   clearTimeout(_exTipHideT);
