@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js" defer></script>
 <style>
 :root {
   --bg:      #08090d;
@@ -65,6 +66,11 @@ body {
   text-decoration: none;
 }
 .topbar .logo span { color: var(--a2); }
+
+.top-nav { display: flex; gap: 4px; margin-left: 14px; flex-wrap: wrap; }
+.top-nav a { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 7px 12px; border-radius: 8px; white-space: nowrap; }
+.top-nav a:hover { color: var(--text); background: var(--card); }
+.top-nav a.active { color: var(--accent); background: rgba(79,142,247,.12); }
 
 .top-search {
   flex: 1;
@@ -1074,7 +1080,16 @@ aside.sidebar {
 
 <!-- ── TOPBAR ─────────────────────────────────────── -->
 <header class="topbar">
-  <div class="logo">English<span>Up</span></div>
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="vocab.html" class="active">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="game.html">🎮 Game</a>
+    <a href="video.html">🎬 Video</a>
+    <a href="posts.html">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
+  </nav>
 
   <div class="topbar-right">
     <div class="xp-badge" id="xp-display" style="display:none">
