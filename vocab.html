@@ -1666,8 +1666,8 @@ function renderWordExamples(w) {
   const rowsHtml = rows.map(r => {
     const tc = typeClass[r.type] || 'type-ts';
     const sentenceHtml = clickableSentence(r.sentence||'', w.term);
-    const altsHtml = r.alternatives ? formatAlternatives(r.alternatives) : '';
-    const oppsHtml = r.opposites    ? formatOpposites(r.opposites)       : '';
+    const altsHtml = r.alternatives ? clickableGloss(r.alternatives, 'alt') : '';
+    const oppsHtml = r.opposites    ? clickableGloss(r.opposites, 'opp')    : '';
     const sentAttr = (r.sentence||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `
       <tr>
@@ -1783,6 +1783,29 @@ function clickableSentence(sentence, term) {
     }
   }
   return html;
+}
+
+// Tap-a-word cho dòng "gợi ý / trái nghĩa": bọc từ tiếng Anh, giữ nguyên nghĩa trong ngoặc
+function clickableGloss(str, kind) {
+  const arrow = kind === 'opp' ? '↔' : '→';
+  const arrowColor = kind === 'opp' ? 'var(--a5)' : 'var(--a3)';
+  let html = '';
+  const parts = String(str).split(/(\([^)]*\))/);
+  for (const part of parts) {
+    if (!part) continue;
+    if (part[0] === '(' && part[part.length - 1] === ')') {
+      html += esc(part); // nghĩa tiếng Việt — giữ nguyên
+    } else {
+      const toks = part.split(/([A-Za-z]+(?:['’\-][A-Za-z]+)*)/);
+      for (let i = 0; i < toks.length; i++) {
+        const tk = toks[i];
+        if (!tk) continue;
+        if (i % 2 === 1) html += `<span class="ex-word" data-w="${esc(tk)}">${esc(tk)}</span>`;
+        else html += esc(tk);
+      }
+    }
+  }
+  return html.split(arrow).join(`<span style="color:${arrowColor}">${arrow}</span>`).split('•').join(' &bull; ');
 }
 
 async function translateWord(word) {
