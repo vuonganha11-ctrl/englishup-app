@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="topbar.js" defer></script>
 <style>
 :root {
   --bg:      #08090d;
@@ -66,11 +65,6 @@ body {
   text-decoration: none;
 }
 .topbar .logo span { color: var(--a2); }
-
-.top-nav { display: flex; gap: 4px; margin-left: 14px; flex-wrap: wrap; }
-.top-nav a { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 7px 12px; border-radius: 8px; white-space: nowrap; }
-.top-nav a:hover { color: var(--text); background: var(--card); }
-.top-nav a.active { color: var(--accent); background: rgba(79,142,247,.12); }
 
 .top-search {
   flex: 1;
@@ -260,6 +254,22 @@ aside.sidebar {
 .topic-info { flex: 1; min-width: 0; }
 .topic-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topic-count { font-size: 11px; color: var(--muted); }
+
+/* Multi-level topic groups */
+.topic-group { margin-bottom: 2px; }
+.group-header { display: flex; align-items: center; gap: 9px; padding: 9px 14px; cursor: pointer; transition: background .15s; user-select: none; }
+.group-header:hover { background: var(--card); }
+.group-header.active { background: var(--card2); border-right: 2px solid var(--a2); }
+.group-chevron { font-size: 10px; color: var(--muted); width: 12px; flex-shrink: 0; transition: transform .18s; display: inline-block; }
+.topic-group.collapsed .group-chevron { transform: rotate(-90deg); }
+.group-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--card2); display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+.group-label { font-size: 13px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group-count { font-size: 11px; color: var(--muted); background: var(--card); border-radius: 10px; padding: 1px 7px; flex-shrink: 0; }
+.group-children { overflow: hidden; }
+.topic-group.collapsed .group-children { display: none; }
+.topic-row.child { padding-left: 34px; }
+.topic-row.child .topic-thumb { width: 26px; height: 26px; font-size: 15px; }
+.topic-row .topic-lv { font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 0 5px; flex-shrink: 0; }
 
 /* Level filter */
 .level-section {
@@ -918,38 +928,6 @@ aside.sidebar {
 .ex-alts { font-size: 11px; color: var(--a3); margin-top: 4px; }
 .ex-oppos { font-size: 11px; color: var(--a5); margin-top: 2px; }
 
-/* Tap-a-word in example sentences */
-.ex-word {
-  cursor: pointer;
-  border-radius: 4px;
-  padding: 0 1px;
-  transition: background .12s, color .12s;
-}
-.ex-word:hover { background: rgba(79,142,247,.18); color: var(--accent); }
-.ex-word.speaking { background: var(--accent); color: #fff; }
-.ex-sentence .highlight.ex-word:hover { background: rgba(79,142,247,.25); }
-
-.ex-tip {
-  position: fixed;
-  z-index: 200;
-  max-width: 260px;
-  background: var(--card2);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
-  padding: 8px 11px;
-  font-size: 13px;
-  color: var(--text);
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .12s, transform .12s;
-}
-.ex-tip.show { opacity: 1; transform: translateY(0); }
-.ex-tip .ex-tip-en { font-weight: 700; color: var(--accent); font-size: 13px; }
-.ex-tip .ex-tip-vi { color: var(--text); margin-top: 2px; }
-.ex-tip .ex-tip-vi.loading { color: var(--muted); font-style: italic; }
-
 /* SRS button */
 .wm-footer {
   padding: 14px 20px;
@@ -1080,16 +1058,7 @@ aside.sidebar {
 
 <!-- ── TOPBAR ─────────────────────────────────────── -->
 <header class="topbar">
-  <a href="vocab.html" class="logo">English<span>Up</span></a>
-  <nav class="top-nav">
-    <a href="vocab.html" class="active">Từ vựng</a>
-    <a href="flashcard.html">🃏 Flashcard</a>
-    <a href="game.html">🎮 Game</a>
-    <a href="video.html">🎬 Video</a>
-    <a href="posts.html">📰 Bài viết</a>
-    <a href="report.html">📊 Báo cáo</a>
-    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
-  </nav>
+  <div class="logo">English<span>Up</span></div>
 
   <div class="topbar-right">
     <div class="xp-badge" id="xp-display" style="display:none">
@@ -1277,6 +1246,9 @@ let currentUser    = null;
 let _srsAdded      = new Set(); // word IDs đã thêm
 let _searchTimer   = null;
 let _paragraphMap  = {};     // topicId → paragraph text
+let currentGroup   = null;   // prefix nhóm cha đang chọn (khi chưa chọn riêng 1 chủ đề con)
+let _groupList     = [];     // [{prefix, topics:[...]}] cho sidebar nhiều cấp
+let _collapsedGroups = new Set(); // các prefix đang thu gọn
 
 // ── INIT ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1383,25 +1355,87 @@ async function loadTopics() {
   }
 }
 
+// Tách "Food - Fruit" → { group:"Food", child:"Fruit" }; không có " - " → nhóm null
+function splitTopic(name) {
+  const sName = name || '';
+  const i = sName.indexOf(' - ');
+  if (i === -1) return { group: null, child: sName };
+  return { group: sName.slice(0, i).trim(), child: sName.slice(i + 3).trim() };
+}
+
 function renderTopicSidebar() {
   const container = document.getElementById('topic-rows');
   if (!allTopics.length) {
+    _groupList = [];
     container.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">Chưa có chủ đề</div>';
     return;
   }
-  container.innerHTML = allTopics.map(t => `
-    <div class="topic-row" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
-      <div class="topic-thumb">
-        ${t.image_url
-          ? `<img src="${esc(t.image_url)}" alt="${esc(t.name)}" loading="lazy">`
-          : topicEmoji(t.name)}
-      </div>
-      <div class="topic-info">
-        <div class="topic-name">${esc(t.name)}</div>
-        <div class="topic-count level-tag" style="background:transparent;border:none;padding:0;font-size:11px;color:var(--muted)">${t.level||''}</div>
-      </div>
-    </div>
-  `).join('');
+  // Gom theo tên cha, giữ thứ tự xuất hiện
+  const groupMap = new Map();
+  const standalone = [];
+  allTopics.forEach(t => {
+    const { group } = splitTopic(t.name);
+    if (!group) { standalone.push(t); return; }
+    if (!groupMap.has(group)) groupMap.set(group, []);
+    groupMap.get(group).push(t);
+  });
+  _groupList = [...groupMap.entries()].map(([prefix, topics]) => ({ prefix, topics }));
+
+  let html = '';
+  _groupList.forEach((g, gi) => {
+    const collapsed = _collapsedGroups.has(g.prefix);
+    const activeGroup = (currentGroup === g.prefix && !currentTopic) ? ' active' : '';
+    const children = g.topics.map(t => {
+      const { child } = splitTopic(t.name);
+      const active = (currentTopic === t.id) ? ' active' : '';
+      return `
+        <div class="topic-row child${active}" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
+          <div class="topic-thumb">${t.image_url ? `<img src="${esc(t.image_url)}" alt="${esc(child)}" loading="lazy">` : topicEmoji(t.name)}</div>
+          <div class="topic-info"><div class="topic-name">${esc(child)}</div></div>
+          ${t.level ? `<span class="topic-lv">${esc(t.level)}</span>` : ''}
+        </div>`;
+    }).join('');
+    html += `
+      <div class="topic-group${collapsed ? ' collapsed' : ''}" data-gi="${gi}">
+        <div class="group-header${activeGroup}" onclick="selectGroup(${gi})">
+          <span class="group-chevron" onclick="toggleGroup(event, ${gi})">▼</span>
+          <div class="group-icon">${topicEmoji(g.prefix)}</div>
+          <div class="group-label">${esc(g.prefix)}</div>
+          <span class="group-count">${g.topics.length}</span>
+        </div>
+        <div class="group-children">${children}</div>
+      </div>`;
+  });
+  standalone.forEach(t => {
+    const active = (currentTopic === t.id) ? ' active' : '';
+    html += `
+      <div class="topic-row${active}" data-id="${t.id}" onclick="selectTopic('${t.id}', this)">
+        <div class="topic-thumb">${t.image_url ? `<img src="${esc(t.image_url)}" alt="${esc(t.name)}" loading="lazy">` : topicEmoji(t.name)}</div>
+        <div class="topic-info"><div class="topic-name">${esc(t.name)}</div></div>
+        ${t.level ? `<span class="topic-lv">${esc(t.level)}</span>` : ''}
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// Chọn cả nhóm cha → lọc toàn bộ chủ đề con trong nhóm
+function selectGroup(gi) {
+  const g = _groupList[gi]; if (!g) return;
+  currentGroup = g.prefix; currentTopic = null;
+  if (_collapsedGroups.has(g.prefix)) _collapsedGroups.delete(g.prefix);
+  renderTopicSidebar();
+  updateHero();
+  loadWords();
+}
+
+// Thu gọn / mở rộng một nhóm (không đổi bộ lọc hiện tại)
+function toggleGroup(e, gi) {
+  if (e) e.stopPropagation();
+  const g = _groupList[gi]; if (!g) return;
+  if (_collapsedGroups.has(g.prefix)) _collapsedGroups.delete(g.prefix);
+  else _collapsedGroups.add(g.prefix);
+  const el = document.querySelector(`.topic-group[data-gi="${gi}"]`);
+  if (el) el.classList.toggle('collapsed');
 }
 
 function topicEmoji(name) {
@@ -1420,8 +1454,9 @@ function topicEmoji(name) {
 // ── SELECT TOPIC / LEVEL ─────────────────────────────
 function selectTopic(topicId, el) {
   currentTopic = topicId || null;
+  currentGroup = null;
   // Update active class
-  document.querySelectorAll('.topic-row, .topic-row-all').forEach(r => r.classList.remove('active'));
+  document.querySelectorAll('.topic-row, .topic-row-all, .group-header').forEach(r => r.classList.remove('active'));
   if (el) el.classList.add('active');
   updateHero();
   loadWords();
@@ -1444,6 +1479,13 @@ function onSearch(val) {
 }
 
 function updateHero() {
+  if (!currentTopic && currentGroup) {
+    document.getElementById('hero-icon').textContent = topicEmoji(currentGroup);
+    document.getElementById('hero-title').textContent = currentGroup;
+    document.getElementById('hero-desc').textContent = 'Tất cả nhóm trong chủ đề ' + currentGroup;
+    const bg = document.getElementById('hero-bg-img'); bg.style.display = 'none'; bg.src = '';
+    return;
+  }
   if (!currentTopic) {
     document.getElementById('hero-icon').textContent = '📚';
     document.getElementById('hero-title').textContent = 'Tất cả từ vựng';
@@ -1473,6 +1515,10 @@ async function loadWords() {
       .order('term');
 
     if (currentTopic) q = q.eq('topic', getTopicName(currentTopic));
+    else if (currentGroup) {
+      const g = _groupList.find(x => x.prefix === currentGroup);
+      if (g) q = q.in('topic', g.topics.map(t => t.name));
+    }
     if (currentLevel) q = q.eq('level', currentLevel);
     if (currentSearch) q = q.ilike('term', `%${currentSearch}%`);
 
@@ -1480,7 +1526,7 @@ async function loadWords() {
     if (error) throw error;
     currentWords = data || [];
 
-    document.getElementById('all-count').textContent = currentTopic ? currentWords.length : (await getTotalCount());
+    document.getElementById('all-count').textContent = (currentTopic || currentGroup) ? currentWords.length : (await getTotalCount());
     document.getElementById('hero-word-count').textContent = currentWords.length;
     document.getElementById('shown-count').textContent = currentWords.length;
 
@@ -1639,15 +1685,11 @@ function openWord(id) {
 function closeWord() {
   document.getElementById('overlay-word').classList.remove('open');
   stopAudio();
-  hideExTip();
 }
 
 function renderWordExamples(w) {
   const section = document.getElementById('wm-examples-section');
   const wrap    = document.getElementById('wm-examples-table-wrap');
-
-  // Build VI gloss dictionary for tap-a-word (term + alternatives + opposites)
-  buildExGloss(w);
 
   const examples = w.examples;
   if (!examples || !examples.length || !examples[0]?.rows?.length) {
@@ -1657,7 +1699,7 @@ function renderWordExamples(w) {
       wrap.innerHTML = `
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
           <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Câu mẫu</div>
-          <div style="font-size:14px;line-height:1.65;">${clickableSentence(w.example_sentence, w.term)}</div>
+          <div style="font-size:14px;line-height:1.65;">${highlightTerm(esc(w.example_sentence), w.term)}</div>
         </div>`;
     } else {
       section.style.display = 'none';
@@ -1680,12 +1722,13 @@ function renderWordExamples(w) {
 
   const rowsHtml = rows.map(r => {
     const tc = typeClass[r.type] || 'type-ts';
-    const sentenceHtml = clickableSentence(r.sentence||'', w.term);
-    const altsHtml = r.alternatives ? clickableGloss(r.alternatives, 'alt') : '';
-    const oppsHtml = r.opposites    ? clickableGloss(r.opposites, 'opp')    : '';
+    const sentenceHtml = highlightTerm(esc(r.sentence||''), w.term);
+    const altsHtml = r.alternatives ? formatAlternatives(r.alternatives) : '';
+    const oppsHtml = r.opposites    ? formatOpposites(r.opposites)       : '';
     const sentAttr = (r.sentence||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `
       <tr>
+        <td style="width:90px"><span class="type-badge ${tc}">${esc(r.type||'')}</span></td>
         <td>
           <div class="ex-sentence">${sentenceHtml}</div>
           ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
@@ -1710,9 +1753,11 @@ function renderWordExamples(w) {
   }).join('');
 
   wrap.innerHTML = `
+    ${situation ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 ${esc(situation)}</div>` : ''}
     <table class="examples-table">
       <thead>
         <tr>
+          <th>Loại câu</th>
           <th>Câu mẫu & giải thích</th>
         </tr>
       </thead>
@@ -1735,163 +1780,6 @@ function highlightTerm(text, term) {
   const re = new RegExp(`(${escRegex(term)})`, 'gi');
   return text.replace(re, '<span class="highlight">$1</span>');
 }
-
-// ── TAP-A-WORD trong câu mẫu: phát âm + hiện nghĩa tiếng Việt ──────────
-let _exGloss = null;
-let _exTipEl = null, _exTipHideT = null, _exTipToken = 0;
-const _trCache = new Map();
-const _EX_STOP = new Set(['a','an','the','of','in','on','at','to','and','or','is','are','was','were','be','been','with','for','it','its','some','none','as','by','that','this','these','those','from','into','out']);
-
-function cleanWord(w) {
-  return (w || '').toLowerCase().replace(/[^a-zà-ỹ'’\-]/gi, '');
-}
-
-function buildExGloss(w) {
-  _exGloss = { words: new Map(), phrases: [] };
-  if (w.term && w.definition_vi) _exGloss.words.set(cleanWord(w.term), w.definition_vi);
-  const texts = [];
-  const rows = (w.examples && w.examples[0] && w.examples[0].rows) || [];
-  rows.forEach(r => { if (r.alternatives) texts.push(r.alternatives); if (r.opposites) texts.push(r.opposites); });
-  // pattern: "cụm từ (nghĩa việt)"
-  const re = /([A-Za-z][A-Za-z'’\- ]*?)\s*\(([^)]+)\)/g;
-  for (const t of texts) {
-    let m;
-    while ((m = re.exec(t))) {
-      const gloss = m[2].trim();
-      if (!gloss) continue;
-      const allWords = m[1].trim().toLowerCase().split(/\s+/).map(cleanWord).filter(Boolean);
-      if (!allWords.length) continue;
-      if (allWords.length === 1) {
-        if (!_EX_STOP.has(allWords[0]) && !_exGloss.words.has(allWords[0])) _exGloss.words.set(allWords[0], gloss);
-      } else {
-        const matchWords = new Set(allWords.filter(x => !_EX_STOP.has(x)));
-        if (matchWords.size) _exGloss.phrases.push({ words: matchWords, gloss });
-      }
-    }
-  }
-}
-
-function lookupGloss(word) {
-  if (!_exGloss) return null;
-  const c = cleanWord(word);
-  if (!c) return null;
-  if (_exGloss.words.has(c)) return _exGloss.words.get(c);
-  for (const ph of _exGloss.phrases) if (ph.words.has(c)) return ph.gloss;
-  return null;
-}
-
-function clickableSentence(sentence, term) {
-  const termLc = (term || '').toLowerCase();
-  const parts = String(sentence).split(/([A-Za-z]+(?:['’\-][A-Za-z]+)*)/);
-  let html = '';
-  for (let i = 0; i < parts.length; i++) {
-    const p = parts[i];
-    if (!p) continue;
-    if (i % 2 === 1) {
-      const lc = p.toLowerCase();
-      const isTerm = termLc && (lc === termLc || lc.startsWith(termLc) || termLc.startsWith(lc));
-      html += `<span class="ex-word${isTerm ? ' highlight' : ''}" data-w="${esc(p)}">${esc(p)}</span>`;
-    } else {
-      html += esc(p);
-    }
-  }
-  return html;
-}
-
-// Tap-a-word cho dòng "gợi ý / trái nghĩa": bọc từ tiếng Anh, giữ nguyên nghĩa trong ngoặc
-function clickableGloss(str, kind) {
-  const arrow = kind === 'opp' ? '↔' : '→';
-  const arrowColor = kind === 'opp' ? 'var(--a5)' : 'var(--a3)';
-  let html = '';
-  const parts = String(str).split(/(\([^)]*\))/);
-  for (const part of parts) {
-    if (!part) continue;
-    if (part[0] === '(' && part[part.length - 1] === ')') {
-      html += esc(part); // nghĩa tiếng Việt — giữ nguyên
-    } else {
-      const toks = part.split(/([A-Za-z]+(?:['’\-][A-Za-z]+)*)/);
-      for (let i = 0; i < toks.length; i++) {
-        const tk = toks[i];
-        if (!tk) continue;
-        if (i % 2 === 1) html += `<span class="ex-word" data-tr="1" data-w="${esc(tk)}">${esc(tk)}</span>`;
-        else html += esc(tk);
-      }
-    }
-  }
-  return html.split(arrow).join(`<span style="color:${arrowColor}">${arrow}</span>`).split('•').join(' &bull; ');
-}
-
-async function translateWord(word) {
-  try {
-    const r = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en|vi');
-    const j = await r.json();
-    const t = j && j.responseData && j.responseData.translatedText;
-    if (t && t.toLowerCase() !== word.toLowerCase()) return t;
-  } catch (_) {}
-  return null;
-}
-
-function hideExTip() { if (_exTipEl) _exTipEl.classList.remove('show'); }
-
-function showExTip(anchor, en, vi, loading) {
-  if (!_exTipEl) {
-    _exTipEl = document.createElement('div');
-    _exTipEl.className = 'ex-tip';
-    document.body.appendChild(_exTipEl);
-  }
-  _exTipEl.innerHTML = `<div class="ex-tip-en">🔊 ${esc(en)}</div><div class="ex-tip-vi${loading ? ' loading' : ''}">${esc(vi)}</div>`;
-  _exTipEl.classList.add('show');
-  const r = anchor.getBoundingClientRect();
-  const tw = _exTipEl.offsetWidth, th = _exTipEl.offsetHeight;
-  let left = r.left + r.width / 2 - tw / 2;
-  left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
-  let top = r.top - th - 8;
-  if (top < 8) top = r.bottom + 8;
-  _exTipEl.style.left = left + 'px';
-  _exTipEl.style.top = top + 'px';
-}
-
-async function exWordTap(el) {
-  const word = el.dataset.w || el.textContent;
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(word);
-    u.lang = 'en-US'; u.rate = 0.9;
-    window.speechSynthesis.speak(u);
-  }
-  el.classList.add('speaking');
-  setTimeout(() => el.classList.remove('speaking'), 700);
-
-  const token = ++_exTipToken;
-  // Dòng gợi ý/trái nghĩa (data-tr) → luôn dịch tự động, bỏ qua nghĩa trong mẫu
-  const translateOnly = el.dataset.tr === '1';
-  const key = cleanWord(word);
-  const cached = translateOnly ? _trCache.get(key) : lookupGloss(word);
-  if (cached) {
-    showExTip(el, word, cached, false);
-  } else {
-    showExTip(el, word, 'Đang dịch…', true);
-    const t = await translateWord(word);
-    if (token !== _exTipToken) return; // người dùng đã chạm từ khác
-    const vi = t || '(chưa có nghĩa)';
-    if (t) {
-      if (translateOnly) _trCache.set(key, vi);
-      else if (_exGloss) _exGloss.words.set(key, vi);
-    }
-    showExTip(el, word, vi, false);
-  }
-  clearTimeout(_exTipHideT);
-  _exTipHideT = setTimeout(hideExTip, 5000);
-}
-
-document.addEventListener('click', function (e) {
-  const el = e.target.closest ? e.target.closest('.ex-word') : null;
-  if (!el) { if (!(e.target.closest && e.target.closest('.ex-tip'))) hideExTip(); return; }
-  e.stopPropagation();
-  exWordTap(el);
-});
-window.addEventListener('scroll', hideExTip, true);
-window.addEventListener('resize', hideExTip);
 
 // ── AUDIO ────────────────────────────────────────────
 let _audio = null;
