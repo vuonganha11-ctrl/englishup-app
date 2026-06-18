@@ -286,6 +286,12 @@ select.input{cursor:pointer}
               <option value="">Tất cả cấp độ</option>
               <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option>
             </select>
+            <select class="input" style="width:160px;padding:7px 10px" id="words-topic-filter" onchange="onTopicFilterChange()">
+              <option value="">Tất cả chủ đề</option>
+            </select>
+            <select class="input" style="width:160px;padding:7px 10px;display:none" id="words-subtopic-filter" onchange="filterWords()">
+              <option value="">Tất cả nhóm</option>
+            </select>
           </div>
           <div id="words-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
           <div class="pagination" id="words-pagination"></div>
@@ -763,7 +769,7 @@ select.input{cursor:pointer}
 let _sb = null;
 let _user = null;
 let _words=[], _topics=[], _courses=[], _shadowing=[], _users=[];
-let _wordsFiltered=[], _wordPage=0;
+let _wordsFiltered=[], _wordPage=0, _topicTree={};
 const PAGE=15;
 let _pendingImport=[];
 let _imgFile=null,_audioFile=null,_topicImgFile=null,_shadowAudioFile=null;
@@ -891,12 +897,56 @@ async function loadWords(){
   document.getElementById('words-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
   const {data,error}=await _sb.from('words').select('*').order('created_at',{ascending:false});
   if(error){document.getElementById('words-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
-  _words=data||[]; _wordsFiltered=[..._words]; renderWords();
+  _words=data||[]; _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
+}
+// Tách topic "Cha - Con" thành {parent, child} (separator " - ")
+function splitTopic(t){
+  t=(t||'').trim(); if(!t) return {parent:'',child:''};
+  const i=t.indexOf(' - ');
+  return i<0 ? {parent:t,child:''} : {parent:t.slice(0,i).trim(),child:t.slice(i+3).trim()};
+}
+// Dựng cây chủ đề từ _words rồi đổ vào dropdown cha (giữ lựa chọn hiện tại nếu còn)
+function buildTopicFilter(){
+  const tree={};
+  _words.forEach(w=>{
+    const {parent,child}=splitTopic(w.topic);
+    if(!parent) return;
+    (tree[parent]=tree[parent]||new Set());
+    if(child) tree[parent].add(child);
+  });
+  _topicTree=tree;
+  const sel=document.getElementById('words-topic-filter'); if(!sel) return;
+  const prev=sel.value;
+  const parents=Object.keys(tree).sort((a,b)=>a.localeCompare(b,'vi'));
+  sel.innerHTML='<option value="">Tất cả chủ đề</option>'+parents.map(p=>`<option${p===prev?' selected':''}>${p}</option>`).join('');
+  onTopicFilterChange(true);
+}
+// Khi đổi chủ đề cha → đổ nhóm con tương ứng (ẩn nếu không có nhóm con)
+function onTopicFilterChange(keepSub){
+  const parent=document.getElementById('words-topic-filter').value;
+  const sub=document.getElementById('words-subtopic-filter');
+  const prevSub=keepSub?sub.value:'';
+  const children=parent&&_topicTree[parent]?[..._topicTree[parent]].sort((a,b)=>a.localeCompare(b,'vi')):[];
+  if(children.length){
+    sub.innerHTML='<option value="">Tất cả nhóm</option>'+children.map(c=>`<option${c===prevSub?' selected':''}>${c}</option>`).join('');
+    sub.style.display='';
+  }else{
+    sub.innerHTML='<option value="">Tất cả nhóm</option>'; sub.value=''; sub.style.display='none';
+  }
+  filterWords();
 }
 function filterWords(v){
   const q=(v??document.getElementById('words-search').value).toLowerCase();
   const lvl=document.getElementById('words-level-filter').value;
-  _wordsFiltered=_words.filter(w=>(!q||(w.term||'').toLowerCase().includes(q)||(w.definition_vi||'').toLowerCase().includes(q))&&(!lvl||w.level===lvl));
+  const parent=document.getElementById('words-topic-filter').value;
+  const subEl=document.getElementById('words-subtopic-filter');
+  const sub=subEl&&subEl.style.display!=='none'?subEl.value:'';
+  _wordsFiltered=_words.filter(w=>{
+    if(q&&!((w.term||'').toLowerCase().includes(q)||(w.definition_vi||'').toLowerCase().includes(q))) return false;
+    if(lvl&&w.level!==lvl) return false;
+    if(parent){const t=splitTopic(w.topic); if(t.parent!==parent) return false; if(sub&&t.child!==sub) return false;}
+    return true;
+  });
   _wordPage=0; renderWords();
 }
 function renderWords(){
