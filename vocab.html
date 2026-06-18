@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js" defer></script>
 <style>
 :root {
   --bg:      #08090d;
@@ -65,6 +66,11 @@ body {
   text-decoration: none;
 }
 .topbar .logo span { color: var(--a2); }
+
+.top-nav { display: flex; gap: 4px; margin-left: 14px; flex-wrap: wrap; }
+.top-nav a { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 7px 12px; border-radius: 8px; white-space: nowrap; }
+.top-nav a:hover { color: var(--text); background: var(--card); }
+.top-nav a.active { color: var(--accent); background: rgba(79,142,247,.12); }
 
 .top-search {
   flex: 1;
@@ -928,6 +934,17 @@ aside.sidebar {
 .ex-alts { font-size: 11px; color: var(--a3); margin-top: 4px; }
 .ex-oppos { font-size: 11px; color: var(--a5); margin-top: 2px; }
 
+/* Tap-a-word in example sentences */
+.ex-word { cursor: pointer; border-radius: 4px; padding: 0 1px; transition: background .12s, color .12s; }
+.ex-word:hover { background: rgba(79,142,247,.18); color: var(--accent); }
+.ex-word.speaking { background: var(--accent); color: #fff; }
+.ex-sentence .highlight.ex-word:hover { background: rgba(79,142,247,.25); }
+.ex-tip { position: fixed; z-index: 200; max-width: 260px; background: var(--card2); border: 1px solid var(--border2); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.5); padding: 8px 11px; font-size: 13px; color: var(--text); pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; }
+.ex-tip.show { opacity: 1; transform: translateY(0); }
+.ex-tip .ex-tip-en { font-weight: 700; color: var(--accent); font-size: 13px; }
+.ex-tip .ex-tip-vi { color: var(--text); margin-top: 2px; }
+.ex-tip .ex-tip-vi.loading { color: var(--muted); font-style: italic; }
+
 /* SRS button */
 .wm-footer {
   padding: 14px 20px;
@@ -1058,7 +1075,16 @@ aside.sidebar {
 
 <!-- ── TOPBAR ─────────────────────────────────────── -->
 <header class="topbar">
-  <div class="logo">English<span>Up</span></div>
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="vocab.html" class="active">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="game.html">🎮 Game</a>
+    <a href="video.html">🎬 Video</a>
+    <a href="posts.html">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
+  </nav>
 
   <div class="topbar-right">
     <div class="xp-badge" id="xp-display" style="display:none">
@@ -1685,11 +1711,14 @@ function openWord(id) {
 function closeWord() {
   document.getElementById('overlay-word').classList.remove('open');
   stopAudio();
+  hideExTip();
 }
 
 function renderWordExamples(w) {
   const section = document.getElementById('wm-examples-section');
   const wrap    = document.getElementById('wm-examples-table-wrap');
+
+  buildExGloss(w);
 
   const examples = w.examples;
   if (!examples || !examples.length || !examples[0]?.rows?.length) {
@@ -1699,7 +1728,7 @@ function renderWordExamples(w) {
       wrap.innerHTML = `
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
           <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Câu mẫu</div>
-          <div style="font-size:14px;line-height:1.65;">${highlightTerm(esc(w.example_sentence), w.term)}</div>
+          <div style="font-size:14px;line-height:1.65;">${clickableSentence(w.example_sentence, w.term)}</div>
         </div>`;
     } else {
       section.style.display = 'none';
@@ -1722,13 +1751,12 @@ function renderWordExamples(w) {
 
   const rowsHtml = rows.map(r => {
     const tc = typeClass[r.type] || 'type-ts';
-    const sentenceHtml = highlightTerm(esc(r.sentence||''), w.term);
-    const altsHtml = r.alternatives ? formatAlternatives(r.alternatives) : '';
-    const oppsHtml = r.opposites    ? formatOpposites(r.opposites)       : '';
+    const sentenceHtml = clickableSentence(r.sentence||'', w.term);
+    const altsHtml = r.alternatives ? clickableGloss(r.alternatives, 'alt') : '';
+    const oppsHtml = r.opposites    ? clickableGloss(r.opposites, 'opp')    : '';
     const sentAttr = (r.sentence||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `
       <tr>
-        <td style="width:90px"><span class="type-badge ${tc}">${esc(r.type||'')}</span></td>
         <td>
           <div class="ex-sentence">${sentenceHtml}</div>
           ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
@@ -1753,11 +1781,9 @@ function renderWordExamples(w) {
   }).join('');
 
   wrap.innerHTML = `
-    ${situation ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 ${esc(situation)}</div>` : ''}
     <table class="examples-table">
       <thead>
         <tr>
-          <th>Loại câu</th>
           <th>Câu mẫu & giải thích</th>
         </tr>
       </thead>
@@ -1780,6 +1806,162 @@ function highlightTerm(text, term) {
   const re = new RegExp(`(${escRegex(term)})`, 'gi');
   return text.replace(re, '<span class="highlight">$1</span>');
 }
+
+// ── TAP-A-WORD trong câu mẫu: phát âm + hiện nghĩa tiếng Việt ──────────
+let _exGloss = null;
+let _exTipEl = null, _exTipHideT = null, _exTipToken = 0;
+const _trCache = new Map();
+const _EX_STOP = new Set(['a','an','the','of','in','on','at','to','and','or','is','are','was','were','be','been','with','for','it','its','some','none','as','by','that','this','these','those','from','into','out']);
+
+function cleanWord(w) {
+  return (w || '').toLowerCase().replace(/[^a-zà-ỹ'’\-]/gi, '');
+}
+
+function buildExGloss(w) {
+  _exGloss = { words: new Map(), phrases: [] };
+  if (w.term && w.definition_vi) _exGloss.words.set(cleanWord(w.term), w.definition_vi);
+  const texts = [];
+  const rows = (w.examples && w.examples[0] && w.examples[0].rows) || [];
+  rows.forEach(r => { if (r.alternatives) texts.push(r.alternatives); if (r.opposites) texts.push(r.opposites); });
+  const re = /([A-Za-z][A-Za-z'’\- ]*?)\s*\(([^)]+)\)/g;
+  for (const t of texts) {
+    let m;
+    while ((m = re.exec(t))) {
+      const gloss = m[2].trim();
+      if (!gloss) continue;
+      const allWords = m[1].trim().toLowerCase().split(/\s+/).map(cleanWord).filter(Boolean);
+      if (!allWords.length) continue;
+      if (allWords.length === 1) {
+        if (!_EX_STOP.has(allWords[0]) && !_exGloss.words.has(allWords[0])) _exGloss.words.set(allWords[0], gloss);
+      } else {
+        const matchWords = new Set(allWords.filter(x => !_EX_STOP.has(x)));
+        if (matchWords.size) _exGloss.phrases.push({ words: matchWords, gloss });
+      }
+    }
+  }
+}
+
+function lookupGloss(word) {
+  if (!_exGloss) return null;
+  const c = cleanWord(word);
+  if (!c) return null;
+  if (_exGloss.words.has(c)) return _exGloss.words.get(c);
+  for (const ph of _exGloss.phrases) if (ph.words.has(c)) return ph.gloss;
+  return null;
+}
+
+function clickableSentence(sentence, term) {
+  const termLc = (term || '').toLowerCase();
+  const parts = String(sentence).split(/([A-Za-z]+(?:['’\-][A-Za-z]+)*)/);
+  let html = '';
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (!p) continue;
+    if (i % 2 === 1) {
+      const lc = p.toLowerCase();
+      const isTerm = termLc && (lc === termLc || lc.startsWith(termLc) || termLc.startsWith(lc));
+      html += `<span class="ex-word${isTerm ? ' highlight' : ''}" data-w="${esc(p)}">${esc(p)}</span>`;
+    } else {
+      html += esc(p);
+    }
+  }
+  return html;
+}
+
+// Dòng gợi ý/trái nghĩa: bọc từ tiếng Anh (data-tr → luôn dịch tự động), giữ nguyên nghĩa trong ngoặc
+function clickableGloss(str, kind) {
+  const arrow = kind === 'opp' ? '↔' : '→';
+  const arrowColor = kind === 'opp' ? 'var(--a5)' : 'var(--a3)';
+  let html = '';
+  const parts = String(str).split(/(\([^)]*\))/);
+  for (const part of parts) {
+    if (!part) continue;
+    if (part[0] === '(' && part[part.length - 1] === ')') {
+      html += esc(part);
+    } else {
+      const toks = part.split(/([A-Za-z]+(?:['’\-][A-Za-z]+)*)/);
+      for (let i = 0; i < toks.length; i++) {
+        const tk = toks[i];
+        if (!tk) continue;
+        if (i % 2 === 1) html += `<span class="ex-word" data-tr="1" data-w="${esc(tk)}">${esc(tk)}</span>`;
+        else html += esc(tk);
+      }
+    }
+  }
+  return html.split(arrow).join(`<span style="color:${arrowColor}">${arrow}</span>`).split('•').join(' &bull; ');
+}
+
+async function translateWord(word) {
+  try {
+    const r = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en|vi');
+    const j = await r.json();
+    const t = j && j.responseData && j.responseData.translatedText;
+    if (t && t.toLowerCase() !== word.toLowerCase()) return t;
+  } catch (_) {}
+  return null;
+}
+
+function hideExTip() { if (_exTipEl) _exTipEl.classList.remove('show'); }
+
+function showExTip(anchor, en, vi, loading) {
+  if (!_exTipEl) {
+    _exTipEl = document.createElement('div');
+    _exTipEl.className = 'ex-tip';
+    document.body.appendChild(_exTipEl);
+  }
+  _exTipEl.innerHTML = `<div class="ex-tip-en">🔊 ${esc(en)}</div><div class="ex-tip-vi${loading ? ' loading' : ''}">${esc(vi)}</div>`;
+  _exTipEl.classList.add('show');
+  const r = anchor.getBoundingClientRect();
+  const tw = _exTipEl.offsetWidth, th = _exTipEl.offsetHeight;
+  let left = r.left + r.width / 2 - tw / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+  let top = r.top - th - 8;
+  if (top < 8) top = r.bottom + 8;
+  _exTipEl.style.left = left + 'px';
+  _exTipEl.style.top = top + 'px';
+}
+
+async function exWordTap(el) {
+  const word = el.dataset.w || el.textContent;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'en-US'; u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+  el.classList.add('speaking');
+  setTimeout(() => el.classList.remove('speaking'), 700);
+
+  const token = ++_exTipToken;
+  const translateOnly = el.dataset.tr === '1';
+  const key = cleanWord(word);
+  const cached = translateOnly ? _trCache.get(key) : lookupGloss(word);
+  if (cached) {
+    showExTip(el, word, cached, false);
+  } else {
+    showExTip(el, word, 'Đang dịch…', true);
+    const t = await translateWord(word);
+    if (token !== _exTipToken) return;
+    const vi = t || '(chưa có nghĩa)';
+    if (t) {
+      if (translateOnly) _trCache.set(key, vi);
+      else if (_exGloss) _exGloss.words.set(key, vi);
+    }
+    showExTip(el, word, vi, false);
+  }
+  clearTimeout(_exTipHideT);
+  _exTipHideT = setTimeout(hideExTip, 5000);
+}
+
+document.addEventListener('click', function (e) {
+  const el = e.target.closest ? e.target.closest('.ex-word') : null;
+  if (!el) { if (!(e.target.closest && e.target.closest('.ex-tip'))) hideExTip(); return; }
+  e.stopPropagation();
+  exWordTap(el);
+});
+window.addEventListener('scroll', hideExTip, true);
+window.addEventListener('resize', hideExTip);
+
 
 // ── AUDIO ────────────────────────────────────────────
 let _audio = null;
@@ -1883,9 +2065,9 @@ async function addToSRS() {
     const { error } = await sb.from('srs_cards').upsert({
       user_id:     currentUser.id,
       word_id:     openedWord.id,
-      due_date:     new Date().toISOString(),
+      due_date:    new Date().toISOString(),
       interval_days: 1,
-      ease_factor:  2.5,
+      ease_factor: 2.5,
       review_count: 0
     }, { onConflict: 'user_id,word_id' });
 
