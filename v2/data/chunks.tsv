@@ -1,0 +1,81 @@
+ord	chunk	slots	meaning_vi	nhom	goi_y_voi_em
+1	This is my ___.	book|bag|toy|room|sister	Đây là ___ của tớ.	Giới thiệu	Chỉ đồ của mình cho em xem
+2	Look at the ___!	cat|car|bird|moon|flower	Nhìn ___ kìa!	Chỉ trỏ	Chỉ cho em cái gì đó ngoài cửa sổ
+3	I like ___.	apples|dogs|music|blue|pizza	Tớ thích ___.	Cảm xúc	Nói với em mình thích gì
+4	I don't like ___.	milk|rain|noise|carrots	Tớ không thích ___.	Cảm xúc	
+5	Do you want ___?	water|an apple|this|some milk	Em muốn ___ không?	Hỏi em	Mời em ăn gì đó
+6	Can I have ___?	some water|an apple|the ball|more	Cho tớ ___ được không?	Xin	Xin mẹ cái gì đó
+7	Let's play!		Mình chơi đi!	Rủ chơi	Rủ em chơi
+8	Let's go!		Đi thôi!	Rủ chơi	
+9	What is this?		Cái này là gì?	Hỏi	Cầm đồ chơi lên hỏi em
+10	It's a ___.	dog|car|book|ball|tree	Đó là ___.	Trả lời	Trả lời khi em hỏi
+11	Where is ___?	Mom|my bag|the cat|Dad	___ ở đâu?	Hỏi	Hỏi em xem đồ ở đâu
+12	Here it is!		Đây rồi!	Trả lời	
+13	I'm ___.	happy|hungry|tired|okay|sad	Tớ đang ___.	Cảm xúc	Nói cho em biết mình thấy sao
+14	Are you ___?	happy|hungry|okay|tired	Em có ___ không?	Hỏi em	Hỏi em có đói không
+15	I have a ___.	dog|bike|brother|question	Tớ có một ___.	Giới thiệu	
+16	Thank you!		Cảm ơn!	Xã giao	
+17	You're welcome.		Không có gì.	Xã giao	Nói khi em cảm ơn
+18	Good morning!		Chào buổi sáng!	Xã giao	Chào em mỗi sáng
+19	Good night!		Chúc ngủ ngon!	Xã giao	Nói với em trước khi ngủ
+20	How are you?		Em khỏe không?	Hỏi em	
+21	I'm fine, thank you.		Tớ khỏe, cảm ơn.	Trả lời	
+22	What's your name?		Em tên gì?	Hỏi em	
+23	My name is ___.	Nam|Mai|Bin	Tớ tên là ___.	Giới thiệu	
+24	How old are you?		Em mấy tuổi?	Hỏi em	
+25	I'm ___ years old.	eight|four|nine	Tớ ___ tuổi.	Giới thiệu	
+26	Can you see ___?	the bird|my toy|this	Em thấy ___ không?	Hỏi em	Chỉ cho em xem con gì đó
+27	Come here!		Lại đây!	Ra lệnh	Gọi em lại
+28	Sit down, please.		Ngồi xuống đi.	Ra lệnh	
+29	Give me ___, please.	the ball|your hand|that	Đưa tớ ___ nhé.	Xin	Xin em đồ chơi
+30	Please help me.		Giúp tớ với.	Xin	
+31	I want to ___.	play|go home|eat|sleep|draw	Tớ muốn ___.	Muốn	
+32	I don't want to ___.	go|sleep|eat that	Tớ không muốn ___.	Muốn	
+33	Do you want to ___?	play|draw|go outside|read	Em muốn ___ không?	Hỏi em	Rủ em làm gì đó
+34	Let's ___ together.	play|draw|sing|read	Mình cùng ___ nhé.	Rủ chơi	Rủ em cùng làm
+35	What color is it?		Nó màu gì?	Hỏi	Chỉ đồ vật hỏi em màu
+36	It's ___.	red|blue|green|yellow	Nó màu ___.	Trả lời	
+37	How many ___?	apples|cars|dogs|fingers	Có mấy ___?	Hỏi	Đếm đồ chơi cùng em
+38	There are ___.	two|three|five|many	Có ___ cái.	Trả lời	
+39	Yes, please.		Có ạ.	Trả lời	
+40	No, thank you.		Không, cảm ơn.	Trả lời	
+41	I'm sorry.		Tớ xin lỗi.	Xã giao	
+42	That's okay.		Không sao đâu.	Xã giao	Nói khi em xin lỗi
+43	Be careful!		Cẩn thận!	Cảnh báo	Nhắc em khi em chạy
+44	Don't do that.		Đừng làm thế.	Cảnh báo	
+45	Wait for me!		Đợi tớ với!	Gọi	
+46	Follow me.		Đi theo tớ.	Ra lệnh	Dẫn em đi đâu đó
+47	Look at me!		Nhìn tớ này!	Chỉ trỏ	
+48	Listen!		Nghe này!	Chỉ trỏ	
+49	It's my turn.		Đến lượt tớ.	Chơi	Chơi trò chơi với em
+50	It's your turn.		Đến lượt em.	Chơi	Chơi trò chơi với em
+51	Good job!		Giỏi lắm!	Khen	Khen em khi em làm được
+52	Well done!		Làm tốt lắm!	Khen	Khen em
+53	Try again.		Thử lại đi.	Khen	Động viên em
+54	I can ___.	swim|read|draw|sing|run	Tớ biết ___.	Khoe	Khoe với em mình làm được gì
+55	Can you ___?	swim|sing|jump|count	Em biết ___ không?	Hỏi em	
+56	I don't know.		Tớ không biết.	Trả lời	
+57	I don't understand.		Tớ không hiểu.	Trả lời	
+58	Say it again, please.		Nói lại đi.	Xin	
+59	What's that?		Cái kia là gì?	Hỏi	
+60	Who is that?		Ai kia?	Hỏi	
+61	That's my ___.	sister|brother|mom|dad	Đó là ___ của tớ.	Giới thiệu	
+62	I love you.		Tớ thương em.	Cảm xúc	Nói với em trước khi ngủ
+63	Are you okay?		Em ổn không?	Hỏi em	Hỏi khi em ngã
+64	Let's eat!		Ăn thôi!	Rủ	Gọi em ăn cơm
+65	I'm hungry.		Tớ đói.	Cảm xúc	
+66	I'm thirsty.		Tớ khát.	Cảm xúc	
+67	It's hot.		Nóng quá.	Nhận xét	
+68	It's cold.		Lạnh quá.	Nhận xét	
+69	It's big!		To quá!	Nhận xét	Nói khi thấy cái gì to
+70	It's so cute!		Dễ thương quá!	Nhận xét	Nói khi thấy con mèo
+71	Open it.		Mở ra đi.	Ra lệnh	
+72	Close the door.		Đóng cửa lại.	Ra lệnh	
+73	Put it here.		Để đây đi.	Ra lệnh	Dọn đồ chơi cùng em
+74	Don't touch!		Đừng đụng vào!	Cảnh báo	
+75	Where are you going?		Em đi đâu đấy?	Hỏi em	
+76	I'm going ___.	home|to school|outside	Tớ đi ___.	Trả lời	
+77	See you later!		Hẹn gặp lại!	Xã giao	Chào em khi đi học
+78	Let's go outside.		Ra ngoài chơi đi.	Rủ	Rủ em ra sân
+79	Are you ready?		Em sẵn sàng chưa?	Hỏi em	Trước khi bắt đầu trò chơi
+80	One, two, three, go!		Một, hai, ba, chạy!	Chơi	Đếm rồi chạy đua với em
