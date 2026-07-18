@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp · Học qua Video</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
+  --border:#232d42; --border2:#2e3a55;
+  --accent:#4f8ef7; --a2:#a78bfa; --a3:#34d399; --a4:#fb923c; --a5:#f472b6;
+  --text:#dde3f0; --muted:#64748b;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.5}
+a{color:inherit;text-decoration:none}
+/* topbar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;padding:12px 20px;background:rgba(14,16,24,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.logo{font-weight:800;font-size:18px;letter-spacing:.3px}
+.logo span{color:var(--accent)}
+.topnav{display:flex;gap:6px;flex-wrap:wrap}
+.topnav a{padding:6px 12px;border-radius:8px;font-size:14px;color:var(--muted);transition:.15s}
+.topnav a:hover{color:var(--text);background:var(--card)}
+.topnav a.active{color:var(--text);background:var(--card2);border:1px solid var(--border2)}
+.spacer{flex:1}
+.pill{font-size:12px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:4px 10px}
+/* layout */
+.wrap{max-width:1280px;margin:0 auto;padding:20px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px}
+@media(max-width:920px){.wrap{grid-template-columns:1fr}}
+.col-video{position:sticky;top:74px;align-self:start}
+@media(max-width:920px){.col-video{position:static}}
+.player-box{background:#000;border:1px solid var(--border);border-radius:14px;overflow:hidden;aspect-ratio:16/9}
+.player-box iframe{width:100%;height:100%;border:0;display:block}
+.vmeta{margin-top:14px}
+.vmeta h1{font-size:20px;margin:0 0 6px}
+.vmeta .by{color:var(--muted);font-size:13px;display:flex;gap:10px;align-items:center}
+.vmeta .by b{color:var(--a3)}
+.now-playing{margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-height:64px}
+.now-playing .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.now-playing .txt{font-size:16px;margin-top:6px}
+/* tabs */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.tabbar{display:flex;gap:2px;padding:8px;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto}
+.tabbar button{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--muted);font-size:14px;font-weight:600;padding:9px 14px;border-radius:9px;cursor:pointer;transition:.15s;white-space:nowrap}
+.tabbar button:hover{color:var(--text);background:var(--card2)}
+.tabbar button.active{color:#fff;background:var(--accent)}
+.tabbar .ic{font-size:15px}
+.tabpane{display:none;padding:16px;max-height:72vh;overflow:auto}
+.tabpane.active{display:block}
+/* transcript */
+.tr-tools{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent)}
+.sent{padding:9px 12px;border-radius:9px;border:1px solid transparent;cursor:pointer;transition:.12s;margin-bottom:4px;font-size:15px}
+.sent:hover{background:var(--card)}
+.sent .ts{font-family:var(--mono);font-size:11px;color:var(--muted);margin-right:10px}
+.sent.active{background:rgba(79,142,247,.14);border-color:var(--accent)}
+.sent.done{color:var(--muted)}
+/* ===== v2: bấm tra từ trong transcript ===== */
+.sent .w{cursor:pointer;border-radius:4px;padding:0 1px;border-bottom:2px dotted rgba(125,125,125,.45);transition:.12s;position:relative}
+.sent .w:hover{background:#fef3c7;color:#7c2d12;border-bottom-color:#ea580c}
+.sent .w.saved{background:#dcfce7;color:#14532d;border-bottom-color:#22c55e}
+.wpop{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 7px);
+  background:#1c1917;color:#fff;border-radius:11px;padding:9px 12px;font-size:13px;
+  font-weight:500;line-height:1.5;width:max-content;max-width:250px;z-index:60;
+  text-align:left;box-shadow:0 8px 22px rgba(0,0,0,.35);white-space:normal}
+.wpop b{color:#fdba74}.wpop i{color:#a8a29e;font-family:var(--mono);font-style:normal;font-size:11px}
+.wpop small{display:block;color:#4ade80;margin-top:4px;font-size:10.5px}
+/* shadowing */
+.shadow-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.shadow-idx{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.shadow-text{font-size:22px;line-height:1.45;margin:14px 0;min-height:64px}
+.shadow-text.hidden-text{filter:blur(7px);user-select:none}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border2);background:var(--card2);color:var(--text);font-size:14px;font-weight:600;padding:9px 14px;border-radius:10px;cursor:pointer;transition:.12s}
+.btn:hover{border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.on{background:var(--a3);border-color:var(--a3);color:#04210f}
+.btn.rec{background:var(--a5);border-color:var(--a5);color:#3a0820}
+.btn.sm{padding:6px 10px;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--card2);color:var(--muted);font-size:13px;font-weight:600;padding:8px 12px;cursor:pointer}
+.seg button.active{background:var(--a2);color:#1a1030}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.row .cap{font-size:12px;color:var(--muted);min-width:84px}
+.score-box{margin-top:14px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;display:none}
+.score-box.show{display:block}
+.score-ring{font-size:30px;font-weight:800}
+.heard{margin-top:8px;font-size:15px}
+.heard .ok{color:var(--a3)}
+.heard .miss{color:var(--a5);text-decoration:underline dotted}
+.audio-wrap{margin-top:10px}
+.audio-wrap audio{width:100%;margin-top:6px}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.warn{font-size:13px;color:var(--a4);background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.3);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none}
+.warn.show{display:block}
+/* listen */
+.dict-input{width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:12px;font-size:16px;font-family:inherit;resize:vertical;min-height:60px}
+.dict-input:focus{outline:none;border-color:var(--accent)}
+/* vocab */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.vcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.vcard .term{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.vcard .term .spk{margin-left:auto;cursor:pointer;color:var(--accent);border:1px solid var(--border2);border-radius:8px;padding:3px 7px;font-size:13px}
+.vcard .ph{font-family:var(--mono);font-size:12px;color:var(--a2);margin-top:2px}
+.vcard .vi{font-size:14px;margin-top:8px}
+.vcard .ex{font-size:13px;color:var(--muted);margin-top:8px;font-style:italic;border-left:2px solid var(--border2);padding-left:8px}
+.vcard .ex b{color:var(--accent);font-style:normal}
+/* quiz */
+.qitem{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.qitem .q{font-weight:600;font-size:15px;margin-bottom:10px}
+.qitem .q .n{color:var(--accent);margin-right:6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--border);border-radius:9px;margin-bottom:7px;cursor:pointer;font-size:14px}
+.opt:hover{border-color:var(--border2)}
+.opt input{accent-color:var(--accent);margin-top:3px}
+.opt.correct{border-color:var(--a3);background:rgba(52,211,153,.1)}
+.opt.wrong{border-color:var(--a5);background:rgba(244,114,182,.1)}
+.qexp{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+.qexp.show{display:block}
+.qexp b{color:var(--a3)}
+.quiz-foot{display:flex;align-items:center;gap:14px;margin-top:6px}
+.quiz-result{font-size:18px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="report.html" class="logo">English<span>Up</span></a>
+  <nav class="topnav">
+    <a href="vocab.html">Từ vựng</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="game.html">🎮 Game</a>
+    <a href="video.html" class="active">🎬 Video</a>
+    <a href="posts.html">📰 Bài viết</a>
+    <a href="report.html">📊 Báo cáo</a>
+    <a href="accounts.html" id="nav-accounts" style="display:none">👥 Tài khoản</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="pill">Bản demo · 1 video</div>
+</div>
+
+<div class="wrap">
+  <!-- LEFT: video -->
+  <div class="col-video">
+    <div class="player-box"><div id="player"></div></div>
+    <div class="vmeta">
+      <h1 id="v-title">Do artists really write their own songs?</h1>
+      <div class="by"><b id="v-channel">TED-Ed</b> · <span>Think Like A Musician</span> · <span id="v-dur">7:44</span></div>
+    </div>
+    <div class="now-playing">
+      <div class="lbl">Đang phát</div>
+      <div class="txt" id="now-playing">Bấm một câu ở phần Phụ đề hoặc vào tab "Nói" để bắt đầu luyện.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: tabs -->
+  <div class="panel">
+    <div class="tabbar" id="tabbar">
+      <button data-tab="transcript" class="active"><span class="ic">📝</span>Phụ đề</button>
+      <button data-tab="speak"><span class="ic">🎙️</span>Nói theo</button>
+      <button data-tab="listen"><span class="ic">🎧</span>Nghe</button>
+      <button data-tab="vocab"><span class="ic">📚</span>Từ vựng</button>
+      <button data-tab="quiz"><span class="ic">❓</span>Trắc nghiệm</button>
+    </div>
+
+    <!-- TRANSCRIPT -->
+    <div class="tabpane active" id="pane-transcript">
+      <div class="tr-tools">
+        <label class="toggle"><input type="checkbox" id="autoscroll" checked> Tự cuộn theo video</label>
+        <span>·</span>
+        <span>Bấm vào câu để nhảy tới và phát</span>
+      </div>
+      <div id="transcript"></div>
+    </div>
+
+    <!-- SPEAK / SHADOWING -->
+    <div class="tabpane" id="pane-speak">
+      <div class="warn" id="speak-warn"></div>
+      <div class="shadow-card">
+        <div class="shadow-idx">
+          <span>Câu <b id="sp-num">1</b> / <span id="sp-total">0</span></span>
+          <label class="toggle" style="font-size:12px"><input type="checkbox" id="sp-hide"> Ẩn chữ (thử thách)</label>
+        </div>
+        <div class="shadow-text" id="sp-text">—</div>
+
+        <div class="btnrow">
+          <button class="btn sm" id="sp-prev">◀ Câu trước</button>
+          <button class="btn primary" id="sp-play">▶ Nghe câu</button>
+          <button class="btn" id="sp-loop">🔁 Lặp</button>
+          <button class="btn sm" id="sp-next">Câu sau ▶</button>
+        </div>
+
+        <div class="row">
+          <span class="cap">Tốc độ</span>
+          <div class="seg" id="sp-speed">
+            <button data-rate="0.5">0.5x</button>
+            <button data-rate="0.75">0.75x</button>
+            <button data-rate="1" class="active">1x</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="cap">Ghi âm</span>
+          <button class="btn rec" id="sp-rec">● Ghi âm</button>
+          <button class="btn sm" id="sp-replay" disabled>▶ Nghe lại</button>
+          <button class="btn primary" id="sp-score">🎤 Nói theo &amp; chấm điểm</button>
+        </div>
+        <div class="audio-wrap"><audio id="sp-audio" controls style="display:none"></audio></div>
+
+        <div class="score-box" id="sp-scorebox">
+          <div class="score-ring" id="sp-pct">0%</div>
+          <div style="font-size:13px;color:var(--muted)">Độ khớp với câu mẫu</div>
+          <div class="heard" id="sp-heard"></div>
+        </div>
+        <div class="note">Mẹo: nghe câu → bật Lặp ở tốc độ chậm → đọc nhại theo → bấm "Nói theo &amp; chấm điểm" để máy nghe và so khớp.</div>
+      </div>
+    </div>
+
+    <!-- LISTEN / DICTATION -->
+    <div class="tabpane" id="pane-listen">
+      <div class="shadow-card">
+        <div class="shadow-idx"><span>Chép chính tả · Câu <b id="ls-num">1</b> / <span id="ls-total">0</span></span></div>
+        <div class="btnrow" style="margin-top:12px">
+          <button class="btn primary" id="ls-play">▶ Nghe câu</button>
+          <button class="btn" id="ls-slow">🐢 Nghe chậm</button>
+        </div>
+        <div class="row"><span class="cap">Gõ lại</span></div>
+        <textarea class="dict-input" id="ls-input" placeholder="Gõ lại những gì bạn nghe được..."></textarea>
+        <div class="btnrow" style="margin-top:10px">
+          <button class="btn sm" id="ls-prev">◀ Trước</button>
+          <button class="btn primary" id="ls-check">Kiểm tra</button>
+          <button class="btn sm" id="ls-next">Sau ▶</button>
+        </div>
+        <div class="score-box" id="ls-scorebox">
+          <div class="score-ring" id="ls-pct">0%</div>
+          <div class="heard" id="ls-diff"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOCAB -->
+    <div class="tabpane" id="pane-vocab">
+      <div class="vgrid" id="vocab-grid"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="tabpane" id="pane-quiz">
+      <div id="quiz-list"></div>
+      <div class="quiz-foot">
+        <button class="btn primary" id="quiz-submit">Nộp bài</button>
+        <button class="btn sm" id="quiz-reset">Làm lại</button>
+        <span class="quiz-result" id="quiz-result"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============ DATA (mặc định = bản demo; có thể bị ghi đè khi mở ?id=) ============ */
+let VIDEO_ID = "UDdkgOoeNcQ";
+let TITLE = "Do artists really write their own songs?";
+let CHANNEL = "TED-Ed";
+let DURATION = 464;
+let SEGMENTS = [{"start":6.0,"text":"I don't think you have to have any kind of formal training at all to be a songwriter.","end":11.7},{"start":11.7,"text":"Again, I work with people, brilliant people with huge hits all the time that don't play an instrument.","end":17.5},{"start":17.5,"text":"So don't let that dissuade you. Hey, you! Yes, you.","end":20.7},{"start":20.7,"text":"Is there music inside of you?","end":22.6},{"start":22.6,"text":"We've recruited working musicians from throughout the industry to help you hear it, hold it, and share it with this wild and wonderful world.","end":30.2},{"start":30.2,"text":"I think growing up, I assumed, like many people, that the artists that I loved and listened to wrote all of their own music.","end":37.9},{"start":37.9,"text":"I didn't realize that there were other people behind the scenes, and that it really takes a village to write a song.","end":44.9},{"start":44.9,"text":"Some artists write everything themselves, but most of the artists that you hear are a collaboration.","end":50.0},{"start":50.0,"text":"The first artist that I was aware of that wrote songs for themselves and also wrote songs for other people, was Carole King.","end":57.3},{"start":57.3,"text":"And then I heard that she had had a whole career before she was an artist of writing songs for other people.","end":64.3},{"start":64.3,"text":"That was kind of like a light bulb went off for me where I was like, that can be a job?","end":71.0},{"start":71.0,"text":"That's something that you can actually do?","end":73.2},{"start":73.2,"text":"When it comes to making a song, and people realizing their favorite artist did not write that song, that's sometimes the job of a songwriter, is to make sure that it feels like it came from your favorite artist.","end":85.6},{"start":85.6,"text":"And that is songwriting at its best.","end":87.9},{"start":87.9,"text":"It's to make sure that it's authentic.","end":90.1},{"start":90.1,"text":"There's two different ways of going.","end":92.0},{"start":92.0,"text":"Whether you're pitching a song, meaning you're selling it, just randomly and doing that, or whether you're getting in and taking a really collaborative effort together.","end":100.3},{"start":100.3,"text":"So there are two ways that in pop music that songs, let's call it getting placed.","end":105.4},{"start":105.4,"text":"The first way is you are in a room with an artist.","end":109.2},{"start":109.2,"text":"It's a producer or two, or a songwriter or two, and an artist, only one.","end":114.0},{"start":114.0,"text":"And you're making that piece of music with the artist and you are collaborating with them.","end":119.1},{"start":119.1,"text":"You are basically helping, bringing their vision to life.","end":122.0},{"start":122.0,"text":"Sometimes artists come in and they know exactly what they want to say and they don't need any help.","end":128.0},{"start":128.0,"text":"And you're kind of like artwork or you're just supportive.","end":131.2},{"start":131.2,"text":"And sometimes they come in and they don't know what to say and you are helping them figure that out.","end":137.6},{"start":137.6,"text":"So that's the first way.","end":139.2},{"start":139.2,"text":"The second way is what's called a pitch song, where you and a group of other writers and producers, just a group of musicians get together and you write a song.","end":149.0},{"start":149.0,"text":"And then that song then gets pitched to an artist or multiple artists to see if it is something that they would like to sing themselves and hopefully release.","end":158.3},{"start":158.3,"text":"When you go in to do a pitch song, which is a song that you write without the artist in the room, you take the brand of the artist into consideration, you take the genre into consideration.","end":170.1},{"start":170.1,"text":"Oftentimes, the label will send you a brief, and that is sort of details of themes that the artist wants to explore.","end":177.1},{"start":177.1,"text":"Placing a pitch song, it's kind of like going in your closet, regardless of your shape, size, and style and pulling out a suit, and then you hand it to this artist and you go, I hope this fits you perfectly.","end":190.1},{"start":190.1,"text":"Start to think about the key of the song.","end":193.0},{"start":193.0,"text":"You start to think about the vocal range of this artist.","end":196.5},{"start":196.5,"text":"Are they the type of artist that singing all the runs, and are they the vocalists of our time, or is it giving a different kind of vocal style?","end":205.8},{"start":205.8,"text":"If I do a little bit of research on an artist and I see that they're going through a breakup or they came from a certain kind of a background, I try to find things that I have in common with the artists so that I can write from an authentic place for me.","end":223.0},{"start":223.0,"text":"Let's just say they're in the room, we'll pick that adventure.","end":226.5},{"start":226.5,"text":"The next question becomes, how's your day?","end":228.7},{"start":228.7,"text":"Starts off with another conversation: where are we right now in this moment?","end":232.8},{"start":232.8,"text":"For me, I like to get an idea of what is your idea of success as an artist?","end":238.6},{"start":238.6,"text":"Because a hit song is very, very different based off of the artist, right?","end":243.0},{"start":243.0,"text":"A Billboard Hot 100 hit song or a Grammy nomination.","end":246.2},{"start":246.2,"text":"Two different forms of success, both very successful.","end":248.8},{"start":248.8,"text":"So let's say the artist is more concerned with popularity and having the hottest record on the Billboard Hot 100, because that's all that that means, if he goes to number 1, this is the most popular song in the world.","end":261.8},{"start":261.8,"text":"I say, okay, well, I know it needs to be catchy, I know it needs to be relatable, and I know that it needs to be straight to the point.","end":271.4},{"start":271.4,"text":"That also gives me a lot of reference on whether we're going to have a bridge on this song or not.","end":278.1},{"start":278.1,"text":"It also gives me some perspective as to how relatable it needs to be.","end":282.5},{"start":282.5,"text":"You're more likely to connect to typical kind of pop chords that we kind of hear over and over and over again.","end":289.6},{"start":289.6,"text":"We've listened to the same chords for however many years.","end":292.7},{"start":292.7,"text":"However, how you put them together is what makes something feel familiar enough to resonate with people, but not familiar enough that you're in a lawsuit.","end":301.0},{"start":301.0,"text":"Versus the person who is wanting to make an artistic statement.","end":304.5},{"start":304.5,"text":"And they might go a little bit weird, like some of our jazz artists or our punk artists.","end":310.3},{"start":310.3,"text":"There's very different intentions as an artist, right?","end":312.8},{"start":312.8,"text":"And I think that it's very important for songwriters specifically to have all of these things going through their mind because that's how we make it work.","end":321.4},{"start":321.4,"text":"Most of the times I start off with the melody.","end":324.6},{"start":324.6,"text":"However, there's some times where I come in and I'm like, this is the lyric.","end":329.4},{"start":329.4,"text":"And that might have started because of a conversation.","end":332.2},{"start":332.2,"text":"So each one is different.","end":333.8},{"start":333.8,"text":"But for me, melody is king and then lyrics come later.","end":337.3},{"start":337.3,"text":"A lot of my early songwriting experiences in the industry were in rooms where someone would play a track.","end":343.4},{"start":343.4,"text":"And then, the writers in the room will all go into the booth and freestyle a bunch of melodies, and then you build the song from there.","end":352.0},{"start":352.0,"text":"But the last five years now I've been living in Nashville, where the songwriting process is the exact opposite, where you come in with a title and a concept for the song, and then you build the song more from a lyrical and conceptual perspective.","end":366.3},{"start":366.3,"text":"And then almost try to retrofit some of those lyrics to melodies that might be able to house them, because the lyric is most important here in Nashville.","end":375.3},{"start":375.3,"text":"If you want to get into songwriting, I think it's important to listen to a lot of music and to study the structure and think about rhyme scheme and dynamics between the different parts, and just notice what the songs that you like are doing.","end":389.6},{"start":389.6,"text":"And leave your ego at the door.","end":391.8},{"start":391.8,"text":"Do what's best for the art.","end":393.7},{"start":393.7,"text":"Nobody's going to know who wrote what in the room.","end":396.9},{"start":396.9,"text":"Nobody's going to know who came up with this and who came up with that. Nobody cares.","end":402.3},{"start":402.3,"text":"The point is, if somebody in the room has a better idea than you, great!","end":407.1},{"start":407.1,"text":"You get to be a part of that and you get to learn from that.","end":411.9},{"start":411.9,"text":"So, I think the most important thing is to learn how to collaborate, know your strengths, know your weaknesses, and try to find people that can sort of fill in the gap for you.","end":422.7},{"start":422.7,"text":"So if you're not super strong on melody, find somebody who's strong on melody.","end":427.2},{"start":427.2,"text":"And the two of you together can make something great.","end":430.4},{"start":430.4,"text":"My advice for anybody that wants a career as a songwriter or a producer would be to work very, very, very hard at it.","end":438.0},{"start":438.0,"text":"Just keep on working.","end":439.3},{"start":439.3,"text":"Just keep on going, keep on writing songs.","end":441.8},{"start":441.8,"text":"When you write that song that you think is your best song, I promise you, you've got better; just keep on doing it.","end":449.2},{"start":449.2,"text":"It is a sport and it's a muscle and it needs to be exercised, and keep on going, and you will end up in a place musically that you probably didn't even know existed.","end":460.0}];
+
+let VOCAB = [
+  {t:"formal training", ph:"", vi:"đào tạo bài bản, chính quy", ex:"I don't think you have to have any kind of formal training at all to be a songwriter."},
+  {t:"dissuade", ph:"/dɪˈsweɪd/", vi:"can ngăn, làm ai đó nản lòng hay từ bỏ ý định", ex:"So don't let that dissuade you."},
+  {t:"behind the scenes", ph:"", vi:"ở hậu trường, phía sau sân khấu", ex:"There were other people behind the scenes."},
+  {t:"it takes a village", ph:"", vi:"cần cả một tập thể chung tay mới làm nên việc", ex:"It really takes a village to write a song."},
+  {t:"collaboration", ph:"/kəˌlæbəˈreɪʃn/", vi:"sự hợp tác, cộng tác", ex:"Most of the artists that you hear are a collaboration."},
+  {t:"authentic", ph:"/ɔːˈθentɪk/", vi:"chân thật, đích thực", ex:"It's to make sure that it's authentic."},
+  {t:"pitch a song", ph:"", vi:"chào bán hay giới thiệu một bài hát cho nghệ sĩ", ex:"Whether you're pitching a song, meaning you're selling it."},
+  {t:"bring their vision to life", ph:"", vi:"hiện thực hóa tầm nhìn, ý tưởng của họ", ex:"You are basically helping, bringing their vision to life."},
+  {t:"brief", ph:"/briːf/", vi:"bản tóm tắt yêu cầu, định hướng công việc", ex:"The label will send you a brief, details of themes the artist wants to explore."},
+  {t:"genre", ph:"/ˈʒɒnrə/", vi:"thể loại nhạc, phim...", ex:"You take the genre into consideration."},
+  {t:"vocal range", ph:"", vi:"quãng giọng, tầm cữ giọng hát", ex:"You start to think about the vocal range of this artist."},
+  {t:"catchy", ph:"/ˈkætʃi/", vi:"bắt tai, dễ nhớ, dễ gây ấn tượng", ex:"I know it needs to be catchy."},
+  {t:"relatable", ph:"/rɪˈleɪtəbl/", vi:"dễ đồng cảm, gần gũi với người nghe", ex:"I know it needs to be relatable."},
+  {t:"resonate", ph:"/ˈrezəneɪt/", vi:"gây tiếng vang, chạm đến cảm xúc", ex:"Make something feel familiar enough to resonate with people."},
+  {t:"retrofit", ph:"/ˈretrəʊfɪt/", vi:"điều chỉnh, ghép thêm cho khớp về sau", ex:"Try to retrofit some of those lyrics to melodies."},
+  {t:"rhyme scheme", ph:"", vi:"sơ đồ gieo vần", ex:"Think about rhyme scheme and dynamics between the different parts."},
+  {t:"leave your ego at the door", ph:"", vi:"gác cái tôi sang một bên", ex:"And leave your ego at the door. Do what's best for the art."}
+];
+
+let QUIZ = [
+  {q:"Theo người viết nhạc, bạn có cần được đào tạo nhạc bài bản để viết nhạc không?",
+   o:["Có, phải thành thạo một nhạc cụ trước","Không — nhiều người viết hit còn không chơi nhạc cụ","Chỉ cần nếu viết nhạc pop","Chỉ cần với bài hát hợp tác"], a:1,
+   e:"Cô ấy nói không cần đào tạo bài bản; cô làm việc với nhiều người viết hit giỏi mà không chơi nhạc cụ."},
+  {q:"Câu 'it takes a village to write a song' ngụ ý điều gì?",
+   o:["Luật bắt buộc viết nhạc theo nhóm","Một thiên tài viết tất cả một mình","Thường có nhiều người cùng hợp tác ở hậu trường","Làng quê tạo cảm hứng tốt nhất"], a:2,
+   e:"Hầu hết bài hát bạn nghe là sự hợp tác của nhiều người phía sau hậu trường."},
+  {q:"Người viết nhạc nào khiến diễn giả nhận ra viết nhạc có thể là một nghề?",
+   o:["Carole King","Billie Eilish","Một nhà sản xuất ở Nashville","Giáo viên dạy nhạc"], a:0,
+   e:"Carole King vừa viết cho mình vừa viết cho người khác — đó là khoảnh khắc 'bật đèn' với diễn giả."},
+  {q:"'Pitch song' là gì?",
+   o:["Bài hát hát trực tiếp để chốt hợp đồng","Bài viết KHÔNG có nghệ sĩ, rồi đem chào cho các nghệ sĩ","Một bài hát về bóng chày","Bài đầu tiên trong album"], a:1,
+   e:"Pitch song được viết khi không có nghệ sĩ trong phòng, sau đó chào cho một hoặc nhiều nghệ sĩ."},
+  {q:"Bản 'brief' của hãng đĩa thường chứa nội dung gì?",
+   o:["Lời bài hát hoàn chỉnh","Các chủ đề mà nghệ sĩ muốn khai thác","Giờ đặt phòng thu","Ảnh bìa album"], a:1,
+   e:"Brief cho biết chi tiết các chủ đề mà nghệ sĩ muốn khai thác."},
+  {q:"Phép so sánh 'tủ quần áo và bộ vest' mô tả điều gì?",
+   o:["Mua đồ cho buổi quay MV","May đo một pitch song cho vừa với một nghệ sĩ cụ thể","Ăn mặc đẹp khi đi thu âm","Chọn tên album"], a:1,
+   e:"Giống như lấy một bộ vest trong tủ và mong nó vừa khít với nghệ sĩ — tức là 'may đo' bài hát cho hợp với họ."},
+  {q:"Để có hit trên Billboard Hot 100, diễn giả nói bài hát nên như thế nào?",
+   o:["Dài và mang tính thử nghiệm","Bắt tai, dễ đồng cảm và đi thẳng vào trọng tâm","Mang màu jazz và khác lạ","Viết mà không có điệp khúc"], a:1,
+   e:"Để phổ biến đại chúng, bài hát cần catchy, relatable và straight to the point."},
+  {q:"Ở Nashville, quá trình viết nhạc thường bắt đầu từ đâu?",
+   o:["Một beat/track rồi freestyle giai điệu","Một tiêu đề và ý tưởng — lời trước","Chỉ từ brief của hãng đĩa","Phần khởi động giọng của nghệ sĩ"], a:1,
+   e:"Ở Nashville bạn bắt đầu bằng tiêu đề/ý tưởng và xây dựng theo lời; giai điệu được ghép vào sau."},
+  {q:"'Leave your ego at the door' khuyên người viết nhạc điều gì?",
+   o:["Nhận hết công lao mọi câu chữ","Từ chối ý tưởng của người khác","Hợp tác và đón nhận ý tưởng hay hơn từ bất kỳ ai","Chỉ làm việc một mình"], a:2,
+   e:"Không ai quan tâm ai viết câu nào; nếu ai đó có ý tưởng hay hơn, hãy đón nhận và học hỏi."},
+  {q:"Lời khuyên sự nghiệp chính của diễn giả là gì?",
+   o:["Chờ cảm hứng đến","Làm việc rất chăm chỉ và liên tục viết bài","Chuyển tới Nashville ngay lập tức","Chỉ viết cho nghệ sĩ nổi tiếng"], a:1,
+   e:"Hãy làm việc thật chăm chỉ, viết liên tục — đó là một cơ bắp cần được rèn luyện."}
+];
+
+/* ============ HELPERS ============ */
+const $ = s => document.querySelector(s);
+const fmt = s => { s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
+const norm = s => s.toLowerCase().replace(/[^a-z0-9\s']/g," ").replace(/\s+/g," ").trim();
+function lcsRatio(target, said){
+  const A=norm(target).split(" ").filter(Boolean), B=norm(said).split(" ").filter(Boolean);
+  if(!A.length) return {pct:0, matched:new Set()};
+  const m=A.length,n=B.length, dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    dp[i][j]=A[i-1]===B[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+  // backtrack matched indices in A
+  const matched=new Set(); let i=m,j=n;
+  while(i>0&&j>0){ if(A[i-1]===B[j-1]){matched.add(i-1);i--;j--;} else if(dp[i-1][j]>=dp[i][j-1]) i--; else j--; }
+  return {pct:Math.round(dp[m][n]/A.length*100), matched};
+}
+function ttsSpeak(text, rate=1){
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=rate;
+  const v=speechSynthesis.getVoices().find(v=>/en[-_]US/i.test(v.lang))||speechSynthesis.getVoices().find(v=>/^en/i.test(v.lang));
+  if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+
+/* ============ YT PLAYER ============ */
+let player=null, playerReady=false;
+let playCtl={active:false,start:0,end:0,loop:false};
+let curRate=1;
+window.onYouTubeIframeAPIReady=function(){
+  player=new YT.Player("player",{
+    videoId:VIDEO_ID,
+    playerVars:{rel:0,modestbranding:1,playsinline:1},
+    events:{onReady:()=>{playerReady=true;}}
+  });
+};
+function loadYT(){const t=document.createElement("script");t.src="https://www.youtube.com/iframe_api";document.head.appendChild(t);}
+
+function seekPlay(start,end,{loop=false,rate=curRate}={}){
+  if(playerReady){
+    playCtl={active:true,start,end,loop};
+    player.setPlaybackRate(rate);
+    player.seekTo(start,true); player.playVideo();
+  }else{
+    // fallback: read sentence with TTS
+    const seg=SEGMENTS.find(s=>Math.abs(s.start-start)<0.01);
+    if(seg) ttsSpeak(seg.text, rate);
+  }
+}
+
+/* polling loop: highlight transcript + enforce sentence bounds */
+setInterval(()=>{
+  if(!playerReady||!player.getCurrentTime) return;
+  const t=player.getCurrentTime();
+  // bounds
+  if(playCtl.active && t>=playCtl.end-0.06){
+    if(playCtl.loop){ player.seekTo(playCtl.start,true); }
+    else { player.pauseVideo(); playCtl.active=false; }
+  }
+  // highlight
+  let idx=SEGMENTS.findIndex(s=>t>=s.start && t<s.end);
+  if(idx>=0) setActiveSentence(idx);
+},120);
+
+/* ============ TRANSCRIPT TAB ============ */
+const trWrap=$("#transcript");
+let activeIdx=-1;
+/* ============ v2: BẤM TRA TỪ -> SỔ TỪ ============
+   Từ do chính người học bấm tra, trong ngữ cảnh thật, lúc đang cần.
+   Cần: 01_migration.sql (cột NGSL) + 06_saved_words.sql (bảng + RLS). */
+const _esc = t => String(t??"").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+
+function wrapWords(text){
+  // Tách token TRƯỚC rồi mới escape. Nếu escape trước, regex khớp vào trong
+  // entity và xé &lt; thành &<b>lt</b>; -> hỏng hiển thị.
+  return String(text??"").replace(/[A-Za-z][A-Za-z'-]*|[^A-Za-z]+/g, tok =>
+    (/^[A-Za-z]/.test(tok) && tok.length>1)
+      ? `<b class="w" data-w="${_esc(tok)}">${_esc(tok)}</b>` : _esc(tok));
+}
+
+let _sb=null, _uid=null;
+async function _auth(){
+  if(_uid!==null) return _uid;
+  try{
+    _sb = _sb || supabase.createClient(SB_URL, SB_KEY);
+    const {data} = await _sb.auth.getSession();
+    _uid = data?.session?.user?.id || false;
+  }catch(e){ _uid=false; }
+  return _uid;
+}
+
+async function lookupWord(el, ctx){
+  const term = (el.dataset.w||"").toLowerCase().replace(/[^a-z'-]/g,"");
+  if(!term) return;
+  if("speechSynthesis" in window){
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(term); u.lang="en-US"; u.rate=.85;
+    speechSynthesis.speak(u);
+  }
+  let w=null;
+  try{
+    _sb = _sb || supabase.createClient(SB_URL, SB_KEY);
+    const {data} = await _sb.from("words")
+      .select("id,term,phonetic,definition_vi").ilike("term",term).limit(1);
+    w = data && data[0];
+  }catch(e){}
+
+  const uid = await _auth();
+  let saved=false;
+  if(uid){
+    try{
+      const {error} = await _sb.from("saved_words").upsert({
+        user_id: uid, term,
+        phonetic: w?.phonetic||null, definition_vi: w?.definition_vi||null,
+        word_id: w?.id||null, source: "video:"+TITLE, context: (ctx||"").slice(0,200),
+      }, { onConflict: "user_id,term", ignoreDuplicates: false });
+      saved = !error;
+    }catch(e){}
+  }
+  if(saved) el.classList.add("saved");
+  _pop(el, term, w, uid, saved);
+}
+
+function _pop(el, term, w, uid, saved){
+  document.querySelectorAll(".wpop").forEach(p=>p.remove());
+  const d=document.createElement("div"); d.className="wpop";
+  const head=`<b>${_esc(term)}</b> <i>${_esc(w?.phonetic||"")}</i><br>`;
+  const body=w?.definition_vi ? _esc(w.definition_vi) : "Chưa có trong từ điển";
+  const foot= !uid  ? '<small style="color:#fca5a5">Đăng nhập để lưu vào sổ từ</small>'
+            : saved ? '<small>đã lưu vào sổ từ ✓</small>'
+                    : '<small style="color:#fca5a5">Chưa lưu được — chạy 06_saved_words.sql</small>';
+  d.innerHTML=head+body+foot;
+  el.appendChild(d);
+  setTimeout(()=>d.remove(), 3400);
+}
+
+function buildTranscript(){
+  trWrap.innerHTML=""; activeIdx=-1;
+  SEGMENTS.forEach((s,i)=>{
+    const d=document.createElement("div");
+    d.className="sent"; d.dataset.i=i;
+    d.innerHTML=`<span class="ts">${fmt(s.start)}</span>${wrapWords(s.text)}`;
+    d.onclick=(e)=>{
+      // v2: bấm vào TỪ -> tra nghĩa. Bấm vào chỗ trống của câu -> nhảy tới câu.
+      if(e.target.closest(".w")){ lookupWord(e.target.closest(".w"), s.text); return; }
+      curRate=1; syncSpeedUI(); seekPlay(s.start,s.end,{loop:false,rate:1}); playCtl.active=false; if(playerReady){player.seekTo(s.start,true);player.playVideo();} setNow(s.text); };
+    trWrap.appendChild(d);
+  });
+}
+function setActiveSentence(i){
+  if(i===activeIdx) return;
+  activeIdx=i;
+  document.querySelectorAll(".sent").forEach((el,k)=>{
+    el.classList.toggle("active",k===i);
+    el.classList.toggle("done",k<i);
+  });
+  setNow(SEGMENTS[i].text);
+  if($("#autoscroll").checked && $("#pane-transcript").classList.contains("active")){
+    const el=trWrap.children[i]; if(el) el.scrollIntoView({block:"center",behavior:"smooth"});
+  }
+}
+function setNow(txt){ $("#now-playing").textContent=txt; }
+
+/* ============ SHADOWING (SPEAK) TAB ============ */
+let spIdx=0;
+function renderSpeak(){
+  spIdx=Math.max(0,Math.min(SEGMENTS.length-1,spIdx));
+  $("#sp-num").textContent=spIdx+1;
+  $("#sp-text").textContent=SEGMENTS[spIdx].text;
+  $("#sp-scorebox").classList.remove("show");
+  $("#sp-audio").style.display="none"; $("#sp-replay").disabled=true;
+}
+$("#sp-prev").onclick=()=>{spIdx--;renderSpeak();};
+$("#sp-next").onclick=()=>{spIdx++;renderSpeak();};
+$("#sp-hide").onchange=e=>$("#sp-text").classList.toggle("hidden-text",e.target.checked);
+$("#sp-play").onclick=()=>{const s=SEGMENTS[spIdx];seekPlay(s.start,s.end,{loop:false});};
+let spLoop=false;
+$("#sp-loop").onclick=()=>{
+  spLoop=!spLoop; $("#sp-loop").classList.toggle("on",spLoop);
+  $("#sp-loop").textContent=spLoop?"🔁 Đang lặp":"🔁 Lặp";
+  const s=SEGMENTS[spIdx];
+  if(spLoop) seekPlay(s.start,s.end,{loop:true}); else playCtl.loop=false;
+};
+function syncSpeedUI(){document.querySelectorAll("#sp-speed button").forEach(b=>b.classList.toggle("active",parseFloat(b.dataset.rate)===curRate));}
+document.querySelectorAll("#sp-speed button").forEach(b=>{
+  b.onclick=()=>{curRate=parseFloat(b.dataset.rate);syncSpeedUI();if(playerReady)player.setPlaybackRate(curRate);};
+});
+
+/* recording */
+let mediaRec=null, chunks=[], recURL=null, recording=false;
+$("#sp-rec").onclick=async()=>{
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){flagInsecure();return;}
+  if(!recording){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRec=new MediaRecorder(stream); chunks=[];
+      mediaRec.ondataavailable=e=>chunks.push(e.data);
+      mediaRec.onstop=()=>{
+        const blob=new Blob(chunks,{type:"audio/webm"});
+        if(recURL)URL.revokeObjectURL(recURL); recURL=URL.createObjectURL(blob);
+        const a=$("#sp-audio"); a.src=recURL; a.style.display="block"; $("#sp-replay").disabled=false;
+        stream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRec.start(); recording=true;
+      $("#sp-rec").textContent="⏹ Dừng ghi"; $("#sp-rec").classList.add("on");
+    }catch(err){flagInsecure();}
+  }else{
+    mediaRec.stop(); recording=false;
+    $("#sp-rec").textContent="● Ghi âm"; $("#sp-rec").classList.remove("on");
+  }
+};
+$("#sp-replay").onclick=()=>{const a=$("#sp-audio");if(a.src){a.currentTime=0;a.play();}};
+
+/* speech recognition scoring */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+$("#sp-score").onclick=()=>{
+  if(!SR){flagInsecure();return;}
+  const rec=new SR(); rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=1;
+  $("#sp-score").textContent="🎤 Đang nghe..."; $("#sp-score").disabled=true;
+  rec.onresult=ev=>{
+    const said=ev.results[0][0].transcript;
+    const {pct,matched}=lcsRatio(SEGMENTS[spIdx].text, said);
+    $("#sp-pct").textContent=pct+"%";
+    $("#sp-pct").style.color=pct>=80?"var(--a3)":pct>=50?"var(--a4)":"var(--a5)";
+    const words=SEGMENTS[spIdx].text.split(" ");
+    let wi=0; const html=words.map(w=>{
+      const clean=norm(w); if(!clean) return w;
+      const ok=matched.has(wi); wi++;
+      return ok?`<span class="ok">${w}</span>`:`<span class="miss">${w}</span>`;
+    }).join(" ");
+    $("#sp-heard").innerHTML=`<div style="margin-bottom:6px">${html}</div><div style="color:var(--muted);font-size:13px">Máy nghe được: "${said}"</div>`;
+    $("#sp-scorebox").classList.add("show");
+  };
+  rec.onerror=()=>{ $("#sp-heard").innerHTML='<span style="color:var(--a4)">Không nhận được giọng nói. Thử lại nhé.</span>'; $("#sp-scorebox").classList.add("show"); };
+  rec.onend=()=>{ $("#sp-score").textContent="🎤 Nói theo & chấm điểm"; $("#sp-score").disabled=false; };
+  rec.start();
+};
+function flagInsecure(){
+  const w=$("#speak-warn");
+  w.innerHTML="⚠️ Tính năng ghi âm và chấm điểm phát âm cần mở trang qua <b>https</b> hoặc <b>localhost</b> (không chạy khi mở trực tiếp file). Trên web đã đăng (GitHub Pages) sẽ chạy bình thường.";
+  w.classList.add("show");
+}
+
+/* ============ LISTEN (DICTATION) TAB ============ */
+let lsIdx=0;
+function renderListen(){
+  lsIdx=Math.max(0,Math.min(SEGMENTS.length-1,lsIdx));
+  $("#ls-num").textContent=lsIdx+1;
+  $("#ls-input").value=""; $("#ls-scorebox").classList.remove("show");
+}
+$("#ls-play").onclick=()=>{const s=SEGMENTS[lsIdx];seekPlay(s.start,s.end,{loop:false,rate:1});};
+$("#ls-slow").onclick=()=>{const s=SEGMENTS[lsIdx];seekPlay(s.start,s.end,{loop:false,rate:0.5});};
+$("#ls-prev").onclick=()=>{lsIdx--;renderListen();};
+$("#ls-next").onclick=()=>{lsIdx++;renderListen();};
+$("#ls-check").onclick=()=>{
+  const said=$("#ls-input").value;
+  const {pct,matched}=lcsRatio(SEGMENTS[lsIdx].text, said);
+  $("#ls-pct").textContent=pct+"%";
+  $("#ls-pct").style.color=pct>=80?"var(--a3)":pct>=50?"var(--a4)":"var(--a5)";
+  const words=SEGMENTS[lsIdx].text.split(" "); let wi=0;
+  const html=words.map(w=>{const clean=norm(w);if(!clean)return w;const ok=matched.has(wi);wi++;return ok?`<span class="ok">${w}</span>`:`<span class="miss">${w}</span>`;}).join(" ");
+  $("#ls-diff").innerHTML=html;
+  $("#ls-scorebox").classList.add("show");
+};
+
+/* ============ VOCAB TAB ============ */
+function renderVocab(){
+  const g=$("#vocab-grid");
+  g.innerHTML="";
+  VOCAB.forEach(v=>{
+    const exHtml=v.ex.replace(new RegExp("("+v.t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<b>$1</b>");
+    const d=document.createElement("div"); d.className="vcard";
+    d.innerHTML=`<div class="term">${v.t}<span class="spk" title="Phát âm">🔊</span></div>
+      ${v.ph?`<div class="ph">${v.ph}</div>`:""}
+      <div class="vi">${v.vi}</div>
+      <div class="ex">${exHtml}</div>`;
+    d.querySelector(".spk").onclick=()=>ttsSpeak(v.t,0.95);
+    g.appendChild(d);
+  });
+}
+
+/* ============ QUIZ TAB ============ */
+function renderQuiz(){
+  const list=$("#quiz-list");
+  list.innerHTML="";
+  QUIZ.forEach((q,qi)=>{
+    const item=document.createElement("div"); item.className="qitem"; item.dataset.qi=qi;
+    let opts=q.o.map((o,oi)=>`<label class="opt" data-oi="${oi}"><input type="radio" name="q${qi}" value="${oi}"><span>${o}</span></label>`).join("");
+    item.innerHTML=`<div class="q"><span class="n">${qi+1}.</span>${q.q}</div>${opts}<div class="qexp"><b>Giải thích:</b> ${q.e}</div>`;
+    list.appendChild(item);
+  });
+}
+$("#quiz-submit").onclick=()=>{
+  let score=0, answered=0;
+  QUIZ.forEach((q,qi)=>{
+    const item=document.querySelector(`.qitem[data-qi="${qi}"]`);
+    const sel=item.querySelector(`input[name="q${qi}"]:checked`);
+    item.querySelectorAll(".opt").forEach(o=>o.classList.remove("correct","wrong"));
+    if(sel)answered++;
+    const chosen=sel?parseInt(sel.value):-1;
+    if(chosen===q.a)score++;
+    item.querySelector(`.opt[data-oi="${q.a}"]`).classList.add("correct");
+    if(chosen>=0&&chosen!==q.a)item.querySelector(`.opt[data-oi="${chosen}"]`).classList.add("wrong");
+    item.querySelector(".qexp").classList.add("show");
+  });
+  const pct=Math.round(score/QUIZ.length*100);
+  const r=$("#quiz-result");
+  r.textContent=`${score}/${QUIZ.length} đúng · ${pct}%`;
+  r.style.color=pct>=80?"var(--a3)":pct>=50?"var(--a4)":"var(--a5)";
+};
+$("#quiz-reset").onclick=()=>{
+  document.querySelectorAll(".qitem input").forEach(i=>i.checked=false);
+  document.querySelectorAll(".opt").forEach(o=>o.classList.remove("correct","wrong"));
+  document.querySelectorAll(".qexp").forEach(e=>e.classList.remove("show"));
+  $("#quiz-result").textContent="";
+};
+
+/* ============ TABS ============ */
+$("#tabbar").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  const tab=b.dataset.tab;
+  document.querySelectorAll("#tabbar button").forEach(x=>x.classList.toggle("active",x===b));
+  document.querySelectorAll(".tabpane").forEach(p=>p.classList.toggle("active",p.id==="pane-"+tab));
+  if(tab==="speak")renderSpeak();
+  if(tab==="listen")renderListen();
+});
+
+/* ============ DATA LOADING (DB theo ?id=) ============ */
+const SB_URL = localStorage.getItem('sb_url') || "https://fyglubimflzsetcovgqx.supabase.co";
+const SB_KEY = localStorage.getItem('sb_key') || "sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_";
+
+function applyLesson(v){
+  if(v.youtube_id) VIDEO_ID=v.youtube_id;
+  if(Array.isArray(v.segments)&&v.segments.length) SEGMENTS=v.segments;
+  if(Array.isArray(v.vocab)) VOCAB=v.vocab;
+  if(Array.isArray(v.quiz)) QUIZ=v.quiz;
+  if(v.title) TITLE=v.title;
+  if(v.channel) CHANNEL=v.channel;
+  if(v.duration) DURATION=v.duration;
+}
+function applyMeta(){
+  $("#v-title").textContent=TITLE;
+  $("#v-channel").textContent=CHANNEL;
+  if(DURATION) $("#v-dur").textContent=fmt(DURATION);
+  document.title="EnglishUp · "+TITLE;
+}
+function boot(){
+  applyMeta();
+  buildTranscript();
+  renderVocab();
+  renderQuiz();
+  $("#sp-total").textContent=SEGMENTS.length;
+  $("#ls-total").textContent=SEGMENTS.length;
+  spIdx=0; lsIdx=0;
+  renderSpeak(); renderListen();
+  loadYT();
+}
+async function init(){
+  const id=new URLSearchParams(location.search).get("id");
+  const pill=document.querySelector(".pill");
+  if(id && window.supabase){
+    try{
+      const sb=supabase.createClient(SB_URL,SB_KEY);
+      const {data,error}=await sb.from("video_lessons").select("*").eq("id",id).single();
+      if(error) throw error;
+      if(data){ applyLesson(data); if(pill) pill.textContent="Bài #"+id; }
+    }catch(e){
+      if(pill) pill.textContent="Dùng bản demo (không tải được bài)";
+    }
+  }else if(id && !window.supabase){
+    if(pill) pill.textContent="Dùng bản demo (thiếu Supabase)";
+  }
+  boot();
+}
+if("speechSynthesis" in window){ speechSynthesis.onvoiceschanged=()=>{}; }
+init();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>
