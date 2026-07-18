@@ -1,0 +1,87 @@
+/* EnglishUp · giao diện dùng chung
+   Sáng, chữ to — bé 8 tuổi và bố đều dùng được cùng một giao diện. */
+:root{
+  --bg:#fff8ed; --bg2:#ffeede; --card:#fff; --line:#fed7aa; --line2:#fdba74;
+  --ink:#1c1917; --mute:#78716c; --brand:#ea580c; --brand2:#c2410c;
+  --blue:#3b82f6; --green:#22c55e; --red:#ef4444; --purple:#8b5cf6;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  background:linear-gradient(170deg,var(--bg),var(--bg2));min-height:100vh;
+  color:var(--ink);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  padding:0 16px 48px;
+}
+.wrap{max-width:640px;margin:0 auto}
+h2{font-size:21px;font-weight:800;color:var(--brand2);margin:20px 0 12px}
+
+/* ── nav ── */
+.eu-nav{
+  display:flex;align-items:center;gap:12px;max-width:640px;margin:0 auto;
+  padding:12px 0 14px;flex-wrap:wrap;
+}
+.eu-nav .brand{font-weight:900;color:var(--brand);text-decoration:none;font-size:17px}
+.eu-nav .tabs{display:flex;gap:5px;flex:1;justify-content:center}
+.eu-nav .tabs a{
+  text-decoration:none;color:var(--mute);font-size:20px;font-weight:700;
+  padding:7px 11px;border-radius:13px;display:flex;align-items:center;gap:5px;transition:.15s;
+}
+.eu-nav .tabs a span{font-size:13px}
+.eu-nav .tabs a:hover{background:#fff}
+.eu-nav .tabs a.on{background:var(--brand);color:#fff}
+.eu-nav .who{
+  text-decoration:none;background:#fff;border:2px solid var(--line);
+  border-radius:20px;padding:5px 12px;font-weight:700;font-size:14px;color:var(--ink);
+}
+
+/* ── card ── */
+.card{
+  background:var(--card);border:3px solid var(--line);border-radius:22px;
+  padding:20px;box-shadow:0 5px 0 #fde3c4;
+}
+
+/* ── nút ── */
+button{
+  font:inherit;font-weight:800;cursor:pointer;border:none;border-radius:16px;
+  padding:13px 18px;font-size:16px;transition:.12s;color:#fff;
+}
+button:active{transform:translateY(3px)}
+button:disabled{opacity:.35;cursor:default;transform:none}
+.b-blue{background:var(--blue);box-shadow:0 4px 0 #1d4ed8}
+.b-green{background:var(--green);box-shadow:0 4px 0 #15803d}
+.b-red{background:var(--red);box-shadow:0 4px 0 #b91c1c}
+.b-orange{background:var(--brand);box-shadow:0 4px 0 var(--brand2)}
+.b-purple{background:var(--purple);box-shadow:0 4px 0 #6d28d9}
+.b-ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 #fde3c4}
+.b-blue:active{box-shadow:0 1px 0 #1d4ed8}
+.b-green:active{box-shadow:0 1px 0 #15803d}
+.b-red:active{box-shadow:0 1px 0 #b91c1c}
+.b-orange:active{box-shadow:0 1px 0 var(--brand2)}
+.b-purple:active{box-shadow:0 1px 0 #6d28d9}
+.b-ghost:active{box-shadow:0 1px 0 #fde3c4}
+.row{display:flex;gap:9px;flex-wrap:wrap}
+
+/* ── từ bấm tra được: TRUNG TÂM của cả app ── */
+.w{
+  font-weight:inherit;cursor:pointer;border-radius:5px;padding:1px 2px;
+  position:relative;transition:.12s;border-bottom:2px dotted #d6d3d1;
+}
+.w:hover{background:#fef3c7;border-bottom-color:var(--brand)}
+.w.saved{background:#dcfce7;border-bottom-color:var(--green)}
+.pop{
+  position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 8px);
+  background:#1c1917;color:#fff;border-radius:12px;padding:10px 13px;
+  font-size:14px;font-weight:500;line-height:1.5;width:max-content;max-width:230px;
+  z-index:50;text-align:left;box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+.pop b{color:#fdba74}
+.pop i{color:#a8a29e;font-family:var(--mono);font-style:normal;font-size:12px}
+.pop small{display:block;color:#4ade80;margin-top:5px;font-size:11px}
+
+.empty{text-align:center;padding:44px 20px;color:var(--mute);line-height:1.8}
+.empty b{display:block;font-size:19px;color:var(--ink);margin-bottom:8px}
+.warn{
+  background:#fffbeb;border:2px dashed #fbbf24;border-radius:14px;
+  padding:12px 14px;font-size:13.5px;color:#78350f;line-height:1.65;margin-top:12px;
+}
+.hide{display:none}

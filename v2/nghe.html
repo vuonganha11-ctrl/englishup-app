@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nghe & nhại · EnglishUp</title>
+<link rel="stylesheet" href="eu.css">
+<style>
+.player{position:relative;padding-top:56.25%;border-radius:18px;overflow:hidden;
+  border:3px solid var(--line);background:#000;margin-bottom:14px}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.line{
+  background:#fff;border:2px solid var(--line);border-radius:15px;padding:13px 15px;
+  margin-bottom:8px;cursor:pointer;transition:.12s;
+}
+.line:hover{border-color:var(--line2)}
+.line.on{border-color:var(--brand);background:#fff7ed;box-shadow:0 3px 0 #fde3c4}
+.line .en{font-size:18px;font-weight:700;line-height:1.5}
+.line .vi{font-size:13.5px;color:var(--mute);margin-top:4px}
+.line .no{font-size:11px;color:#a8a29e;font-family:var(--mono)}
+.ctrl{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.ctrl button{flex:1;min-width:84px}
+.speed{display:flex;gap:5px;align-items:center;font-size:13px;color:var(--mute);font-weight:700}
+.speed button{padding:6px 10px;font-size:13px;border-radius:10px;flex:none;min-width:0}
+select{font:inherit;font-weight:700;padding:9px 12px;border-radius:13px;
+  border:2px solid var(--line);background:#fff;color:var(--ink);width:100%;margin-bottom:14px}
+.tip{background:#eff6ff;border:2px dashed #93c5fd;border-radius:14px;padding:12px 14px;
+  font-size:13.5px;color:#1e3a8a;line-height:1.65;margin-top:14px}
+details{margin-top:22px;background:#fff;border:2px solid var(--line);border-radius:15px;padding:14px}
+summary{font-weight:800;cursor:pointer;color:var(--brand2)}
+details input,details textarea{font:inherit;width:100%;padding:9px 11px;border-radius:11px;
+  border:2px solid var(--line);margin-top:8px;font-size:14px}
+details textarea{min-height:110px;font-family:var(--mono);font-size:12.5px}
+.mark{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.mark button{flex:1;min-width:74px;font-size:13px;padding:10px}
+code{background:#f5f5f4;padding:1px 5px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+  <select id="pick"><option>Đang tải…</option></select>
+  <div class="player"><div id="yt"></div></div>
+  <div class="ctrl">
+    <button class="b-blue"  id="prev">← Câu trước</button>
+    <button class="b-green" id="rep">🔁 Nghe lại câu</button>
+    <button class="b-blue"  id="next">Câu sau →</button>
+  </div>
+  <div class="speed">Tốc độ:
+    <button class="b-ghost sp" data-s="0.5">0.5×</button>
+    <button class="b-ghost sp" data-s="0.75">0.75×</button>
+    <button class="b-ghost sp" data-s="1">1×</button>
+    <span style="flex:1"></span>
+    <label style="font-weight:700"><input type="checkbox" id="loop" checked> Lặp câu</label>
+  </div>
+  <h2>Bấm vào từ nào chưa biết</h2>
+  <div id="lines"></div>
+  <div class="tip">
+    🗣️ <b>Nhại theo, đừng chỉ nghe.</b> Nghe 1 lần → nói đè lên câu đó 2–3 lần.
+    Ngồi xem không nói thì đây chỉ là YouTube thôi.
+  </div>
+  <div id="admin"></div>
+</div>
+
+<script type="module">
+import { api, requireProfile, nav, clickable, bindLookup, esc, $, $$ } from './eu.js';
+const me = requireProfile();
+if (!me) throw new Error('no profile');
+$('#nav').innerHTML = nav('nghe');
+
+let vids = [], vid = null, lines = [], idx = 0, player = null, timer = null, ready = false;
+
+/* YouTube IFrame API: cho seekTo/play/pause/setPlaybackRate.
+   KHÔNG cho transcript — captions module chỉ có fontSize & reload.
+   Nên mốc thời gian phải nhập tay bằng công cụ bấm mốc bên dưới. */
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player('yt', {
+    playerVars: {
+      rel: 0,            // từ 25/09/2018 rel=0 chỉ giới hạn gợi ý về CÙNG KÊNH, không tắt được
+      modestbranding: 1, playsinline: 1, controls: 1,
+    },
+    events: {
+      onReady: () => { ready = true; if (vid) load(vid); },
+      onStateChange: e => { if (e.data === YT.PlayerState.PLAYING) watch(); },
+    },
+  });
+};
+const t = document.createElement('script');
+t.src = 'https://www.youtube.com/iframe_api';
+document.head.appendChild(t);
+
+async function boot() {
+  try {
+    vids = await api('videos?select=*&order=created_at.desc');
+  } catch (e) { vids = []; }
+  if (!vids.length) {
+    $('#pick').innerHTML = '<option>Chưa có video nào — thêm ở phần dưới ↓</option>';
+    $('#lines').innerHTML = `<div class="empty"><b>Chưa có video</b>
+      Mở phần <b style="display:inline">➕ Thêm video</b> ở cuối trang.<br>
+      Cần chạy <code>05_family.sql</code> trước.</div>`;
+    adminUI();
+    return;
+  }
+  $('#pick').innerHTML = vids.map(v =>
+    `<option value="${v.id}">${esc(v.title)}${v.level ? ' · ' + esc(v.level) : ''}</option>`).join('');
+  vid = vids[0];
+  if (ready) load(vid);
+  adminUI();
+}
+
+$('#pick').onchange = e => { vid = vids.find(v => String(v.id) === e.target.value); load(vid); };
+
+async function load(v) {
+  if (!v || !ready) return;
+  lines = await api(`video_lines?select=*&video_id=eq.${v.id}&order=ord.asc`);
+  player.cueVideoById(v.youtube_id);
+  idx = 0;
+  paint();
+}
+
+function paint() {
+  if (!lines.length) {
+    $('#lines').innerHTML = `<div class="empty"><b>Video này chưa có câu nào</b>
+      Dùng công cụ bấm mốc ở cuối trang để tách câu.</div>`;
+    return;
+  }
+  $('#lines').innerHTML = lines.map((l, i) => `
+    <div class="line ${i === idx ? 'on' : ''}" data-i="${i}">
+      <div class="no">${i + 1}/${lines.length} · ${(+l.start_sec).toFixed(1)}s</div>
+      <div class="en">${clickable(l.text)}</div>
+      ${l.text_vi ? `<div class="vi">${esc(l.text_vi)}</div>` : ''}
+    </div>`).join('');
+  $$('.line').forEach(el => el.addEventListener('click', e => {
+    if (e.target.closest('.w')) return;      // bấm vào từ -> tra, không nhảy câu
+    idx = +el.dataset.i; play();
+  }));
+  bindLookup($('#lines'), { source: 'nghe:' + (vid?.title || ''), topic: vid?.level || '' });
+}
+
+function play() {
+  const l = lines[idx];
+  if (!l || !player) return;
+  player.seekTo(+l.start_sec, true);
+  player.playVideo();
+  paint();
+  watch();
+}
+
+/* Tự dừng ở cuối câu — cũng là cách chặn video chạy tiếp
+   sang phần gợi ý của YouTube (rel=0 không tắt được gợi ý). */
+function watch() {
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const l = lines[idx];
+    if (!l || !player?.getCurrentTime) return;
+    if (player.getCurrentTime() >= +l.end_sec) {
+      player.pauseVideo();
+      clearInterval(timer);
+      if ($('#loop').checked) setTimeout(play, 900);   // chừa khoảng lặng để bé nhại
+    }
+  }, 120);
+}
+
+$('#rep').onclick  = play;
+$('#prev').onclick = () => { idx = Math.max(0, idx - 1); play(); };
+$('#next').onclick = () => { idx = Math.min(lines.length - 1, idx + 1); play(); };
+$$('.sp').forEach(b => b.onclick = () => player?.setPlaybackRate(+b.dataset.s));
+
+/* ── Công cụ bấm mốc: YouTube không trả transcript nên phải tự làm ── */
+function adminUI() {
+  $('#admin').innerHTML = `
+  <details>
+    <summary>➕ Thêm video / bấm mốc câu</summary>
+    <div class="warn" style="margin:10px 0">
+      YouTube <b>không cho lấy transcript</b> qua API — phải tự gõ câu và bấm mốc.
+      Cách nhanh: dán ID → gõ 1 câu → bấm <b>Bắt đầu</b> lúc câu bắt đầu, <b>Kết thúc</b> lúc câu hết → <b>Lưu câu</b>.
+    </div>
+    <input id="a-yt"    placeholder="ID video YouTube (vd: dQw4w9WgXcQ)">
+    <input id="a-title" placeholder="Tên bài">
+    <div class="mark">
+      <button class="b-orange" id="a-new">Tạo bài mới</button>
+      <button class="b-ghost"  id="a-cue">Nạp lên player</button>
+    </div>
+    <hr style="margin:14px 0;border:none;border-top:2px dashed var(--line)">
+    <input id="a-en" placeholder="Câu tiếng Anh">
+    <input id="a-vi" placeholder="Nghĩa tiếng Việt (không bắt buộc)">
+    <div class="mark">
+      <button class="b-green" id="a-s">⏱️ Bắt đầu</button>
+      <button class="b-red"   id="a-e">⏹️ Kết thúc</button>
+      <button class="b-blue"  id="a-save">💾 Lưu câu</button>
+    </div>
+    <div id="a-msg" style="font-size:13px;color:var(--mute);margin-top:9px"></div>
+  </details>`;
+
+  let s = null, e = null, curVid = vid;
+  const msg = m => $('#a-msg').innerHTML = m;
+
+  $('#a-cue').onclick = () => {
+    const id = $('#a-yt').value.trim();
+    if (id && player) { player.cueVideoById(id); msg('Đã nạp. Bấm play rồi bấm mốc.'); }
+  };
+  $('#a-new').onclick = async () => {
+    const youtube_id = $('#a-yt').value.trim(), title = $('#a-title').value.trim();
+    if (!youtube_id || !title) return msg('Cần cả ID và tên bài.');
+    try {
+      const r = await api('videos', { method: 'POST',
+        headers: { Prefer: 'return=representation,resolution=merge-duplicates' },
+        body: JSON.stringify({ youtube_id, title }) });
+      curVid = r[0]; msg(`Đã tạo <b>${esc(title)}</b>. Giờ bấm mốc từng câu.`);
+      player?.cueVideoById(youtube_id);
+    } catch (err) { msg('Lỗi: ' + esc(err.message)); }
+  };
+  $('#a-s').onclick = () => { s = player.getCurrentTime(); msg(`Bắt đầu: <b>${s.toFixed(2)}s</b>`); };
+  $('#a-e').onclick = () => { e = player.getCurrentTime(); msg(`Bắt đầu ${s?.toFixed(2)}s → kết thúc <b>${e.toFixed(2)}s</b>`); };
+  $('#a-save').onclick = async () => {
+    const text = $('#a-en').value.trim();
+    if (!curVid) return msg('Tạo bài mới trước đã.');
+    if (!text)   return msg('Chưa có câu tiếng Anh.');
+    if (s == null || e == null || e <= s) return msg('Mốc chưa hợp lệ (kết thúc phải sau bắt đầu).');
+    try {
+      const n = (await api(`video_lines?select=ord&video_id=eq.${curVid.id}&order=ord.desc&limit=1`))[0];
+      await api('video_lines', { method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ video_id: curVid.id, ord: (n?.ord ?? 0) + 1, text,
+          text_vi: $('#a-vi').value.trim() || null, start_sec: +s.toFixed(2), end_sec: +e.toFixed(2) }) });
+      msg(`✅ Đã lưu: “${esc(text)}”`);
+      $('#a-en').value = ''; $('#a-vi').value = ''; s = e = null;
+      if (curVid.id === vid?.id) load(vid);
+    } catch (err) { msg('Lỗi: ' + esc(err.message)); }
+  };
+}
+
+boot();
+</script>
+</body>
+</html>

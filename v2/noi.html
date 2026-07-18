@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nói · EnglishUp</title>
+<link rel="stylesheet" href="eu.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  background:linear-gradient(170deg,#fff8ed 0%,#ffeede 100%);
+  color:#2d2416;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:18px 16px 40px;user-select:none;
+}
+.wrap{width:100%;max-width:540px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+h1{font-size:19px;font-weight:800;color:#c2410c}
+.dots{display:flex;gap:5px}
+.dots i{width:11px;height:11px;border-radius:50%;background:#f3d9bd;transition:.25s}
+.dots i.on{background:#f97316;transform:scale(1.25)}
+
+.card{
+  background:#fff;border:3px solid #fed7aa;border-radius:26px;
+  padding:30px 22px;text-align:center;
+  box-shadow:0 6px 0 #fde3c4;min-height:210px;
+  display:flex;flex-direction:column;justify-content:center;gap:12px;
+}
+.emo{font-size:74px;line-height:1;margin-bottom:2px;letter-spacing:2px}
+.chunk{font-size:36px;font-weight:800;line-height:1.28;color:#1c1917;overflow-wrap:anywhere}
+.chunk b{color:#ea580c}
+.vi{font-size:17px;color:#78716c;font-weight:500}
+.tag{
+  display:inline-block;align-self:center;font-size:12px;font-weight:700;
+  color:#c2410c;background:#ffedd5;border-radius:20px;padding:4px 13px;
+}
+
+.btns{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+button{
+  font:inherit;font-weight:800;cursor:pointer;border:none;border-radius:20px;
+  padding:17px 22px;font-size:17px;transition:.12s;min-width:112px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+button:active{transform:translateY(3px)}
+button:disabled{opacity:.35;cursor:default}
+button span{font-size:27px;line-height:1}
+.listen{background:#3b82f6;color:#fff;box-shadow:0 4px 0 #1d4ed8}
+.listen:active{box-shadow:0 1px 0 #1d4ed8}
+.rec{background:#ef4444;color:#fff;box-shadow:0 4px 0 #b91c1c}
+.rec:active{box-shadow:0 1px 0 #b91c1c}
+.rec.on{animation:pulse .8s infinite}
+@keyframes pulse{50%{background:#fca5a5}}
+.play{background:#22c55e;color:#fff;box-shadow:0 4px 0 #15803d}
+.play:active{box-shadow:0 1px 0 #15803d}
+.next{
+  background:#f97316;color:#fff;box-shadow:0 4px 0 #c2410c;
+  width:100%;margin-top:14px;flex-direction:row;justify-content:center;padding:18px;
+}
+.next:active{box-shadow:0 1px 0 #c2410c}
+
+.tip{
+  margin-top:18px;background:#fffbeb;border:2px dashed #fbbf24;border-radius:18px;
+  padding:15px 17px;font-size:15px;color:#78350f;line-height:1.6;
+}
+.tip b{color:#b45309}
+.note{text-align:center;font-size:13px;color:#a8a29e;margin-top:16px;line-height:1.7}
+.done{text-align:center;padding:34px 20px}
+.done h2{font-size:30px;color:#c2410c;margin-bottom:10px}
+.done p{font-size:17px;color:#57534e;line-height:1.75}
+.big{font-size:56px;margin-bottom:8px}
+.warn{
+  background:#fef2f2;border:2px solid #fecaca;color:#991b1b;
+  border-radius:14px;padding:11px 14px;font-size:13.5px;margin-top:14px;line-height:1.6;
+}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+  <header>
+    <h1>🗣️ Nói tiếng Anh nào!</h1>
+    <div class="dots" id="dots"></div>
+  </header>
+  <div id="stage"></div>
+  <div class="note">
+    Không có điểm số. Không có đúng sai.<br>Cứ nói thoải mái — máy không cười con đâu 🙂
+  </div>
+</div>
+
+<script type="module">
+import { requireProfile, nav, $ as _$ } from "./eu.js";
+const me = requireProfile();
+if (me) document.querySelector("#nav").innerHTML = nav("noi");
+const CHUNKS = [{"ord": 1,"chunk": "This is my ___.","slots": ["book","bag","toy","room","sister"],"meaning_vi": "Đây là ___ của tớ.","nhom": "Giới thiệu","goi_y": "Chỉ đồ của mình cho em xem"},{"ord": 2,"chunk": "Look at the ___!","slots": ["cat","car","bird","moon","flower"],"meaning_vi": "Nhìn ___ kìa!","nhom": "Chỉ trỏ","goi_y": "Chỉ cho em cái gì đó ngoài cửa sổ"},{"ord": 3,"chunk": "I like ___.","slots": ["apples","dogs","music","blue","pizza"],"meaning_vi": "Tớ thích ___.","nhom": "Cảm xúc","goi_y": "Nói với em mình thích gì"},{"ord": 4,"chunk": "I don't like ___.","slots": ["milk","rain","noise","carrots"],"meaning_vi": "Tớ không thích ___.","nhom": "Cảm xúc","goi_y": ""},{"ord": 5,"chunk": "Do you want ___?","slots": ["water","an apple","this","some milk"],"meaning_vi": "Em muốn ___ không?","nhom": "Hỏi em","goi_y": "Mời em ăn gì đó"},{"ord": 6,"chunk": "Can I have ___?","slots": ["some water","an apple","the ball","more"],"meaning_vi": "Cho tớ ___ được không?","nhom": "Xin","goi_y": "Xin mẹ cái gì đó"},{"ord": 7,"chunk": "Let's play!","slots": [],"meaning_vi": "Mình chơi đi!","nhom": "Rủ chơi","goi_y": "Rủ em chơi"},{"ord": 8,"chunk": "Let's go!","slots": [],"meaning_vi": "Đi thôi!","nhom": "Rủ chơi","goi_y": ""},{"ord": 9,"chunk": "What is this?","slots": [],"meaning_vi": "Cái này là gì?","nhom": "Hỏi","goi_y": "Cầm đồ chơi lên hỏi em"},{"ord": 10,"chunk": "It's a ___.","slots": ["dog","car","book","ball","tree"],"meaning_vi": "Đó là ___.","nhom": "Trả lời","goi_y": "Trả lời khi em hỏi"},{"ord": 11,"chunk": "Where is ___?","slots": ["Mom","my bag","the cat","Dad"],"meaning_vi": "___ ở đâu?","nhom": "Hỏi","goi_y": "Hỏi em xem đồ ở đâu"},{"ord": 12,"chunk": "Here it is!","slots": [],"meaning_vi": "Đây rồi!","nhom": "Trả lời","goi_y": ""},{"ord": 13,"chunk": "I'm ___.","slots": ["happy","hungry","tired","okay","sad"],"meaning_vi": "Tớ đang ___.","nhom": "Cảm xúc","goi_y": "Nói cho em biết mình thấy sao"},{"ord": 14,"chunk": "Are you ___?","slots": ["happy","hungry","okay","tired"],"meaning_vi": "Em có ___ không?","nhom": "Hỏi em","goi_y": "Hỏi em có đói không"},{"ord": 15,"chunk": "I have a ___.","slots": ["dog","bike","brother","question"],"meaning_vi": "Tớ có một ___.","nhom": "Giới thiệu","goi_y": ""},{"ord": 16,"chunk": "Thank you!","slots": [],"meaning_vi": "Cảm ơn!","nhom": "Xã giao","goi_y": ""},{"ord": 17,"chunk": "You're welcome.","slots": [],"meaning_vi": "Không có gì.","nhom": "Xã giao","goi_y": "Nói khi em cảm ơn"},{"ord": 18,"chunk": "Good morning!","slots": [],"meaning_vi": "Chào buổi sáng!","nhom": "Xã giao","goi_y": "Chào em mỗi sáng"},{"ord": 19,"chunk": "Good night!","slots": [],"meaning_vi": "Chúc ngủ ngon!","nhom": "Xã giao","goi_y": "Nói với em trước khi ngủ"},{"ord": 20,"chunk": "How are you?","slots": [],"meaning_vi": "Em khỏe không?","nhom": "Hỏi em","goi_y": ""},{"ord": 21,"chunk": "I'm fine, thank you.","slots": [],"meaning_vi": "Tớ khỏe, cảm ơn.","nhom": "Trả lời","goi_y": ""},{"ord": 22,"chunk": "What's your name?","slots": [],"meaning_vi": "Em tên gì?","nhom": "Hỏi em","goi_y": ""},{"ord": 23,"chunk": "My name is ___.","slots": ["Nam","Mai","Bin"],"meaning_vi": "Tớ tên là ___.","nhom": "Giới thiệu","goi_y": ""},{"ord": 24,"chunk": "How old are you?","slots": [],"meaning_vi": "Em mấy tuổi?","nhom": "Hỏi em","goi_y": ""},{"ord": 25,"chunk": "I'm ___ years old.","slots": ["eight","four","nine"],"meaning_vi": "Tớ ___ tuổi.","nhom": "Giới thiệu","goi_y": ""},{"ord": 26,"chunk": "Can you see ___?","slots": ["the bird","my toy","this"],"meaning_vi": "Em thấy ___ không?","nhom": "Hỏi em","goi_y": "Chỉ cho em xem con gì đó"},{"ord": 27,"chunk": "Come here!","slots": [],"meaning_vi": "Lại đây!","nhom": "Ra lệnh","goi_y": "Gọi em lại"},{"ord": 28,"chunk": "Sit down, please.","slots": [],"meaning_vi": "Ngồi xuống đi.","nhom": "Ra lệnh","goi_y": ""},{"ord": 29,"chunk": "Give me ___, please.","slots": ["the ball","your hand","that"],"meaning_vi": "Đưa tớ ___ nhé.","nhom": "Xin","goi_y": "Xin em đồ chơi"},{"ord": 30,"chunk": "Please help me.","slots": [],"meaning_vi": "Giúp tớ với.","nhom": "Xin","goi_y": ""},{"ord": 31,"chunk": "I want to ___.","slots": ["play","go home","eat","sleep","draw"],"meaning_vi": "Tớ muốn ___.","nhom": "Muốn","goi_y": ""},{"ord": 32,"chunk": "I don't want to ___.","slots": ["go","sleep","eat that"],"meaning_vi": "Tớ không muốn ___.","nhom": "Muốn","goi_y": ""},{"ord": 33,"chunk": "Do you want to ___?","slots": ["play","draw","go outside","read"],"meaning_vi": "Em muốn ___ không?","nhom": "Hỏi em","goi_y": "Rủ em làm gì đó"},{"ord": 34,"chunk": "Let's ___ together.","slots": ["play","draw","sing","read"],"meaning_vi": "Mình cùng ___ nhé.","nhom": "Rủ chơi","goi_y": "Rủ em cùng làm"},{"ord": 35,"chunk": "What color is it?","slots": [],"meaning_vi": "Nó màu gì?","nhom": "Hỏi","goi_y": "Chỉ đồ vật hỏi em màu"},{"ord": 36,"chunk": "It's ___.","slots": ["red","blue","green","yellow"],"meaning_vi": "Nó màu ___.","nhom": "Trả lời","goi_y": ""},{"ord": 37,"chunk": "How many ___?","slots": ["apples","cars","dogs","fingers"],"meaning_vi": "Có mấy ___?","nhom": "Hỏi","goi_y": "Đếm đồ chơi cùng em"},{"ord": 38,"chunk": "There are ___.","slots": ["two","three","five","many"],"meaning_vi": "Có ___ cái.","nhom": "Trả lời","goi_y": ""},{"ord": 39,"chunk": "Yes, please.","slots": [],"meaning_vi": "Có ạ.","nhom": "Trả lời","goi_y": ""},{"ord": 40,"chunk": "No, thank you.","slots": [],"meaning_vi": "Không, cảm ơn.","nhom": "Trả lời","goi_y": ""},{"ord": 41,"chunk": "I'm sorry.","slots": [],"meaning_vi": "Tớ xin lỗi.","nhom": "Xã giao","goi_y": ""},{"ord": 42,"chunk": "That's okay.","slots": [],"meaning_vi": "Không sao đâu.","nhom": "Xã giao","goi_y": "Nói khi em xin lỗi"},{"ord": 43,"chunk": "Be careful!","slots": [],"meaning_vi": "Cẩn thận!","nhom": "Cảnh báo","goi_y": "Nhắc em khi em chạy"},{"ord": 44,"chunk": "Don't do that.","slots": [],"meaning_vi": "Đừng làm thế.","nhom": "Cảnh báo","goi_y": ""},{"ord": 45,"chunk": "Wait for me!","slots": [],"meaning_vi": "Đợi tớ với!","nhom": "Gọi","goi_y": ""},{"ord": 46,"chunk": "Follow me.","slots": [],"meaning_vi": "Đi theo tớ.","nhom": "Ra lệnh","goi_y": "Dẫn em đi đâu đó"},{"ord": 47,"chunk": "Look at me!","slots": [],"meaning_vi": "Nhìn tớ này!","nhom": "Chỉ trỏ","goi_y": ""},{"ord": 48,"chunk": "Listen!","slots": [],"meaning_vi": "Nghe này!","nhom": "Chỉ trỏ","goi_y": ""},{"ord": 49,"chunk": "It's my turn.","slots": [],"meaning_vi": "Đến lượt tớ.","nhom": "Chơi","goi_y": "Chơi trò chơi với em"},{"ord": 50,"chunk": "It's your turn.","slots": [],"meaning_vi": "Đến lượt em.","nhom": "Chơi","goi_y": "Chơi trò chơi với em"},{"ord": 51,"chunk": "Good job!","slots": [],"meaning_vi": "Giỏi lắm!","nhom": "Khen","goi_y": "Khen em khi em làm được"},{"ord": 52,"chunk": "Well done!","slots": [],"meaning_vi": "Làm tốt lắm!","nhom": "Khen","goi_y": "Khen em"},{"ord": 53,"chunk": "Try again.","slots": [],"meaning_vi": "Thử lại đi.","nhom": "Khen","goi_y": "Động viên em"},{"ord": 54,"chunk": "I can ___.","slots": ["swim","read","draw","sing","run"],"meaning_vi": "Tớ biết ___.","nhom": "Khoe","goi_y": "Khoe với em mình làm được gì"},{"ord": 55,"chunk": "Can you ___?","slots": ["swim","sing","jump","count"],"meaning_vi": "Em biết ___ không?","nhom": "Hỏi em","goi_y": ""},{"ord": 56,"chunk": "I don't know.","slots": [],"meaning_vi": "Tớ không biết.","nhom": "Trả lời","goi_y": ""},{"ord": 57,"chunk": "I don't understand.","slots": [],"meaning_vi": "Tớ không hiểu.","nhom": "Trả lời","goi_y": ""},{"ord": 58,"chunk": "Say it again, please.","slots": [],"meaning_vi": "Nói lại đi.","nhom": "Xin","goi_y": ""},{"ord": 59,"chunk": "What's that?","slots": [],"meaning_vi": "Cái kia là gì?","nhom": "Hỏi","goi_y": ""},{"ord": 60,"chunk": "Who is that?","slots": [],"meaning_vi": "Ai kia?","nhom": "Hỏi","goi_y": ""},{"ord": 61,"chunk": "That's my ___.","slots": ["sister","brother","mom","dad"],"meaning_vi": "Đó là ___ của tớ.","nhom": "Giới thiệu","goi_y": ""},{"ord": 62,"chunk": "I love you.","slots": [],"meaning_vi": "Tớ thương em.","nhom": "Cảm xúc","goi_y": "Nói với em trước khi ngủ"},{"ord": 63,"chunk": "Are you okay?","slots": [],"meaning_vi": "Em ổn không?","nhom": "Hỏi em","goi_y": "Hỏi khi em ngã"},{"ord": 64,"chunk": "Let's eat!","slots": [],"meaning_vi": "Ăn thôi!","nhom": "Rủ","goi_y": "Gọi em ăn cơm"},{"ord": 65,"chunk": "I'm hungry.","slots": [],"meaning_vi": "Tớ đói.","nhom": "Cảm xúc","goi_y": ""},{"ord": 66,"chunk": "I'm thirsty.","slots": [],"meaning_vi": "Tớ khát.","nhom": "Cảm xúc","goi_y": ""},{"ord": 67,"chunk": "It's hot.","slots": [],"meaning_vi": "Nóng quá.","nhom": "Nhận xét","goi_y": ""},{"ord": 68,"chunk": "It's cold.","slots": [],"meaning_vi": "Lạnh quá.","nhom": "Nhận xét","goi_y": ""},{"ord": 69,"chunk": "It's big!","slots": [],"meaning_vi": "To quá!","nhom": "Nhận xét","goi_y": "Nói khi thấy cái gì to"},{"ord": 70,"chunk": "It's so cute!","slots": [],"meaning_vi": "Dễ thương quá!","nhom": "Nhận xét","goi_y": "Nói khi thấy con mèo"},{"ord": 71,"chunk": "Open it.","slots": [],"meaning_vi": "Mở ra đi.","nhom": "Ra lệnh","goi_y": ""},{"ord": 72,"chunk": "Close the door.","slots": [],"meaning_vi": "Đóng cửa lại.","nhom": "Ra lệnh","goi_y": ""},{"ord": 73,"chunk": "Put it here.","slots": [],"meaning_vi": "Để đây đi.","nhom": "Ra lệnh","goi_y": "Dọn đồ chơi cùng em"},{"ord": 74,"chunk": "Don't touch!","slots": [],"meaning_vi": "Đừng đụng vào!","nhom": "Cảnh báo","goi_y": ""},{"ord": 75,"chunk": "Where are you going?","slots": [],"meaning_vi": "Em đi đâu đấy?","nhom": "Hỏi em","goi_y": ""},{"ord": 76,"chunk": "I'm going ___.","slots": ["home","to school","outside"],"meaning_vi": "Tớ đi ___.","nhom": "Trả lời","goi_y": ""},{"ord": 77,"chunk": "See you later!","slots": [],"meaning_vi": "Hẹn gặp lại!","nhom": "Xã giao","goi_y": "Chào em khi đi học"},{"ord": 78,"chunk": "Let's go outside.","slots": [],"meaning_vi": "Ra ngoài chơi đi.","nhom": "Rủ","goi_y": "Rủ em ra sân"},{"ord": 79,"chunk": "Are you ready?","slots": [],"meaning_vi": "Em sẵn sàng chưa?","nhom": "Hỏi em","goi_y": "Trước khi bắt đầu trò chơi"},{"ord": 80,"chunk": "One, two, three, go!","slots": [],"meaning_vi": "Một, hai, ba, chạy!","nhom": "Chơi","goi_y": "Đếm rồi chạy đua với em"}];
+const EMOJI = {"an apple": "🍎", "apples": "🍎", "ball": "⚽", "the ball": "⚽", "bag": "🎒", "my bag": "🎒", "book": "📕", "bike": "🚲", "car": "🚗", "cars": "🚗", "toy": "🧸", "my toy": "🧸", "milk": "🥛", "some milk": "🥛", "water": "💧", "some water": "💧", "pizza": "🍕", "carrots": "🥕", "room": "🛏️", "cat": "🐱", "the cat": "🐱", "dog": "🐶", "dogs": "🐶", "bird": "🐦", "the bird": "🐦", "flower": "🌸", "tree": "🌳", "moon": "🌙", "rain": "🌧️", "Mom": "👩", "mom": "👩", "Dad": "👨", "dad": "👨", "sister": "👧", "brother": "👦", "red": "🟥", "blue": "🟦", "green": "🟩", "yellow": "🟨", "two": "🔵🔵", "three": "🔵🔵🔵", "five": "🔵🔵🔵🔵🔵", "four": "🔵🔵🔵🔵", "eight": "8️⃣", "nine": "9️⃣", "fingers": "✋", "play": "🎮", "draw": "🎨", "sing": "🎤", "read": "📖", "swim": "🏊", "run": "🏃", "jump": "🤸", "eat": "🍽️", "sleep": "😴", "count": "🔢", "go home": "🏠", "home": "🏠", "go outside": "🚪", "outside": "🚪", "to school": "🏫", "happy": "😄", "sad": "😢", "hungry": "😋", "tired": "😴", "music": "🎵", "noise": "📢", "your hand": "✋", "question": "❓"};
+const SLOT_VI = {"an apple": "quả táo", "apples": "táo", "ball": "quả bóng", "the ball": "quả bóng", "bag": "cái cặp", "my bag": "cặp của tớ", "book": "quyển sách", "bike": "xe đạp", "car": "ô tô", "cars": "ô tô", "toy": "đồ chơi", "my toy": "đồ chơi của tớ", "milk": "sữa", "some milk": "sữa", "water": "nước", "some water": "nước", "pizza": "pizza", "carrots": "cà rốt", "room": "phòng", "cat": "con mèo", "the cat": "con mèo", "dog": "con chó", "dogs": "chó", "bird": "con chim", "the bird": "con chim", "flower": "bông hoa", "tree": "cái cây", "moon": "mặt trăng", "rain": "mưa", "Mom": "mẹ", "mom": "mẹ", "Dad": "bố", "dad": "bố", "sister": "em gái", "brother": "em trai", "red": "đỏ", "blue": "xanh dương", "green": "xanh lá", "yellow": "vàng", "two": "hai", "three": "ba", "four": "bốn", "five": "năm", "eight": "tám", "nine": "chín", "fingers": "ngón tay", "many": "nhiều", "more": "thêm nữa", "play": "chơi", "draw": "vẽ", "sing": "hát", "read": "đọc sách", "swim": "bơi", "run": "chạy", "jump": "nhảy", "eat": "ăn", "eat that": "ăn cái đó", "sleep": "ngủ", "count": "đếm", "go": "đi", "go home": "về nhà", "home": "nhà", "go outside": "ra ngoài", "outside": "ngoài sân", "to school": "đến trường", "happy": "vui", "sad": "buồn", "hungry": "đói", "tired": "mệt", "okay": "ổn", "music": "nhạc", "noise": "tiếng ồn", "your hand": "tay em", "question": "câu hỏi", "this": "cái này", "that": "cái kia", "Nam": "Nam", "Mai": "Mai", "Bin": "Bin"};
+const N = 10;                       // mỗi phiên 10 cụm — vừa sức bé 8 tuổi
+
+const $ = s => document.querySelector(s);
+const rnd = a => a[Math.floor(Math.random() * a.length)];
+
+// Nhớ cụm nào đã tập, hôm sau đổi cụm mới
+const SEEN = 'englishup_noi_seen';
+let seen = JSON.parse(localStorage.getItem(SEEN) || '[]');
+
+let queue = [], cur = null, i = 0;
+let media = null, chunks = [], audioURL = null, recording = false;
+
+function buildQueue() {
+  const fresh = CHUNKS.filter(c => !seen.includes(c.ord));
+  const pool = fresh.length >= N ? fresh : (seen = [], CHUNKS);
+  queue = pool.slice(0, N);
+  i = 0;
+  render();
+}
+
+function fill(c) {
+  if (!c.slots.length) return { text: c.chunk, slot: '', emo: '' };
+  const s = rnd(c.slots);
+  return { text: c.chunk.replace('___', s), slot: s,
+           emo: EMOJI[s] || '', vi: SLOT_VI[s] || s };
+}
+
+function dots() {
+  $('#dots').innerHTML = queue.map((_, k) =>
+    `<i class="${k < i ? 'on' : ''}"></i>`).join('');
+}
+
+function render() {
+  if (i >= queue.length) return finish();
+  cur = queue[i];
+  const f = fill(cur);
+  cur._text = f.text;
+  const html = f.slot
+    ? cur.chunk.replace('___', `<b>${f.slot}</b>`)
+    : cur.chunk;
+  const viHtml = f.slot
+    ? cur.meaning_vi.replace('___', f.vi)
+    : cur.meaning_vi;
+  dots();
+  $('#stage').innerHTML = `
+    <div class="card">
+      <div class="tag">${cur.nhom}</div>
+      ${f.emo ? `<div class="emo">${f.emo}</div>` : ''}
+      <div class="chunk">${html}</div>
+      <div class="vi">${viHtml}</div>
+    </div>
+    <div class="btns">
+      <button class="listen" id="b-listen"><span>🔊</span>Nghe</button>
+      <button class="rec"    id="b-rec"><span>🎤</span>Thu</button>
+      <button class="play"   id="b-play" disabled><span>▶️</span>Nghe lại</button>
+    </div>
+    <button class="next" id="b-next">Cụm tiếp theo →</button>
+    ${cur.goi_y ? `<div class="tip">💡 <b>Thử với em:</b> ${cur.goi_y}</div>` : ''}
+    <div id="warn"></div>`;
+
+  $('#b-listen').onclick = speak;
+  $('#b-rec').onclick    = toggleRec;
+  $('#b-play').onclick   = playback;
+  $('#b-next').onclick   = () => { stopRec(); seen.push(cur.ord);
+    localStorage.setItem(SEEN, JSON.stringify(seen)); i++; render(); };
+  setTimeout(speak, 350);           // đọc mẫu ngay, bé nghe trước đã
+}
+
+function speak() {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(cur._text);
+  u.lang = 'en-US';
+  u.rate = 0.75;                    // chậm để bé nhại kịp
+  const v = speechSynthesis.getVoices().find(v => /en-US|en_US/.test(v.lang));
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+
+async function toggleRec() {
+  if (recording) return stopRec();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    media = new MediaRecorder(stream);
+    chunks = [];
+    media.ondataavailable = e => chunks.push(e.data);
+    media.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (audioURL) URL.revokeObjectURL(audioURL);
+      audioURL = URL.createObjectURL(new Blob(chunks, { type: 'audio/webm' }));
+      $('#b-play').disabled = false;
+      playback();                   // tự phát lại luôn — bé nghe chính mình
+    };
+    media.start();
+    recording = true;
+    $('#b-rec').classList.add('on');
+    $('#b-rec').innerHTML = '<span>⏹️</span>Dừng';
+  } catch (e) {
+    $('#warn').innerHTML = `<div class="warn"><b>Chưa thu âm được.</b>
+      Micro cần chạy qua <code>localhost</code> hoặc <code>https</code> —
+      mở bằng <code>npx serve . -p 8080</code> thay vì nháy đúp file.
+      Vẫn nghe và nhại theo bình thường được nhé.</div>`;
+  }
+}
+
+function stopRec() {
+  if (media && recording) media.stop();
+  recording = false;
+  const b = $('#b-rec');
+  if (b) { b.classList.remove('on'); b.innerHTML = '<span>🎤</span>Thu'; }
+}
+
+function playback() {
+  if (audioURL) new Audio(audioURL).play();
+}
+
+function finish() {
+  const c = queue[queue.length - 1];
+  $('#dots').innerHTML = '';
+  $('#stage').innerHTML = `
+    <div class="card done">
+      <div class="big">🎉</div>
+      <h2>Xong rồi!</h2>
+      <p>Con vừa nói <b>${queue.length} câu</b> tiếng Anh.<br><br>
+      Giờ ra tìm em, thử nói câu này xem em có hiểu không:</p>
+      <div class="chunk" style="margin-top:14px;font-size:27px">${c._text}</div>
+    </div>
+    <button class="next" id="again">Tập tiếp →</button>`;
+  $('#again').onclick = buildQueue;
+}
+
+speechSynthesis.onvoiceschanged = () => {};
+buildQueue();
+</script>
+</body>
+</html>

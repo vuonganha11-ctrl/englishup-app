@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ từ · EnglishUp</title>
+<link rel="stylesheet" href="eu.css">
+<style>
+.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+select,input[type=search]{
+  font:inherit;font-weight:600;padding:9px 12px;border-radius:13px;
+  border:2px solid var(--line);background:#fff;color:var(--ink);
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+.stat{background:#fff;border:2px solid var(--line);border-radius:15px;padding:11px;text-align:center}
+.stat b{display:block;font-size:24px;font-family:var(--mono);font-weight:800}
+.stat small{color:var(--mute);font-size:11px}
+.s-all b{color:var(--brand)} .s-due b{color:var(--red)} .s-ok b{color:var(--green)}
+
+.word{
+  background:#fff;border:2px solid var(--line);border-radius:15px;
+  padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center;
+}
+.word .t{flex:1;min-width:0}
+.word .term{font-size:19px;font-weight:800}
+.word .ipa{font-family:var(--mono);font-size:12px;color:var(--purple)}
+.word .def{font-size:14px;color:var(--mute);margin-top:2px}
+.word .src{font-size:11px;color:#a8a29e;margin-top:3px}
+.word .due{
+  font-size:11px;font-weight:800;border-radius:9px;padding:3px 8px;white-space:nowrap;
+  background:#f5f5f4;color:var(--mute);
+}
+.word .due.now{background:#fee2e2;color:#b91c1c}
+.word button{padding:8px 11px;font-size:17px;border-radius:11px}
+
+/* ôn tập */
+.rev{text-align:center;padding:28px 18px}
+.rev .term{font-size:42px;font-weight:900;margin:6px 0}
+.rev .ipa{font-family:var(--mono);color:var(--purple);font-size:16px}
+.rev .def{font-size:23px;color:var(--green);font-weight:700;margin-top:14px}
+.rev .ctx{font-size:14px;color:var(--mute);margin-top:12px;font-style:italic;line-height:1.6}
+.grade{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.grade button{flex:1;min-width:78px;display:flex;flex-direction:column;gap:2px;padding:13px 8px}
+.grade small{font-size:10px;opacity:.85;font-weight:600}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+  <div id="body"><div class="empty">Đang tải…</div></div>
+</div>
+
+<script type="module">
+import { api, requireProfile, nav, speak, nextState, esc, today, $, $$ } from './eu.js';
+const me = requireProfile();
+if (me) {
+  $('#nav').innerHTML = nav('tuvung');
+  main();
+}
+
+let words = [], view = 'list', queue = [], cur = null, shown = false;
+
+async function load() {
+  try {
+    words = await api(`saved_words?select=*&profile_id=eq.${me.id}&order=created_at.desc&limit=2000`);
+  } catch (e) {
+    $('#body').innerHTML = `<div class="empty"><b>Chưa kết nối được sổ từ</b>
+      ${esc(e.message)}<br><br>Chạy <code>05_family.sql</code> trong Supabase SQL Editor trước nhé.</div>`;
+    return false;
+  }
+  return true;
+}
+
+async function main() { if (await load()) render(); }
+
+function due() { const t = today(); return words.filter(w => w.due <= t); }
+
+function render() {
+  if (view === 'review') return renderReview();
+  const t = today();
+  const topics = [...new Set(words.map(w => w.topic).filter(Boolean))].sort();
+  const q = ($('#q')?.value || '').toLowerCase();
+  const tf = $('#topic')?.value || '';
+  let list = words;
+  if (q)  list = list.filter(w => w.term.includes(q) || (w.definition_vi || '').toLowerCase().includes(q));
+  if (tf) list = list.filter(w => (w.topic || '') === tf);
+
+  $('#body').innerHTML = `
+    <div class="stats">
+      <div class="stat s-all"><b>${words.length}</b><small>TỪ TRONG SỔ</small></div>
+      <div class="stat s-due"><b>${due().length}</b><small>ĐẾN HẠN ÔN</small></div>
+      <div class="stat s-ok"><b>${words.filter(w => w.reps > 0).length}</b><small>ĐÃ ÔN</small></div>
+    </div>
+    ${due().length ? `<button class="b-orange" id="start" style="width:100%;margin-bottom:16px">
+       Ôn ${due().length} từ đến hạn →</button>` : ''}
+    <div class="bar">
+      <input type="search" id="q" placeholder="Tìm từ…" value="${esc(q)}" style="flex:1">
+      <select id="topic">
+        <option value="">Mọi chủ đề</option>
+        ${topics.map(x => `<option ${x === tf ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+      </select>
+    </div>
+    ${list.length ? list.map(row).join('') : `<div class="empty">
+      <b>Sổ từ còn trống</b>
+      Sang trang <a href="nghe.html" style="color:var(--brand);font-weight:700">🎧 Nghe</a>
+      và <b style="display:inline">bấm vào từ nào chưa biết</b> — nó sẽ tự bay về đây.
+      <div class="warn" style="text-align:left;margin-top:18px">
+        💡 Sổ này chỉ chứa từ <b style="display:inline">chính bạn bấm tra</b> — gặp trong ngữ cảnh thật,
+        lúc đang cần. Đó là lý do nó đúng trình độ của bạn hơn mọi danh sách có sẵn.
+      </div></div>`}`;
+
+  $('#q')?.addEventListener('input', render);
+  $('#topic')?.addEventListener('change', render);
+  $('#start')?.addEventListener('click', () => {
+    queue = due().sort(() => Math.random() - .5); view = 'review'; render();
+  });
+  $$('.speak').forEach(b => b.onclick = () => speak(b.dataset.t));
+}
+
+function row(w) {
+  const isDue = w.due <= today();
+  return `<div class="word">
+    <button class="b-blue speak" data-t="${esc(w.term)}">🔊</button>
+    <div class="t">
+      <div class="term">${esc(w.term)} <span class="ipa">${esc(w.phonetic || '')}</span></div>
+      <div class="def">${esc(w.definition_vi || '—')}</div>
+      ${w.source ? `<div class="src">gặp ở: ${esc(w.source)}</div>` : ''}
+    </div>
+    <span class="due ${isDue ? 'now' : ''}">${isDue ? 'ôn ngay' : w.due}</span>
+  </div>`;
+}
+
+function renderReview() {
+  cur = queue[0];
+  if (!cur) {
+    view = 'list';
+    $('#body').innerHTML = `<div class="card rev"><div style="font-size:52px">🎉</div>
+      <h2>Ôn xong rồi!</h2><p style="color:var(--mute)">Mai quay lại nhé — giãn cách mới là chỗ trí nhớ bám lại.</p></div>
+      <button class="b-ghost" id="back" style="width:100%;margin-top:12px">← Về sổ từ</button>`;
+    $('#back').onclick = () => { load().then(render); };
+    return;
+  }
+  shown = false;
+  $('#body').innerHTML = `
+    <div class="card rev">
+      <div class="term">${esc(cur.term)}</div>
+      <div class="ipa">${esc(cur.phonetic || '')}</div>
+      ${cur.context ? `<div class="ctx">“${esc(cur.context.slice(0, 90))}”</div>` : ''}
+      <div id="ans"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="b-blue" id="say" style="flex:1">🔊 Nghe</button>
+      <button class="b-orange" id="show" style="flex:2">Hiện nghĩa</button>
+    </div>
+    <div id="g"></div>`;
+  $('#say').onclick = () => speak(cur.term);
+  $('#show').onclick = reveal;
+  speak(cur.term);
+}
+
+function reveal() {
+  if (shown) return;
+  shown = true;
+  $('#ans').innerHTML = `<div class="def">${esc(cur.definition_vi || '(chưa có nghĩa)')}</div>`;
+  $('#show').disabled = true;
+  const st = q => nextState(cur, q).interval;
+  $('#g').innerHTML = `<div class="grade">
+    ${[['b-red','Quên',0], ['b-ghost','Khó',1], ['b-green','Được',2], ['b-blue','Dễ',3]]
+      .map(([c, l, q]) => `<button class="${c}" data-q="${q}">${l}<small>${st(q)} ngày</small></button>`).join('')}
+  </div>`;
+  $$('#g button').forEach(b => b.onclick = () => grade(+b.dataset.q));
+}
+
+async function grade(q) {
+  const s = nextState(cur, q);
+  Object.assign(cur, { step: s.step, reps: s.reps, lapses: s.lapses, due: s.due });
+  try {
+    await api(`saved_words?id=eq.${cur.id}`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ step: s.step, reps: s.reps, lapses: s.lapses, due: s.due }),
+    });
+  } catch (e) { console.warn(e.message); }
+  queue.shift();
+  if (q === 0) queue.push(cur);     // quên -> gặp lại cuối phiên
+  renderReview();
+}
+</script>
+</body>
+</html>

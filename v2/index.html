@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EnglishUp · Ai đang học?</title>
+<link rel="stylesheet" href="eu.css">
+<style>
+.hero{text-align:center;padding:38px 0 26px}
+.hero h1{font-size:34px;font-weight:900;color:var(--brand);letter-spacing:-.02em}
+.hero p{color:var(--mute);margin-top:7px;font-size:15px}
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:14px;margin-top:8px}
+.person{
+  background:#fff;border:3px solid var(--line);border-radius:22px;
+  padding:24px 12px;text-align:center;cursor:pointer;transition:.15s;
+  box-shadow:0 5px 0 #fde3c4;
+}
+.person:hover{border-color:var(--brand);transform:translateY(-3px);box-shadow:0 8px 0 #fde3c4}
+.person:active{transform:translateY(3px);box-shadow:0 1px 0 #fde3c4}
+.person .e{font-size:56px;line-height:1}
+.person .n{font-weight:800;font-size:18px;margin-top:7px}
+.person .d{font-size:12px;color:var(--mute);margin-top:3px}
+.note{text-align:center;color:var(--mute);font-size:13px;margin-top:26px;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>EnglishUp</h1>
+    <p>Ai đang học?</p>
+  </div>
+  <div class="people" id="people"><div class="empty">Đang tải…</div></div>
+  <div class="note">
+    Không cần mật khẩu — bấm vào tên là vào.<br>
+    Mỗi người có sổ từ và lịch ôn riêng.
+  </div>
+</div>
+
+<script type="module">
+import { api, setProfile, $ } from './eu.js';
+
+// Dự phòng: nếu chưa chạy 05_family.sql thì vẫn vào được
+const FALLBACK = [
+  { id: 1, name: 'Bố', emoji: '👨', is_child: false },
+  { id: 2, name: 'Mẹ', emoji: '👩', is_child: false },
+  { id: 3, name: 'Anh', emoji: '👦', is_child: true },
+  { id: 4, name: 'Em',  emoji: '👧', is_child: true },
+];
+
+const DESC = { 'Bố':'Người lớn', 'Mẹ':'Người lớn', 'Anh':'8 tuổi', 'Em':'4 tuổi' };
+
+let ps;
+try {
+  ps = await api('profiles?select=id,name,emoji,is_child&order=ord.asc');
+  if (!ps.length) ps = FALLBACK;
+} catch (e) {
+  ps = FALLBACK;
+  console.warn('Chua chay 05_family.sql — dung ho so mac dinh');
+}
+
+$('#people').innerHTML = ps.map(p => `
+  <div class="person" data-id="${p.id}">
+    <div class="e">${p.emoji}</div>
+    <div class="n">${p.name}</div>
+    <div class="d">${DESC[p.name] || (p.is_child ? 'Bé' : 'Người lớn')}</div>
+  </div>`).join('');
+
+$('#people').addEventListener('click', e => {
+  const el = e.target.closest('.person');
+  if (!el) return;
+  const p = ps.find(x => String(x.id) === el.dataset.id);
+  setProfile(p);
+  // Bé 4 tuổi: mình đã khuyên không dùng màn hình. Vào thẳng trang Nói
+  // để bé ngồi cùng anh, không lang thang trong app.
+  location.href = p.name === 'Em' ? 'noi.html' : 'tuvung.html';
+});
+</script>
+</body>
+</html>

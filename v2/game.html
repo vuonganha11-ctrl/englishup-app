@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game · EnglishUp v2</title>
+<link rel="stylesheet" href="eu.css">
+</head>
+<body>
+<div id="nav"></div>
+<div class="wrap">
+  <div class="card" style="margin-top:20px">
+    <h2 style="margin-top:0">🎮 Bản v2 không làm lại trang này</h2>
+    <p style="line-height:1.85;color:var(--mute)">
+      Bạn <b>đã có</b> <code>game.html</code> — 827 dòng, 45,7 KB, có trò
+      <b>scramble</b> và <b>matching</b>. Tôi không biết điều đó lúc dựng v2.
+    </p>
+    <div class="warn" style="text-align:left">
+      <b>Dùng trang game cũ.</b> Nó thật và đang chạy.<br>
+      Nếu muốn nâng, việc đáng làm là cho nó lấy nguyên liệu từ
+      <a href="tuvung.html" style="color:var(--brand);font-weight:700">📒 sổ từ</a>
+      của từng người — thay vì từ toàn bộ kho từ vựng.
+      Từ bé tự bấm tra mới là từ bé cần ôn.
+    </div>
+  </div>
+</div>
+<script type="module">
+import { requireProfile, nav, $ } from './eu.js';
+if (requireProfile()) $('#nav').innerHTML = nav('game');
+</script>
+</body>
+</html>
