@@ -133,6 +133,12 @@ a{color:inherit;text-decoration:none}
 .lib-body .c{color:var(--muted);font-size:13px;margin-top:6px;display:flex;align-items:center;gap:8px}
 .lib-body .c b{color:var(--a3);font-weight:600}
 .lib-empty,.lib-loading{color:var(--muted);font-size:15px;padding:40px 4px;text-align:center}
+.lib-filters{margin:0 4px 18px;display:flex;flex-direction:column;gap:8px}
+.lib-frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lib-flabel{font-size:11px;color:var(--muted);min-width:58px;text-transform:uppercase;letter-spacing:.5px}
+.lib-chip{border:1px solid var(--border2);background:var(--card);color:var(--muted);font-size:13px;font-weight:600;padding:5px 13px;border-radius:999px;cursor:pointer;transition:.12s}
+.lib-chip:hover{color:var(--text);border-color:var(--accent)}
+.lib-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -157,6 +163,7 @@ a{color:inherit;text-decoration:none}
     <h1>🎬 Thư viện Video</h1>
     <p>Chọn một video để bắt đầu học: phụ đề, nói theo, nghe chép chính tả, từ vựng và trắc nghiệm.</p>
   </div>
+  <div class="lib-filters" id="lib-filters"></div>
   <div class="lib-grid" id="lib-grid"><div class="lib-loading">Đang tải danh sách video…</div></div>
 </div>
 
@@ -624,6 +631,40 @@ function boot(){
 }
 /* ============ LIBRARY (danh sách khi không có ?id=) ============ */
 function ytThumb(yid){ return yid?`https://i.ytimg.com/vi/${yid}/hqdefault.jpg`:""; }
+let LIB_ROWS=[]; let LIB_FILTER={topic:null,level:null};
+const CEFR=["A1","A2","B1","B2","C1","C2"];
+function libDistinct(rows,key){ return [...new Set(rows.map(r=>((r[key]||"")+"").trim()).filter(Boolean))]; }
+function buildLibFilters(rows){
+  const box=$("#lib-filters"); if(!box) return; box.innerHTML="";
+  const topics=libDistinct(rows,"topic").sort();
+  const levels=libDistinct(rows,"level").sort((a,b)=>CEFR.indexOf(a)-CEFR.indexOf(b));
+  const mkRow=(label,dim,vals)=>{
+    if(!vals.length) return;
+    const row=document.createElement("div"); row.className="lib-frow";
+    const lab=document.createElement("span"); lab.className="lib-flabel"; lab.textContent=label; row.appendChild(lab);
+    const mkChip=(text,val)=>{
+      const b=document.createElement("button");
+      b.className="lib-chip"+(LIB_FILTER[dim]===val?" active":"");
+      b.textContent=text;
+      b.onclick=()=>{ LIB_FILTER[dim]=val; buildLibFilters(LIB_ROWS); applyLibFilter(); };
+      return b;
+    };
+    row.appendChild(mkChip("Tất cả",null));
+    vals.forEach(v=>row.appendChild(mkChip(v,v)));
+    box.appendChild(row);
+  };
+  mkRow("Chủ đề","topic",topics);
+  mkRow("Cấp độ","level",levels);
+}
+function applyLibFilter(){
+  const f=LIB_FILTER;
+  const rows=LIB_ROWS.filter(v=>
+    (!f.topic || ((v.topic||"")+"").trim()===f.topic) &&
+    (!f.level || ((v.level||"")+"").trim()===f.level));
+  renderLibrary(rows);
+  const pill=document.querySelector(".pill");
+  if(pill) pill.textContent=(f.topic||f.level)?(rows.length+"/"+LIB_ROWS.length+" video"):(LIB_ROWS.length+" video");
+}
 function renderLibrary(rows){
   const g=$("#lib-grid");
   if(!rows||!rows.length){ g.innerHTML='<div class="lib-empty">Chưa có video nào. Thêm video ở trang quản trị (admin).</div>'; return; }
@@ -650,10 +691,11 @@ async function init(){
     try{
       const sb=supabase.createClient(SB_URL,SB_KEY);
       const {data,error}=await sb.from("video_lessons")
-        .select("id,title,channel,youtube_id,duration").order("id",{ascending:false});
+        .select("id,title,channel,youtube_id,duration,topic,level").order("id",{ascending:false});
       if(error) throw error;
-      renderLibrary(data);
-      if(pill) pill.textContent=(data?data.length:0)+" video";
+      LIB_ROWS=data||[]; LIB_FILTER={topic:null,level:null};
+      buildLibFilters(LIB_ROWS);
+      applyLibFilter();
     }catch(e){
       $("#lib-grid").innerHTML='<div class="lib-empty">Không tải được danh sách video. Thử tải lại trang.</div>';
       if(pill) pill.textContent="Thư viện";
