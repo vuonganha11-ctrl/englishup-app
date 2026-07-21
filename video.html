@@ -414,7 +414,7 @@ window.onYouTubeIframeAPIReady=function(){
   player=new YT.Player("player",{
     videoId:VIDEO_ID,
     playerVars:pv,
-    events:{onReady:()=>{playerReady=true; if(CLIP_ACTIVE&&player.seekTo) player.seekTo(CLIP_START,true);}}
+    events:{onReady:()=>{playerReady=true;}} // KHÔNG pre-seek CLIP_START: pre-seek khiến seekTo khi bấm câu (player chưa start) bị bỏ qua → nhảy về đầu đoạn. Guard sẽ ép về CLIP_START khi bắt đầu phát.
   });
 };
 function loadYT(){const t=document.createElement("script");t.src="https://www.youtube.com/iframe_api";document.head.appendChild(t);}
