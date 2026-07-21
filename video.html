@@ -436,7 +436,7 @@ setInterval(()=>{
   if(!playerReady||!player.getCurrentTime) return;
   const t=player.getCurrentTime();
   // khóa đoạn (clip): không cho phát ra ngoài [CLIP_START, CLIP_END]
-  if(CLIP_ACTIVE){
+  if(CLIP_ACTIVE && player.getPlayerState && player.getPlayerState()===1){ // CHỈ ép biên khi ĐANG PHÁT — tránh mốc 0 thoáng qua lúc seek/buffer bị kéo về CLIP_START (bug bấm câu nhảy về đầu đoạn)
     if(CLIP_END<1e8 && t>=CLIP_END-0.05){ player.pauseVideo(); player.seekTo(CLIP_START,true); playCtl.active=false; }
     else if(t<CLIP_START-0.4){ player.seekTo(CLIP_START,true); }
   }
