@@ -1361,6 +1361,7 @@ function renderVideos(){
       <td style="text-align:right"><div class="row-actions" style="justify-content:flex-end">
         <button class="btn-icon" title="Mở trang học" onclick="window.open('video.html?id=${v.id}','_blank')">▶</button>
         <button class="btn-icon" onclick="editVideo('${v.id}')">✏️</button>
+        <button class="btn-icon" title="Nhân bản → tạo video mới (giữ nguyên video + transcript, chỉ đổi tiêu đề & mốc đoạn)" onclick="duplicateVideo('${v.id}')">📋</button>
         <button class="btn-icon del" onclick="confirmDel('video_lessons','${v.id}','${(v.title||'').replace(/'/g,"\\'")}')">🗑</button>
       </div></td></tr>`;
   }).join('')}</tbody></table></div>`;
@@ -1389,6 +1390,14 @@ function openVideoModal(v){
   openModal('modal-video');
 }
 function editVideo(id){const v=_videos.find(x=>String(x.id)===String(id));if(v)openVideoModal(v);}
+function duplicateVideo(id){
+  const v=_videos.find(x=>String(x.id)===String(id)); if(!v)return;
+  openVideoModal({...v, id:'', title:(v.title||'')+' (bản sao)'});   // id rỗng → saveVideo INSERT (tạo mới)
+  document.getElementById('vf-id').value='';
+  document.getElementById('video-modal-title').textContent='Nhân bản video — đổi tiêu đề & mốc đoạn rồi Lưu';
+  const cs=document.getElementById('vf-clip-start'); if(cs){cs.focus();}
+  toast('Đã nhân bản. Đổi tiêu đề + mốc Bắt đầu/Kết thúc rồi bấm Lưu để tạo video mới.','success');
+}
 async function fetchVideoMeta(){
   const id=parseYoutubeId(document.getElementById('vf-url').value);
   if(!id){toast('Link/ID YouTube không hợp lệ.','warn');return;}
