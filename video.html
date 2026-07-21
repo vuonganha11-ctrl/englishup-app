@@ -115,6 +115,24 @@ a{color:inherit;text-decoration:none}
 .qexp b{color:var(--a3)}
 .quiz-foot{display:flex;align-items:center;gap:14px;margin-top:6px}
 .quiz-result{font-size:18px;font-weight:800}
+/* library */
+.libwrap{max-width:1280px;margin:0 auto;padding:20px}
+.lib-head{margin:8px 4px 18px}
+.lib-head h1{font-size:22px;margin:0 0 4px}
+.lib-head p{color:var(--muted);font-size:14px;margin:0}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.lib-card{display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:.15s;cursor:pointer}
+.lib-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.lib-thumb{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
+.lib-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lib-thumb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;background:rgba(0,0,0,.18);opacity:0;transition:.15s}
+.lib-card:hover .lib-thumb .play{opacity:1}
+.lib-thumb .dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.82);color:#fff;font-family:var(--mono);font-size:12px;padding:2px 6px;border-radius:6px}
+.lib-body{padding:12px 14px}
+.lib-body .t{font-size:15px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lib-body .c{color:var(--muted);font-size:13px;margin-top:6px;display:flex;align-items:center;gap:8px}
+.lib-body .c b{color:var(--a3);font-weight:600}
+.lib-empty,.lib-loading{color:var(--muted);font-size:15px;padding:40px 4px;text-align:center}
 </style>
 </head>
 <body>
@@ -133,7 +151,16 @@ a{color:inherit;text-decoration:none}
   <div class="pill">Bản demo · 1 video</div>
 </div>
 
-<div class="wrap">
+<!-- LIBRARY (hiện khi mở video.html không kèm ?id=) -->
+<div class="libwrap" id="libwrap" style="display:none">
+  <div class="lib-head">
+    <h1>🎬 Thư viện Video</h1>
+    <p>Chọn một video để bắt đầu học: phụ đề, nói theo, nghe chép chính tả, từ vựng và trắc nghiệm.</p>
+  </div>
+  <div class="lib-grid" id="lib-grid"><div class="lib-loading">Đang tải danh sách video…</div></div>
+</div>
+
+<div class="wrap" id="playerwrap" style="display:none">
   <!-- LEFT: video -->
   <div class="col-video">
     <div class="player-box"><div id="player"></div></div>
@@ -595,9 +622,47 @@ function boot(){
   renderSpeak(); renderListen();
   loadYT();
 }
+/* ============ LIBRARY (danh sách khi không có ?id=) ============ */
+function ytThumb(yid){ return yid?`https://i.ytimg.com/vi/${yid}/hqdefault.jpg`:""; }
+function renderLibrary(rows){
+  const g=$("#lib-grid");
+  if(!rows||!rows.length){ g.innerHTML='<div class="lib-empty">Chưa có video nào. Thêm video ở trang quản trị (admin).</div>'; return; }
+  g.innerHTML="";
+  rows.forEach(v=>{
+    const a=document.createElement("a");
+    a.className="lib-card"; a.href="video.html?id="+v.id;
+    const dur=(v.duration&&v.duration>0)?`<span class="dur">${fmt(v.duration)}</span>`:"";
+    const thumb=ytThumb(v.youtube_id);
+    const chan=v.channel?`<b>${v.channel}</b>`:"";
+    a.innerHTML=`<div class="lib-thumb">${thumb?`<img src="${thumb}" alt="" loading="lazy">`:""}<div class="play">▶</div>${dur}</div>
+      <div class="lib-body"><div class="t">${v.title||("Video #"+v.id)}</div><div class="c">${chan}</div></div>`;
+    g.appendChild(a);
+  });
+}
 async function init(){
   const id=new URLSearchParams(location.search).get("id");
   const pill=document.querySelector(".pill");
+  // KHÔNG có ?id= → hiển thị thư viện toàn bộ video
+  if(!id){
+    document.querySelector("#libwrap").style.display="";
+    document.querySelector("#playerwrap").style.display="none";
+    if(!window.supabase){ $("#lib-grid").innerHTML='<div class="lib-empty">Thiếu thư viện Supabase — không tải được danh sách.</div>'; if(pill)pill.textContent="Thư viện"; return; }
+    try{
+      const sb=supabase.createClient(SB_URL,SB_KEY);
+      const {data,error}=await sb.from("video_lessons")
+        .select("id,title,channel,youtube_id,duration").order("id",{ascending:false});
+      if(error) throw error;
+      renderLibrary(data);
+      if(pill) pill.textContent=(data?data.length:0)+" video";
+    }catch(e){
+      $("#lib-grid").innerHTML='<div class="lib-empty">Không tải được danh sách video. Thử tải lại trang.</div>';
+      if(pill) pill.textContent="Thư viện";
+    }
+    return;
+  }
+  // Có ?id= → mở trình phát 1 bài
+  document.querySelector("#libwrap").style.display="none";
+  document.querySelector("#playerwrap").style.display="";
   if(id && window.supabase){
     try{
       const sb=supabase.createClient(SB_URL,SB_KEY);
