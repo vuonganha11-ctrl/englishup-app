@@ -671,12 +671,12 @@ select.input{cursor:pointer}
         </div>
       </div>
       <div class="field">
-        <label>Transcript (phụ đề) · <span style="color:var(--muted);font-weight:400">mỗi dòng dạng <code>m:ss  câu</code> — sửa số phút:giây để chỉnh mốc. Dòng không có mốc sẽ được ước lượng.</span></label>
+        <label>Transcript (phụ đề) · <span style="color:var(--muted);font-weight:400">dán dạng VTT <code>m:ss --&gt; m:ss</code> (câu ở dòng dưới) để dùng đúng mốc đầu &amp; cuối; hoặc <code>m:ss  câu</code>. Dòng không mốc sẽ được ước lượng.</span></label>
         <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
           <button class="btn" onclick="fetchTranscriptAuto()">⚡ Lấy tự động (Edge Function)</button>
           <span id="vf-tr-status" style="font-size:12px;color:var(--muted);align-self:center"></span>
         </div>
-        <textarea class="input" id="vf-transcript" style="min-height:120px;font-size:12px;line-height:1.7" placeholder="Mỗi câu một dòng, có thể thêm mốc thời gian ở đầu:&#10;0:02  Bat and Friends, Episode 1.&#10;0:18  Bat woke up.&#10;&#10;Có mốc → dùng đúng mốc đó. Không mốc → tự ước lượng theo thời lượng."></textarea>
+        <textarea class="input" id="vf-transcript" style="min-height:120px;font-size:12px;line-height:1.7" placeholder="Dán VTT (mốc bắt đầu --&gt; kết thúc, câu ở dòng dưới):&#10;00:00:12.000 --&gt; 00:00:20.000&#10;Hello, my name is Brian.&#10;&#10;Hoặc mỗi dòng: 0:12  Hello, my name is Brian."></textarea>
       </div>
       <div class="field">
         <label style="display:flex;justify-content:space-between;align-items:center">
@@ -1378,7 +1378,7 @@ function openVideoModal(v){
   document.getElementById('vf-clip-start').value=(v?.clip_start!=null&&v.clip_start!=='')?fmtTS(v.clip_start):'';
   document.getElementById('vf-clip-end').value=(v?.clip_end!=null&&v.clip_end!=='')?fmtTS(v.clip_end):'';
   const segs=Array.isArray(v?.segments)?v.segments:[];
-  const tr=segs.map(s=>(s.start!=null?fmtTS(s.start)+'  ':'')+s.text).join('\n');
+  const tr=segs.map((s,i)=>{const st=s.start!=null?s.start:0;const en=s.end!=null?s.end:((segs[i+1]&&segs[i+1].start!=null)?segs[i+1].start:st+3);return fmtTS(st)+' --> '+fmtTS(en)+'\n'+s.text;}).join('\n\n');
   _videoSeg={text:tr.replace(/\n/g,' '),segments:segs};
   document.getElementById('vf-transcript').value=tr;
   document.getElementById('vf-quiz-json').value=Array.isArray(v?.quiz)&&v.quiz.length?JSON.stringify(v.quiz,null,1):'';
@@ -1416,7 +1416,7 @@ async function fetchTranscriptAuto(){
     if(d.error)throw new Error(d.error);
     const segs=d.segments||[];
     _videoSeg={text:(d.text||segs.map(s=>s.text).join(' ')),segments:segs};
-    document.getElementById('vf-transcript').value=segs.map(s=>(s.start!=null?fmtTS(s.start)+'  ':'')+s.text).join('\n');
+    document.getElementById('vf-transcript').value=segs.map((s,i)=>{const st=s.start!=null?s.start:0;const en=s.end!=null?s.end:((segs[i+1]&&segs[i+1].start!=null)?segs[i+1].start:st+3);return fmtTS(st)+' --> '+fmtTS(en)+'\n'+s.text;}).join('\n\n');
     st.textContent=`✅ ${segs.length} câu (timing chính xác)`;
     toast('✅ Đã lấy transcript tự động.','success');
   }catch(e){
