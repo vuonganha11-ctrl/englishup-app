@@ -409,7 +409,8 @@ let playCtl={active:false,start:0,end:0,loop:false};
 let curRate=1;
 window.onYouTubeIframeAPIReady=function(){
   const pv={rel:0,modestbranding:1,playsinline:1};
-  if(CLIP_ACTIVE){ pv.start=Math.floor(CLIP_START); if(CLIP_END<1e8) pv.end=Math.ceil(CLIP_END); }
+  // KHÔNG set playerVars.start/end cho clip: playerVars.end khiến YouTube CHẶN seekTo trong đoạn
+  // (bấm câu bị nhảy về đầu clip). Khóa đoạn do onReady-seek(CLIP_START) + guard trong poll đảm nhiệm.
   player=new YT.Player("player",{
     videoId:VIDEO_ID,
     playerVars:pv,
