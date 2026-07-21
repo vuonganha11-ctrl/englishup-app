@@ -1278,10 +1278,32 @@ function parseTS(line){
   return h*3600+mm*60+ss+(m[4]?parseFloat('0.'+m[4]):0);
 }
 function stripTS(line){return String(line).replace(/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d+)?\s+/,'').trim();}
+// WEBVTT / SRT: dòng "hh:mm:ss.mmm --> hh:mm:ss.mmm" (câu ở dòng kế) -> segments[{start,end,text}] mốc THẬT (giữ cả end, KHÔNG nhét timecode vào nội dung).
+function parseVTT(text){
+  const raw=String(text||'').replace(/\r/g,'');
+  if(!/-->/.test(raw))return null;
+  const lines=raw.split('\n');
+  const P='(?:(\\d{1,2}):)?(\\d{1,2}):(\\d{2})(?:[.,](\\d{1,3}))?';
+  const cue=new RegExp('^\\s*'+P+'\\s*-->\\s*'+P);
+  const sec=(h,m,s,f)=>(h?+h:0)*3600+(+m)*60+(+s)+(f?parseFloat('0.'+f):0);
+  const segs=[];let i=0;
+  while(i<lines.length){
+    const m=lines[i].match(cue);
+    if(!m){i++;continue;}
+    const st=sec(m[1],m[2],m[3],m[4]), en=sec(m[5],m[6],m[7],m[8]);
+    i++;const buf=[];
+    while(i<lines.length&&lines[i].trim()!==''&&!cue.test(lines[i])){buf.push(lines[i].trim());i++;}
+    const txt=buf.join(' ').replace(/<[^>]+>/g,'').trim();
+    if(txt)segs.push({start:+st.toFixed(2),end:+en.toFixed(2),text:txt});
+  }
+  return segs.length?segs:null;
+}
 // Transcript (mỗi dòng "m:ss  câu" hoặc chữ thường) -> segments[{start,end,text}].
 // Có mốc thì DÙNG ĐÚNG mốc đó (không ước lượng); dòng thiếu mốc thì nội suy giữa 2 dòng có mốc.
 function parseTranscript(text,duration){
   const dur=parseFloat(duration)||0;
+  const _vtt=parseVTT(text);
+  if(_vtt)return _vtt;
   const lines=String(text||'').split('\n').map(l=>l.trim()).filter(Boolean);
   if(!lines.length)return [];
   const rows=lines.map(l=>{const t=parseTS(l);return {start:t,text:t!=null?stripTS(l):l};});
