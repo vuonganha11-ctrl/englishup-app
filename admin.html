@@ -664,6 +664,13 @@ select.input{cursor:pointer}
         <div class="field"><label>Chủ đề</label><input class="input" id="vf-topic" placeholder="Music…"></div>
       </div>
       <div class="field">
+        <label>Khóa đoạn (tuỳ chọn) · <span style="color:var(--muted);font-weight:400">chỉ phát &amp; hiện phụ đề trong đoạn này. Để trống = toàn bộ video. Dạng <code>m:ss</code> hoặc số giây.</span></label>
+        <div class="field-row">
+          <div class="field"><label>Bắt đầu</label><input class="input" id="vf-clip-start" placeholder="2:00"></div>
+          <div class="field"><label>Kết thúc</label><input class="input" id="vf-clip-end" placeholder="13:59"></div>
+        </div>
+      </div>
+      <div class="field">
         <label>Transcript (phụ đề) · <span style="color:var(--muted);font-weight:400">mỗi dòng dạng <code>m:ss  câu</code> — sửa số phút:giây để chỉnh mốc. Dòng không có mốc sẽ được ước lượng.</span></label>
         <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
           <button class="btn" onclick="fetchTranscriptAuto()">⚡ Lấy tự động (Edge Function)</button>
@@ -1262,6 +1269,8 @@ function vfThumb(){
   else img.style.display='none';
 }
 function fmtTS(s){s=Math.max(0,Math.round(+s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+// "m:ss" / "h:mm:ss" / số giây -> giây (int); rỗng -> null
+function parseClock(v){if(v==null)return null;v=String(v).trim();if(v==='')return null;if(/^\d+(\.\d+)?$/.test(v))return Math.round(parseFloat(v));const m=v.match(/^(\d+):([0-5]?\d)(?::([0-5]?\d))?$/);if(m)return m[3]!==undefined?(+m[1])*3600+(+m[2])*60+(+m[3]):(+m[1])*60+(+m[2]);return null;}
 function parseTS(line){
   const m=String(line).match(/^\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.(\d+))?\s+/);
   if(!m)return null;
@@ -1344,6 +1353,8 @@ function openVideoModal(v){
   document.getElementById('vf-level').value=v?.level||'B1';
   document.getElementById('vf-lang').value=v?.lang||'en';
   document.getElementById('vf-topic').value=v?.topic||'';
+  document.getElementById('vf-clip-start').value=(v?.clip_start!=null&&v.clip_start!=='')?fmtTS(v.clip_start):'';
+  document.getElementById('vf-clip-end').value=(v?.clip_end!=null&&v.clip_end!=='')?fmtTS(v.clip_end):'';
   const segs=Array.isArray(v?.segments)?v.segments:[];
   const tr=segs.map(s=>(s.start!=null?fmtTS(s.start)+'  ':'')+s.text).join('\n');
   _videoSeg={text:tr.replace(/\n/g,' '),segments:segs};
@@ -1454,7 +1465,10 @@ async function saveVideo(){
   const vraw=document.getElementById('vf-vocab-json').value.trim();
   try{if(qraw){quiz=JSON.parse(qraw);if(!Array.isArray(quiz))throw 0;}}catch(e){toast('❌ JSON Trắc nghiệm chưa hợp lệ.','error');return;}
   try{if(vraw){vocab=JSON.parse(vraw);if(!Array.isArray(vocab))throw 0;}}catch(e){toast('❌ JSON Từ vựng chưa hợp lệ.','error');return;}
-  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),segments,vocab,quiz};
+  const clip_start=parseClock(document.getElementById('vf-clip-start').value);
+  const clip_end=parseClock(document.getElementById('vf-clip-end').value);
+  if(clip_start!=null&&clip_end!=null&&clip_end<=clip_start){toast('❌ Khóa đoạn: mốc kết thúc phải lớn hơn mốc bắt đầu.','error');return;}
+  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),segments,vocab,quiz,clip_start,clip_end};
   try{
     const rid=document.getElementById('vf-id').value;
     let err;
