@@ -664,12 +664,12 @@ select.input{cursor:pointer}
         <div class="field"><label>Chủ đề</label><input class="input" id="vf-topic" placeholder="Music…"></div>
       </div>
       <div class="field">
-        <label>Transcript (phụ đề)</label>
+        <label>Transcript (phụ đề) · <span style="color:var(--muted);font-weight:400">mỗi dòng dạng <code>m:ss  câu</code> — sửa số phút:giây để chỉnh mốc. Dòng không có mốc sẽ được ước lượng.</span></label>
         <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
           <button class="btn" onclick="fetchTranscriptAuto()">⚡ Lấy tự động (Edge Function)</button>
           <span id="vf-tr-status" style="font-size:12px;color:var(--muted);align-self:center"></span>
         </div>
-        <textarea class="input" id="vf-transcript" style="min-height:120px;font-size:12px;line-height:1.7" placeholder="Dán transcript vào đây — sẽ tự tách thành câu theo thời lượng. Hoặc bấm 'Lấy tự động' nếu đã deploy Edge Function fetch-transcript."></textarea>
+        <textarea class="input" id="vf-transcript" style="min-height:120px;font-size:12px;line-height:1.7" placeholder="Mỗi câu một dòng, có thể thêm mốc thời gian ở đầu:&#10;0:02  Bat and Friends, Episode 1.&#10;0:18  Bat woke up.&#10;&#10;Có mốc → dùng đúng mốc đó. Không mốc → tự ước lượng theo thời lượng."></textarea>
       </div>
       <div class="field">
         <label style="display:flex;justify-content:space-between;align-items:center">
@@ -1261,6 +1261,38 @@ function vfThumb(){
   if(id){img.src=`https://i.ytimg.com/vi/${id}/hqdefault.jpg`;img.style.display='block';}
   else img.style.display='none';
 }
+function fmtTS(s){s=Math.max(0,Math.round(+s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function parseTS(line){
+  const m=String(line).match(/^\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.(\d+))?\s+/);
+  if(!m)return null;
+  const h=m[1]?parseInt(m[1],10):0, mm=parseInt(m[2],10), ss=parseInt(m[3],10);
+  return h*3600+mm*60+ss+(m[4]?parseFloat('0.'+m[4]):0);
+}
+function stripTS(line){return String(line).replace(/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d+)?\s+/,'').trim();}
+// Transcript (mỗi dòng "m:ss  câu" hoặc chữ thường) -> segments[{start,end,text}].
+// Có mốc thì DÙNG ĐÚNG mốc đó (không ước lượng); dòng thiếu mốc thì nội suy giữa 2 dòng có mốc.
+function parseTranscript(text,duration){
+  const dur=parseFloat(duration)||0;
+  const lines=String(text||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length)return [];
+  const rows=lines.map(l=>{const t=parseTS(l);return {start:t,text:t!=null?stripTS(l):l};});
+  const anyTimed=rows.some(r=>r.start!=null);
+  if(!anyTimed)return segmentTranscript(lines.join(' '),duration);
+  if(rows[0].start==null)rows[0].start=0;
+  const last=rows.length-1;
+  if(rows[last].start==null)rows[last].start=dur||(((rows[last-1]&&rows[last-1].start)||0)+3);
+  let i=0;
+  while(i<rows.length){
+    if(rows[i].start!=null){i++;continue;}
+    const s=i-1;let e=i;while(e<rows.length&&rows[e].start==null)e++;
+    const a=rows[s].start,b=rows[e].start,cnt=e-s;
+    for(let k=i;k<e;k++)rows[k].start=+(a+(b-a)*(k-s)/cnt).toFixed(2);
+    i=e;
+  }
+  for(let k=1;k<rows.length;k++)if(rows[k].start<rows[k-1].start)rows[k].start=rows[k-1].start;
+  rows.forEach((r,k)=>{r.end=k+1<rows.length?rows[k+1].start:(dur||r.start+3);});
+  return rows.map(r=>({start:+(+r.start).toFixed(2),end:+(+r.end).toFixed(2),text:r.text}));
+}
 function segmentTranscript(text,duration){
   text=(text||'').replace(/\s+/g,' ').trim();
   if(!text)return [];
@@ -1313,7 +1345,7 @@ function openVideoModal(v){
   document.getElementById('vf-lang').value=v?.lang||'en';
   document.getElementById('vf-topic').value=v?.topic||'';
   const segs=Array.isArray(v?.segments)?v.segments:[];
-  const tr=segs.map(s=>s.text).join('\n');
+  const tr=segs.map(s=>(s.start!=null?fmtTS(s.start)+'  ':'')+s.text).join('\n');
   _videoSeg={text:tr.replace(/\n/g,' '),segments:segs};
   document.getElementById('vf-transcript').value=tr;
   document.getElementById('vf-quiz-json').value=Array.isArray(v?.quiz)&&v.quiz.length?JSON.stringify(v.quiz,null,1):'';
@@ -1351,7 +1383,7 @@ async function fetchTranscriptAuto(){
     if(d.error)throw new Error(d.error);
     const segs=d.segments||[];
     _videoSeg={text:(d.text||segs.map(s=>s.text).join(' ')),segments:segs};
-    document.getElementById('vf-transcript').value=segs.map(s=>s.text).join('\n');
+    document.getElementById('vf-transcript').value=segs.map(s=>(s.start!=null?fmtTS(s.start)+'  ':'')+s.text).join('\n');
     st.textContent=`✅ ${segs.length} câu (timing chính xác)`;
     toast('✅ Đã lấy transcript tự động.','success');
   }catch(e){
@@ -1415,14 +1447,8 @@ async function saveVideo(){
   if(!id){toast('Link/ID YouTube không hợp lệ.','warn');return;}
   if(!title){toast('Vui lòng nhập tiêu đề.','warn');return;}
   const duration=parseInt(document.getElementById('vf-duration').value)||0;
-  const txt=document.getElementById('vf-transcript').value.trim();
-  const normTxt=txt.replace(/\s+/g,' ').trim();
-  let segments;
-  if(normTxt && normTxt===(_videoSeg.text||'').replace(/\s+/g,' ').trim() && _videoSeg.segments.length){
-    segments=_videoSeg.segments;
-  }else{
-    segments=segmentTranscript(txt,duration);
-  }
+  const txt=document.getElementById('vf-transcript').value;
+  const segments=parseTranscript(txt,duration);
   let quiz=[],vocab=[];
   const qraw=document.getElementById('vf-quiz-json').value.trim();
   const vraw=document.getElementById('vf-vocab-json').value.trim();
