@@ -816,7 +816,7 @@ init();
     ['iː','i'],['uː','u'],['ɑː','a'],['ɔː','o'],['ɜː','ơ'],['æ','a'],
     ['tʃ','ch'],['dʒ','gi'],['ʃ','s'],['ʒ','gi'],['θ','th'],['ð','đ'],['ŋ','ng'],
     ['ɪ','i'],['ɛ','e'],['e','ê'],['ə','ơ'],['ʌ','â'],['ʊ','u'],['ɒ','o'],['ɑ','a'],['ɔ','o'],['i','i'],['u','u'],['o','ô'],['a','a'],
-    ['p','p'],['b','b'],['t','t'],['d','đ'],['k','c'],['g','g'],['f','ph'],['v','v'],['s','x'],['z','z'],['h','h'],['m','m'],['n','n'],['l','l'],['r','r'],['w','u'],['j','y']];
+    ['p','p'],['b','b'],['t','t'],['d','đ'],['k','c'],['ɡ','g'],['g','g'],['f','ph'],['v','v'],['s','x'],['z','z'],['h','h'],['m','m'],['n','n'],['l','l'],['ɹ','r'],['ɾ','r'],['ɫ','l'],['r','r'],['w','u'],['j','y']];
   function ipaToVi(ipa){ if(!ipa) return ''; let t=ipa.replace(/[\/\[\]]/g,'').replace(/[ˈˌ.ˑ]/g,'').trim(); let o=''; for(let i=0;i<t.length;){ let mt=false; for(const [k,v] of M){ if(t.startsWith(k,i)){ o+=v; i+=k.length; mt=true; break; } } if(!mt) i++; } return o; }
   const pop=document.createElement('div'); pop.id='wordpop';
   pop.innerHTML='<span class="wp-x">✕</span><div class="wp-top"><span class="wp-w"></span><button class="wp-spk" title="Phát âm">🔊</button></div><div class="wp-ipa"></div><div class="wp-vipa"></div><div class="wp-mean"></div>';
