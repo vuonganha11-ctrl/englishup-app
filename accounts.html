@@ -149,7 +149,7 @@ table.tbl tbody tr:hover{background:var(--card2)}
     <div class="panel">
       <table class="tbl">
         <thead><tr>
-          <th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>XP</th><th>Ngày tạo</th><th style="text-align:right">Thao tác</th>
+          <th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Gói</th><th>XP</th><th>Ngày tạo</th><th style="text-align:right">Thao tác</th>
         </tr></thead>
         <tbody id="a-rows"></tbody>
       </table>
@@ -289,7 +289,7 @@ async function boot(){
 async function loadAccounts(){
   show('state-loading');
   const { data, error }=await sb.from('user_profiles')
-    .select('id,email,full_name,role,status,xp,created_at')
+    .select('id,email,full_name,role,status,xp,created_at,phone,plan,plan_expires_at')
     .order('created_at',{ascending:true});
   if(error){ toast('Lỗi tải dữ liệu: '+error.message); show('view-admin'); return; }
   _users=data||[];
@@ -321,7 +321,7 @@ function renderTable(){
     return true;
   });
   document.getElementById('a-rows').innerHTML = rows.length ? rows.map(rowHtml).join('')
-    : `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">Không có tài khoản phù hợp.</td></tr>`;
+    : `<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Không có tài khoản phù hợp.</td></tr>`;
 }
 
 function rowHtml(u){
@@ -329,6 +329,10 @@ function rowHtml(u){
   const status=u.status||'active';
   const locked=status==='locked';
   const name=u.full_name||(u.email||'').split('@')[0];
+  const plan=u.plan||'free';
+  let planInfo='';
+  if(plan==='plus'){ const exp=u.plan_expires_at?new Date(u.plan_expires_at):null; if(exp){ const expired=exp.getTime()<Date.now(); planInfo=` · ${expired?'⛔ hết hạn ':'⏳ '}${fmtDate(u.plan_expires_at)}`; } }
+  else if(plan==='pro'){ planInfo=' · ∞ vĩnh viễn'; }
   return `<tr>
     <td><div class="s-name">${esc(name)}</div><div class="s-email">${esc(u.email||'')}</div></td>
     <td>
@@ -339,6 +343,14 @@ function rowHtml(u){
       </select>
     </td>
     <td><span class="badge ${locked?'b-locked':'b-active'}">${locked?'Đã khóa':'Hoạt động'}</span></td>
+    <td>
+      <select class="role-sel" onchange="changePlan('${u.id}',this.value)">
+        <option value="free" ${plan==='free'?'selected':''}>Free</option>
+        <option value="plus" ${plan==='plus'?'selected':''}>Plus (1 năm)</option>
+        <option value="pro" ${plan==='pro'?'selected':''}>Pro (vĩnh viễn)</option>
+      </select>
+      <div class="s-email" style="margin-top:3px">${u.phone?('📱 '+esc(u.phone)):'<span class="muted">chưa có SĐP</span>'}${planInfo}</div>
+    </td>
     <td class="num">${u.xp||0}</td>
     <td class="muted">${fmtDate(u.created_at)}</td>
     <td>
@@ -361,6 +373,19 @@ async function changeRole(id,role){
   const { error }=await sb.from('user_profiles').update({role}).eq('id',id);
   if(error){ toast('Lỗi: '+error.message); u.role=prev; renderTable(); return; }
   u.role=role; renderStats(); renderTable(); toast('Đã đổi vai trò ✓');
+}
+
+// ── ĐỔI GÓI (Free / Plus 1 năm / Pro vĩnh viễn) ──
+async function changePlan(id,plan){
+  const u=_users.find(x=>x.id===id); if(!u)return;
+  const prev={plan:u.plan,exp:u.plan_expires_at};
+  let exp=null;
+  if(plan==='plus'){ const d=new Date(); d.setFullYear(d.getFullYear()+1); exp=d.toISOString(); }
+  const { error }=await sb.from('user_profiles').update({plan, plan_expires_at:exp}).eq('id',id);
+  if(error){ toast('Lỗi: '+error.message); u.plan=prev.plan; u.plan_expires_at=prev.exp; renderTable(); return; }
+  u.plan=plan; u.plan_expires_at=exp;
+  const label = plan==='plus'?'Plus (1 năm)':(plan==='pro'?'Pro (vĩnh viễn)':'Free');
+  renderTable(); toast('Đã đặt gói: '+label+' ✓');
 }
 
 // ── KHÓA / MỞ KHÓA ──
