@@ -183,7 +183,7 @@ async function loadMe(){
     if(role==='teacher'||role==='admin'){
       cur.innerHTML='Bạn đang là <b>'+(role==='admin'?'Quản trị viên':'Giáo viên')+'</b> — đã có <b>toàn quyền</b>, không cần nâng cấp.';
     } else if(plan==='pro'){
-      cur.innerHTML='Gói hiện tại: <b>Pro (vĩnh viễn)</b> — bạn đã mở khóa toàn bộ. Cảm ơn bạn! 🎉2'.replace('2','');
+      cur.innerHTML='Gói hiện tại: <b>Pro (vĩnh viễn)</b> — bạn đã mở khóa toàn bộ. Cảm ơn bạn! 🎉';
     } else if(plan==='plus'){
       const exp=prof.plan_expires_at; const expired=exp && new Date(exp).getTime()<Date.now();
       cur.innerHTML = expired
