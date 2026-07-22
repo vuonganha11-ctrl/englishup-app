@@ -170,22 +170,43 @@
     if (m) m.classList.remove("open");
   });
 
+  /* ===== Quyền truy cập dùng chung (window.EU_ACCESS) =====
+     isPremium = full quyền: giáo viên/admin, HOẶC gói 'pro', HOẶC 'plus' còn hạn.
+     Trang khác đọc window.EU_ACCESS hoặc nghe sự kiện 'eu-access'. */
+  window.EU_ACCESS = window.EU_ACCESS || { ready:false, loggedIn:false, role:null, plan:null, planExpiresAt:null, status:null, isStaff:false, isPremium:false };
+  function computeAccess(loggedIn, prof) {
+    prof = prof || {};
+    var role = prof.role || null;
+    var plan = prof.plan || (loggedIn ? "free" : null);
+    var exp = prof.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : null;
+    var isStaff = role === "teacher" || role === "admin";
+    var planActive = plan === "pro" || (plan === "plus" && (exp === null || exp > Date.now()));
+    var isPremium = isStaff || planActive;
+    return { ready:true, loggedIn:!!loggedIn, role:role, status:prof.status || null, plan:plan, planExpiresAt:prof.plan_expires_at || null, isStaff:isStaff, isPremium:isPremium };
+  }
+  function publishAccess(a) {
+    window.EU_ACCESS = a;
+    try { document.dispatchEvent(new CustomEvent("eu-access", { detail:a })); } catch (e) {}
+  }
+  function setAccess(u, prof) { publishAccess(computeAccess(true, prof)); }
+  function clearAccess() { publishAccess(computeAccess(false, {})); }
+
   function loadAndRender() {
     var c = sb();
     if (!c) return;
     c.auth.getSession().then(function (r) {
       var u = r.data && r.data.session && r.data.session.user;
-      if (!u) { showLoggedOut(); return; }
-      c.from("user_profiles").select("email,full_name,xp,streak,role").eq("id", u.id).maybeSingle()
-        .then(function (res) { showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
-        .catch(function () { showLoggedIn(u, {}); gateAccountsNav(false); });
+      if (!u) { clearAccess(); showLoggedOut(); return; }
+      c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
+        .then(function (res) { setAccess(u, res.data || {}); showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
+        .catch(function () { setAccess(u, {}); showLoggedIn(u, {}); gateAccountsNav(false); });
     }).catch(function () {});
     c.auth.onAuthStateChange(function (_e, sess) {
       var u = sess && sess.user;
-      if (!u) { showLoggedOut(); return; }
-      c.from("user_profiles").select("email,full_name,xp,streak,role").eq("id", u.id).maybeSingle()
-        .then(function (res) { showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
-        .catch(function () { showLoggedIn(u, {}); gateAccountsNav(false); });
+      if (!u) { clearAccess(); showLoggedOut(); return; }
+      c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
+        .then(function (res) { setAccess(u, res.data || {}); showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
+        .catch(function () { setAccess(u, {}); showLoggedIn(u, {}); gateAccountsNav(false); });
     });
   }
 
