@@ -1250,6 +1250,9 @@ aside.sidebar {
     </div>
     <button class="btn-submit" id="btn-submit-login" onclick="doLogin()">Đăng nhập</button>
     <div class="login-err" id="login-err"></div>
+    <div style="margin-top:12px;text-align:center;font-size:13px;color:var(--muted)">
+      <a href="#" onclick="forgotPassword();return false" style="color:inherit">Quên mật khẩu?</a> · <a href="register.html" style="color:var(--accent)">Đăng ký</a>
+    </div>
   </div>
 </div>
 
@@ -1353,6 +1356,22 @@ async function doLogin() {
     err.textContent = e.message || 'Đăng nhập thất bại';
   } finally {
     btn.disabled = false; btn.textContent = 'Đăng nhập';
+  }
+}
+
+async function forgotPassword() {
+  const err = document.getElementById('login-err');
+  let email = (document.getElementById('login-email').value || '').trim();
+  if (!email) { email = (prompt('Nhập email đã đăng ký để nhận link đặt lại mật khẩu:') || '').trim(); }
+  if (!email) return;
+  err.style.color = ''; err.textContent = 'Đang gửi link đặt lại…';
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: new URL('tai-khoan.html', location.href).href });
+    if (error) throw error;
+    err.style.color = 'var(--a3, #34d399)';
+    err.textContent = 'Đã gửi email đặt lại mật khẩu tới ' + email + ' (kiểm tra cả hộp thư Spam).';
+  } catch (e) {
+    err.style.color = ''; err.textContent = e.message || 'Không gửi được email.';
   }
 }
 
