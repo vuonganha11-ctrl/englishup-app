@@ -659,10 +659,11 @@ select.input{cursor:pointer}
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Cấp độ</label><select class="input" id="vf-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
+        <div class="field"><label>Phân loại</label><input class="input" id="vf-level" list="vf-level-list" placeholder="B1, hoặc tự nhập…"><datalist id="vf-level-list"><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option></datalist></div>
         <div class="field"><label>Ngôn ngữ phụ đề</label><input class="input" id="vf-lang" value="en"></div>
         <div class="field"><label>Chủ đề</label><input class="input" id="vf-topic" placeholder="Music…"></div>
       </div>
+      <div class="field"><label>Nội dung</label><input class="input" id="vf-noidung" placeholder="Nội dung ngắn về video…"></div>
       <div class="field">
         <label>Khóa đoạn (tuỳ chọn) · <span style="color:var(--muted);font-weight:400">chỉ phát &amp; hiện phụ đề trong đoạn này. Để trống = toàn bộ video. Dạng <code>m:ss</code> hoặc số giây.</span></label>
         <div class="field-row">
@@ -1376,6 +1377,8 @@ function openVideoModal(v){
   document.getElementById('vf-level').value=v?.level||'B1';
   document.getElementById('vf-lang').value=v?.lang||'en';
   document.getElementById('vf-topic').value=v?.topic||'';
+  document.getElementById('vf-noidung').value=v?.noi_dung||'';
+  try{const _lv=[...new Set(['A1','A2','B1','B2','C1'].concat((_videos||[]).map(x=>x.level).filter(Boolean)))];document.getElementById('vf-level-list').innerHTML=_lv.map(l=>'<option>'+String(l).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')+'</option>').join('');}catch(e){}
   document.getElementById('vf-clip-start').value=(v?.clip_start!=null&&v.clip_start!=='')?fmtTS(v.clip_start):'';
   document.getElementById('vf-clip-end').value=(v?.clip_end!=null&&v.clip_end!=='')?fmtTS(v.clip_end):'';
   const segs=Array.isArray(v?.segments)?v.segments:[];
@@ -1499,7 +1502,7 @@ async function saveVideo(){
   const clip_start=parseClock(document.getElementById('vf-clip-start').value);
   const clip_end=parseClock(document.getElementById('vf-clip-end').value);
   if(clip_start!=null&&clip_end!=null&&clip_end<=clip_start){toast('❌ Khóa đoạn: mốc kết thúc phải lớn hơn mốc bắt đầu.','error');return;}
-  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),segments,vocab,quiz,clip_start,clip_end};
+  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),noi_dung:document.getElementById('vf-noidung').value.trim(),segments,vocab,quiz,clip_start,clip_end};
   try{
     const rid=document.getElementById('vf-id').value;
     let err;
