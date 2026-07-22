@@ -1461,6 +1461,7 @@ function renderTopicSidebar() {
       </div>`;
   });
   container.innerHTML = html;
+  euDecorateLocks();
 }
 
 // Chọn cả nhóm cha → lọc toàn bộ chủ đề con trong nhóm
@@ -1551,6 +1552,7 @@ function updateHero() {
 
 // ── LOAD WORDS ───────────────────────────────────────
 async function loadWords() {
+  if (euGateLocked()) { euRenderLockPanel(); return; }
   const grid = document.getElementById('words-grid');
   grid.innerHTML = renderSkeletons(8);
 
@@ -2142,6 +2144,67 @@ function esc(s) {
 function escRegex(s) {
   return String(s||'').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// ── FREEMIUM GATE (Giai đoạn 3) ──────────────────────
+let _euFreeTopicId = null;   // chủ đề miễn phí (đầu tiên)
+let _euAutoSelected = false; // đã tự chọn chủ đề miễn phí cho user free chưa
+
+function euIsPremium() {
+  const a = window.EU_ACCESS;
+  if (!a || !a.ready) return true;   // chưa biết → chưa khóa (tránh nháy)
+  return !!a.isPremium;
+}
+function euComputeFreeTopic() {
+  _euFreeTopicId = (allTopics && allTopics.length) ? String(allTopics[0].id) : null;
+}
+function euGateLocked() {
+  if (euIsPremium()) return false;
+  if (!_euFreeTopicId) return false;
+  // chỉ mở đúng 1 chủ đề miễn phí; nhóm cha / "Tất cả" đều khóa
+  return currentGroup ? true : (String(currentTopic || '') !== _euFreeTopicId);
+}
+function euRenderLockPanel() {
+  const grid = document.getElementById('words-grid');
+  const sc = document.getElementById('shown-count'); if (sc) sc.textContent = '0';
+  const hc = document.getElementById('hero-word-count'); if (hc) hc.textContent = '🔒';
+  if (grid) grid.innerHTML =
+    '<div class="empty-state" style="padding:50px 20px">' +
+      '<div style="font-size:52px;margin-bottom:14px">🔒</div>' +
+      '<h3>Nội dung dành cho tài khoản nâng cấp</h3>' +
+      '<p style="max-width:440px;margin:0 auto 20px">Tài khoản miễn phí chỉ xem được chủ đề đầu tiên. ' +
+      'Nâng cấp lên <b>Plus</b> hoặc <b>Pro</b> để mở khoá toàn bộ chủ đề từ vựng.</p>' +
+      '<a href="nangcap.html" style="display:inline-block;background:var(--accent);color:#fff;' +
+      'padding:11px 22px;border-radius:8px;font-weight:600;text-decoration:none">⭐ Nâng cấp tài khoản</a>' +
+    '</div>';
+}
+function euDecorateLocks() {
+  document.querySelectorAll('.eu-lock').forEach(e => e.remove());
+  if (euIsPremium() || !_euFreeTopicId) return;
+  const addLock = (el) => {
+    if (!el) return;
+    const s = document.createElement('span');
+    s.className = 'eu-lock'; s.textContent = '🔒';
+    s.style.cssText = 'font-size:12px;opacity:.7;padding-left:6px;flex-shrink:0';
+    el.appendChild(s);
+  };
+  addLock(document.querySelector('.topic-row-all'));
+  document.querySelectorAll('.group-header').forEach(addLock);
+  document.querySelectorAll('.topic-row[data-id]').forEach(r => {
+    if (r.getAttribute('data-id') !== _euFreeTopicId) addLock(r);
+  });
+}
+function euApplyGate() {
+  euComputeFreeTopic();
+  if (!euIsPremium() && !_euAutoSelected && _euFreeTopicId && !currentTopic && !currentGroup) {
+    _euAutoSelected = true;
+    currentTopic = _euFreeTopicId;
+    updateHero();
+  }
+  renderTopicSidebar();   // sẽ gọi euDecorateLocks bên trong
+  loadWords();
+}
+document.addEventListener('eu-access', euApplyGate);
+if (window.EU_ACCESS && window.EU_ACCESS.ready) euApplyGate();
 </script>
 
 </body>
