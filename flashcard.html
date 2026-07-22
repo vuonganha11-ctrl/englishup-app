@@ -172,6 +172,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <a href="vocab.html"><button class="btn btn-ghost">← Về Từ vựng</button></a>
   </div>
 
+  <!-- UPGRADE WALL (freemium) -->
+  <div class="state hidden" id="state-upgrade">
+    <div class="ico">🔒</div><h2>Bạn đã dùng hết lượt ôn miễn phí</h2>
+    <p>Tài khoản miễn phí chỉ ôn được <b id="free-limit-n">5</b> thẻ mỗi phiên. Nâng cấp lên <b>Plus</b> hoặc <b>Pro</b> để ôn không giới hạn.</p>
+    <a href="nangcap.html"><button class="btn btn-primary">⭐ Nâng cấp tài khoản</button></a>
+  </div>
+
   <!-- CARD -->
   <div id="card-area" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center">
     <div class="card-stage">
@@ -227,6 +234,12 @@ let flipped = false;
 let reviewedCount = 0;
 let totalDue = 0;
 const MIN_EF = 1.3;
+
+// ── FREEMIUM (Giai đoạn 3): user free chỉ ôn được số thẻ giới hạn mỗi phiên ──
+const EU_FREE_CARD_LIMIT = 5;
+function euIsPremium(){ const a=window.EU_ACCESS; if(!a||!a.ready) return true; return !!a.isPremium; }
+function euShowUpgrade(){ var n=document.getElementById('free-limit-n'); if(n) n.textContent=EU_FREE_CARD_LIMIT; show('state-upgrade'); }
+
 
 window.addEventListener('DOMContentLoaded', async () => {
   // lock no-op: tránh treo getSession do Supabase Web Locks khi refresh token
@@ -339,7 +352,7 @@ async function loadDue(){
 }
 
 function show(id){
-  ['state-loading','state-login','state-empty','state-done','card-area'].forEach(s=>{
+  ['state-loading','state-login','state-empty','state-done','state-upgrade','card-area'].forEach(s=>{
     document.getElementById(s).classList.toggle('hidden', s!==id);
   });
   const showHead = (id==='card-area');
@@ -349,6 +362,7 @@ function show(id){
 
 // ── CARD FLOW ──
 function nextCard(){
+  if(!euIsPremium() && reviewedCount >= EU_FREE_CARD_LIMIT){ euShowUpgrade(); return; }
   if(!queue.length){ finishSession(); return; }
   _cur = queue.shift();
   flipped = false;
