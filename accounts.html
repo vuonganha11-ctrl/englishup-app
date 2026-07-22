@@ -349,7 +349,7 @@ function rowHtml(u){
         <option value="plus" ${plan==='plus'?'selected':''}>Plus (1 năm)</option>
         <option value="pro" ${plan==='pro'?'selected':''}>Pro (vĩnh viễn)</option>
       </select>
-      <div class="s-email" style="margin-top:3px">${u.phone?('📱 '+esc(u.phone)):'<span class="muted">chưa có SĐP</span>'}${planInfo}</div>
+      <div class="s-email" style="margin-top:3px">${u.phone?('📱 '+esc(u.phone)):'<span class="muted">chưa có SĐT</span>'}${planInfo}</div>
     </td>
     <td class="num">${u.xp||0}</td>
     <td class="muted">${fmtDate(u.created_at)}</td>
