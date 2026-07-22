@@ -209,8 +209,6 @@ a{color:inherit;text-decoration:none}
     <!-- TRANSCRIPT -->
     <div class="tabpane active" id="pane-transcript">
       <div class="tr-tools">
-        <label class="toggle"><input type="checkbox" id="autoscroll" checked> Tự cuộn theo video</label>
-        <span>·</span>
         <span>Bấm vào câu để nhảy tới và phát</span>
       </div>
       <div id="transcript"></div>
@@ -519,9 +517,6 @@ function setActiveSentence(i){
     el.classList.toggle("done",k<i);
   });
   setNow(SEGMENTS[i].text);
-  if($("#autoscroll").checked && $("#pane-transcript").classList.contains("active")){
-    const el=trWrap.children[i]; if(el) el.scrollIntoView({block:"center",behavior:"smooth"});
-  }
 }
 function setNow(txt){ $("#now-playing").textContent=txt; showNowVi(txt); }
 const _viCache={};
