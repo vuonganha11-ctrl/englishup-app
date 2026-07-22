@@ -325,6 +325,18 @@ select.inp:focus{border-color:var(--accent)}
     </div>
   </div>
 
+  <!-- UPGRADE WALL (freemium) -->
+  <div id="screen-upgrade" class="hidden">
+    <div class="result">
+      <div class="big">🔒</div>
+      <h2>Hết lượt chơi miễn phí</h2>
+      <div class="sub">Tài khoản miễn phí chỉ chơi được <b>1</b> lượt mỗi phiên. Nâng cấp lên <b>Plus</b> hoặc <b>Pro</b> để chơi không giới hạn.</div>
+      <div class="result-actions" style="margin-top:26px">
+        <a href="nangcap.html"><button class="btn-g primary">⭐ Nâng cấp tài khoản</button></a>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- LOGIN MODAL -->
@@ -363,6 +375,16 @@ let allTopics=[];
 let selMode='meaning', selLevel='', selCount=10;
 let availWords=[];                 // từ trong phạm vi đang chọn (đã lọc)
 let round=null;                    // {mode,kind,items|boards,idx,correct,xpEarned,answered}
+
+// ── FREEMIUM (Giai đoạn 3): user free chỉ chơi 1 lượt mỗi phiên ──
+let _euRoundsPlayed = 0;
+function euIsPremium(){ const a=window.EU_ACCESS; if(!a||!a.ready) return true; return !!a.isPremium; }
+function euShowUpgrade(){
+  document.getElementById('screen-setup').classList.add('hidden');
+  document.getElementById('screen-play').classList.add('hidden');
+  document.getElementById('screen-result').classList.add('hidden');
+  document.getElementById('screen-upgrade').classList.remove('hidden');
+}
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', async ()=>{
@@ -540,6 +562,8 @@ function pickDistinct(pool,key,exclude,n){
 
 // ── BUILD ROUND ──
 function startGame(){
+  if(!euIsPremium() && _euRoundsPlayed >= 1){ euShowUpgrade(); return; }
+  _euRoundsPlayed++;
   const cardModes=['meaning','listening','image','scramble'];
   let kind,items=[],boards=[];
   if(selMode==='matching'){
