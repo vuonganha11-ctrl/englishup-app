@@ -427,6 +427,26 @@ function ttsSpeak(text, rate=1){
   speechSynthesis.speak(u);
 }
 
+/* ============ DỊCH EN→VI (Google trước, MyMemory dự phòng, bỏ cảnh báo hết lượt) ============ */
+async function euTranslate(text){
+  const q=(text||"").trim(); if(!q) return null;
+  try{
+    const r=await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q="+encodeURIComponent(q));
+    if(r.ok){ const j=await r.json(); if(j&&j[0]&&j[0].length){ const t=j[0].map(s=>(s&&s[0])?s[0]:"").join("").trim(); if(t) return t; } }
+  }catch(e){}
+  try{
+    const r=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(q)+"&langpair=en|vi&de=contact@englishup.xyz");
+    const j=await r.json();
+    const st=String((j&&j.responseStatus)||"");
+    let t=((j&&j.responseData&&j.responseData.translatedText)||"").trim();
+    if(st&&st!=="200") return null;
+    if(/MYMEMORY WARNING|USED ALL AVAILABLE TRANSLATIONS/i.test(t)) return null;
+    if(t){ const ta=document.createElement("textarea"); ta.innerHTML=t; return ta.value; }
+  }catch(e){}
+  return null;
+}
+window.euTranslate=euTranslate;
+
 /* ============ YT PLAYER ============ */
 let player=null, playerReady=false;
 let playCtl={active:false,start:0,end:0,loop:false};
@@ -537,18 +557,16 @@ async function showNowVi(en){
   const key=(en||"").trim();
   if(!key){ box.textContent=""; box.dataset.for=""; box.classList.remove("loading"); return; }
   box.dataset.for=key;
+  // ưu tiên bản dịch có sẵn trong phụ đề song ngữ
+  const _seg=SEGMENTS.find(s=>(s.text||"").trim()===key);
+  if(_seg && _seg.vi && String(_seg.vi).trim()){ box.textContent=String(_seg.vi).trim(); box.classList.remove("loading"); return; }
   if(_viCache[key]!==undefined){ box.textContent=_viCache[key]; box.classList.remove("loading"); return; }
   box.textContent="Đang dịch…"; box.classList.add("loading");
-  try{
-    const r=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(key)+"&langpair=en|vi");
-    const jj=await r.json();
-    let vi=((jj&&jj.responseData&&jj.responseData.translatedText)||"").trim();
-    vi=_decodeEnt(vi);
-    if(vi) _viCache[key]=vi;
-    if(box.dataset.for===key){ box.textContent=vi||"(không dịch được)"; box.classList.remove("loading"); }
-  }catch(e){
-    if(box.dataset.for===key){ box.textContent="(không dịch được)"; box.classList.remove("loading"); }
-  }
+  const vi=await euTranslate(key);
+  if(box.dataset.for!==key) return;
+  if(vi){ _viCache[key]=vi; box.textContent=vi; }
+  else { box.textContent="(chưa dịch được, thử lại sau)"; }
+  box.classList.remove("loading");
 }
 
 /* ============ SHADOWING (SPEAK) TAB ============ */
@@ -874,7 +892,7 @@ init();
   const cache={};
   async function lookup(word){ if(cache[word])return cache[word]; const res={ipa:'',audio:'',vi:''};
     try{ const j=await(await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(word))).json(); const e=Array.isArray(j)?j[0]:null; if(e){ res.ipa=e.phonetic||(e.phonetics||[]).map(p=>p.text).filter(Boolean)[0]||''; res.audio=(e.phonetics||[]).map(p=>p.audio).filter(Boolean)[0]||''; } }catch(e){}
-    try{ const j=await(await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(word)+'&langpair=en|vi')).json(); let vi=((j&&j.responseData&&j.responseData.translatedText)||'').trim(); const ta=document.createElement('textarea'); ta.innerHTML=vi; res.vi=ta.value; }catch(e){}
+    try{ const t=(typeof window.euTranslate==='function')?await window.euTranslate(word):null; if(t) res.vi=t; }catch(e){}
     res.vipa=ipaToVi(res.ipa); cache[word]=res; return res; }
   function position(span){ const r=span.getBoundingClientRect(); const pw=pop.offsetWidth||280,ph=pop.offsetHeight||120; let x=r.left,y=r.bottom+8; if(x+pw>innerWidth-10)x=innerWidth-10-pw; if(x<10)x=10; if(y+ph>innerHeight-10)y=r.top-ph-8; if(y<10)y=10; pop.style.left=x+'px'; pop.style.top=y+'px'; }
   let cur='';
