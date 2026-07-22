@@ -1913,11 +1913,21 @@ function clickableGloss(str, kind) {
 }
 
 async function translateWord(word) {
+  const q = (word || '').trim(); if (!q) return null;
+  // 1) Google (hạn cao, đáng tin)
   try {
-    const r = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en|vi');
+    const r = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=' + encodeURIComponent(q));
+    if (r.ok) { const j = await r.json(); if (j && j[0] && j[0].length) { const t = j[0].map(s => (s && s[0]) ? s[0] : '').join('').trim(); if (t && t.toLowerCase() !== q.toLowerCase()) return t; } }
+  } catch (_) {}
+  // 2) MyMemory (dự phòng) — bỏ qua cảnh báo hết lượt
+  try {
+    const r = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(q) + '&langpair=en|vi&de=contact@englishup.xyz');
     const j = await r.json();
-    const t = j && j.responseData && j.responseData.translatedText;
-    if (t && t.toLowerCase() !== word.toLowerCase()) return t;
+    const st = String((j && j.responseStatus) || '');
+    const t = ((j && j.responseData && j.responseData.translatedText) || '').trim();
+    if (st && st !== '200') return null;
+    if (/MYMEMORY WARNING|USED ALL AVAILABLE TRANSLATIONS/i.test(t)) return null;
+    if (t && t.toLowerCase() !== q.toLowerCase()) return t;
   } catch (_) {}
   return null;
 }
