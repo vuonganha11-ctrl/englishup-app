@@ -903,5 +903,90 @@ init();
   return 'init-ok';
 })();
 </script>
+
+<!-- ============ FREEMIUM GATE (Giai đoạn 3) ============ -->
+<script>
+(function(){
+  const LOCKED_TABS=['speak','listen','vocab','quiz'];
+  const SB_URL=localStorage.getItem('sb_url')||"https://fyglubimflzsetcovgqx.supabase.co";
+  const SB_KEY=localStorage.getItem('sb_key')||"sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_";
+  const curId=new URLSearchParams(location.search).get('id');
+  let _known=false, _premium=true, _freeId=null, _freeResolved=false;
+
+  function isPremium(){ return _known?_premium:true; }               // chưa biết → tạm không khóa
+  function videoLocked(){
+    if(isPremium()) return false;
+    if(!curId) return false;                                          // trang thư viện → không khóa
+    if(!_freeResolved||_freeId==null) return false;                   // chưa biết video miễn phí → tạm mở
+    return String(curId)!==String(_freeId);                          // chỉ video đầu tiên được mở đầy đủ
+  }
+
+  const ov=document.createElement('div');
+  ov.id='eu-vid-upgrade';
+  ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(4,6,12,.82);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML='<div style="max-width:430px;width:100%;text-align:center;background:#0e1018;border:1px solid #2e3a55;border-radius:16px;padding:34px 28px">'+
+    '<div style="font-size:52px">🔒</div>'+
+    '<h2 style="margin:12px 0 6px;font-size:20px">Tính năng dành cho tài khoản nâng cấp</h2>'+
+    '<p style="color:#64748b;font-size:14px;margin:0 0 22px;line-height:1.6">Với tài khoản miễn phí, các video khác chỉ xem được phần <b style="color:#dde3f0">Phụ đề</b>. Nâng cấp lên <b>Plus</b> hoặc <b>Pro</b> để mở khoá Nói theo, Nghe, Từ vựng và Trắc nghiệm cho mọi video.</p>'+
+    '<a href="nangcap.html" style="display:inline-block;background:#4f8ef7;color:#fff;padding:11px 22px;border-radius:8px;font-weight:600;text-decoration:none">⭐ Nâng cấp tài khoản</a>'+
+    '<div style="margin-top:14px"><button id="eu-vid-close" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer">Đóng</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.style.display='none'; });
+  ov.querySelector('#eu-vid-close').addEventListener('click',()=>ov.style.display='none');
+  function showUpgrade(){ ov.style.display='flex'; }
+
+  function decorate(){
+    const bar=document.getElementById('tabbar'); if(!bar) return;
+    const locked=videoLocked();
+    bar.querySelectorAll('button[data-tab]').forEach(b=>{
+      const need=locked&&LOCKED_TABS.includes(b.dataset.tab);
+      let badge=b.querySelector('.eu-lock');
+      if(need&&!badge){ badge=document.createElement('span'); badge.className='eu-lock'; badge.textContent=' 🔒'; badge.style.fontSize='12px'; b.appendChild(badge); }
+      else if(!need&&badge){ badge.remove(); }
+    });
+  }
+
+  const bar=document.getElementById('tabbar');
+  if(bar){
+    bar.addEventListener('click',function(e){
+      const b=e.target.closest('button'); if(!b) return;
+      if(videoLocked()&&LOCKED_TABS.includes(b.dataset.tab)){
+        e.stopPropagation(); e.preventDefault(); showUpgrade();
+      }
+    }, true);
+  }
+
+  (async function(){
+    try{
+      if(window.supabase){
+        const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
+        // trạng thái premium của user hiện tại
+        try{
+          const {data:{session}}=await Promise.race([sb.auth.getSession(), new Promise(r=>setTimeout(()=>r({data:{session:null}}),4000))]);
+          if(session&&session.user){
+            const {data:prof}=await sb.from('user_profiles').select('role,plan,plan_expires_at').eq('id',session.user.id).maybeSingle();
+            const role=prof&&prof.role; const plan=(prof&&prof.plan)||'free';
+            const exp=(prof&&prof.plan_expires_at)?new Date(prof.plan_expires_at).getTime():null;
+            const staff=role==='teacher'||role==='admin';
+            const active=plan==='pro'||(plan==='plus'&&(exp===null||exp>Date.now()));
+            _premium=staff||active;
+          } else _premium=false;
+        }catch(e){ _premium=false; }
+        _known=true;
+        // video miễn phí = id nhỏ nhất
+        if(curId){
+          try{
+            const {data}=await sb.from('video_lessons').select('id').order('id',{ascending:true}).limit(1);
+            if(data&&data.length) _freeId=data[0].id;
+          }catch(e){}
+        }
+        _freeResolved=true;
+      } else { _known=true; _freeResolved=true; }
+    }catch(e){ _known=true; _freeResolved=true; }
+    decorate();
+  })();
+})();
+</script>
 </body>
 </html>
