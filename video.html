@@ -45,6 +45,7 @@ a{color:inherit;text-decoration:none}
 .vmeta h1{font-size:20px;margin:0 0 6px}
 .vmeta .by{color:var(--muted);font-size:13px;display:flex;gap:10px;align-items:center}
 .vmeta .by b{color:var(--a3)}
+.v-noidung{margin-top:10px;font-size:14px;color:#cdd7ee;line-height:1.55;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
 .now-playing{margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-height:64px}
 .now-playing .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
 .now-playing .txt{font-size:16px;margin-top:6px}
@@ -188,6 +189,7 @@ a{color:inherit;text-decoration:none}
     <div class="vmeta">
       <h1 id="v-title">Do artists really write their own songs?</h1>
       <div class="by"><b id="v-channel">TED-Ed</b> · <span>Think Like A Musician</span> · <span id="v-dur">7:44</span></div>
+      <div class="v-noidung" id="v-noidung" style="display:none"></div>
     </div>
     <div class="now-playing">
       <div class="lbl">Đang phát</div>
@@ -301,6 +303,7 @@ a{color:inherit;text-decoration:none}
 /* ============ DATA (mặc định = bản demo; có thể bị ghi đè khi mở ?id=) ============ */
 let VIDEO_ID = "UDdkgOoeNcQ";
 let TITLE = "Do artists really write their own songs?";
+let NOIDUNG = "";
 let CHANNEL = "TED-Ed";
 let DURATION = 464;
 let CLIP_START=null, CLIP_END=null, CLIP_ACTIVE=false;
@@ -715,6 +718,7 @@ function applyLesson(v){
   if(Array.isArray(v.quiz)) QUIZ=v.quiz;
   if(v.title) TITLE=v.title;
   if(v.channel) CHANNEL=v.channel;
+  if(v.noi_dung!=null) NOIDUNG=v.noi_dung;
   if(v.duration) DURATION=v.duration;
   if(v.clip_start!=null) CLIP_START=parseClock(v.clip_start);
   if(v.clip_end!=null)   CLIP_END=parseClock(v.clip_end);
@@ -722,6 +726,7 @@ function applyLesson(v){
 function applyMeta(){
   $("#v-title").textContent=TITLE;
   $("#v-channel").textContent=CHANNEL;
+  { const _nd=$("#v-noidung"); if(_nd){ if(NOIDUNG){ _nd.textContent=NOIDUNG; _nd.style.display=""; } else { _nd.style.display="none"; } } }
   if(CLIP_ACTIVE) $("#v-dur").textContent="đoạn "+fmt(CLIP_START)+"–"+fmt(CLIP_END<1e8?CLIP_END:(DURATION||0));
   else if(DURATION) $("#v-dur").textContent=fmt(DURATION);
   document.title="EnglishUp · "+TITLE;
