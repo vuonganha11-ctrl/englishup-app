@@ -93,6 +93,7 @@
       '  </div>' +
       '  <div class="eu-menu" id="eu-menu">' +
       '    <div class="eu-menu-head"><b id="menu-name">—</b><small id="menu-email">—</small></div>' +
+      '    <a href="nangcap.html">⭐ Nâng cấp gói</a>' +
       '    <a href="tai-khoan.html">👤 Trang tài khoản</a>' +
       '    <button type="button" class="eu-logout" onclick="__euLogout()">🚪 Đăng xuất</button>' +
       '  </div>' +
