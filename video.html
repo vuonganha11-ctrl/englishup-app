@@ -886,7 +886,8 @@ init();
     $ipa.textContent=r.ipa||''; $vipa.textContent=r.vipa?('≈ '+r.vipa):''; $mean.textContent=r.vi||'(không có nghĩa)'; $spk.onclick=()=>speak(word,r.audio); position(span); }
   document.addEventListener('click',ev=>{ const sw=ev.target.closest('.sp-word'); if(sw){ ev.stopPropagation(); onClick(sw); return; } if(!ev.target.closest('#wordpop')) hidePop(); });
   window.addEventListener('scroll',hidePop,true);
-  function wrap(){ const el=document.getElementById('sp-text'); if(!el)return; if(el.querySelector('.sp-word'))return; const txt=el.textContent; if(!txt||!txt.trim()||txt.trim()==='—')return;
+  const WRAP_TARGETS=['sp-text','now-playing'];
+  function wrapEl(el){ if(!el)return; if(el.querySelector('.sp-word'))return; const txt=el.textContent; if(!txt||!txt.trim()||txt.trim()==='—')return;
     const parts=txt.split(/(\s+)/); const frag=document.createDocumentFragment();
     parts.forEach(tok=>{ if(tok===''||/^\s+$/.test(tok)){ frag.appendChild(document.createTextNode(tok)); return; }
       const m=tok.match(/^([^A-Za-z'’]*)([A-Za-z][A-Za-z'’\-]*)([^A-Za-z]*)$/);
@@ -894,10 +895,12 @@ init();
       if(m[1])frag.appendChild(document.createTextNode(m[1]));
       const sp=document.createElement('span'); sp.className='sp-word'; sp.textContent=m[2]; sp.dataset.w=m[2].replace(/[’]/g,"'").replace(/-+$/,''); frag.appendChild(sp);
       if(m[3])frag.appendChild(document.createTextNode(m[3])); });
-    if(obs)obs.disconnect(); el.innerHTML=''; el.appendChild(frag); if(obs)obs.observe(el,{childList:true,characterData:true,subtree:true}); }
-  let obs=new MutationObserver(()=>wrap());
-  const spEl=document.getElementById('sp-text'); if(spEl)obs.observe(spEl,{childList:true,characterData:true,subtree:true});
-  wrap();
+    if(obs)obs.disconnect(); el.innerHTML=''; el.appendChild(frag); reobserve(); }
+  function wrapAll(){ WRAP_TARGETS.forEach(id=>wrapEl(document.getElementById(id))); }
+  function reobserve(){ if(!obs)return; WRAP_TARGETS.forEach(id=>{ const t=document.getElementById(id); if(t)obs.observe(t,{childList:true,characterData:true,subtree:true}); }); }
+  let obs=new MutationObserver(()=>wrapAll());
+  reobserve();
+  wrapAll();
   return 'init-ok';
 })();
 </script>
