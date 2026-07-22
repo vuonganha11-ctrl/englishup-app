@@ -144,10 +144,12 @@ a{color:inherit;text-decoration:none}
 .lib-empty,.lib-loading{color:var(--muted);font-size:15px;padding:40px 4px;text-align:center}
 .lib-filters{margin:0 4px 18px;display:flex;flex-direction:column;gap:8px}
 .lib-frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.lib-flabel{font-size:11px;color:var(--muted);min-width:58px;text-transform:uppercase;letter-spacing:.5px}
-.lib-chip{border:1px solid var(--border2);background:var(--card);color:var(--muted);font-size:13px;font-weight:600;padding:5px 13px;border-radius:999px;cursor:pointer;transition:.12s}
-.lib-chip:hover{color:var(--text);border-color:var(--accent)}
-.lib-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.lib-flabel{font-size:11px;color:var(--muted);min-width:70px;text-transform:uppercase;letter-spacing:.5px}
+.lib-finput{flex:1;min-width:180px;max-width:340px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;padding:7px 12px;border-radius:10px;outline:none}
+.lib-finput:focus{border-color:var(--accent)}
+.lib-finput::placeholder{color:var(--muted)}
+.lib-fclear{border:1px solid var(--border2);background:var(--card);color:var(--muted);font-size:12px;padding:6px 12px;border-radius:999px;cursor:pointer}
+.lib-fclear:hover{color:var(--text);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -172,7 +174,11 @@ a{color:inherit;text-decoration:none}
     <h1>🎬 Thư viện Video</h1>
     <p>Chọn một video để bắt đầu học: phụ đề, nói theo, nghe chép chính tả, từ vựng và trắc nghiệm.</p>
   </div>
-  <div class="lib-filters" id="lib-filters"></div>
+  <div class="lib-filters" id="lib-filters">
+    <div class="lib-frow"><span class="lib-flabel">Phân loại</span><input class="lib-finput" id="lf-level" list="lf-level-list" placeholder="Gõ tìm hoặc chọn phân loại…" autocomplete="off"><datalist id="lf-level-list"></datalist></div>
+    <div class="lib-frow"><span class="lib-flabel">Chủ đề</span><input class="lib-finput" id="lf-topic" list="lf-topic-list" placeholder="Gõ tìm hoặc chọn chủ đề…" autocomplete="off"><datalist id="lf-topic-list"></datalist></div>
+    <div class="lib-frow"><span class="lib-flabel">Nội dung</span><input class="lib-finput" id="lf-noidung" list="lf-noidung-list" placeholder="Gõ tìm trong nội dung…" autocomplete="off"><datalist id="lf-noidung-list"></datalist><button class="lib-fclear" id="lf-clear" type="button">Xóa lọc</button></div>
+  </div>
   <div class="lib-grid" id="lib-grid"><div class="lib-loading">Đang tải danh sách video…</div></div>
 </div>
 
@@ -745,39 +751,30 @@ function boot(){
 }
 /* ============ LIBRARY (danh sách khi không có ?id=) ============ */
 function ytThumb(yid){ return yid?`https://i.ytimg.com/vi/${yid}/hqdefault.jpg`:""; }
-let LIB_ROWS=[]; let LIB_FILTER={topic:null,level:null};
-const CEFR=["A1","A2","B1","B2","C1","C2"];
+let LIB_ROWS=[]; let LIB_FILTER={level:"",topic:"",noidung:""};
 function libDistinct(rows,key){ return [...new Set(rows.map(r=>((r[key]||"")+"").trim()).filter(Boolean))]; }
 function buildLibFilters(rows){
-  const box=$("#lib-filters"); if(!box) return; box.innerHTML="";
-  const topics=libDistinct(rows,"topic").sort();
-  const levels=libDistinct(rows,"level").sort((a,b)=>CEFR.indexOf(a)-CEFR.indexOf(b));
-  const mkRow=(label,dim,vals)=>{
-    if(!vals.length) return;
-    const row=document.createElement("div"); row.className="lib-frow";
-    const lab=document.createElement("span"); lab.className="lib-flabel"; lab.textContent=label; row.appendChild(lab);
-    const mkChip=(text,val)=>{
-      const b=document.createElement("button");
-      b.className="lib-chip"+(LIB_FILTER[dim]===val?" active":"");
-      b.textContent=text;
-      b.onclick=()=>{ LIB_FILTER[dim]=val; buildLibFilters(LIB_ROWS); applyLibFilter(); };
-      return b;
-    };
-    row.appendChild(mkChip("Tất cả",null));
-    vals.forEach(v=>row.appendChild(mkChip(v,v)));
-    box.appendChild(row);
-  };
-  mkRow("Chủ đề","topic",topics);
-  mkRow("Cấp độ","level",levels);
+  const esc=v=>String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  const fill=(id,vals)=>{ const dl=document.getElementById(id); if(!dl)return; dl.innerHTML=vals.map(v=>'<option value="'+esc(v)+'"></option>').join(""); };
+  fill("lf-level-list", libDistinct(rows,"level").sort());
+  fill("lf-topic-list", libDistinct(rows,"topic").sort());
+  fill("lf-noidung-list", libDistinct(rows,"noi_dung").sort());
+  const bind=(id,dim)=>{ const el=document.getElementById(id); if(!el||el._bound)return; el._bound=true; el.addEventListener("input",()=>{ LIB_FILTER[dim]=el.value.trim(); applyLibFilter(); }); };
+  bind("lf-level","level"); bind("lf-topic","topic"); bind("lf-noidung","noidung");
+  const clr=document.getElementById("lf-clear"); if(clr&&!clr._bound){ clr._bound=true; clr.addEventListener("click",()=>{ ["lf-level","lf-topic","lf-noidung"].forEach(i=>{const e=document.getElementById(i);if(e)e.value="";}); LIB_FILTER={level:"",topic:"",noidung:""}; applyLibFilter(); }); }
 }
 function applyLibFilter(){
   const f=LIB_FILTER;
+  const has=s=>!!s&&s.length>0;
+  const inc=(field,q)=>(((field||"")+"").toLowerCase().includes(q.toLowerCase()));
   const rows=LIB_ROWS.filter(v=>
-    (!f.topic || ((v.topic||"")+"").trim()===f.topic) &&
-    (!f.level || ((v.level||"")+"").trim()===f.level));
+    (!has(f.level) || inc(v.level,f.level)) &&
+    (!has(f.topic) || inc(v.topic,f.topic)) &&
+    (!has(f.noidung) || inc(v.noi_dung,f.noidung)));
   renderLibrary(rows);
   const pill=document.querySelector(".pill");
-  if(pill) pill.textContent=(f.topic||f.level)?(rows.length+"/"+LIB_ROWS.length+" video"):(LIB_ROWS.length+" video");
+  const active=has(f.level)||has(f.topic)||has(f.noidung);
+  if(pill) pill.textContent=active?(rows.length+"/"+LIB_ROWS.length+" video"):(LIB_ROWS.length+" video");
 }
 function renderLibrary(rows){
   const g=$("#lib-grid");
@@ -805,9 +802,9 @@ async function init(){
     try{
       const sb=supabase.createClient(SB_URL,SB_KEY);
       const {data,error}=await sb.from("video_lessons")
-        .select("id,title,channel,youtube_id,duration,topic,level").order("id",{ascending:false});
+        .select("id,title,channel,youtube_id,duration,topic,level,noi_dung").order("id",{ascending:false});
       if(error) throw error;
-      LIB_ROWS=data||[]; LIB_FILTER={topic:null,level:null};
+      LIB_ROWS=data||[]; LIB_FILTER={level:"",topic:"",noidung:""};
       buildLibFilters(LIB_ROWS);
       applyLibFilter();
     }catch(e){
