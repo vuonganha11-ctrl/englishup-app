@@ -200,7 +200,7 @@ a{color:inherit;text-decoration:none}
     <div class="now-playing">
       <div class="lbl">Đang phát</div>
       <div class="txt" id="now-playing">Bấm một câu ở phần Phụ đề hoặc vào tab "Nói" để bắt đầu luyện.</div>
-  <div class="txt-vi" id="now-playing-vi"></div>
+      <div class="np-note" style="font-size:13px;margin-top:12px;color:var(--muted);line-height:1.55;font-style:italic">💡 Hãy tập trung xem video và lắng nghe và đoán nội dung hội thoại, nếu có từ nào mới hãy tạm dừng và bấm vào từ đó để tra nghĩa và luyện đọc.</div>
     </div>
   </div>
 
@@ -549,7 +549,7 @@ function setActiveSentence(i){
   });
   setNow(SEGMENTS[i].text);
 }
-function setNow(txt){ $("#now-playing").textContent=txt; showNowVi(txt); }
+function setNow(txt){ $("#now-playing").textContent=txt; }
 const _viCache={};
 function _decodeEnt(x){ const t=document.createElement("textarea"); t.innerHTML=x; return t.value; }
 async function showNowVi(en){
