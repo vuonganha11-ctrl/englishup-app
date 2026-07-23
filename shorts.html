@@ -334,7 +334,7 @@ function goLibrary(){ location.href='shorts.html'; }
 /* ---------- Mở 1 short ---------- */
 async function openShort(id){
   $('#libwrap').style.display='none';
-  $('#playerwrap').style.display='';
+  $('#playerwrap').style.display='block';
   const {data,error} = await sb.from('shorts_lessons').select('*').eq('id',id).single();
   if(error||!data){ $('#playerwrap').innerHTML='<div class="empty">Không tìm thấy video ngắn (#'+esc(id)+').</div>'; return; }
   SHORT=data;
