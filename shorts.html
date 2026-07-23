@@ -162,6 +162,8 @@
   .navnext{right:0;border-radius:0 18px 18px 0;background:linear-gradient(270deg,rgba(0,0,0,.6),rgba(0,0,0,0))}
   .navbtn:disabled{opacity:0;pointer-events:none}
   .swipe-tip{color:var(--muted);font-size:11.5px;text-align:center;margin:8px 2px 0}
+  #sh-shield{position:absolute;inset:0;z-index:5;background:transparent;cursor:pointer}
+  #sh-playicon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;padding-left:4px;pointer-events:none;transition:opacity .2s}
 
   @media (max-width:720px){
     .stage{flex-direction:column}
@@ -204,6 +206,8 @@
     <div class="videocol">
       <div class="vframe" id="vframe">
         <div id="yt"></div>
+        <div id="sh-shield" oncontextmenu="return false"></div>
+        <div id="sh-playicon">▶</div>
         <button class="navbtn navprev" id="nav-prev" onclick="prevShort()" aria-label="Short trước">‹</button>
         <button class="navbtn navnext" id="nav-next" onclick="nextShort()" aria-label="Short kế">›</button>
       </div>
@@ -398,15 +402,18 @@ function updateNavButtons(){
   if(p) p.disabled = listPos<=0;
   if(n) n.disabled = listPos<0 || listPos>=LIB_IDS.length-1;
 }
-let _swipeBound=false, touchX=0, touchY=0;
+let _swipeBound=false, touchX=0, touchY=0, _swiped=false;
+function toggleShieldPlay(){ if(!ytReady||!player)return; try{ var st=player.getPlayerState(); if(st===1) player.pauseVideo(); else player.playVideo(); }catch(e){} }
 function setupSwipe(){
   if(_swipeBound) return; _swipeBound=true;
   const el=$('#playerwrap');
-  el.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; touchX=t.clientX; touchY=t.clientY; },{passive:true});
+  el.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; touchX=t.clientX; touchY=t.clientY; _swiped=false; },{passive:true});
   el.addEventListener('touchend',e=>{
     const t=e.changedTouches[0]; const dx=t.clientX-touchX, dy=t.clientY-touchY;
-    if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.4){ dx<0 ? nextShort() : prevShort(); }
+    if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.4){ _swiped=true; dx<0 ? nextShort() : prevShort(); }
   },{passive:true});
+  const sh=$('#sh-shield');
+  if(sh) sh.addEventListener('click',()=>{ if(_swiped){ _swiped=false; return; } toggleShieldPlay(); });
 }
 function safeJson(s){ try{return JSON.parse(s)||[]}catch(e){return []} }
 
@@ -423,10 +430,11 @@ window.onYouTubeIframeAPIReady=function(){ if(window._VID) createPlayer(window._
 function createPlayer(vid){
   player=new YT.Player('yt',{
     videoId:vid,
-    playerVars:{playsinline:1, rel:0, modestbranding:1, controls:1},
-    events:{ onReady:()=>{ ytReady=true; startPoll(); } }
+    playerVars:{playsinline:1, rel:0, modestbranding:1, controls:0, fs:0, disablekb:1, iv_load_policy:3},
+    events:{ onReady:()=>{ ytReady=true; startPoll(); }, onStateChange:onState }
   });
 }
+function onState(e){ var pi=document.getElementById('sh-playicon'); if(pi) pi.style.opacity=(e&&e.data===1)?'0':'1'; }
 function startPoll(){
   clearInterval(pollTimer);
   pollTimer=setInterval(()=>{
