@@ -16,12 +16,12 @@
       var head = document.head || document.getElementsByTagName("head")[0];
       if (head && !document.getElementById("eu-mobile-css")) {
         var l = document.createElement("link");
-        l.id = "eu-mobile-css"; l.rel = "stylesheet"; l.href = "mobile.css";
+        l.id = "eu-mobile-css"; l.rel = "stylesheet"; l.href = "mobile.css?v=20260723b";
         head.appendChild(l);
       }
       if (head && !document.getElementById("eu-mobile-nav-js")) {
         var s = document.createElement("script");
-        s.id = "eu-mobile-nav-js"; s.src = "mobile-nav.js";
+        s.id = "eu-mobile-nav-js"; s.src = "mobile-nav.js?v=20260723b";
         head.appendChild(s);
       }
     } catch (e) {}
