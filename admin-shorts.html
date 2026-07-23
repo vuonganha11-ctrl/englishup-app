@@ -101,12 +101,12 @@
     </div>
     <div class="two">
       <div class="field">
-        <label>YouTube ID / link * <span style="font-weight:400">(short khổ dọc)</span></label>
+        <label>Link video * <span style="font-weight:400">(YouTube / TikTok / Facebook)</span></label>
         <div style="display:flex;gap:8px">
           <input id="f-yt" placeholder="VD: dQw4w9WgXcQ hoặc dán cả link" style="flex:1" onblur="fetchYtMeta(false)">
           <button type="button" class="btn" onclick="fetchYtMeta(true)">🔎 Lấy tin</button>
         </div>
-        <div class="hint">Dán cả link cũng được (tự tách ID từ <code>/shorts/</code>, <code>?v=</code>, <code>youtu.be/</code>). Bấm “Lấy tin” để tự điền tiêu đề &amp; kênh.</div>
+        <div class="hint">Dán link <b>YouTube</b>, <b>TikTok</b> (…/video/…) hoặc <b>Facebook</b> (video công khai). YouTube tự lấy tiêu đề/kênh; TikTok/FB nhập tay. Lưu ý TikTok/FB không đổi được tốc độ phát.</div>
         <div id="yt-prev" style="margin-top:8px;display:none;align-items:center;gap:10px">
           <img id="yt-thumb" alt="" style="width:46px;height:82px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#000">
           <span id="yt-meta" style="font-size:12.5px;color:var(--muted);line-height:1.4"></span>
@@ -261,14 +261,17 @@ function ytClean(v){
   const m=v.match(/(?:shorts\/|v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/);
   return m?m[1]:v;
 }
+function isOtherPlat(v){ v=String(v||'').toLowerCase(); return v.indexOf('tiktok.com')>=0||v.indexOf('facebook.com')>=0||v.indexOf('fb.watch')>=0; }
 function showYtThumb(id){
   id=id||ytClean($('#f-yt').value); if(!id){ $('#yt-prev').style.display='none'; return; }
+  if(isOtherPlat(id)){ $('#yt-prev').style.display='none'; return; }
   $('#yt-thumb').src='https://i.ytimg.com/vi/'+id+'/hqdefault.jpg';
   $('#yt-prev').style.display='flex';
 }
 async function fetchYtMeta(force){
   const id=ytClean($('#f-yt').value); if(!id) return;
   $('#f-yt').value=id;
+  if(isOtherPlat(id)){ $('#yt-prev').style.display='none'; if($('#yt-meta')) $('#yt-meta').textContent=''; return; }
   const meta=$('#yt-meta'); showYtThumb(id);
   meta.textContent='Đang lấy thông tin…';
   const url='https://www.youtube.com/watch?v='+id;
