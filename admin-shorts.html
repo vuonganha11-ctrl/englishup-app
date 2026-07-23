@@ -138,9 +138,9 @@
       <textarea id="f-noidung" rows="2" placeholder="Mô tả nội dung short (tuỳ chọn)"></textarea>
     </div>
     <div class="field">
-      <label>Phụ đề (mỗi dòng 1 câu)</label>
-      <textarea id="f-segs" rows="7" placeholder="0 | 3 | Hey, how is it going?&#10;3 | 7 | Pretty good, thanks. What about you?"></textarea>
-      <div class="hint">Định dạng mỗi dòng: <b>giây bắt đầu | giây kết thúc | câu tiếng Anh</b>. VD: <code>7 | 11 | I can't complain.</code></div>
+      <label>Phụ đề (dán WEBVTT)</label>
+      <textarea id="f-segs" rows="8" placeholder="WEBVTT&#10;&#10;00:00:00.640 --&gt; 00:00:05.279&#10;I am big big big. I am small small.&#10;&#10;00:00:05.279 --&gt; 00:00:09.840&#10;tall tall. I am short short."></textarea>
+      <div class="hint">Dán thẳng phụ đề <b>WEBVTT</b> (chép từ YouTube/tệp .vtt, có <code>--&gt;</code>). Mỗi khối thời gian = 1 câu. Vẫn nhận định dạng cũ <code>giây | giây | câu</code>.</div>
     </div>
     <div class="msg" id="f-msg"></div>
     <div class="modal-acts">
@@ -208,13 +208,32 @@ function render(){
 }
 
 /* ---- Form ---- */
+function vttTime(s){ s=Math.max(0,+s||0); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+sec.toFixed(3).padStart(6,'0'); }
+function parseVTTtime(t){ t=String(t||'').trim().replace(',','.'); const p=t.split(':').map(Number); if(p.length===3) return (p[0]||0)*3600+(p[1]||0)*60+(p[2]||0); if(p.length===2) return (p[0]||0)*60+(p[1]||0); return (p[0]||0); }
 function parseSegs(txt){
-  return String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
-    const p=l.split('|');
-    return {start:parseFloat(p[0])||0, end:parseFloat(p[1])||0, en:(p.slice(2).join('|')||'').trim()};
-  }).filter(s=>s.en).sort((a,b)=>a.start-b.start);
+  txt=String(txt||'');
+  if(txt.indexOf('-->')>=0){
+    const lines=txt.replace(/\r/g,'').split('\n'); const segs=[]; let cur=null;
+    for(const raw of lines){
+      const line=raw.trim();
+      if(line.indexOf('-->')>=0){
+        if(cur&&cur.en) segs.push(cur);
+        const parts=line.split('-->');
+        const start=parseVTTtime(parts[0]);
+        const end=parseVTTtime((parts[1]||'').trim().split(/\s+/)[0]);
+        cur={start,end,en:''};
+      } else if(cur){
+        if(line===''){ if(cur.en){ segs.push(cur); cur=null; } }
+        else if(/^WEBVTT/i.test(line)||/^NOTE\b/i.test(line)){}
+        else cur.en = cur.en ? (cur.en+' '+line) : line;
+      }
+    }
+    if(cur&&cur.en) segs.push(cur);
+    return segs.filter(s=>s.en).sort((a,b)=>a.start-b.start);
+  }
+  return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{ const p=l.split('|'); return {start:parseFloat(p[0])||0, end:parseFloat(p[1])||0, en:(p.slice(2).join('|')||'').trim()}; }).filter(s=>s.en).sort((a,b)=>a.start-b.start);
 }
-function segsToText(arr){ return (Array.isArray(arr)?arr:[]).map(s=>((+s.start||0)+' | '+(+s.end||0)+' | '+(s.en||s.text||''))).join('\n'); }
+function segsToText(arr){ arr=Array.isArray(arr)?arr:[]; if(!arr.length) return ''; return 'WEBVTT\n\n'+arr.map(s=>vttTime(s.start)+' --> '+vttTime(s.end)+'\n'+(s.en||s.text||'')).join('\n\n'); }
 
 function openForm(id){
   $('#f-msg').textContent=''; $('#f-msg').className='msg';
