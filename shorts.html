@@ -163,6 +163,8 @@
   .navbtn:disabled{opacity:0;pointer-events:none}
   .swipe-tip{color:var(--muted);font-size:11.5px;text-align:center;margin:8px 2px 0}
   #sh-shield{position:absolute;inset:0;z-index:5;background:transparent;cursor:pointer}
+  #vframe.tt-native #sh-shield{bottom:52px}
+  #vframe.tt-native #sh-playicon{display:none}
   #sh-playicon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;padding-left:4px;pointer-events:none;transition:opacity .2s}
   #pmount .fb-video,#pmount .fb-video>span{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important}
   #pmount .fb-video iframe{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
@@ -432,6 +434,7 @@ function detectSrc(v){
 function mountPlayer(raw){
   const src=detectSrc(raw); SRCTYPE=src.type;
   const sp=document.getElementById('sh-speed'); if(sp) sp.style.display=(src.type==='yt')?'':'none';
+  var _vf=document.getElementById('vframe'); if(_vf) _vf.classList.toggle('tt-native', src.type==='tiktok');
   if(player && player._type && player._type!==src.type){ try{ player.destroy&&player.destroy(); }catch(e){} player=null; ytReady=false; }
   if(src.type==='yt') mountYT(src.id); else if(src.type==='tiktok') mountTT(src.id); else mountFB(src.url);
 }
@@ -451,7 +454,7 @@ function createYT(vid){
 function onState(e){ setPlayIcon(e&&e.data===1); }
 function mountTT(id){
   const pm=pmount();
-  pm.innerHTML='<iframe id="ttf" allow="autoplay;fullscreen" src="https://www.tiktok.com/player/v1/'+encodeURIComponent(id)+'?controls=0&music_info=0&description=0&rel=0&autoplay=0"></iframe>';
+  pm.innerHTML='<iframe id="ttf" allow="autoplay;fullscreen" src="https://www.tiktok.com/player/v1/'+encodeURIComponent(id)+'?controls=1&music_info=0&description=0&rel=0&autoplay=0"></iframe>';
   const ttp=(type,value)=>{ try{ document.getElementById('ttf').contentWindow.postMessage({type:type, value:(value===undefined?null:value), 'x-tiktok-player':true}, '*'); }catch(e){} };
   player={ _type:'tiktok', _t:0, _st:-1, loadVideoById:(nid)=>mountTT(nid), seekTo:(s)=>ttp('seekTo', +s||0), getCurrentTime:()=>player._t, setPlaybackRate:()=>{}, playVideo:()=>ttp('play'), pauseVideo:()=>ttp('pause'), getPlayerState:()=>player._st, destroy:()=>{ pm.innerHTML=''; } };
   ytReady=true; startPoll();
