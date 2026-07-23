@@ -153,6 +153,16 @@
 
   .loadingbox{color:var(--muted);text-align:center;padding:50px 20px}
 
+  /* Nút đổi short + vuốt ngang */
+  .navbtn{position:absolute;top:0;bottom:0;width:48px;display:flex;align-items:center;justify-content:center;
+    border:0;color:#fff;font-size:32px;font-weight:700;cursor:pointer;z-index:6;opacity:.5;transition:opacity .15s;
+    -webkit-tap-highlight-color:transparent;padding:0;line-height:1;user-select:none}
+  .navbtn:hover{opacity:1}
+  .navprev{left:0;border-radius:18px 0 0 18px;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,0))}
+  .navnext{right:0;border-radius:0 18px 18px 0;background:linear-gradient(270deg,rgba(0,0,0,.6),rgba(0,0,0,0))}
+  .navbtn:disabled{opacity:0;pointer-events:none}
+  .swipe-tip{color:var(--muted);font-size:11.5px;text-align:center;margin:8px 2px 0}
+
   @media (max-width:720px){
     .stage{flex-direction:column}
     .videocol{width:min(320px,100%)}
@@ -190,10 +200,15 @@
   <div class="back" onclick="goLibrary()">← Thư viện video ngắn</div>
   <div class="stage">
     <div class="videocol">
-      <div class="vframe"><div id="yt"></div></div>
+      <div class="vframe" id="vframe">
+        <div id="yt"></div>
+        <button class="navbtn navprev" id="nav-prev" onclick="prevShort()" aria-label="Short trước">‹</button>
+        <button class="navbtn navnext" id="nav-next" onclick="nextShort()" aria-label="Short kế">›</button>
+      </div>
       <div class="v-title" id="v-title"></div>
       <div class="v-ch" id="v-ch"></div>
       <div class="v-desc" id="v-desc"></div>
+      <div class="swipe-tip">‹ Vuốt ngang / bấm ‹ › để đổi short ›</div>
     </div>
 
     <div class="sidecol">
@@ -257,6 +272,7 @@ let SEG = [];              // [{start,end,en}]
 let curIdx = -1;          // câu đang phát/chọn để shadowing
 let player = null, ytReady = false, pollTimer = null;
 let LIB_ROWS = [], LIB_FILTER = {topic:null, level:null};
+let LIB_IDS = [], listPos = -1;   // danh sách id (để vuốt sang short khác)
 const CEFR = ['A1','A2','B1','B2','C1','C2'];
 
 /* ================= Tiện ích ================= */
@@ -335,9 +351,16 @@ function goLibrary(){ location.href='shorts.html'; }
 async function openShort(id){
   $('#libwrap').style.display='none';
   $('#playerwrap').style.display='block';
+  const lst = await sb.from('shorts_lessons').select('id').order('id',{ascending:false});
+  LIB_IDS = (lst.data||[]).map(r=>r.id);
   const {data,error} = await sb.from('shorts_lessons').select('*').eq('id',id).single();
   if(error||!data){ $('#playerwrap').innerHTML='<div class="empty">Không tìm thấy video ngắn (#'+esc(id)+').</div>'; return; }
+  applyShort(data);
+  setupSwipe();
+}
+function applyShort(data){
   SHORT=data;
+  listPos = LIB_IDS.indexOf(data.id);
   SEG = Array.isArray(data.segments)? data.segments.slice()
         : (typeof data.segments==='string'? safeJson(data.segments):[]);
   SEG = SEG.filter(s=>s && (s.en||s.text)).map(s=>({start:+s.start||0, end:+s.end||0, en:String(s.en||s.text||'')}))
@@ -346,8 +369,42 @@ async function openShort(id){
   $('#v-ch').textContent=data.channel||'';
   $('#v-desc').textContent=data.noi_dung||'';
   document.title=(data.title||'Video ngắn')+' · EnglishUp';
+  // reset trạng thái phát/nói theo
+  curIdx=-1; segLoop=-1; playingIdx=-1;
+  $('#now-en').textContent='—'; setNow('');
+  $('#sh-target').innerHTML='<span class="muted">Chọn một câu ở dưới để luyện nói.</span>';
+  $('#sh-play').disabled=true; $('#sh-rec').disabled=true; $('#sh-listen').disabled=true;
+  $('#sh-score').style.display='none';
   renderSubs();
-  loadYT(data.youtube_id);
+  updateNavButtons();
+  try{ history.replaceState(null,'','shorts.html?id='+data.id); }catch(e){}
+  if(player && player.loadVideoById){ try{ player.setPlaybackRate(1); }catch(e){} player.loadVideoById(data.youtube_id); }
+  else { loadYT(data.youtube_id); }
+}
+async function switchTo(delta){
+  if(listPos<0 || !LIB_IDS.length) return;
+  const np=listPos+delta;
+  if(np<0 || np>=LIB_IDS.length) return;
+  const {data,error}=await sb.from('shorts_lessons').select('*').eq('id',LIB_IDS[np]).single();
+  if(error||!data) return;
+  applyShort(data);
+}
+function nextShort(){ switchTo(1); }
+function prevShort(){ switchTo(-1); }
+function updateNavButtons(){
+  const p=$('#nav-prev'), n=$('#nav-next');
+  if(p) p.disabled = listPos<=0;
+  if(n) n.disabled = listPos<0 || listPos>=LIB_IDS.length-1;
+}
+let _swipeBound=false, touchX=0, touchY=0;
+function setupSwipe(){
+  if(_swipeBound) return; _swipeBound=true;
+  const el=$('#playerwrap');
+  el.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; touchX=t.clientX; touchY=t.clientY; },{passive:true});
+  el.addEventListener('touchend',e=>{
+    const t=e.changedTouches[0]; const dx=t.clientX-touchX, dy=t.clientY-touchY;
+    if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.4){ dx<0 ? nextShort() : prevShort(); }
+  },{passive:true});
 }
 function safeJson(s){ try{return JSON.parse(s)||[]}catch(e){return []} }
 
@@ -563,7 +620,12 @@ function scoreShadow(heard){
 }
 
 /* ================= Go ================= */
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePop(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ closePop(); return; }
+  if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
+  if(e.key==='ArrowRight') nextShort();
+  else if(e.key==='ArrowLeft') prevShort();
+});
 init();
 </script>
 </body>
