@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Video ngắn · EnglishUp</title>
+<title>Shorts · EnglishUp</title>
 <style>
   :root{
     --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
@@ -177,10 +177,12 @@
   <div class="topinner">
     <a class="brand" href="index.html"><b>English</b>Up</a>
     <nav class="mainnav">
-      <a href="vocab.html">Từ vựng</a>
-      <a href="game.html">Game</a>
-      <a href="video.html">Video</a>
-      <a href="shorts.html" class="active">Video ngắn</a>
+      <a href="vocab.html">📚 Từ vựng</a>
+      <a href="flashcard.html">🃏 Flashcard</a>
+      <a href="game.html">🎮 Game</a>
+      <a href="video.html">🎬 Video</a>
+      <a href="shorts.html" class="active">📱 Shorts</a>
+      <a href="report.html">📊 Thống kê</a>
     </nav>
     <div class="spacer"></div>
   </div>
@@ -188,16 +190,16 @@
 
 <!-- ===================== THƯ VIỆN SHORT ===================== -->
 <div id="libwrap" class="wrap">
-  <h1 class="page">🎬 Video ngắn</h1>
+  <h1 class="page">🎬 Shorts</h1>
   <p class="sub">Học nhanh qua clip dọc — bấm vào từ để tra nghĩa, luyện nói theo từng câu.</p>
   <div id="lib-filters"></div>
   <div id="lib-grid" class="lib-grid"></div>
-  <div id="lib-empty" class="empty" style="display:none">Chưa có video ngắn nào. Hãy thêm dữ liệu vào bảng <code>shorts_lessons</code>.</div>
+  <div id="lib-empty" class="empty" style="display:none">Chưa có Shorts nào. Hãy thêm dữ liệu vào bảng <code>shorts_lessons</code>.</div>
 </div>
 
 <!-- ===================== PLAYER ===================== -->
 <div id="playerwrap" class="wrap">
-  <div class="back" onclick="goLibrary()">← Thư viện video ngắn</div>
+  <div class="back" onclick="goLibrary()">← Thư viện Shorts</div>
   <div class="stage">
     <div class="videocol">
       <div class="vframe" id="vframe">
@@ -331,7 +333,7 @@ function applyLibFilter(){
     (!LIB_FILTER.topic || r.topic===LIB_FILTER.topic) &&
     (!LIB_FILTER.level || r.level===LIB_FILTER.level));
   $('#lib-empty').style.display = LIB_ROWS.length? 'none':'block';
-  if(!rows.length && LIB_ROWS.length){ grid.innerHTML='<div class="empty">Không có video ngắn khớp bộ lọc.</div>'; return; }
+  if(!rows.length && LIB_ROWS.length){ grid.innerHTML='<div class="empty">Không có Shorts khớp bộ lọc.</div>'; return; }
   grid.innerHTML = rows.map(r=>{
     const th='https://i.ytimg.com/vi/'+encodeURIComponent(r.youtube_id)+'/hqdefault.jpg';
     const dur=fmtDur(r.duration);
@@ -354,7 +356,7 @@ async function openShort(id){
   const lst = await sb.from('shorts_lessons').select('id').order('id',{ascending:false});
   LIB_IDS = (lst.data||[]).map(r=>r.id);
   const {data,error} = await sb.from('shorts_lessons').select('*').eq('id',id).single();
-  if(error||!data){ $('#playerwrap').innerHTML='<div class="empty">Không tìm thấy video ngắn (#'+esc(id)+').</div>'; return; }
+  if(error||!data){ $('#playerwrap').innerHTML='<div class="empty">Không tìm thấy Shorts (#'+esc(id)+').</div>'; return; }
   applyShort(data);
   setupSwipe();
 }
@@ -368,7 +370,7 @@ function applyShort(data){
   $('#v-title').textContent=data.title||'';
   $('#v-ch').textContent=data.channel||'';
   $('#v-desc').textContent=data.noi_dung||'';
-  document.title=(data.title||'Video ngắn')+' · EnglishUp';
+  document.title=(data.title||'Shorts')+' · EnglishUp';
   // reset trạng thái phát/nói theo
   curIdx=-1; segLoop=-1; playingIdx=-1;
   $('#now-en').textContent='—'; setNow('');
@@ -446,7 +448,7 @@ let playingIdx=-1, segLoop=-1;
 /* ---------- Phụ đề ---------- */
 function renderSubs(){
   const box=$('#subs');
-  if(!SEG.length){ box.innerHTML='<div class="loadingbox">Video ngắn này chưa có phụ đề.</div>'; return; }
+  if(!SEG.length){ box.innerHTML='<div class="loadingbox">Shorts này chưa có phụ đề.</div>'; return; }
   box.innerHTML=SEG.map((s,i)=>{
     return '<div class="sent" data-i="'+i+'" onclick="seekSeg('+i+')">'+
       '<span class="tm">'+fmtDur(s.start)+'</span>'+ wrapWords(s.en) +'</div>';
