@@ -90,7 +90,7 @@ body.eu-noscroll { overflow: hidden !important; }
   .eu-hamburger { display: none !important; }
 
   /* Ẩn thanh nav ngang gốc — đã thay bằng ngăn kéo ☰ */
-  .topbar { flex-wrap: wrap !important; }
+  .topbar { height: auto !important; min-height: var(--topbar-h, 56px) !important; flex-wrap: wrap !important; padding-top: 8px !important; padding-bottom: 8px !important; align-items: center !important; }
   .topbar nav, .topbar .top-nav, .topbar .topnav { display: flex !important; flex-wrap: wrap !important; order: 10; flex-basis: 100% !important; width: 100% !important; gap: 6px 12px !important; margin-top: 8px !important; }
 
   /* Topbar gọn lại, logo co về vừa phải */
