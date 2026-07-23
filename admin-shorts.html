@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý Video ngắn · EnglishUp Admin</title>
+<style>
+  :root{
+    --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
+    --border:#232d42; --border2:#2e3a55;
+    --accent:#4f8ef7; --a2:#a78bfa; --a3:#34d399; --a4:#fb923c; --a5:#f472b6;
+    --text:#dde3f0; --muted:#64748b; --danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+  h1{font-size:22px;margin:0}
+  .back{color:var(--muted);font-size:14px}
+  .back:hover{color:var(--text)}
+  .sub{color:var(--muted);font-size:13.5px;margin:2px 0 20px}
+  .spacer{flex:1}
+  button.btn{border:1px solid var(--border2);background:var(--card2);color:var(--text);
+    padding:9px 14px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:600;transition:.15s}
+  button.btn:hover{border-color:var(--accent)}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.btn.sm{padding:5px 10px;font-size:12.5px;font-weight:500;border-radius:8px}
+  button.btn.danger{color:#fff;background:var(--danger);border-color:var(--danger)}
+  button.btn.ghost{background:transparent}
+
+  .notice{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-top:16px}
+  .notice b{color:var(--text)}
+
+  /* Danh sách */
+  .list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .row{display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--border);
+    border-radius:14px;padding:10px 12px}
+  .row .th{width:52px;height:92px;flex:0 0 auto;border-radius:8px;background:#000 center/cover no-repeat;border:1px solid var(--border)}
+  .row .info{flex:1;min-width:0}
+  .row .t{font-weight:600;font-size:15px;line-height:1.35}
+  .row .m{color:var(--muted);font-size:12.5px;margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+  .tag{background:var(--card2);border:1px solid var(--border2);border-radius:999px;padding:1px 9px;font-size:11.5px}
+  .row .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .empty{color:var(--muted);text-align:center;padding:44px 20px}
+
+  /* Modal */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:50}
+  .modal{position:fixed;z-index:51;inset:0;display:none;align-items:flex-start;justify-content:center;
+    padding:30px 14px;overflow:auto}
+  .modal .box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;
+    width:min(640px,100%);padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .modal h2{margin:0 0 14px;font-size:19px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .field input,.field textarea,.field select{width:100%;background:var(--card);border:1px solid var(--border2);
+    color:var(--text);border-radius:9px;padding:9px 11px;font-size:14px;font-family:inherit}
+  .field textarea{resize:vertical;line-height:1.5}
+  .field .hint{color:var(--muted);font-size:11.5px;margin-top:4px;line-height:1.45}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .modal-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap}
+  .modal-acts .spacer{flex:1}
+  .msg{font-size:13px;margin-top:10px;min-height:1em}
+  .msg.ok{color:var(--a3)} .msg.err{color:var(--danger)}
+  @media(max-width:560px){ .two,.three{grid-template-columns:1fr} .row .th{width:44px;height:78px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📱 Quản lý Video ngắn</h1>
+    <div class="spacer"></div>
+    <a class="back" href="admin.html">← Về Admin</a>
+    <a class="back" href="shorts.html" target="_blank">Xem trang ↗</a>
+  </header>
+  <p class="sub">Thêm / sửa / xoá các short (bảng <code>shorts_lessons</code>). Học viên xem tại <code>shorts.html</code>.</p>
+
+  <div id="gate"></div>
+
+  <div id="main" style="display:none">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <button class="btn primary" onclick="openForm()">＋ Thêm short</button>
+      <div class="spacer" style="flex:1"></div>
+      <span id="count" style="color:var(--muted);font-size:13px"></span>
+    </div>
+    <div class="list" id="list"><div class="empty">Đang tải…</div></div>
+  </div>
+</div>
+
+<!-- Modal thêm/sửa -->
+<div class="backdrop" id="backdrop" onclick="closeForm()"></div>
+<div class="modal" id="modal">
+  <div class="box">
+    <h2 id="m-title">Thêm short</h2>
+    <input type="hidden" id="f-id">
+    <div class="field">
+      <label>Tiêu đề *</label>
+      <input id="f-title" placeholder="VD: Small talk hằng ngày">
+    </div>
+    <div class="two">
+      <div class="field">
+        <label>YouTube ID * <span style="font-weight:400">(short khổ dọc)</span></label>
+        <input id="f-yt" placeholder="VD: dQw4w9WgXcQ">
+        <div class="hint">Lấy phần sau <code>/shorts/</code> hoặc <code>?v=</code> trong link YouTube.</div>
+      </div>
+      <div class="field">
+        <label>Kênh / nguồn</label>
+        <input id="f-ch" placeholder="EnglishUp">
+      </div>
+    </div>
+    <div class="three">
+      <div class="field">
+        <label>Chủ đề</label>
+        <input id="f-topic" list="dl-topic" placeholder="Giao tiếp">
+        <datalist id="dl-topic"></datalist>
+      </div>
+      <div class="field">
+        <label>Cấp độ</label>
+        <input id="f-level" list="dl-level" placeholder="A2">
+        <datalist id="dl-level"><option value="A1"></option><option value="A2"></option><option value="B1"></option><option value="B2"></option><option value="C1"></option><option value="C2"></option></datalist>
+      </div>
+      <div class="field">
+        <label>Độ dài (giây)</label>
+        <input id="f-dur" type="number" min="0" placeholder="45">
+      </div>
+    </div>
+    <div class="field">
+      <label>Mô tả ngắn</label>
+      <textarea id="f-noidung" rows="2" placeholder="Mô tả nội dung short (tuỳ chọn)"></textarea>
+    </div>
+    <div class="field">
+      <label>Phụ đề (mỗi dòng 1 câu)</label>
+      <textarea id="f-segs" rows="7" placeholder="0 | 3 | Hey, how is it going?&#10;3 | 7 | Pretty good, thanks. What about you?"></textarea>
+      <div class="hint">Định dạng mỗi dòng: <b>giây bắt đầu | giây kết thúc | câu tiếng Anh</b>. VD: <code>7 | 11 | I can't complain.</code></div>
+    </div>
+    <div class="msg" id="f-msg"></div>
+    <div class="modal-acts">
+      <button class="btn danger ghost" id="f-del" style="display:none" onclick="delShort()">Xoá</button>
+      <div class="spacer"></div>
+      <button class="btn ghost" onclick="closeForm()">Huỷ</button>
+      <button class="btn primary" id="f-save" onclick="saveShort()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SUPA_ANON='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb=window.supabase.createClient(SUPA_URL,SUPA_ANON);
+const $=s=>document.querySelector(s);
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDur=s=>{s=+s||0;if(!s)return '';const m=Math.floor(s/60);return m+':'+String(Math.round(s%60)).padStart(2,'0');};
+let ROWS=[];
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    $('#gate').innerHTML='<div class="notice">Bạn cần <b>đăng nhập</b> trước. Vào <a href="index.html">trang chủ</a> hoặc <a href="report.html">đăng nhập</a> rồi quay lại đây.</div>';
+    return;
+  }
+  $('#gate').innerHTML='<div class="notice" style="padding:10px 14px;font-size:13px">Đang đăng nhập: <b>'+esc(session.user.email)+'</b></div>';
+  $('#main').style.display='';
+  await load();
+}
+async function load(){
+  const {data,error}=await sb.from('shorts_lessons')
+    .select('id,title,channel,youtube_id,duration,topic,level,noi_dung,segments').order('id',{ascending:false});
+  if(error){ $('#list').innerHTML='<div class="empty">Lỗi tải: '+esc(error.message)+'<br><small>Đã tạo bảng shorts_lessons chưa? Chạy migration_shorts.sql.</small></div>'; return; }
+  ROWS=data||[];
+  fillDatalists();
+  render();
+}
+function fillDatalists(){
+  const topics=Array.from(new Set(ROWS.map(r=>r.topic).filter(Boolean)));
+  $('#dl-topic').innerHTML=topics.map(t=>'<option>'+esc(t)+'</option>').join('');
+}
+function render(){
+  $('#count').textContent=ROWS.length+' short';
+  if(!ROWS.length){ $('#list').innerHTML='<div class="empty">Chưa có short nào. Bấm “＋ Thêm short”.</div>'; return; }
+  $('#list').innerHTML=ROWS.map(r=>{
+    const th='https://i.ytimg.com/vi/'+encodeURIComponent(r.youtube_id||'')+'/hqdefault.jpg';
+    const nseg=Array.isArray(r.segments)?r.segments.length:0;
+    return '<div class="row">'+
+      '<div class="th" style="background-image:url(\''+th+'\')"></div>'+
+      '<div class="info"><div class="t">'+esc(r.title||'(không tên)')+'</div>'+
+        '<div class="m">'+
+          (r.level?'<span class="tag">'+esc(r.level)+'</span>':'')+
+          (r.topic?'<span class="tag">'+esc(r.topic)+'</span>':'')+
+          (r.duration?'<span>⏱ '+fmtDur(r.duration)+'</span>':'')+
+          '<span>📝 '+nseg+' câu</span>'+
+          '<span style="color:var(--border2)">#'+r.id+'</span>'+
+        '</div></div>'+
+      '<div class="acts">'+
+        '<a class="btn sm ghost" href="shorts.html?id='+r.id+'" target="_blank">Xem</a>'+
+        '<button class="btn sm" onclick="openForm('+r.id+')">Sửa</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+/* ---- Form ---- */
+function parseSegs(txt){
+  return String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const p=l.split('|');
+    return {start:parseFloat(p[0])||0, end:parseFloat(p[1])||0, en:(p.slice(2).join('|')||'').trim()};
+  }).filter(s=>s.en).sort((a,b)=>a.start-b.start);
+}
+function segsToText(arr){ return (Array.isArray(arr)?arr:[]).map(s=>((+s.start||0)+' | '+(+s.end||0)+' | '+(s.en||s.text||''))).join('\n'); }
+
+function openForm(id){
+  $('#f-msg').textContent=''; $('#f-msg').className='msg';
+  if(id){
+    const r=ROWS.find(x=>x.id===id); if(!r)return;
+    $('#m-title').textContent='Sửa short #'+id;
+    $('#f-id').value=r.id;
+    $('#f-title').value=r.title||''; $('#f-yt').value=r.youtube_id||''; $('#f-ch').value=r.channel||'';
+    $('#f-topic').value=r.topic||''; $('#f-level').value=r.level||''; $('#f-dur').value=r.duration||'';
+    $('#f-noidung').value=r.noi_dung||''; $('#f-segs').value=segsToText(r.segments);
+    $('#f-del').style.display='';
+  }else{
+    $('#m-title').textContent='Thêm short';
+    ['f-id','f-title','f-yt','f-ch','f-topic','f-level','f-dur','f-noidung','f-segs'].forEach(i=>$('#'+i).value='');
+    $('#f-del').style.display='none';
+  }
+  $('#backdrop').style.display='block'; $('#modal').style.display='flex';
+}
+function closeForm(){ $('#backdrop').style.display='none'; $('#modal').style.display='none'; }
+
+function ytClean(v){
+  v=String(v||'').trim();
+  const m=v.match(/(?:shorts\/|v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/);
+  return m?m[1]:v;
+}
+async function saveShort(){
+  const msg=$('#f-msg'); msg.className='msg';
+  const title=$('#f-title').value.trim();
+  const yt=ytClean($('#f-yt').value);
+  if(!title||!yt){ msg.className='msg err'; msg.textContent='Cần ít nhất Tiêu đề và YouTube ID.'; return; }
+  const payload={
+    title, youtube_id:yt,
+    channel:$('#f-ch').value.trim()||null,
+    topic:$('#f-topic').value.trim()||null,
+    level:$('#f-level').value.trim()||null,
+    duration:parseInt($('#f-dur').value)||0,
+    noi_dung:$('#f-noidung').value.trim()||null,
+    segments:parseSegs($('#f-segs').value)
+  };
+  $('#f-save').disabled=true;
+  const id=$('#f-id').value;
+  let error;
+  if(id){ ({error}=await sb.from('shorts_lessons').update(payload).eq('id',id)); }
+  else  { ({error}=await sb.from('shorts_lessons').insert(payload)); }
+  $('#f-save').disabled=false;
+  if(error){ msg.className='msg err'; msg.textContent='Lỗi lưu: '+error.message; return; }
+  msg.className='msg ok'; msg.textContent='Đã lưu ✓';
+  await load(); closeForm();
+}
+async function delShort(){
+  const id=$('#f-id').value; if(!id)return;
+  if(!confirm('Xoá short #'+id+' ? Hành động này không thể hoàn tác.'))return;
+  const {error}=await sb.from('shorts_lessons').delete().eq('id',id);
+  if(error){ $('#f-msg').className='msg err'; $('#f-msg').textContent='Lỗi xoá: '+error.message; return; }
+  await load(); closeForm();
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeForm(); });
+boot();
+</script>
+</body>
+</html>
