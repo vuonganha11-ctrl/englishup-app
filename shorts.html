@@ -66,6 +66,10 @@
   .thumb::after{content:"▶";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:34px;color:rgba(255,255,255,.9);opacity:0;transition:.15s;text-shadow:0 2px 12px rgba(0,0,0,.6)}
   .lib-card:hover .thumb::after{opacity:1}
+  .thumb.pl-tiktok{background:linear-gradient(135deg,#0b0b0b 0%,#69C9D0 55%,#EE1D52 100%)}
+  .thumb.pl-fb{background:linear-gradient(135deg,#1877F2 0%,#0b2e63 100%)}
+  .thumb.pl-tiktok::after,.thumb.pl-fb::after{content:""}
+  .thumb .plch{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:800;color:rgba(255,255,255,.95);text-shadow:0 3px 14px rgba(0,0,0,.45);z-index:1;pointer-events:none}
   .dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.75);color:#fff;font-size:11px;
     padding:2px 6px;border-radius:6px;font-weight:600}
   .badge{position:absolute;left:6px;top:6px;background:rgba(79,142,247,.92);color:#fff;font-size:10px;
@@ -345,9 +349,10 @@ function applyLibFilter(){
   if(!rows.length && LIB_ROWS.length){ grid.innerHTML='<div class="empty">Không có Shorts khớp bộ lọc.</div>'; return; }
   grid.innerHTML = rows.map(r=>{
     const th='https://i.ytimg.com/vi/'+encodeURIComponent(r.youtube_id)+'/hqdefault.jpg';
+    const _pt=(detectSrc(r.youtube_id)||{}).type||'yt';
     const dur=fmtDur(r.duration);
     return '<a class="lib-card" href="shorts.html?id='+r.id+'">'+
-      '<div class="thumb" style="background-image:url('+"'"+th+"'"+')">'+
+      ((_pt==='yt')?('<div class="thumb" style="background-image:url('+"'"+th+"'"+')">'):('<div class="thumb pl-'+_pt+'"><span class="plch">'+(_pt==='tiktok'?'T':'F')+'</span>'))+
         (r.level?'<span class="badge">'+esc(r.level)+'</span>':'')+
         (dur?'<span class="dur">'+dur+'</span>':'')+
       '</div>'+
