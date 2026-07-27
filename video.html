@@ -210,7 +210,7 @@ a{color:inherit;text-decoration:none}
       <button data-tab="transcript" class="active"><span class="ic">📝</span>Phụ đề</button>
       <button data-tab="speak"><span class="ic">🎙️</span>Nói theo</button>
       <button data-tab="listen"><span class="ic">🎧</span>Nghe</button>
-      <button data-tab="vocab"><span class="ic">📚</span>Từ vựng</button>
+      <button data-tab="vocab"><span class="ic">📗</span>Từ mới</button>
       <button data-tab="quiz"><span class="ic">❓</span>Trắc nghiệm</button>
     </div>
 
@@ -289,7 +289,9 @@ a{color:inherit;text-decoration:none}
 
     <!-- VOCAB -->
     <div class="tabpane" id="pane-vocab">
-      <div class="vgrid" id="vocab-grid"></div>
+      <div class="nw-hint">Bấm vào từ trong phụ đề để tra nghĩa, rồi chọn <b>➕ Lưu từ mới</b>. Các từ đã lưu có thể thêm vào Flashcard để ôn tập theo SRS.</div>
+      <div class="nw-list" id="nw-list"></div>
+      <div id="nw-lesson-wrap" style="display:none;margin-top:18px"><div class="nw-sub">Từ khoá bài học</div><div class="vgrid" id="vocab-grid"></div></div>
     </div>
 
     <!-- QUIZ -->
@@ -674,6 +676,7 @@ $("#ls-check").onclick=()=>{
 /* ============ VOCAB TAB ============ */
 function renderVocab(){
   const g=$("#vocab-grid");
+  const lw=document.getElementById('nw-lesson-wrap'); if(lw) lw.style.display=(typeof VOCAB!=='undefined'&&VOCAB&&VOCAB.length)?'':'none';
   g.innerHTML="";
   VOCAB.forEach(v=>{
     const exHtml=v.ex.replace(new RegExp("("+v.t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<b>$1</b>");
@@ -688,6 +691,18 @@ function renderVocab(){
 }
 
 /* ============ QUIZ TAB ============ */
+/* ============ TU MOI (saved words) ============ */
+function nwEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function euClient(){ if(!window.__eusb){ window.__eusb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,lock:(_n,_t,fn)=>fn()}}); } return window.__eusb; }
+async function euUser(){ try{ const {data}=await euClient().auth.getUser(); return (data&&data.user)?data.user:null; }catch(e){ return null; } }
+function nwToast(msg){ let t=document.getElementById('nw-toast'); if(!t){ t=document.createElement('div'); t.id='nw-toast'; t.className='nw-toast'; document.body.appendChild(t); } t.textContent=msg; t.classList.add('show'); clearTimeout(window.__nwtt); window.__nwtt=setTimeout(()=>t.classList.remove('show'),2000); }
+function nwSay(w){ try{ ttsSpeak(w,0.95); }catch(e){ try{ const u=new SpeechSynthesisUtterance(w); u.lang='en-US'; u.rate=.9; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(_){} } }
+async function saveNewWord(term,ipa,vi,btn,res){ term=(term||'').trim(); if(!term) return; if(!vi||vi==='Đang tra…'||vi==='(không có nghĩa)') vi=(res&&res.vi)||''; if(!ipa||ipa==='…') ipa=(res&&res.ipa)||''; const u=await euUser(); if(!u){ nwToast('Hãy đăng nhập để lưu từ mới'); return; } const sb=euClient(); const vid=parseInt(new URLSearchParams(location.search).get('id'),10); const row={ user_id:u.id, term:term, phonetic:ipa||'', definition_vi:vi||'', source_video_id:isNaN(vid)?null:vid }; try{ const {error}=await sb.from('user_saved_words').insert(row); if(error){ if(error.code==='23505'||/duplicate|unique/i.test(error.message||'')){ nwToast('"'+term+'" đã có trong Từ mới'); } else { nwToast('Lỗi lưu: '+(error.message||'')); return; } } else { nwToast('Đã lưu "'+term+'" vào Từ mới'); } if(btn){ btn.textContent='✓ Đã lưu'; btn.classList.add('saved'); } loadNewWords(); }catch(e){ nwToast('Lỗi lưu từ'); } }
+async function loadNewWords(){ const box=document.getElementById('nw-list'); if(!box) return; const u=await euUser(); if(!u){ box.innerHTML='<div class="nw-empty">Đăng nhập để lưu và ôn tập từ mới của bạn.</div>'; return; } const sb=euClient(); const {data,error}=await sb.from('user_saved_words').select('*').eq('user_id',u.id).order('created_at',{ascending:false}); if(error){ box.innerHTML='<div class="nw-empty">Không tải được danh sách.</div>'; return; } renderNewWords(data||[]); }
+function renderNewWords(rows){ const box=document.getElementById('nw-list'); if(!box) return; if(!rows.length){ box.innerHTML='<div class="nw-empty">Chưa có từ nào. Bấm vào một từ trong phụ đề rồi chọn "➕ Lưu từ mới".</div>'; return; } box.innerHTML=''; rows.forEach(r=>{ const it=document.createElement('div'); it.className='nw-item'; const done=!!r.added_to_flashcard; it.innerHTML='<button class="nw-btn nw-spk" title="Phát âm">🔊</button>'+'<div class="nw-main"><div class="nw-term">'+nwEsc(r.term)+(r.phonetic?' <span class="nw-ipa">/'+nwEsc(r.phonetic)+'/</span>':'')+'</div>'+(r.definition_vi?'<div class="nw-vi">'+nwEsc(r.definition_vi)+'</div>':'')+'</div>'+'<button class="nw-btn nw-fc'+(done?' done':'')+'">'+(done?'✓ Trong Flashcard':'➕ Flashcard')+'</button>'+'<button class="nw-btn nw-del" title="Xoá">🗑</button>'; it.querySelector('.nw-spk').onclick=()=>nwSay(r.term); const fc=it.querySelector('.nw-fc'); if(!done) fc.onclick=()=>addSavedToFlashcard(r,fc); it.querySelector('.nw-del').onclick=()=>deleteNewWord(r,it); box.appendChild(it); }); }
+async function deleteNewWord(r,el){ const u=await euUser(); if(!u) return; const sb=euClient(); const {error}=await sb.from('user_saved_words').delete().eq('id',r.id).eq('user_id',u.id); if(error){ nwToast('Lỗi xoá'); return; } if(el) el.remove(); nwToast('Đã xoá "'+r.term+'"'); const box=document.getElementById('nw-list'); if(box&&!box.children.length) loadNewWords(); }
+async function addSavedToFlashcard(r,btn){ const u=await euUser(); if(!u){ nwToast('Hãy đăng nhập'); return; } const sb=euClient(); if(btn){ btn.disabled=true; btn.textContent='Đang thêm…'; } try{ let wid=r.word_id; if(!wid){ const {data:found}=await sb.from('words').select('id').ilike('term',r.term).limit(1); if(found&&found.length){ wid=found[0].id; } else { const {data:ins,error:ie}=await sb.from('words').insert({term:r.term,phonetic:r.phonetic||'',definition_vi:r.definition_vi||'',topic:'Từ video',level:'A1'}).select('id').single(); if(ie){ nwToast('Lỗi tạo từ: '+(ie.message||'')); if(btn){btn.disabled=false;btn.textContent='➕ Flashcard';} return; } wid=ins.id; } } const {data:ex}=await sb.from('srs_cards').select('id').eq('user_id',u.id).eq('word_id',wid).limit(1); if(!ex||!ex.length){ const today=new Date().toISOString().slice(0,10); const {error:se}=await sb.from('srs_cards').insert({user_id:u.id,word_id:wid,due_date:today,ease_factor:2.5,interval_days:0,review_count:0,status:'new'}); if(se){ nwToast('Lỗi thêm flashcard: '+(se.message||'')); if(btn){btn.disabled=false;btn.textContent='➕ Flashcard';} return; } } await sb.from('user_saved_words').update({added_to_flashcard:true,word_id:wid}).eq('id',r.id).eq('user_id',u.id); r.added_to_flashcard=true; r.word_id=wid; if(btn){ btn.className='nw-btn nw-fc done'; btn.textContent='✓ Trong Flashcard'; btn.onclick=null; btn.disabled=false; } nwToast('Đã thêm "'+r.term+'" vào Flashcard'); }catch(e){ nwToast('Lỗi: '+e); if(btn){btn.disabled=false;btn.textContent='➕ Flashcard';} } }
+
 function renderQuiz(){
   const list=$("#quiz-list");
   list.innerHTML="";
@@ -762,6 +777,7 @@ function boot(){
   applyMeta();
   buildTranscript();
   renderVocab();
+  loadNewWords();
   renderQuiz();
   $("#sp-total").textContent=SEGMENTS.length;
   $("#ls-total").textContent=SEGMENTS.length;
@@ -870,7 +886,7 @@ init();
   #wordpop .wp-spk:hover{background:#33415f}
   #wordpop .wp-ipa{color:#7aa2ff;font-size:13px;margin-top:3px}
   #wordpop .wp-vipa{color:#f0a860;font-size:13px;font-style:italic;margin-top:1px}
-  #wordpop .wp-mean{margin-top:7px;color:#dfe6f5;border-top:1px solid #2a3346;padding-top:6px}
+  #wordpop .wp-mean{margin-top:7px;color:#dfe6f5;border-top:1px solid #2a3346;padding-top:6px}.wp-save{margin-top:9px;width:100%;cursor:pointer;background:#2b6cb0;border:none;border-radius:8px;padding:7px 10px;font-size:13px;color:#fff;font-weight:600}.wp-save:hover{background:#3b7fca}.wp-save.saved{background:#2f855a;cursor:default}.nw-hint{color:#8b97ad;font-size:13px;margin:2px 0 14px;line-height:1.5}.nw-sub{color:#8b97ad;font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}.nw-item{display:flex;align-items:center;gap:10px;background:#151a25;border:1px solid #232d42;border-radius:12px;padding:10px 12px;margin-bottom:8px}.nw-main{flex:1;min-width:0}.nw-term{font-weight:700;color:#fff;font-size:15px}.nw-ipa{color:#7aa2ff;font-size:12px;font-weight:400}.nw-vi{color:#cdd7ee;font-size:13px;margin-top:2px}.nw-btn{cursor:pointer;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;white-space:nowrap}.nw-fc{background:#7c3aed;color:#fff}.nw-fc:hover{background:#8b4ff5}.nw-fc.done{background:#22303f;color:#5fd39a;cursor:default}.nw-del{background:#2a2030;color:#f4879a}.nw-del:hover{background:#3a2632}.nw-spk{background:#26314a;color:#cdd7ee}.nw-empty{color:#64748b;text-align:center;padding:26px 10px}.nw-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2740;border:1px solid #33415f;color:#e8edf7;padding:10px 18px;border-radius:10px;font-size:14px;z-index:100000;opacity:0;transition:opacity .25s;pointer-events:none}.nw-toast.show{opacity:1}
   #wordpop .wp-x{position:absolute;top:5px;right:9px;cursor:pointer;color:#8894ad;font-size:13px}
   #wordpop .wp-x:hover{color:#cdd7ee}`;
   document.head.appendChild(st);
@@ -881,9 +897,9 @@ init();
     ['p','p'],['b','b'],['t','t'],['d','đ'],['k','c'],['ɡ','g'],['g','g'],['f','ph'],['v','v'],['s','x'],['z','z'],['h','h'],['m','m'],['n','n'],['l','l'],['ɹ','r'],['ɾ','r'],['ɫ','l'],['r','r'],['w','u'],['j','y']];
   function ipaToVi(ipa){ if(!ipa) return ''; let t=ipa.replace(/[\/\[\]]/g,'').replace(/[ˈˌ.ˑ]/g,'').trim(); let o=''; for(let i=0;i<t.length;){ let mt=false; for(const [k,v] of M){ if(t.startsWith(k,i)){ o+=v; i+=k.length; mt=true; break; } } if(!mt) i++; } return o; }
   const pop=document.createElement('div'); pop.id='wordpop';
-  pop.innerHTML='<span class="wp-x">✕</span><div class="wp-top"><span class="wp-w"></span><button class="wp-spk" title="Phát âm">🔊</button></div><div class="wp-ipa"></div><div class="wp-vipa"></div><div class="wp-mean"></div>';
+  pop.innerHTML='<span class="wp-x">✕</span><div class="wp-top"><span class="wp-w"></span><button class="wp-spk" title="Phát âm">🔊</button></div><div class="wp-ipa"></div><div class="wp-vipa"></div><div class="wp-mean"></div><button class="wp-save">➕ Lưu từ mới</button>';
   document.body.appendChild(pop);
-  const $w=pop.querySelector('.wp-w'),$ipa=pop.querySelector('.wp-ipa'),$vipa=pop.querySelector('.wp-vipa'),$mean=pop.querySelector('.wp-mean'),$spk=pop.querySelector('.wp-spk');
+  const $w=pop.querySelector('.wp-w'),$ipa=pop.querySelector('.wp-ipa'),$vipa=pop.querySelector('.wp-vipa'),$mean=pop.querySelector('.wp-mean'),$spk=pop.querySelector('.wp-spk'); const $save=pop.querySelector('.wp-save'); let curRes=null; if($save)$save.addEventListener('click',()=>{ if(!cur)return; saveNewWord(cur,($ipa.textContent||'').replace(/[\/]/g,'').trim(),($mean.textContent||'').trim(),$save,curRes); });
   pop.querySelector('.wp-x').addEventListener('click',hidePop);
   function hidePop(){ pop.style.display='none'; document.querySelectorAll('.sp-word.active').forEach(e=>e.classList.remove('active')); }
   let curAudio=null;
@@ -900,7 +916,7 @@ init();
     $w.textContent=word; $ipa.textContent='…'; $vipa.textContent=''; $mean.textContent='Đang tra…'; $spk.onclick=()=>speak(word,'');
     pop.style.display='block'; position(span); speak(word,'');
     const r=await lookup(word); if(cur!==word)return;
-    $ipa.textContent=r.ipa||''; $vipa.textContent=r.vipa?('≈ '+r.vipa):''; $mean.textContent=r.vi||'(không có nghĩa)'; $spk.onclick=()=>speak(word,r.audio); position(span); }
+    $ipa.textContent=r.ipa||''; $vipa.textContent=r.vipa?('≈ '+r.vipa):''; $mean.textContent=r.vi||'(không có nghĩa)'; $spk.onclick=()=>speak(word,r.audio); position(span); curRes=r; }
   document.addEventListener('click',ev=>{ const sw=ev.target.closest('.sp-word'); if(sw){ ev.stopPropagation(); onClick(sw); return; } if(!ev.target.closest('#wordpop')) hidePop(); });
   window.addEventListener('scroll',hidePop,true);
   const WRAP_TARGETS=['sp-text','now-playing'];
