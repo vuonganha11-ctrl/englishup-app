@@ -86,7 +86,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .r-remember:hover{border-color:var(--a3)} .r-remember .lab{color:var(--a3)}
 .r-known:hover{border-color:var(--a2)} .r-known .lab{color:var(--a2)}
 .r-easy:hover{border-color:var(--accent)} .r-easy .lab{color:var(--accent)}
-#fc-summary{width:100%;max-width:640px;margin:0 auto 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}.sum-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sum-toggle{cursor:pointer;color:var(--muted);font-size:13px}.sum-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sum-chip{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;flex:1;padding:8px 6px;background:var(--card2);border:1px solid var(--border);border-radius:10px}.sum-chip .sc-lab{font-weight:700;font-size:13px}.sum-chip .sc-n{font-size:18px;font-weight:800;color:var(--text)}.sum-list{font-size:13px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;line-height:1.8}.sum-w{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin:2px}.sum-days-title{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 6px}.sum-days{display:flex;flex-direction:column;gap:4px}.sum-day{display:flex;justify-content:space-between;font-size:13px;color:var(--text);padding:5px 9px;background:var(--card2);border-radius:6px}.sum-day b{color:var(--accent)}
+#fc-summary{width:100%;max-width:640px;margin:0 auto 28px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}.sum-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sum-toggle{cursor:pointer;color:var(--muted);font-size:13px}.sum-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sum-chip{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;flex:1;padding:8px 6px;background:var(--card2);border:1px solid var(--border);border-radius:10px}.sum-chip .sc-lab{font-weight:700;font-size:13px}.sum-chip .sc-n{font-size:18px;font-weight:800;color:var(--text)}.sum-list{font-size:13px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;line-height:1.8}.sum-w{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin:2px}.sum-days-title{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 6px}.sum-days{display:flex;flex-direction:column;gap:4px}.sum-day{display:flex;justify-content:space-between;font-size:13px;color:var(--text);padding:5px 9px;background:var(--card2);border-radius:6px}.sum-day b{color:var(--accent)}
+#fc-quote{width:100%;max-width:640px;margin:30px auto;padding:22px 24px;text-align:center;background:linear-gradient(135deg,rgba(79,142,247,.14),rgba(167,139,250,.14));border:1px solid var(--border2,var(--border));border-radius:16px}.q-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px}.q-en{font-size:19px;font-weight:700;font-style:italic;color:var(--text);line-height:1.5}.q-vi{margin-top:10px;font-size:14px;color:var(--muted)}
 .back-img{width:100%;max-height:170px;object-fit:cover;border-radius:10px;margin-bottom:12px;border:1px solid var(--border)}
 
 .flip-cta{display:none;width:100%;max-width:680px;margin-top:22px}
@@ -320,6 +321,45 @@ async function doLogin(){
 async function handleLogout(){ if(!confirm('Đăng xuất?'))return; await sb.auth.signOut(); clearUser(); }
 
 // ── LOAD DUE CARDS ──
+function renderQuote(){ try{
+  var host=document.getElementById('fc-summary'); if(!host||!host.parentNode) return;
+  var Q=[
+   {en:'Practice makes perfect.',vi:'Có công mài sắt, có ngày nên kim.'},
+   {en:'A journey of a thousand miles begins with a single step.',vi:'Hành trình vạn dặm bắt đầu từ một bước chân.'},
+   {en:'Little by little, one travels far.',vi:'Từng chút một, ta sẽ đi thật xa.'},
+   {en:'Fall seven times, stand up eight.',vi:'Ngã bảy lần, đứng dậy tám lần.'},
+   {en:'Where there is a will, there is a way.',vi:'Có chí thì nên.'},
+   {en:'Slow and steady wins the race.',vi:'Chậm mà chắc sẽ thắng cuộc.'},
+   {en:'The expert in anything was once a beginner.',vi:'Chuyên gia nào cũng từng là người mới bắt đầu.'},
+   {en:'Every day is a chance to learn something new.',vi:'Mỗi ngày là một cơ hội học điều mới.'},
+   {en:'Mistakes are proof that you are trying.',vi:'Sai lầm là bằng chứng bạn đang cố gắng.'},
+   {en:'Repetition is the mother of learning.',vi:'Lặp lại là mẹ của việc học.'},
+   {en:'Small steps every day lead to big results.',vi:'Bước nhỏ mỗi ngày tạo nên kết quả lớn.'},
+   {en:'The best way to learn a language is to use it every day.',vi:'Cách tốt nhất để học ngôn ngữ là dùng nó mỗi ngày.'},
+   {en:'You do not have to be great to start, but you have to start to be great.',vi:'Không cần giỏi để bắt đầu, nhưng phải bắt đầu để trở nên giỏi.'},
+   {en:'Consistency is the key to success.',vi:'Kiên trì là chìa khóa của thành công.'},
+   {en:'The more you read, the more you know.',vi:'Càng đọc nhiều, bạn càng biết nhiều.'},
+   {en:'Learning never exhausts the mind.',vi:'Học tập không bao giờ làm mỏi mệt trí óc.'},
+   {en:'Slow progress is still progress.',vi:'Tiến bộ chậm vẫn là tiến bộ.'},
+   {en:'Rome was not built in a day.',vi:'Thành Rome không được xây trong một ngày.'},
+   {en:'Knowledge is power.',vi:'Tri thức là sức mạnh.'},
+   {en:'A word a day keeps forgetting away.',vi:'Mỗi ngày một từ, nỗi quên sẽ tan.'},
+   {en:'Do not watch the clock; do what it does. Keep going.',vi:'Đừng nhìn đồng hồ; hãy như nó — cứ tiến về phía trước.'},
+   {en:'Dream big, start small, act now.',vi:'Ước mơ lớn, bắt đầu nhỏ, hành động ngay.'},
+   {en:'Learn as if you will live forever.',vi:'Hãy học như thể bạn sẽ sống mãi mãi.'},
+   {en:'Slowly but surely.',vi:'Từ từ nhưng chắc chắn.'},
+   {en:'Great things take time.',vi:'Điều tuyệt vời cần có thời gian.'},
+   {en:'Believe you can and you are halfway there.',vi:'Tin rằng bạn làm được, bạn đã đi được nửa đường.'},
+   {en:'Push yourself, because no one else is going to do it for you.',vi:'Hãy tự thúc đẩy mình, vì không ai làm điều đó thay bạn.'},
+   {en:'One day or day one. You decide.',vi:'“Một ngày nào đó” hay “ngày đầu tiên” — bạn quyết định.'}
+  ];
+  var now=new Date(); var start=new Date(now.getFullYear(),0,0); var doy=Math.floor((now-start)/86400000);
+  var it=Q[((doy%Q.length)+Q.length)%Q.length];
+  var q=document.getElementById('fc-quote'); if(!q){ q=document.createElement('div'); q.id='fc-quote'; }
+  q.innerHTML='<div class="q-label">💬 Câu nói hôm nay</div><div class="q-en">“'+it.en+'”</div><div class="q-vi">'+it.vi+'</div>';
+  host.parentNode.insertBefore(q, host);
+}catch(e){} }
+
 function loadSummary(){ (async function(){ try{
   if(typeof currentUser==='undefined'||!currentUser) return;
   var wrap=document.getElementById('fc-summary'); if(!wrap) return;
@@ -343,6 +383,7 @@ function loadSummary(){ (async function(){ try{
   wrap.innerHTML='<div class="sum-head"><b>📊 Tổng hợp ('+cards.length+' từ)</b><span class="sum-toggle" id="sum-toggle">Ẩn ▲</span></div><div id="sum-body"><div class="sum-chips">'+chips+'</div>'+lists+'<div class="sum-days-title">Cần ôn theo ngày</div><div class="sum-days">'+days+'</div></div>';
   wrap.style.display= cards.length? '' : 'none';
   try{ var _stg=document.getElementById('card-area'); if(_stg&&_stg.parentNode) _stg.parentNode.appendChild(wrap); }catch(e){}
+  renderQuote();
   wrap.querySelectorAll('.sum-chip').forEach(function(ch){ ch.onclick=function(){ var el=document.getElementById('suml-'+ch.getAttribute('data-k')); if(el) el.style.display=(el.style.display==='none')?'':'none'; }; });
   var tg=document.getElementById('sum-toggle'), bd=document.getElementById('sum-body');
   if(tg&&bd) tg.onclick=function(){ var hid=(bd.style.display==='none'); bd.style.display=hid?'':'none'; tg.textContent=hid?'Ẩn ▲':'Hiện ▼'; };
