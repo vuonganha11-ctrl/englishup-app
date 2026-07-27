@@ -971,7 +971,7 @@ init();
       if(m[1])frag.appendChild(document.createTextNode(m[1]));
       const sp=document.createElement('span'); sp.className='sp-word'; sp.textContent=m[2]; sp.dataset.w=m[2].replace(/[’]/g,"'").replace(/-+$/,''); try{var _fc=(window.fcColorFor?fcColorFor(sp.dataset.w):''); if(_fc){sp.style.color=_fc;sp.style.fontWeight='700';}}catch(e){} frag.appendChild(sp);
       if(m[3])frag.appendChild(document.createTextNode(m[3])); });
-    if(obs)obs.disconnect(); el.innerHTML=''; el.appendChild(frag); reobserve(); }
+    if(obs)obs.disconnect(); el.innerHTML=''; el.appendChild(frag); reobserve(); try{paintSpWords();}catch(e){} }
   function wrapAll(){ WRAP_TARGETS.forEach(id=>wrapEl(document.getElementById(id))); }
   function reobserve(){ if(!obs)return; WRAP_TARGETS.forEach(id=>{ const t=document.getElementById(id); if(t)obs.observe(t,{childList:true,characterData:true,subtree:true}); }); }
   let obs=new MutationObserver(()=>wrapAll());
