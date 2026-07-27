@@ -289,7 +289,7 @@ a{color:inherit;text-decoration:none}
 
     <!-- VOCAB -->
     <div class="tabpane" id="pane-vocab">
-      <div class="nw-hint">Bấm vào từ trong phụ đề để tra nghĩa, rồi chọn <b>➕ Lưu từ mới</b>. Các từ đã lưu có thể thêm vào Flashcard để ôn tập theo SRS.</div>
+      <div class="nw-hint">Bấm vào từ trong phụ đề để tra nghĩa, rồi chọn <b>➕ Lưu từ mới</b>. Bôi đen (kéo chọn) nhiều từ để lưu thành một cụm. Các từ đã lưu có thể thêm vào Flashcard để ôn tập theo SRS.</div>
       <div class="nw-list" id="nw-list"></div>
       <div id="nw-lesson-wrap" style="display:none;margin-top:18px"><div class="nw-sub">Từ khoá bài học</div><div class="vgrid" id="vocab-grid"></div></div>
     </div>
@@ -928,6 +928,34 @@ init();
     $ipa.textContent=r.ipa||''; $vipa.textContent=r.vipa?('≈ '+r.vipa):''; $mean.textContent=r.vi||'(không có nghĩa)'; $spk.onclick=()=>speak(word,r.audio); position(span); curRes=r; }
   document.addEventListener('click',ev=>{ const sw=ev.target.closest('.sp-word'); if(sw){ ev.stopPropagation(); onClick(sw); return; } if(!ev.target.closest('#wordpop')) hidePop(); });
   window.addEventListener('scroll',hidePop,true);
+  /* ===== chọn nhiều từ thành 1 cụm ===== */
+  function positionRect(rect){ try{ position({getBoundingClientRect:function(){return rect;}}); }catch(e){} }
+  async function onPhrase(text, rect){
+    text=(text||'').replace(/\s+/g,' ').trim(); if(!text) return;
+    cur=text; curRes=null;
+    document.querySelectorAll('.sp-word.active').forEach(function(e){ e.classList.remove('active'); });
+    $w.textContent=text; $ipa.textContent=''; $vipa.textContent=''; $mean.textContent='Đang tra…';
+    if($save){ var _sv=window.__nwSet&&window.__nwSet.has(text.toLowerCase()); $save.textContent=_sv?'✓ Đã lưu':'➕ Lưu cụm này'; $save.classList.toggle('saved',!!_sv); }
+    $spk.onclick=function(){ speak(text,''); };
+    pop.style.display='block'; positionRect(rect); speak(text,'');
+    var r=await lookup(text); if(cur!==text) return;
+    $mean.textContent=(r&&r.vi)||'(không có nghĩa)'; curRes=r;
+  }
+  function _selPhrase(){
+    var sel=window.getSelection(); if(!sel||sel.isCollapsed||!sel.rangeCount) return null;
+    var text=(sel.toString()||'').replace(/\s+/g,' ').trim(); if(!text) return null;
+    if(text.split(/\s+/).filter(Boolean).length<2) return null;
+    function inArea(n){ var el=(n&&n.nodeType===3)?n.parentElement:n; return !!(el&&el.closest&&el.closest('#pane-transcript,#sp-text,#now-playing,.now-playing')); }
+    if(!inArea(sel.anchorNode)&&!inArea(sel.focusNode)) return null;
+    var rect; try{ rect=sel.getRangeAt(0).getBoundingClientRect(); }catch(e){ return null; }
+    if(!rect||(!rect.width&&!rect.height)) return null;
+    return {text:text, rect:rect};
+  }
+  function _onSelEnd(){ setTimeout(function(){ var s=_selPhrase(); if(s) onPhrase(s.text, s.rect); }, 10); }
+  document.addEventListener('mouseup', _onSelEnd);
+  document.addEventListener('touchend', _onSelEnd);
+  document.addEventListener('click', function(ev){ if(ev.target&&ev.target.closest&&ev.target.closest('#wordpop')) return; if(_selPhrase()) ev.stopPropagation(); }, true);
+
   const WRAP_TARGETS=['sp-text','now-playing'];
   function wrapEl(el){ if(!el)return; if(el.querySelector('.sp-word'))return; const txt=el.textContent; if(!txt||!txt.trim()||txt.trim()==='—')return;
     const parts=txt.split(/(\s+)/); const frag=document.createDocumentFragment();
