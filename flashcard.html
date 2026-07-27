@@ -342,6 +342,7 @@ function loadSummary(){ (async function(){ try{
   for(var i=1;i<=14;i++){ if(dayCounts[i]){ var dt=new Date(startToday.getTime()+i*86400000); var lbl=(i===1?'Ngày mai':(dn[dt.getDay()]+' '+dt.getDate()+'/'+(dt.getMonth()+1))); days+='<div class="sum-day"><span>'+lbl+'</span><b>'+dayCounts[i]+'</b></div>'; } }
   wrap.innerHTML='<div class="sum-head"><b>📊 Tổng hợp ('+cards.length+' từ)</b><span class="sum-toggle" id="sum-toggle">Ẩn ▲</span></div><div id="sum-body"><div class="sum-chips">'+chips+'</div>'+lists+'<div class="sum-days-title">Cần ôn theo ngày</div><div class="sum-days">'+days+'</div></div>';
   wrap.style.display= cards.length? '' : 'none';
+  try{ var _stg=document.getElementById('card-area'); if(_stg&&_stg.parentNode) _stg.parentNode.appendChild(wrap); }catch(e){}
   wrap.querySelectorAll('.sum-chip').forEach(function(ch){ ch.onclick=function(){ var el=document.getElementById('suml-'+ch.getAttribute('data-k')); if(el) el.style.display=(el.style.display==='none')?'':'none'; }; });
   var tg=document.getElementById('sum-toggle'), bd=document.getElementById('sum-body');
   if(tg&&bd) tg.onclick=function(){ var hid=(bd.style.display==='none'); bd.style.display=hid?'':'none'; tg.textContent=hid?'Ẩn ▲':'Hiện ▼'; };
