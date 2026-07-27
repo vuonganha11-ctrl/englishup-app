@@ -83,8 +83,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .rate-btn .kk{font-size:10px;color:var(--muted);font-family:var(--mono)}
 .r-again:hover{border-color:var(--danger)} .r-again .lab{color:var(--danger)}
 .r-hard:hover{border-color:var(--a4)} .r-hard .lab{color:var(--a4)}
-.r-remember:hover{border-color:var(--a3)} .r-remember .lab{color:var(--a3)}
-.r-known:hover{border-color:var(--a2)} .r-known .lab{color:var(--a2)}
+.r-remember:hover{border-color:var(--a2)} .r-remember .lab{color:var(--a2)}
+.r-known:hover{border-color:var(--a3)} .r-known .lab{color:var(--a3)}
 .r-easy:hover{border-color:var(--accent)} .r-easy .lab{color:var(--accent)}
 #fc-summary{width:100%;max-width:640px;margin:0 auto 28px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}.sum-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sum-toggle{cursor:pointer;color:var(--muted);font-size:13px}.sum-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sum-chip{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;flex:1;padding:8px 6px;background:var(--card2);border:1px solid var(--border);border-radius:10px}.sum-chip .sc-lab{font-weight:700;font-size:13px}.sum-chip .sc-n{font-size:18px;font-weight:800;color:var(--text)}.sum-list{font-size:13px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;line-height:1.8}.sum-w{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin:2px}.sum-days-title{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 6px}.sum-days{display:flex;flex-direction:column;gap:4px}.sum-day{display:flex;justify-content:space-between;font-size:13px;color:var(--text);padding:5px 9px;background:var(--card2);border-radius:6px}.sum-day b{color:var(--accent)}
 #fc-quote{width:100%;max-width:640px;margin:30px auto;padding:22px 24px;text-align:center;background:linear-gradient(135deg,rgba(79,142,247,.14),rgba(167,139,250,.14));border:1px solid var(--border2,var(--border));border-radius:16px}.q-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px}.q-en{font-size:19px;font-weight:700;font-style:italic;color:var(--text);line-height:1.5}.q-vi{margin-top:10px;font-size:14px;color:var(--muted)}
@@ -367,7 +367,7 @@ function loadSummary(){ (async function(){ try{
   var cards=res.data; if(!cards) return;
   var ids=[]; cards.forEach(function(c){ if(c.word_id&&ids.indexOf(c.word_id)<0) ids.push(c.word_id); });
   var tmap={}; if(ids.length){ var wr=await sb.from('words').select('id,term').in('id',ids); (wr.data||[]).forEach(function(w){ tmap[w.id]=w.term; }); }
-  var STATES=[{k:0,lab:'Lại',col:'#f87171'},{k:1,lab:'Khó',col:'#fb923c'},{k:3,lab:'Nhớ',col:'#34d399'},{k:5,lab:'Thuộc',col:'#a78bfa'},{k:14,lab:'Dễ',col:'#4f8ef7'}];
+  var STATES=[{k:0,lab:'Lại',col:'#f87171'},{k:1,lab:'Khó',col:'#fb923c'},{k:3,lab:'Nhớ',col:'#a78bfa'},{k:5,lab:'Thuộc',col:'#34d399'},{k:14,lab:'Dễ',col:'#4f8ef7'}];
   function bucket(iv){ iv=(iv==null)?0:iv; if(iv<=0)return 0; if(iv<=1)return 1; if(iv<=3)return 3; if(iv<=5)return 5; return 14; }
   var byState={0:[],1:[],3:[],5:[],14:[]};
   cards.forEach(function(c){ byState[bucket(c.interval_days)].push(tmap[c.word_id]||'?'); });
