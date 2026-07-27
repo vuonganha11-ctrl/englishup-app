@@ -86,6 +86,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .r-remember:hover{border-color:var(--a3)} .r-remember .lab{color:var(--a3)}
 .r-known:hover{border-color:var(--a2)} .r-known .lab{color:var(--a2)}
 .r-easy:hover{border-color:var(--accent)} .r-easy .lab{color:var(--accent)}
+#fc-summary{width:100%;max-width:640px;margin:0 auto 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}.sum-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sum-toggle{cursor:pointer;color:var(--muted);font-size:13px}.sum-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sum-chip{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;flex:1;padding:8px 6px;background:var(--card2);border:1px solid var(--border);border-radius:10px}.sum-chip .sc-lab{font-weight:700;font-size:13px}.sum-chip .sc-n{font-size:18px;font-weight:800;color:var(--text)}.sum-list{font-size:13px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;line-height:1.8}.sum-w{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin:2px}.sum-days-title{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 6px}.sum-days{display:flex;flex-direction:column;gap:4px}.sum-day{display:flex;justify-content:space-between;font-size:13px;color:var(--text);padding:5px 9px;background:var(--card2);border-radius:6px}.sum-day b{color:var(--accent)}
 .back-img{width:100%;max-height:170px;object-fit:cover;border-radius:10px;margin-bottom:12px;border:1px solid var(--border)}
 
 .flip-cta{display:none;width:100%;max-width:680px;margin-top:22px}
@@ -145,6 +146,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <span class="chip" id="remain-chip">Còn 0</span>
   </div>
   <div class="progress-wrap" id="progress-wrap" style="display:none"><div class="progress-bar" id="progress-bar"></div></div>
+  <div id="fc-summary" style="display:none"></div>
 
   <!-- LOADING -->
   <div class="state" id="state-loading">
@@ -318,8 +320,36 @@ async function doLogin(){
 async function handleLogout(){ if(!confirm('Đăng xuất?'))return; await sb.auth.signOut(); clearUser(); }
 
 // ── LOAD DUE CARDS ──
+function loadSummary(){ (async function(){ try{
+  if(typeof currentUser==='undefined'||!currentUser) return;
+  var wrap=document.getElementById('fc-summary'); if(!wrap) return;
+  var res=await sb.from('srs_cards').select('word_id,interval_days,due_date,review_count').eq('user_id',currentUser.id);
+  var cards=res.data; if(!cards) return;
+  var ids=[]; cards.forEach(function(c){ if(c.word_id&&ids.indexOf(c.word_id)<0) ids.push(c.word_id); });
+  var tmap={}; if(ids.length){ var wr=await sb.from('words').select('id,term').in('id',ids); (wr.data||[]).forEach(function(w){ tmap[w.id]=w.term; }); }
+  var STATES=[{k:0,lab:'Lại',col:'#f87171'},{k:1,lab:'Khó',col:'#fb923c'},{k:3,lab:'Nhớ',col:'#34d399'},{k:5,lab:'Thuộc',col:'#a78bfa'},{k:14,lab:'Dễ',col:'#4f8ef7'}];
+  function bucket(iv){ iv=(iv==null)?0:iv; if(iv<=0)return 0; if(iv<=1)return 1; if(iv<=3)return 3; if(iv<=5)return 5; return 14; }
+  var byState={0:[],1:[],3:[],5:[],14:[]};
+  cards.forEach(function(c){ byState[bucket(c.interval_days)].push(tmap[c.word_id]||'?'); });
+  var now=new Date(); var startToday=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var dayCounts={}, overdueToday=0;
+  cards.forEach(function(c){ if(!c.due_date) return; var d=new Date(c.due_date); var dd=new Date(d.getFullYear(),d.getMonth(),d.getDate()); var diff=Math.round((dd-startToday)/86400000); if(diff<=0) overdueToday++; else dayCounts[diff]=(dayCounts[diff]||0)+1; });
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var chips=STATES.map(function(s){ return '<div class="sum-chip" data-k="'+s.k+'" style="border-color:'+s.col+'"><span class="sc-lab" style="color:'+s.col+'">'+s.lab+'</span><span class="sc-n">'+byState[s.k].length+'</span></div>'; }).join('');
+  var lists=STATES.map(function(s){ var ws=byState[s.k]; return '<div class="sum-list" id="suml-'+s.k+'" style="display:none"><b style="color:'+s.col+'">'+s.lab+' ('+ws.length+')</b>: '+(ws.length? ws.map(function(w){return '<span class="sum-w">'+esc(w)+'</span>';}).join(' '):'—')+'</div>'; }).join('');
+  var dn=['CN','T2','T3','T4','T5','T6','T7'];
+  var days='<div class="sum-day"><span>Hôm nay & quá hạn</span><b>'+overdueToday+'</b></div>';
+  for(var i=1;i<=14;i++){ if(dayCounts[i]){ var dt=new Date(startToday.getTime()+i*86400000); var lbl=(i===1?'Ngày mai':(dn[dt.getDay()]+' '+dt.getDate()+'/'+(dt.getMonth()+1))); days+='<div class="sum-day"><span>'+lbl+'</span><b>'+dayCounts[i]+'</b></div>'; } }
+  wrap.innerHTML='<div class="sum-head"><b>📊 Tổng hợp ('+cards.length+' từ)</b><span class="sum-toggle" id="sum-toggle">Ẩn ▲</span></div><div id="sum-body"><div class="sum-chips">'+chips+'</div>'+lists+'<div class="sum-days-title">Cần ôn theo ngày</div><div class="sum-days">'+days+'</div></div>';
+  wrap.style.display= cards.length? '' : 'none';
+  wrap.querySelectorAll('.sum-chip').forEach(function(ch){ ch.onclick=function(){ var el=document.getElementById('suml-'+ch.getAttribute('data-k')); if(el) el.style.display=(el.style.display==='none')?'':'none'; }; });
+  var tg=document.getElementById('sum-toggle'), bd=document.getElementById('sum-body');
+  if(tg&&bd) tg.onclick=function(){ var hid=(bd.style.display==='none'); bd.style.display=hid?'':'none'; tg.textContent=hid?'Ẩn ▲':'Hiện ▼'; };
+}catch(e){} })(); }
+
 async function loadDue(){
   show('state-loading');
+  loadSummary();
   try{
     const nowIso = new Date().toISOString();
     const { data: cards, error } = await sb.from('srs_cards')
@@ -476,6 +506,7 @@ async function rate(grade){
   } else {
     awardXP(3);
   }
+  loadSummary();
   nextCard();
 }
 
