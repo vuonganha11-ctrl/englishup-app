@@ -354,6 +354,7 @@ async function loadDue(){
     const nowIso = new Date().toISOString();
     const { data: cards, error } = await sb.from('srs_cards')
       .select('id,word_id,due_date,interval_days,ease_factor,review_count')
+      .eq('user_id', currentUser.id)
       .lte('due_date', nowIso)
       .order('due_date',{ascending:true});
     if(error) throw error;
