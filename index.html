@@ -111,11 +111,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .step .sc p{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5}
 .step .sc a{color:var(--accent);text-decoration:none;font-weight:600}
 .step .sc a:hover{text-decoration:underline}
-.hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.hltile{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px}
-.hltile .ico{font-size:26px;line-height:1;margin-bottom:10px}
-.hltile h4{font-size:15px;font-weight:700;letter-spacing:-.2px}
-.hltile p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
+.hl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px}
+.hltile{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 24px}
+.hltile .ico{font-size:28px;line-height:1;margin-bottom:11px}
+.hltile h4{font-size:16px;font-weight:700;letter-spacing:-.2px}
+.hltile p{font-size:13.5px;color:var(--muted);margin-top:6px;line-height:1.65}
+.hltile p+p{margin-top:9px}
 .hltile .k{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;font-family:var(--mono);color:var(--a3);background:rgba(52,211,153,.1);border-radius:6px;padding:2px 8px}
 .hltile.feat{grid-column:1/-1;background:linear-gradient(135deg,rgba(52,211,153,.13),rgba(79,142,247,.06));border-color:rgba(52,211,153,.45);padding:24px 22px;position:relative;overflow:hidden}
 .hltile.feat::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 92% -30%,rgba(52,211,153,.18),transparent 55%);pointer-events:none}
@@ -285,32 +286,30 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="hltile">
         <div class="ico">⏰</div>
         <h4>Kỷ luật mỗi ngày</h4>
-        <p>Học đều đặn, dù chỉ 15–20 phút/ngày, hiệu quả hơn hẳn học dồn vài tiếng cuối tuần. Đặt một khung giờ cố định.</p>
+        <p>Não bộ củng cố ngôn ngữ qua sự lặp lại đều đặn, không phải qua những buổi học dồn dập. 20 phút mỗi ngày trong một tháng ăn đứt việc học 10 tiếng một lần rồi nghỉ cả tuần.</p>
+        <p>Bí quyết là <b>gắn việc học vào một khung giờ cố định</b> — sau bữa sáng, trên đường đi làm, hay trước khi ngủ — để nó thành phản xạ tự nhiên chứ không phải việc phải "ép" bản thân mỗi lần.</p>
         <span class="k">Đều đặn</span>
       </div>
       <div class="hltile">
         <div class="ico">🔥</div>
         <h4>Giữ chuỗi (streak)</h4>
-        <p>Đừng bỏ ngày nào — biến việc học thành thói quen như đánh răng. Theo dõi chuỗi trong <a href="report.html" style="color:var(--accent);text-decoration:none;font-weight:600">Thống kê</a> để giữ động lực.</p>
+        <p>Chuỗi ngày học liên tục là một động lực tâm lý cực mạnh: khi đã học 10, 20 ngày liền, bạn sẽ không nỡ phá vỡ nó. Chính cảm giác "không muốn mất chuỗi" kéo bạn quay lại mỗi ngày.</p>
+        <p>Kể cả ngày bận rộn nhất, chỉ cần ôn vài thẻ Flashcard hay xem một video ngắn cũng đủ giữ chuỗi. Theo dõi chuỗi và tiến trình trong <a href="report.html" style="color:var(--accent);text-decoration:none;font-weight:600">Thống kê</a> để thấy rõ mình tiến bộ.</p>
         <span class="k">Thói quen</span>
       </div>
       <div class="hltile">
         <div class="ico">👂</div>
-        <h4>Tắm ngôn ngữ</h4>
-        <p>Nghe càng nhiều càng tốt; nghe đi nghe lại một nội dung tới khi hiểu trọn. Càng tiếp xúc nhiều, ngôn ngữ càng "ngấm" tự nhiên.</p>
+        <h4>Tắm ngôn ngữ (nghe thật nhiều)</h4>
+        <p>Ngôn ngữ "ngấm" vào bạn qua <b>số lượng tiếp xúc</b>, không phải qua việc học thuộc. Hãy nghe càng nhiều càng tốt — nghe đi nghe lại một video tới khi hiểu trọn, nghe cả khi làm việc nhà hay đi đường.</p>
+        <p>Ưu tiên nội dung bạn hiểu được <b>khoảng 80–90%</b>: đủ dễ để theo kịp, đủ mới để não học thêm. Nghe nhiều chính là nền tảng nuôi mọi kỹ năng còn lại — nói, đọc, viết đều mọc lên từ đây.</p>
         <span class="k">Input nhiều</span>
       </div>
       <div class="hltile">
         <div class="ico">😌</div>
         <h4>Đừng sợ sai</h4>
-        <p>Trẻ con nói sai liên tục rồi mới giỏi. Sai là một phần của học — cứ nói, sai đâu sửa đó, đừng chờ "hoàn hảo" mới mở miệng.</p>
+        <p>Không ai học nói mà không nói sai — kể cả trẻ con cũng nói sai suốt nhiều năm trước khi thành thạo. Sai là <b>tín hiệu bạn đang thử thách bản thân</b> và học được điều mới, chứ không phải thất bại.</p>
+        <p>Đừng chờ tới khi "đủ giỏi" mới mở miệng; hãy nói ngay, sai đâu sửa đó. Càng ngại sai bạn càng ít luyện — và chính việc <b>ít luyện</b> mới là thứ thực sự kìm hãm bạn, không phải lỗi sai.</p>
         <span class="k">Tự tin</span>
-      </div>
-      <div class="hltile">
-        <div class="ico">❤️</div>
-        <h4>Chọn nội dung bạn thích</h4>
-        <p>Học điều khiến bạn thấy vui — phim, chủ đề, kênh yêu thích — thì mới đủ hứng thú đi đường dài mà không bỏ cuộc.</p>
-        <span class="k">Bền bỉ</span>
       </div>
     </div>
   </section>
