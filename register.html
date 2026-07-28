@@ -75,19 +75,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <h1>Tạo tài khoản</h1>
       <div class="sub">Đăng ký để bắt đầu học cùng EnglishUp.</div>
 
-      <div class="role-pick">
-        <div class="role-opt active" id="role-student" onclick="pickRole('student')">
-          <div class="ico">🎓</div>
-          <div class="lbl">Học viên</div>
-          <div class="dsc">Học theo lộ trình được giao</div>
-        </div>
-        <div class="role-opt" id="role-teacher" onclick="pickRole('teacher')">
-          <div class="ico">🧑‍🏫</div>
-          <div class="lbl">Giáo viên</div>
-          <div class="dsc">Đăng bài, chấm điểm, nhận xét</div>
-        </div>
-      </div>
-
       <div class="field">
         <label>Họ và tên</label>
         <input type="text" id="r-name" placeholder="Nguyễn Văn A" autocomplete="name">
@@ -130,13 +117,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
 const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
-let selectedRole='student';
-
-function pickRole(r){
-  selectedRole=r;
-  document.getElementById('role-student').classList.toggle('active', r==='student');
-  document.getElementById('role-teacher').classList.toggle('active', r==='teacher');
-}
 function setMsg(t,type){ const m=document.getElementById('msg'); m.textContent=t||''; m.className='msg'+(type?' '+type:''); }
 
 async function doRegister(){
@@ -157,7 +137,7 @@ async function doRegister(){
   try{
     const { data, error } = await sb.auth.signUp({
       email, password:pw,
-      options:{ data:{ role:selectedRole, full_name:name, phone } }
+      options:{ data:{ role:'student', full_name:name, phone } }
     });
     if(error) throw error;
 
@@ -169,7 +149,7 @@ async function doRegister(){
       }
     }
 
-    const roleLabel = selectedRole==='teacher' ? 'Giáo viên' : 'Học viên';
+    const roleLabel = 'Học viên';
     document.getElementById('form-view').classList.add('hidden');
     document.getElementById('success-view').style.display='block';
     if(data.session){
