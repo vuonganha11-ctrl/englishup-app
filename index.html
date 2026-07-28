@@ -157,7 +157,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
         if(!u) return;
         c.from("user_profiles").select("role").eq("id",u.id).maybeSingle().then(function(res){
           var role = res.data && res.data.role;
-          if(role==='admin' || role==='teacher'){
+          if(role==='admin'){
             var nav = document.getElementById('nav-accounts');
             if(nav) nav.style.display = '';
           }
