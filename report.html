@@ -248,12 +248,6 @@ table.tbl tbody tr:hover{background:var(--card2)}
         <span>Nhiều</span>
       </div>
     </div>
-
-    <!-- Điểm kỹ năng + nhận xét (đưa xuống cuối) -->
-    <div class="two-col">
-      <div class="panel"><h2>🎯 Điểm theo kỹ năng</h2><div class="chart-box"><canvas id="chart-skill-self"></canvas></div><div id="s-nogr" class="muted hidden" style="text-align:center;padding:30px 0">Chưa có điểm đánh giá.</div></div>
-      <div class="panel"><h2>📝 Nhận xét từ giáo viên</h2><div id="s-evals"></div></div>
-    </div>
   </div>
 </div>
 
@@ -387,8 +381,7 @@ async function boot(){
     myRole = (me && me.role) || 'student';
     const navAcc=document.getElementById('nav-accounts'); if(navAcc) navAcc.style.display=(myRole==='admin')?'':'none';
     if(me && me.xp!==undefined && me.xp!==null){ document.getElementById('xp-val').textContent=me.xp; document.getElementById('xp-display').style.display='flex'; }
-    if(myRole==='teacher'||myRole==='admin') await loadTeacher();
-    else await loadStudentSelf();
+    await loadStudentSelf();
   }catch(e){
     console.error(e);
     // không có profile → coi như học viên mới
@@ -588,11 +581,9 @@ const SSR_META=[
 async function loadStudentSelf(){
   show('state-loading');
   const uid=currentUser.id;
-  const [{data:prof},{data:cards},{data:grades},{data:evals}]=await Promise.all([
-    sb.from('user_profiles').select('email,full_name,xp,streak,created_at').eq('id',uid).maybeSingle(),
-    sb.from('srs_cards').select('word_id,interval_days,review_count,last_reviewed,due_date').eq('user_id',uid),
-    sb.from('grades').select('*').eq('student_id',uid).maybeSingle(),
-    sb.from('evaluations').select('*').eq('student_id',uid).order('created_at',{ascending:false})
+  const [{data:prof},{data:cards}]=await Promise.all([
+    sb.from('user_profiles').select('email,full_name,xp,streak,created_at,plan,plan_expires_at').eq('id',uid).maybeSingle(),
+    sb.from('srs_cards').select('word_id,interval_days,review_count,last_reviewed,due_date').eq('user_id',uid)
   ]);
   const cardList=cards||[];
   const xp=prof?.xp||0;
@@ -612,12 +603,11 @@ async function loadStudentSelf(){
   const sk=streakInfo(daysSet);
   const lastStudyTs=cardList.reduce((m,c)=>{ if(!c.last_reviewed)return m; const t=new Date(c.last_reviewed).getTime(); return (m==null||t>m)?t:m; }, null);
 
-  const cl=classify(xp);
   show('view-student');
 
   const nm=prof?.full_name||(prof?.email||currentUser.email||'').split('@')[0];
   const email=prof?.email||currentUser.email||'—';
-  document.getElementById('s-sub').textContent=email+' · Xếp loại tự động theo XP';
+  document.getElementById('s-sub').textContent=email+' · Báo cáo học tập cá nhân';
 
   // Thông tin học viên
   document.getElementById('s-av').textContent=(nm||'?').slice(0,2).toUpperCase();
@@ -626,10 +616,10 @@ async function loadStudentSelf(){
   document.getElementById('s-info').innerHTML=
     infoItem('Họ và tên', esc(prof?.full_name)||'<span class="muted">(chưa cập nhật)</span>')+
     infoItem('Email', esc(email))+
-    infoItem('Vai trò', 'Học viên')+
+    infoItem('Vai trò', roleLabel(myRole))+
     infoItem('Ngày tham gia', fmtDate(prof?.created_at||currentUser.created_at))+
     infoItem('Học gần nhất', lastStudyTs?fmtDate(lastStudyTs):'—')+
-    infoItem('Xếp loại hiện tại', `<span class="grade-pill ${cl.c}">${cl.t}</span>`);
+    infoItem('Gói đang sử dụng', planLabel(prof, myRole));
 
   // Thẻ thống kê
   const mastered=cardList.filter(c=>(c.review_count||0)>0 && (c.interval_days||0)>=14).length;
@@ -638,29 +628,7 @@ async function loadStudentSelf(){
     statCard('Chuỗi hiện tại',sk.current+' <small>ngày</small>')+
     statCard('Tổng số từ',words)+
     statCard('Lượt ôn',reviews)+
-    statCard('Thành thạo',mastered)+
-    `<div class="stat"><div class="k">Xếp loại</div><div class="v" style="font-size:20px"><span class="grade-pill ${cl.c}" style="font-size:14px">${cl.t}</span></div></div>`;
-
-  // Biểu đồ kỹ năng
-  const g=grades;
-  if(g){
-    document.getElementById('s-nogr').classList.add('hidden');
-    document.getElementById('chart-skill-self').style.display='';
-    if(_chartSelf) _chartSelf.destroy();
-    _chartSelf=new Chart(document.getElementById('chart-skill-self'),{
-      type:'radar',
-      data:{labels:['Từ vựng','Nghe','Nói','Đọc','Viết'],
-        datasets:[{label:'Điểm',data:[g.vocabulary||0,g.listening||0,g.speaking||0,g.reading||0,g.writing||0],
-          backgroundColor:'rgba(79,142,247,.25)',borderColor:'#4f8ef7',borderWidth:2,pointBackgroundColor:'#4f8ef7'}]},
-      options:radarOpts()
-    });
-  } else {
-    document.getElementById('chart-skill-self').style.display='none';
-    document.getElementById('s-nogr').classList.remove('hidden');
-  }
-
-  const list=evals||[];
-  document.getElementById('s-evals').innerHTML = list.length? list.map(e=>evalItem(e)).join('') : '<div class="muted" style="font-size:13px">Chưa có nhận xét từ giáo viên.</div>';
+    statCard('Thành thạo',mastered);
 
   // Thống kê 5 cấp độ SSR
   renderSSR(cardList, wmap);
@@ -762,6 +730,23 @@ function classify(xp){
 function isActive(last){ if(!last)return false; return (Date.now()-new Date(last).getTime())<7*86400000; }
 function statCard(k,v){ return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
 function infoItem(k,v){ return `<div class="info-item"><div class="il">${k}</div><div class="iv">${v}</div></div>`; }
+function roleLabel(r){ return r==='admin'?'Quản trị viên':(r==='teacher'?'Giáo viên':'Học viên'); }
+function planLabel(prof, role){
+  // Giáo viên/Admin: full quyền theo hệ thống
+  if(role==='teacher'||role==='admin') return '<span class="grade-pill g-gioi">Toàn quyền (nội bộ)</span>';
+  const plan=(prof&&prof.plan)||'free';
+  if(plan==='pro') return '<span class="grade-pill g-gioi">Pro · ∞ vĩnh viễn</span>';
+  if(plan==='plus'){
+    const exp=prof&&prof.plan_expires_at?new Date(prof.plan_expires_at):null;
+    if(exp){ const expired=exp.getTime()<Date.now();
+      return expired
+        ? `<span class="grade-pill g-yeu">Plus · ⛔ hết hạn ${fmtDate(prof.plan_expires_at)}</span>`
+        : `<span class="grade-pill g-kha">Plus · đến ${fmtDate(prof.plan_expires_at)}</span>`;
+    }
+    return '<span class="grade-pill g-kha">Plus</span>';
+  }
+  return '<span class="grade-pill">Miễn phí (Free)</span>';
+}
 function evalItem(e){
   return `<div class="eval-item"><div class="eval-meta">${fmtDate(e.created_at)}${e.rating?' · <b>'+esc(e.rating)+'</b>':''}</div><div>${esc(e.content)}</div></div>`;
 }
