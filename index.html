@@ -64,6 +64,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .why p+p{margin-top:11px}
 .why .ci{color:var(--accent);font-weight:700}
 .why .note{margin-top:14px;font-size:13px;color:var(--muted);border-left:2px solid var(--a3);padding-left:12px}
+.why.bloom{background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(251,146,60,.05))}
+.why.bloom::after{background:radial-gradient(circle at 92% -30%,rgba(167,139,250,.18),transparent 55%)}
+.why.bloom h2 span{color:var(--a2)}
+.why.bloom .ci{color:var(--a2)}
+.why.bloom .note{border-left-color:var(--a2)}
+.bloom-ladder{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:16px;position:relative}
+.bloom-ladder .bl{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);white-space:nowrap}
+.bloom-ladder .sep{color:var(--muted);font-size:13px;font-weight:700}
+.bl.bl1{color:var(--a3);border-color:rgba(52,211,153,.4)}
+.bl.bl2{color:var(--accent);border-color:rgba(79,142,247,.4)}
+.bl.bl3{color:#fff;background:var(--a2);border-color:var(--a2)}
+.bl.bl4{color:var(--a4);border-color:rgba(251,146,60,.4)}
+.bl.bl5{color:var(--a5);border-color:rgba(244,114,182,.4)}
+.bl.bl6{color:#fff;background:linear-gradient(135deg,var(--a5),var(--a4));border-color:var(--a5)}
 .steps{display:flex;flex-direction:column;gap:9px;margin-bottom:26px}
 .step{display:flex;gap:15px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;transition:all .15s}
 .step:hover{border-color:var(--border2);background:var(--card2)}
@@ -172,6 +186,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <p>Não bộ tiếp thu ngôn ngữ tốt nhất khi bạn <span class="ci">hiểu được nội dung</span> mình đang nghe/xem, chứ không phải khi học thuộc quy tắc ngữ pháp. Đây chính là cách một đứa trẻ học tiếng mẹ đẻ: nghe thật nhiều thứ hơi cao hơn trình độ hiện tại một chút, đoán nghĩa qua ngữ cảnh, rồi ngữ pháp và từ vựng "ngấm" vào một cách tự nhiên.</p>
       <p>Ở EnglishUp, bạn không cần cày quy tắc khô khan. Bạn <span class="ci">xem video có phụ đề, nghe hiểu, đoán ý</span> — mỗi lần hiểu được một câu là một lần não bộ củng cố ngôn ngữ. Học kiểu này nhẹ nhàng, bền và giữ được cảm hứng lâu dài.</p>
       <div class="note">💡 Nguyên tắc vàng: luôn chọn nội dung mà bạn hiểu được <b>khoảng 80–90%</b> — đủ dễ để theo kịp, đủ mới để tiến bộ.</div>
+    </div>
+
+    <!-- Kho từ vựng theo thang Bloom -->
+    <div class="why bloom">
+      <h2>Kho từ vựng xây dựng theo <span>thang Bloom</span></h2>
+      <p>Từ vựng ở EnglishUp không chỉ để "học thuộc rồi quên". Toàn bộ kho từ được tổ chức theo <span class="ci">thang nhận thức Bloom</span> — dẫn bạn đi từ mức ghi nhớ cơ bản lên dần tới mức vận dụng và sáng tạo ngôn ngữ.</p>
+      <p>Nhờ vậy bạn không dừng ở việc "biết mặt chữ", mà học cách <span class="ci">dùng ngôn ngữ để ứng dụng và diễn đạt ý</span> của chính mình — nói và viết được điều bạn muốn, đúng ngữ cảnh.</p>
+      <div class="bloom-ladder">
+        <span class="bl bl1">Nhớ</span><span class="sep">→</span>
+        <span class="bl bl2">Hiểu</span><span class="sep">→</span>
+        <span class="bl bl3">Vận dụng</span><span class="sep">→</span>
+        <span class="bl bl4">Phân tích</span><span class="sep">→</span>
+        <span class="bl bl5">Đánh giá</span><span class="sep">→</span>
+        <span class="bl bl6">Sáng tạo</span>
+      </div>
+      <div class="note">🎯 Càng lên cao, bạn càng chủ động dùng tiếng Anh để giải quyết vấn đề và thể hiện suy nghĩ — chứ không chỉ nhận diện từ.</div>
     </div>
 
     <!-- Lộ trình 6 bước -->
