@@ -91,6 +91,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .bl.sl3{color:var(--a2);border-color:rgba(167,139,250,.4)}
 .bl.sl4{color:var(--accent);border-color:rgba(79,142,247,.4)}
 .bl.sl5{color:#fff;background:linear-gradient(135deg,var(--accent),var(--a3));border-color:var(--accent)}
+.why.shadow{background:linear-gradient(135deg,rgba(251,146,60,.1),rgba(244,114,182,.05))}
+.why.shadow::after{background:radial-gradient(circle at 92% -30%,rgba(251,146,60,.18),transparent 55%)}
+.why.shadow h2 span{color:var(--a4)}
+.why.shadow .ci{color:var(--a4)}
+.why.shadow .note{border-left-color:var(--a4)}
+.feat-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;position:relative}
+.feat-row .bl{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);white-space:nowrap}
+.feat-row .f1{color:var(--a4);border-color:rgba(251,146,60,.4)}
+.feat-row .f2{color:var(--a3);border-color:rgba(52,211,153,.4)}
+.feat-row .f3{color:var(--accent);border-color:rgba(79,142,247,.4)}
+.feat-row .f4{color:var(--a5);border-color:rgba(244,114,182,.4)}
 .steps{display:flex;flex-direction:column;gap:9px;margin-bottom:26px}
 .step{display:flex;gap:15px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;transition:all .15s}
 .step:hover{border-color:var(--border2);background:var(--card2)}
@@ -230,6 +241,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
         <span class="bl sl5">2 tuần+</span>
       </div>
       <div class="note">🃏 Mỗi ngày chỉ cần ôn các thẻ "đến hạn" — nhẹ nhàng vài phút mà nhớ được lâu dài. <a href="flashcard.html" style="color:var(--accent);text-decoration:none;font-weight:600">Ôn Flashcard →</a></div>
+    </div>
+
+    <!-- Shadowing tích hợp trong video -->
+    <div class="why shadow">
+      <h2>Shadowing tích hợp sẵn trong <span>mỗi video</span></h2>
+      <p>Shadowing (nói nhại theo) là cách nhanh nhất để biến thứ bạn nghe hiểu thành <span class="ci">khả năng nói</span>. Ở EnglishUp, chế độ <span class="ci">"Nói theo"</span> được tích hợp ngay trong từng video — bạn nghe một câu rồi lặp lại tức thì, bắt chước cách phát âm, ngữ điệu và nhịp của người bản xứ.</p>
+      <p>Bạn có thể <span class="ci">chỉnh tốc độ phát</span> — chậm lại để nghe rõ và bắt kịp từng âm, rồi tăng dần khi đã quen — nên vừa sức ở mọi trình độ. Luyện đều mỗi ngày, phản xạ nói của bạn sẽ ngày càng trôi chảy và tự nhiên.</p>
+      <div class="feat-row">
+        <span class="bl f1">🗣️ Nói theo từng câu</span>
+        <span class="bl f2">🐢 Chỉnh tốc độ</span>
+        <span class="bl f3">🔁 Lặp lại câu</span>
+        <span class="bl f4">🎯 Bắt chước ngữ điệu</span>
+      </div>
+      <div class="note">🎬 Mở bất kỳ video nào và bật "Nói theo" để bắt đầu luyện output ngay. <a href="video.html" style="color:var(--a4);text-decoration:none;font-weight:600">Xem video →</a></div>
     </div>
 
     <!-- Lộ trình 6 bước -->
