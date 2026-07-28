@@ -224,9 +224,7 @@ select.input{cursor:pointer}
       <button class="nav-btn active" data-section="dashboard" onclick="nav('dashboard',this)"><span class="nbi">📊</span>Dashboard</button>
       <div class="nav-group-label">Nội dung</div>
       <button class="nav-btn" data-section="words" onclick="nav('words',this)"><span class="nbi">📖</span>Từ vựng<span class="nav-count" id="nav-count-words">—</span></button>
-      <button class="nav-btn" data-section="topics" onclick="nav('topics',this)"><span class="nbi">🗂️</span>Chủ đề<span class="nav-count" id="nav-count-topics">—</span></button>
       <button class="nav-btn" data-section="courses" onclick="nav('courses',this)"><span class="nbi">🎓</span>Khoá học<span class="nav-count" id="nav-count-courses">—</span></button>
-      <button class="nav-btn" data-section="shadowing" onclick="nav('shadowing',this)"><span class="nbi">🎤</span>Shadowing<span class="nav-count" id="nav-count-shadowing">—</span></button>
       <button class="nav-btn" data-section="video" onclick="nav('video',this)"><span class="nbi">🎬</span>Video<span class="nav-count" id="nav-count-video">—</span></button>
       <button class="nav-btn" onclick="location.href='admin-shorts.html'"><span class="nbi">📱</span>Shorts</button>
       <button class="nav-btn" data-section="import" onclick="nav('import',this)"><span class="nbi">📥</span>Import CSV</button>
@@ -249,7 +247,6 @@ select.input{cursor:pointer}
         <div class="page-header"><h1>Dashboard</h1><button class="btn" onclick="loadDashboard()">🔄 Làm mới</button></div>
         <div class="stats-row" id="dash-stats">
           <div class="stat-card"><div class="st-val skeleton" style="height:32px;width:60px;margin-bottom:6px"></div><div class="st-lbl">Từ vựng</div></div>
-          <div class="stat-card"><div class="st-val skeleton" style="height:32px;width:60px;margin-bottom:6px"></div><div class="st-lbl">Chủ đề</div></div>
           <div class="stat-card"><div class="st-val skeleton" style="height:32px;width:60px;margin-bottom:6px"></div><div class="st-lbl">Khoá học</div></div>
           <div class="stat-card"><div class="st-val skeleton" style="height:32px;width:60px;margin-bottom:6px"></div><div class="st-lbl">Học viên</div></div>
         </div>
@@ -299,22 +296,10 @@ select.input{cursor:pointer}
         </div>
       </div>
 
-      <!-- TOPICS -->
-      <div class="section-page" id="sec-topics">
-        <div class="page-header"><h1>🗂️ Chủ đề</h1><button class="btn primary" onclick="openTopicModal()">＋ Thêm chủ đề</button></div>
-        <div id="topics-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
-      </div>
-
       <!-- COURSES -->
       <div class="section-page" id="sec-courses">
         <div class="page-header"><h1>🎓 Khoá học</h1><button class="btn primary" onclick="openCourseModal()">＋ Tạo khoá học</button></div>
         <div id="courses-list"></div>
-      </div>
-
-      <!-- SHADOWING -->
-      <div class="section-page" id="sec-shadowing">
-        <div class="page-header"><h1>🎤 Shadowing</h1><button class="btn primary" onclick="openShadowModal()">＋ Thêm bài</button></div>
-        <div id="shadowing-list"></div>
       </div>
 
       <!-- VIDEO -->
@@ -547,35 +532,6 @@ select.input{cursor:pointer}
   </div>
 </div>
 
-<!-- MODAL TOPIC -->
-<div class="modal-overlay" id="modal-topic">
-  <div class="modal">
-    <div class="modal-header"><span style="font-size:20px">🗂️</span><h2 id="topic-modal-title">Thêm chủ đề</h2><button class="btn-icon" onclick="closeModal('modal-topic')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="tf-id">
-      <div class="field-row">
-        <div class="field"><label>Tên chủ đề *</label><input class="input" id="tf-name" placeholder="Animals, Business…"></div>
-        <div class="field"><label>Cấp độ</label><select class="input" id="tf-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
-      </div>
-      <div class="field"><label>Mô tả</label><textarea class="input" id="tf-desc" style="min-height:60px"></textarea></div>
-      <div class="field-row">
-        <div class="field">
-          <label>Ảnh thumbnail</label>
-          <div class="upload-zone" onclick="document.getElementById('tf-img-file').click()"><div class="uz-icon">🖼️</div><p style="font-size:12px">Chọn ảnh bìa</p></div>
-          <input type="file" id="tf-img-file" accept="image/*" style="display:none" onchange="previewFile(this,'topic-img')">
-          <div id="topic-img-preview" style="display:none" class="upload-preview"></div>
-          <input class="input" id="tf-img-url" placeholder="Hoặc URL ảnh…" style="margin-top:8px;font-size:12px">
-        </div>
-        <div class="field"><label>Đoạn văn mẫu</label><textarea class="input" id="tf-paragraph" style="min-height:120px" placeholder="Đoạn văn để nghe + highlight từ vựng…"></textarea></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-topic')">Huỷ</button>
-      <button class="btn primary" onclick="saveTopic()">💾 Lưu</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL COURSE -->
 <div class="modal-overlay" id="modal-course">
   <div class="modal" style="max-width:680px">
@@ -599,39 +555,6 @@ select.input{cursor:pointer}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-course')">Huỷ</button>
       <button class="btn primary" onclick="saveCourse()">💾 Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL SHADOWING -->
-<div class="modal-overlay" id="modal-shadow">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-header"><span style="font-size:20px">🎤</span><h2 id="shadow-modal-title">Thêm bài Shadowing</h2><button class="btn-icon" onclick="closeModal('modal-shadow')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="sf-id">
-      <div class="field-row">
-        <div class="field"><label>Tiêu đề *</label><input class="input" id="sf-title" placeholder="A Day at the Office…"></div>
-        <div class="field"><label>Cấp độ</label><select class="input" id="sf-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
-      </div>
-      <div class="field">
-        <label>Upload Audio</label>
-        <div class="upload-zone" onclick="document.getElementById('sf-audio-file').click()"><div class="uz-icon">🔊</div><p>Chọn file MP3 (30s – 5 phút)</p></div>
-        <input type="file" id="sf-audio-file" accept="audio/*" style="display:none" onchange="previewFile(this,'shadow-audio')">
-        <div id="shadow-audio-preview" style="display:none" class="upload-preview"></div>
-        <input class="input" id="sf-audio-url" placeholder="Hoặc URL audio…" style="margin-top:8px;font-size:12px">
-      </div>
-      <div class="field">
-        <label>Transcript (mỗi dòng = 1 câu)</label>
-        <textarea class="input" id="sf-transcript" style="min-height:130px;font-size:12px;line-height:1.8" placeholder="Good morning everyone.&#10;Welcome to today's meeting.&#10;I'd like to start by reviewing progress."></textarea>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Chủ đề</label><input class="input" id="sf-topic" placeholder="Business…"></div>
-        <div class="field"><label>Thời lượng (giây)</label><input class="input" id="sf-duration" type="number" placeholder="120"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-shadow')">Huỷ</button>
-      <button class="btn primary" onclick="saveShadowing()">💾 Lưu</button>
     </div>
   </div>
 </div>
@@ -777,11 +700,11 @@ select.input{cursor:pointer}
 // ══════════════════════════════════════════
 let _sb = null;
 let _user = null;
-let _words=[], _topics=[], _courses=[], _shadowing=[], _users=[];
+let _words=[], _courses=[], _users=[];
 let _wordsFiltered=[], _wordPage=0, _topicTree={};
 const PAGE=15;
 let _pendingImport=[];
-let _imgFile=null,_audioFile=null,_topicImgFile=null,_shadowAudioFile=null;
+let _imgFile=null,_audioFile=null;
 let _editingWordId=null;
 
 function initSB(url,key){
@@ -877,15 +800,15 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,topics:loadTopics,courses:loadCourses,shadowing:loadShadowing,video:loadVideos,users:loadUsers})[section]?.();
+  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers})[section]?.();
 }
 
 // ── DASHBOARD ──
 async function loadDashboard(){
-  const tbls=['words','topics','courses','shadowing'];
-  const colors=['var(--accent)','var(--accent2)','var(--accent3)','var(--accent4)'];
-  const icons=['📖','🗂️','🎓','🎤'];
-  const labels=['Từ vựng','Chủ đề','Khoá học','Shadowing'];
+  const tbls=['words','courses'];
+  const colors=['var(--accent)','var(--accent3)'];
+  const icons=['📖','🎓'];
+  const labels=['Từ vựng','Khoá học'];
   const counts=await Promise.all(tbls.map(t=>_sb.from(t).select('*',{count:'exact',head:true}).then(r=>r.count??0).catch(()=>0)));
   document.getElementById('dash-stats').innerHTML=tbls.map((t,i)=>`<div class="stat-card"><div class="st-val" style="color:${colors[i]}">${icons[i]} ${counts[i]}</div><div class="st-lbl">${labels[i]}</div></div>`).join('');
   const {data:rw}=await _sb.from('words').select('term,definition_vi,level').order('created_at',{ascending:false}).limit(5);
@@ -894,7 +817,7 @@ async function loadDashboard(){
   document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${u.display_name||u.email||'—'}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
 }
 async function loadNavCounts(){
-  for(const[tbl,id]of[['words','words'],['topics','topics'],['courses','courses'],['shadowing','shadowing'],['video_lessons','video'],['user_profiles','users']]){
+  for(const[tbl,id]of[['words','words'],['courses','courses'],['video_lessons','video'],['user_profiles','users']]){
     const {count}=await _sb.from(tbl).select('*',{count:'exact',head:true}).catch(()=>({count:0}));
     const el=document.getElementById('nav-count-'+id);
     if(el) el.textContent=count??'—';
@@ -1033,47 +956,6 @@ async function saveWord(){
   finally{btn.disabled=false;btn.textContent='💾 Lưu từ vựng';}
 }
 
-// ── TOPICS ──
-async function loadTopics(){
-  const {data,error}=await _sb.from('topics').select('*').order('created_at',{ascending:false});
-  if(error){document.getElementById('topics-grid').innerHTML=`<div class="empty-state"><p>${error.message}</p></div>`;return;}
-  _topics=data||[];renderTopics();
-}
-function renderTopics(){
-  if(!_topics.length){document.getElementById('topics-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">🗂️</div><p>Chưa có chủ đề nào</p><button class="btn primary" onclick="openTopicModal()">＋ Tạo chủ đề đầu tiên</button></div>';return;}
-  const lC={A1:'badge-green',A2:'badge-green',B1:'badge-blue',B2:'badge-purple',C1:'badge-pink'};
-  document.getElementById('topics-grid').innerHTML=_topics.map(t=>`<div class="table-wrap" style="padding:0;overflow:hidden">${t.thumbnail_url?`<img src="${t.thumbnail_url}" style="width:100%;height:110px;object-fit:cover" onerror="this.style.display='none'">`:`<div style="height:72px;background:linear-gradient(135deg,rgba(79,142,247,.1),rgba(167,139,250,.06));display:flex;align-items:center;justify-content:center;font-size:28px">🗂️</div>`}<div style="padding:14px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><strong style="font-size:14px;flex:1">${t.name||'—'}</strong><span class="badge ${lC[t.level]||'badge-blue'}">${t.level||'—'}</span></div><p style="font-size:12px;color:var(--muted);margin-bottom:10px">${(t.description||'').slice(0,70)}</p><div style="display:flex;justify-content:flex-end"><div class="row-actions"><button class="btn-icon" onclick="editTopic('${t.id}')">✏️</button><button class="btn-icon del" onclick="confirmDel('topics','${t.id}','${(t.name||'').replace(/'/g,"\\'")}')">🗑</button></div></div></div></div>`).join('');
-}
-function openTopicModal(t){
-  _topicImgFile=null;
-  document.getElementById('tf-id').value=t?.id||'';
-  document.getElementById('tf-name').value=t?.name||'';
-  document.getElementById('tf-level').value=t?.level||'B1';
-  document.getElementById('tf-desc').value=t?.description||'';
-  document.getElementById('tf-img-url').value=t?.thumbnail_url||'';
-  document.getElementById('tf-paragraph').value=t?.sample_paragraph||'';
-  document.getElementById('topic-img-preview').style.display='none';
-  document.getElementById('topic-modal-title').textContent=t?'Sửa chủ đề':'Thêm chủ đề';
-  openModal('modal-topic');
-}
-function editTopic(id){const t=_topics.find(x=>x.id===id);if(t)openTopicModal(t);}
-async function saveTopic(){
-  const name=document.getElementById('tf-name').value.trim();
-  if(!name){toast('Vui lòng nhập tên chủ đề.','warn');return;}
-  try{
-    let thumb=document.getElementById('tf-img-url').value.trim();
-    if(_topicImgFile)thumb=await uploadFile(_topicImgFile,'images/topics');
-    const data={name,level:document.getElementById('tf-level').value,description:document.getElementById('tf-desc').value.trim(),thumbnail_url:thumb,sample_paragraph:document.getElementById('tf-paragraph').value.trim()};
-    const id=document.getElementById('tf-id').value;
-    let err;
-    if(id){({error:err}=await _sb.from('topics').update(data).eq('id',id));}
-    else{({error:err}=await _sb.from('topics').insert(data));}
-    if(err)throw err;
-    toast(`✅ Đã lưu chủ đề "${name}"`, 'success');
-    closeModal('modal-topic');loadTopics();loadNavCounts();
-  }catch(e){toast('❌ '+e.message,'error');}
-}
-
 // ── COURSES ──
 async function loadCourses(){
   const {data,error}=await _sb.from('courses').select('*').order('created_at',{ascending:false});
@@ -1113,47 +995,6 @@ async function saveCourse(){
   }catch(e){toast('❌ '+e.message,'error');}
 }
 
-// ── SHADOWING ──
-async function loadShadowing(){
-  const {data,error}=await _sb.from('shadowing').select('*').order('created_at',{ascending:false});
-  if(error){document.getElementById('shadowing-list').innerHTML=`<div class="empty-state"><p>${error.message}</p></div>`;return;}
-  _shadowing=data||[];renderShadowing();
-}
-function renderShadowing(){
-  if(!_shadowing.length){document.getElementById('shadowing-list').innerHTML='<div class="empty-state"><div class="es-icon">🎤</div><p>Chưa có bài shadowing nào</p><button class="btn primary" onclick="openShadowModal()">＋ Thêm bài đầu tiên</button></div>';return;}
-  document.getElementById('shadowing-list').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Tiêu đề</th><th>Cấp độ</th><th>Chủ đề</th><th>Thời lượng</th><th>Số câu</th><th>Audio</th><th style="text-align:right">Thao tác</th></tr></thead><tbody>${_shadowing.map(s=>`<tr><td><strong>${s.title||'—'}</strong></td><td><span class="badge badge-blue">${s.level||'—'}</span></td><td style="color:var(--muted);font-size:12px">${s.topic||'—'}</td><td style="font-family:var(--mono);font-size:12px">${s.duration_seconds?Math.floor(s.duration_seconds/60)+'m'+s.duration_seconds%60+'s':'—'}</td><td style="font-family:var(--mono)">${(s.transcript||'').split('\n').filter(Boolean).length}</td><td>${s.audio_url?`<button class="play-mini" onclick="playAudio('${s.audio_url}')">▶</button>`:'—'}</td><td style="text-align:right"><div class="row-actions" style="justify-content:flex-end"><button class="btn-icon" onclick="editShadow('${s.id}')">✏️</button><button class="btn-icon del" onclick="confirmDel('shadowing','${s.id}','${(s.title||'').replace(/'/g,"\\'")}')">🗑</button></div></td></tr>`).join('')}</tbody></table></div>`;
-}
-function openShadowModal(s){
-  _shadowAudioFile=null;
-  document.getElementById('sf-id').value=s?.id||'';
-  document.getElementById('sf-title').value=s?.title||'';
-  document.getElementById('sf-level').value=s?.level||'B1';
-  document.getElementById('sf-topic').value=s?.topic||'';
-  document.getElementById('sf-duration').value=s?.duration_seconds||'';
-  document.getElementById('sf-audio-url').value=s?.audio_url||'';
-  document.getElementById('sf-transcript').value=s?.transcript||'';
-  document.getElementById('shadow-audio-preview').style.display='none';
-  document.getElementById('shadow-modal-title').textContent=s?'Sửa bài Shadowing':'Thêm bài Shadowing';
-  openModal('modal-shadow');
-}
-function editShadow(id){const s=_shadowing.find(x=>x.id===id);if(s)openShadowModal(s);}
-async function saveShadowing(){
-  const title=document.getElementById('sf-title').value.trim();
-  if(!title){toast('Vui lòng nhập tiêu đề.','warn');return;}
-  try{
-    let audio_url=document.getElementById('sf-audio-url').value.trim();
-    if(_shadowAudioFile)audio_url=await uploadFile(_shadowAudioFile,'audio/shadowing');
-    const data={title,level:document.getElementById('sf-level').value,topic:document.getElementById('sf-topic').value.trim(),duration_seconds:parseInt(document.getElementById('sf-duration').value)||0,audio_url,transcript:document.getElementById('sf-transcript').value.trim()};
-    const id=document.getElementById('sf-id').value;
-    let err;
-    if(id){({error:err}=await _sb.from('shadowing').update(data).eq('id',id));}
-    else{({error:err}=await _sb.from('shadowing').insert(data));}
-    if(err)throw err;
-    toast(`✅ Đã lưu "${title}"`, 'success');
-    closeModal('modal-shadow');loadShadowing();loadNavCounts();
-  }catch(e){toast('❌ '+e.message,'error');}
-}
-
 // ── USERS ──
 async function loadUsers(){
   const {data,error}=await _sb.from('user_profiles').select('*').order('created_at',{ascending:false}).catch(()=>({data:[],error:{message:'Table chưa tồn tại — chạy SQL setup trước.'}}));
@@ -1179,8 +1020,6 @@ function previewFile(input,type){
   const file=input.files[0];if(!file)return;
   if(type==='img'){_imgFile=file;showPrev(file,'img-preview','image');}
   if(type==='audio'){_audioFile=file;showPrev(file,'audio-preview','audio');}
-  if(type==='topic-img'){_topicImgFile=file;showPrev(file,'topic-img-preview','image');}
-  if(type==='shadow-audio'){_shadowAudioFile=file;showPrev(file,'shadow-audio-preview','audio');}
 }
 function showPrev(file,id,kind){
   const el=document.getElementById(id);el.style.display='flex';
@@ -1236,7 +1075,7 @@ function confirmDel(table,id,name){
       const{error}=await _sb.from(table).delete().eq('id',id);
       if(error)throw error;
       toast(`🗑 Đã xoá "${name}"`, 'success');
-      ({words:loadWords,topics:loadTopics,courses:loadCourses,shadowing:loadShadowing,video_lessons:loadVideos})[table]?.();
+      ({words:loadWords,courses:loadCourses,video_lessons:loadVideos})[table]?.();
       loadNavCounts();
     }catch(e){toast('❌ '+e.message,'error');}
     closeConfirm();
