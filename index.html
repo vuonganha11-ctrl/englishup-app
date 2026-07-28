@@ -54,6 +54,32 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .fcard p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
 .fcard .arrow{color:var(--accent);font-size:13px;font-weight:600;margin-top:12px;display:inline-block}
 
+/* GUIDE */
+.guide{margin-top:44px}
+.why{background:linear-gradient(135deg,rgba(52,211,153,.09),rgba(79,142,247,.05));border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 26px;margin-bottom:22px;position:relative;overflow:hidden}
+.why::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 92% -30%,rgba(52,211,153,.16),transparent 55%);pointer-events:none}
+.why h2{font-size:21px;font-weight:800;letter-spacing:-.4px;margin-bottom:12px}
+.why h2 span{color:var(--a3)}
+.why p{font-size:14.5px;color:rgba(221,227,240,.82);max-width:730px;position:relative}
+.why p+p{margin-top:11px}
+.why .ci{color:var(--accent);font-weight:700}
+.why .note{margin-top:14px;font-size:13px;color:var(--muted);border-left:2px solid var(--a3);padding-left:12px}
+.steps{display:flex;flex-direction:column;gap:9px;margin-bottom:26px}
+.step{display:flex;gap:15px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;transition:all .15s}
+.step:hover{border-color:var(--border2);background:var(--card2)}
+.step .n{flex:0 0 34px;height:34px;width:34px;border-radius:9px;background:rgba(79,142,247,.14);color:var(--accent);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;font-family:var(--mono)}
+.step .sc{flex:1;min-width:0}
+.step .sc h4{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step .sc p{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5}
+.step .sc a{color:var(--accent);text-decoration:none;font-weight:600}
+.step .sc a:hover{text-decoration:underline}
+.hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.hltile{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px}
+.hltile .ico{font-size:26px;line-height:1;margin-bottom:10px}
+.hltile h4{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.hltile p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
+.hltile .k{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;font-family:var(--mono);color:var(--a3);background:rgba(52,211,153,.1);border-radius:6px;padding:2px 8px}
+
 /* FOOTER */
 .foot{text-align:center;color:var(--muted);font-size:12.5px;padding:26px 20px;border-top:1px solid var(--border)}
 .foot a{color:var(--muted);text-decoration:none}.foot a:hover{color:var(--text)}
@@ -131,10 +157,99 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <a href="report.html" class="fcard">
       <div class="ico">📊</div>
       <h3>Báo cáo</h3>
-      <p>Theo dõi điểm số, tiến trình và nhận xét của giáo viên.</p>
+      <p>Theo dõi tiến trình, chuỗi ngày học và thống kê từ vựng của bạn.</p>
       <span class="arrow">Xem báo cáo →</span>
     </a>
   </div>
+
+  <!-- HƯỚNG DẪN HỌC TẬP -->
+  <section class="guide">
+    <div class="sect-label">Hướng dẫn học tập</div>
+
+    <!-- Triết lý: Comprehensible Input -->
+    <div class="why">
+      <h2>Học bằng <span>nội dung dễ hiểu</span> — Comprehensible Input</h2>
+      <p>Não bộ tiếp thu ngôn ngữ tốt nhất khi bạn <span class="ci">hiểu được nội dung</span> mình đang nghe/xem, chứ không phải khi học thuộc quy tắc ngữ pháp. Đây chính là cách một đứa trẻ học tiếng mẹ đẻ: nghe thật nhiều thứ hơi cao hơn trình độ hiện tại một chút, đoán nghĩa qua ngữ cảnh, rồi ngữ pháp và từ vựng "ngấm" vào một cách tự nhiên.</p>
+      <p>Ở EnglishUp, bạn không cần cày quy tắc khô khan. Bạn <span class="ci">xem video có phụ đề, nghe hiểu, đoán ý</span> — mỗi lần hiểu được một câu là một lần não bộ củng cố ngôn ngữ. Học kiểu này nhẹ nhàng, bền và giữ được cảm hứng lâu dài.</p>
+      <div class="note">💡 Nguyên tắc vàng: luôn chọn nội dung mà bạn hiểu được <b>khoảng 80–90%</b> — đủ dễ để theo kịp, đủ mới để tiến bộ.</div>
+    </div>
+
+    <!-- Lộ trình 6 bước -->
+    <div class="sect-label">Lộ trình học mỗi ngày</div>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <div class="sc">
+          <h4>🎬 Xem video</h4>
+          <p>Chọn một <a href="video.html">video</a> hoặc <a href="shorts.html">shorts</a> vừa sức. Cứ xem và tận hưởng nội dung trước đã — đây là nguồn "input dễ hiểu" của bạn.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <div class="sc">
+          <h4>👂 Nghe hiểu &amp; đoán ý</h4>
+          <p>Nghe và cố gắng nắm ý chính qua ngữ cảnh, hình ảnh, giọng điệu — <b>đừng vội tra từ điển</b>. Việc tự đoán nghĩa giúp bạn nhớ sâu hơn nhiều so với tra ngay.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div class="sc">
+          <h4>🔍 Từ nào mới thì tra nghĩa</h4>
+          <p>Chỉ những từ thật sự cản trở việc hiểu thì bấm vào để nghe phát âm và xem nghĩa ngay trên phụ đề.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <div class="sc">
+          <h4>🃏 Thêm vào Flashcard để ôn tập</h4>
+          <p>Lưu từ mới vào <a href="flashcard.html">Flashcard</a>. Hệ thống <b>SRS</b> sẽ tự nhắc bạn ôn đúng lúc sắp quên, để từ đi vào trí nhớ dài hạn.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">5</div>
+        <div class="sc">
+          <h4>🗣️ Luyện nói theo (Shadowing)</h4>
+          <p>Bật lại video và <a href="video.html">nói nhại theo</a> từng câu — bắt chước ngữ điệu, nhịp và cách phát âm. Đây là bước biến "input" thành <b>output</b>: giúp bạn nói trôi chảy và tự nhiên.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">6</div>
+        <div class="sc">
+          <h4>✍️ Luyện nghe chép chính tả</h4>
+          <p>Nghe lại và tự chép ra từng câu, sau đó đối chiếu với phụ đề. Bài tập này rèn tai nghe chi tiết và củng cố chính tả, ngữ pháp.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Điểm nhấn công cụ -->
+    <div class="sect-label">Công cụ hỗ trợ bạn</div>
+    <div class="hl-grid">
+      <div class="hltile">
+        <div class="ico">🃏</div>
+        <h4>SRS — Ghi nhớ bền vững</h4>
+        <p>Ôn tập lặp lại ngắt quãng: mỗi từ được nhắc ôn đúng thời điểm bạn sắp quên, nhớ lâu mà tốn ít công.</p>
+        <span class="k">Spaced Repetition</span>
+      </div>
+      <div class="hltile">
+        <div class="ico">🗣️</div>
+        <h4>Shadowing — Bật khả năng nói</h4>
+        <p>Nói theo video giúp bạn tạo output, cải thiện phát âm và phản xạ nói tự nhiên.</p>
+        <span class="k">Output</span>
+      </div>
+      <div class="hltile">
+        <div class="ico">🎮</div>
+        <h4>Game từ vựng</h4>
+        <p>Nhiều chế độ chơi luyện phản xạ, giúp bạn nhớ từ nhẹ nhàng và nhận XP cho mỗi câu đúng.</p>
+        <span class="k">Phản xạ</span>
+      </div>
+      <div class="hltile">
+        <div class="ico">🔥</div>
+        <h4>Giữ chuỗi &amp; xem thống kê</h4>
+        <p>Học đều mỗi ngày để giữ chuỗi (streak), và theo dõi tiến trình trong <a href="report.html" style="color:var(--accent);text-decoration:none;font-weight:600">Thống kê</a> để luôn có động lực.</p>
+        <span class="k">Động lực</span>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="foot">
