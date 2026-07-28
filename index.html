@@ -117,6 +117,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .hltile h4{font-size:15px;font-weight:700;letter-spacing:-.2px}
 .hltile p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
 .hltile .k{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;font-family:var(--mono);color:var(--a3);background:rgba(52,211,153,.1);border-radius:6px;padding:2px 8px}
+.hltile.feat{grid-column:1/-1;background:linear-gradient(135deg,rgba(52,211,153,.13),rgba(79,142,247,.06));border-color:rgba(52,211,153,.45);padding:24px 22px;position:relative;overflow:hidden}
+.hltile.feat::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 92% -30%,rgba(52,211,153,.18),transparent 55%);pointer-events:none}
+.hltile.feat>*{position:relative}
+.hltile.feat .ico{font-size:34px}
+.hltile.feat h4{font-size:18px}
+.hltile.feat p{font-size:14px;color:rgba(221,227,240,.84)}
+.hltile.feat p+p{margin-top:8px}
+.hltile.feat .k{color:var(--a3);background:rgba(52,211,153,.16);font-size:11.5px}
+.hltile.feat b{color:var(--a3)}
 
 /* FOOTER */
 .foot{text-align:center;color:var(--muted);font-size:12.5px;padding:26px 20px;border-top:1px solid var(--border)}
@@ -158,47 +167,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <a href="game.html" class="btn-cta ghost">🎮 Chơi game từ vựng</a>
     </div>
   </section>
-
-  <!-- FEATURES -->
-  <div class="sect-label">Khám phá</div>
-  <div class="grid">
-    <a href="vocab.html" class="fcard">
-      <div class="ico">📚</div>
-      <h3>Từ vựng</h3>
-      <p>Kho từ vựng theo chủ đề &amp; cấp độ, kèm phát âm, ví dụ và câu mẫu.</p>
-      <span class="arrow">Vào học →</span>
-    </a>
-    <a href="flashcard.html" class="fcard">
-      <div class="ico">🃏</div>
-      <h3>Flashcard SRS</h3>
-      <p>Ôn tập lặp lại ngắt quãng giúp ghi nhớ từ lâu dài, hiệu quả.</p>
-      <span class="arrow">Ôn tập →</span>
-    </a>
-    <a href="game.html" class="fcard">
-      <div class="ico">🎮</div>
-      <h3>Game từ vựng</h3>
-      <p>Nhiều chế độ chơi luyện phản xạ, nhận XP cho mỗi câu đúng.</p>
-      <span class="arrow">Chơi ngay →</span>
-    </a>
-    <a href="video.html" class="fcard">
-      <div class="ico">🎬</div>
-      <h3>Video shadowing</h3>
-      <p>Học qua video, luyện nói theo transcript và làm quiz.</p>
-      <span class="arrow">Xem video →</span>
-    </a>
-    <a href="posts.html" class="fcard">
-      <div class="ico">📰</div>
-      <h3>Bài viết</h3>
-      <p>Nội dung &amp; thông báo mới nhất từ giáo viên và nền tảng.</p>
-      <span class="arrow">Đọc bài →</span>
-    </a>
-    <a href="report.html" class="fcard">
-      <div class="ico">📊</div>
-      <h3>Báo cáo</h3>
-      <p>Theo dõi tiến trình, chuỗi ngày học và thống kê từ vựng của bạn.</p>
-      <span class="arrow">Xem báo cáo →</span>
-    </a>
-  </div>
 
   <!-- BÍ QUYẾT ENGLISHUP -->
   <section class="guide">
@@ -304,32 +272,45 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       </div>
     </div>
 
-    <!-- Điểm nhấn công cụ -->
-    <div class="sect-label">Công cụ hỗ trợ bạn</div>
+    <!-- Nguyên tắc để tiến bộ nhanh -->
+    <div class="sect-label">Nguyên tắc để tiến bộ nhanh</div>
     <div class="hl-grid">
-      <div class="hltile">
-        <div class="ico">🃏</div>
-        <h4>SRS — Ghi nhớ bền vững</h4>
-        <p>Ôn tập lặp lại ngắt quãng: mỗi từ được nhắc ôn đúng thời điểm bạn sắp quên, nhớ lâu mà tốn ít công.</p>
-        <span class="k">Spaced Repetition</span>
+      <div class="hltile feat">
+        <div class="ico">👶</div>
+        <h4>Học như đứa trẻ sơ sinh — đừng "học câm"!</h4>
+        <p>Trẻ sơ sinh giỏi ngôn ngữ vì chúng <b>nghe thật nhiều</b> rồi <b>mở miệng bắt chước nói ra</b> — không ai ngồi học ngữ pháp cả. Bạn cũng vậy: nghe hiểu thật nhiều, rồi <b>nói theo (shadowing)</b> thành tiếng.</p>
+        <p>"Học câm" — chỉ đọc thầm, học ngữ pháp mà không bao giờ nói ra — chính là lý do lớn nhất khiến nhiều người học mãi vẫn không nói được. Hãy <b>nói to, nói mỗi ngày</b>, kể cả khi còn sai.</p>
+        <span class="k">Nghe nhiều → Nói ra</span>
       </div>
       <div class="hltile">
-        <div class="ico">🗣️</div>
-        <h4>Shadowing — Bật khả năng nói</h4>
-        <p>Nói theo video giúp bạn tạo output, cải thiện phát âm và phản xạ nói tự nhiên.</p>
-        <span class="k">Output</span>
-      </div>
-      <div class="hltile">
-        <div class="ico">🎮</div>
-        <h4>Game từ vựng</h4>
-        <p>Nhiều chế độ chơi luyện phản xạ, giúp bạn nhớ từ nhẹ nhàng và nhận XP cho mỗi câu đúng.</p>
-        <span class="k">Phản xạ</span>
+        <div class="ico">⏰</div>
+        <h4>Kỷ luật mỗi ngày</h4>
+        <p>Học đều đặn, dù chỉ 15–20 phút/ngày, hiệu quả hơn hẳn học dồn vài tiếng cuối tuần. Đặt một khung giờ cố định.</p>
+        <span class="k">Đều đặn</span>
       </div>
       <div class="hltile">
         <div class="ico">🔥</div>
-        <h4>Giữ chuỗi &amp; xem thống kê</h4>
-        <p>Học đều mỗi ngày để giữ chuỗi (streak), và theo dõi tiến trình trong <a href="report.html" style="color:var(--accent);text-decoration:none;font-weight:600">Thống kê</a> để luôn có động lực.</p>
-        <span class="k">Động lực</span>
+        <h4>Giữ chuỗi (streak)</h4>
+        <p>Đừng bỏ ngày nào — biến việc học thành thói quen như đánh răng. Theo dõi chuỗi trong <a href="report.html" style="color:var(--accent);text-decoration:none;font-weight:600">Thống kê</a> để giữ động lực.</p>
+        <span class="k">Thói quen</span>
+      </div>
+      <div class="hltile">
+        <div class="ico">👂</div>
+        <h4>Tắm ngôn ngữ</h4>
+        <p>Nghe càng nhiều càng tốt; nghe đi nghe lại một nội dung tới khi hiểu trọn. Càng tiếp xúc nhiều, ngôn ngữ càng "ngấm" tự nhiên.</p>
+        <span class="k">Input nhiều</span>
+      </div>
+      <div class="hltile">
+        <div class="ico">😌</div>
+        <h4>Đừng sợ sai</h4>
+        <p>Trẻ con nói sai liên tục rồi mới giỏi. Sai là một phần của học — cứ nói, sai đâu sửa đó, đừng chờ "hoàn hảo" mới mở miệng.</p>
+        <span class="k">Tự tin</span>
+      </div>
+      <div class="hltile">
+        <div class="ico">❤️</div>
+        <h4>Chọn nội dung bạn thích</h4>
+        <p>Học điều khiến bạn thấy vui — phim, chủ đề, kênh yêu thích — thì mới đủ hứng thú đi đường dài mà không bỏ cuộc.</p>
+        <span class="k">Bền bỉ</span>
       </div>
     </div>
   </section>
