@@ -78,6 +78,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .bl.bl4{color:var(--a4);border-color:rgba(251,146,60,.4)}
 .bl.bl5{color:var(--a5);border-color:rgba(244,114,182,.4)}
 .bl.bl6{color:#fff;background:linear-gradient(135deg,var(--a5),var(--a4));border-color:var(--a5)}
+.why.srs{background:linear-gradient(135deg,rgba(79,142,247,.1),rgba(52,211,153,.05))}
+.why.srs::after{background:radial-gradient(circle at 92% -30%,rgba(79,142,247,.18),transparent 55%)}
+.why.srs h2 span{color:var(--accent)}
+.why.srs .ci{color:var(--accent)}
+.why.srs .note{border-left-color:var(--accent)}
+.srs-ladder{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:16px;position:relative}
+.srs-ladder .bl{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);white-space:nowrap}
+.srs-ladder .sep{color:var(--muted);font-size:13px;font-weight:700}
+.bl.sl1{color:var(--a4);border-color:rgba(251,146,60,.4)}
+.bl.sl2{color:var(--a5);border-color:rgba(244,114,182,.4)}
+.bl.sl3{color:var(--a2);border-color:rgba(167,139,250,.4)}
+.bl.sl4{color:var(--accent);border-color:rgba(79,142,247,.4)}
+.bl.sl5{color:#fff;background:linear-gradient(135deg,var(--accent),var(--a3));border-color:var(--accent)}
 .steps{display:flex;flex-direction:column;gap:9px;margin-bottom:26px}
 .step{display:flex;gap:15px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;transition:all .15s}
 .step:hover{border-color:var(--border2);background:var(--card2)}
@@ -176,9 +189,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     </a>
   </div>
 
-  <!-- HƯỚNG DẪN HỌC TẬP -->
+  <!-- BÍ QUYẾT ENGLISHUP -->
   <section class="guide">
-    <div class="sect-label">Hướng dẫn học tập</div>
+    <div class="sect-label">Bí quyết EnglishUp</div>
 
     <!-- Triết lý: Comprehensible Input -->
     <div class="why">
@@ -202,6 +215,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
         <span class="bl bl6">Sáng tạo</span>
       </div>
       <div class="note">🎯 Càng lên cao, bạn càng chủ động dùng tiếng Anh để giải quyết vấn đề và thể hiện suy nghĩ — chứ không chỉ nhận diện từ.</div>
+    </div>
+
+    <!-- Flashcard theo SRS -->
+    <div class="why srs">
+      <h2>Flashcard theo <span>SRS</span> — ghi nhớ bền vững</h2>
+      <p>Từ mới rất dễ quên nếu không ôn lại đúng lúc. <a href="flashcard.html" class="ci">Flashcard</a> của EnglishUp được thiết kế theo <span class="ci">SRS — Spaced Repetition System</span> (hệ thống lặp lại ngắt quãng): mỗi từ được nhắc ôn đúng vào thời điểm bạn <span class="ci">sắp quên</span> nó.</p>
+      <p>Từ nào bạn nhớ tốt sẽ được giãn khoảng ôn ngày càng dài; từ hay quên sẽ hiện lại thường xuyên hơn. Nhờ vậy từ vựng đi vào <span class="ci">trí nhớ dài hạn</span> mà bạn tốn ít công ôn nhất.</p>
+      <div class="srs-ladder">
+        <span class="bl sl1">Ôn ngay</span><span class="sep">→</span>
+        <span class="bl sl2">1 ngày</span><span class="sep">→</span>
+        <span class="bl sl3">3 ngày</span><span class="sep">→</span>
+        <span class="bl sl4">5 ngày</span><span class="sep">→</span>
+        <span class="bl sl5">2 tuần+</span>
+      </div>
+      <div class="note">🃏 Mỗi ngày chỉ cần ôn các thẻ "đến hạn" — nhẹ nhàng vài phút mà nhớ được lâu dài. <a href="flashcard.html" style="color:var(--accent);text-decoration:none;font-weight:600">Ôn Flashcard →</a></div>
     </div>
 
     <!-- Lộ trình 6 bước -->
