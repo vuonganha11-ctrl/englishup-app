@@ -589,6 +589,15 @@ select.input{cursor:pointer}
       </div>
       <div class="field"><label>Nội dung</label><input class="input" id="vf-noidung" placeholder="Nội dung ngắn về video…"></div>
       <div class="field">
+        <label>Nguồn / Giấy phép · <span style="color:var(--muted);font-weight:400">ghi lại để tuân thủ bản quyền</span></label>
+        <select class="input" id="vf-license">
+          <option value="">— Chưa phân loại —</option>
+          <option value="cc">Creative Commons (được tái sử dụng phụ đề)</option>
+          <option value="embed">Chỉ được phép nhúng (không lưu phụ đề gốc)</option>
+          <option value="original">Tự soạn phụ đề / nội dung của tôi</option>
+        </select>
+      </div>
+      <div class="field">
         <label>Khóa đoạn (tuỳ chọn) · <span style="color:var(--muted);font-weight:400">chỉ phát &amp; hiện phụ đề trong đoạn này. Để trống = toàn bộ video. Dạng <code>m:ss</code> hoặc số giây.</span></label>
         <div class="field-row">
           <div class="field"><label>Bắt đầu</label><input class="input" id="vf-clip-start" placeholder="2:00"></div>
@@ -597,9 +606,8 @@ select.input{cursor:pointer}
       </div>
       <div class="field">
         <label>Transcript (phụ đề) · <span style="color:var(--muted);font-weight:400">dán dạng VTT <code>m:ss --&gt; m:ss</code> (câu ở dòng dưới) để dùng đúng mốc đầu &amp; cuối; hoặc <code>m:ss  câu</code>. Dòng không mốc sẽ được ước lượng.</span></label>
-        <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-          <button class="btn" onclick="fetchTranscriptAuto()">⚡ Lấy tự động (Edge Function)</button>
-          <span id="vf-tr-status" style="font-size:12px;color:var(--muted);align-self:center"></span>
+        <div style="margin-bottom:6px;padding:8px 11px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.65">
+          ⚖️ <b style="color:var(--a3)">Chỉ dùng phụ đề hợp pháp:</b> video giấy phép <b>Creative Commons</b> (mở video trên YouTube ▸ menu <code>⋯</code> ▸ <i>Xem bản chép lời / Show transcript</i> rồi copy dán vào đây) hoặc phụ đề bạn <b>tự soạn</b>. Nội dung tự tạo thuộc sở hữu của bạn — không vướng bản quyền. <b style="color:var(--a3)">Không</b> tự động rút phụ đề của video có bản quyền.
         </div>
         <textarea class="input" id="vf-transcript" style="min-height:120px;font-size:12px;line-height:1.7" placeholder="Dán VTT (mốc bắt đầu --&gt; kết thúc, câu ở dòng dưới):&#10;00:00:12.000 --&gt; 00:00:20.000&#10;Hello, my name is Brian.&#10;&#10;Hoặc mỗi dòng: 0:12  Hello, my name is Brian."></textarea>
       </div>
@@ -1218,6 +1226,7 @@ function openVideoModal(v){
   document.getElementById('vf-lang').value=v?.lang||'en';
   document.getElementById('vf-topic').value=v?.topic||'';
   document.getElementById('vf-noidung').value=v?.noi_dung||'';
+  document.getElementById('vf-license').value=v?.license||'';
   try{const _lv=[...new Set(['A1','A2','B1','B2','C1'].concat((_videos||[]).map(x=>x.level).filter(Boolean)))];document.getElementById('vf-level-list').innerHTML=_lv.map(l=>'<option>'+String(l).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')+'</option>').join('');}catch(e){}
   document.getElementById('vf-clip-start').value=(v?.clip_start!=null&&v.clip_start!=='')?fmtTS(v.clip_start):'';
   document.getElementById('vf-clip-end').value=(v?.clip_end!=null&&v.clip_end!=='')?fmtTS(v.clip_end):'';
@@ -1227,7 +1236,6 @@ function openVideoModal(v){
   document.getElementById('vf-transcript').value=tr;
   document.getElementById('vf-quiz-json').value=Array.isArray(v?.quiz)&&v.quiz.length?JSON.stringify(v.quiz,null,1):'';
   document.getElementById('vf-vocab-json').value=Array.isArray(v?.vocab)&&v.vocab.length?JSON.stringify(v.vocab,null,1):'';
-  document.getElementById('vf-tr-status').textContent=segs.length?`${segs.length} câu`:'';
   document.getElementById('video-modal-title').textContent=v?'Sửa video':'Thêm video';
   vfThumb(); previewVideoQuiz();
   openModal('modal-video');
@@ -1253,28 +1261,6 @@ async function fetchVideoMeta(){
     if(!document.getElementById('vf-channel').value)document.getElementById('vf-channel').value=d.author_name||'';
     toast('✅ Đã lấy tiêu đề & kênh. Nhập thời lượng (giây) nếu tách transcript thủ công.','success');
   }catch(e){toast('⚠️ Không lấy được thông tin: '+e.message,'warn');}
-}
-async function fetchTranscriptAuto(){
-  const id=parseYoutubeId(document.getElementById('vf-url').value);
-  if(!id){toast('Nhập link/ID YouTube trước.','warn');return;}
-  const lang=document.getElementById('vf-lang').value.trim()||'en';
-  const url=(localStorage.getItem('sb_url')||'').replace(/\/$/,'')+`/functions/v1/fetch-transcript?v=${id}&lang=${lang}`;
-  const key=localStorage.getItem('sb_key')||'';
-  const st=document.getElementById('vf-tr-status'); st.textContent='⏳ Đang lấy…';
-  try{
-    const r=await fetch(url,{headers:{apikey:key,Authorization:'Bearer '+key}});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    if(d.error)throw new Error(d.error);
-    const segs=d.segments||[];
-    _videoSeg={text:(d.text||segs.map(s=>s.text).join(' ')),segments:segs};
-    document.getElementById('vf-transcript').value=segs.map((s,i)=>{const st=s.start!=null?s.start:0;const en=s.end!=null?s.end:((segs[i+1]&&segs[i+1].start!=null)?segs[i+1].start:st+3);return fmtTS(st)+' --> '+fmtTS(en)+'\n'+s.text;}).join('\n\n');
-    st.textContent=`✅ ${segs.length} câu (timing chính xác)`;
-    toast('✅ Đã lấy transcript tự động.','success');
-  }catch(e){
-    st.textContent='';
-    toast('⚠️ Chưa lấy tự động được ('+e.message+'). Hãy dán transcript thủ công — vẫn dùng tốt.','warn');
-  }
 }
 async function genVideoQuizAI(){
   const tr=document.getElementById('vf-transcript').value.trim();
@@ -1342,7 +1328,7 @@ async function saveVideo(){
   const clip_start=parseClock(document.getElementById('vf-clip-start').value);
   const clip_end=parseClock(document.getElementById('vf-clip-end').value);
   if(clip_start!=null&&clip_end!=null&&clip_end<=clip_start){toast('❌ Khóa đoạn: mốc kết thúc phải lớn hơn mốc bắt đầu.','error');return;}
-  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),noi_dung:document.getElementById('vf-noidung').value.trim(),segments,vocab,quiz,clip_start,clip_end};
+  const data={youtube_id:id,title,channel:document.getElementById('vf-channel').value.trim(),duration,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,lang:document.getElementById('vf-lang').value.trim()||'en',level:document.getElementById('vf-level').value,topic:document.getElementById('vf-topic').value.trim(),noi_dung:document.getElementById('vf-noidung').value.trim(),license:document.getElementById('vf-license').value,segments,vocab,quiz,clip_start,clip_end};
   try{
     const rid=document.getElementById('vf-id').value;
     let err;
