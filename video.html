@@ -767,6 +767,13 @@ function applyLesson(v){
   if(Array.isArray(v.quiz)) QUIZ=v.quiz;
   if(v.title) TITLE=v.title;
   if(v.channel) CHANNEL=v.channel;
+  try{ if(v.license){
+    var __L=v.license, __src="https://www.youtube.com/watch?v="+(typeof VIDEO_ID!=="undefined"?VIDEO_ID:"");
+    var __txt={cc:"🅭 Creative Commons",embed:"▶ Nhúng từ nguồn",original:"✍ Phụ đề do EnglishUp biên soạn"}[__L]||"";
+    if(__txt){ var __b=document.getElementById("v-license");
+      if(!__b){__b=document.createElement("div");__b.id="v-license";__b.style.cssText="font-size:12px;color:#78716c;margin-top:4px";var __t=document.getElementById("v-title");if(__t&&__t.parentNode)__t.parentNode.appendChild(__b);}
+      __b.innerHTML=__txt+(__L!=="original"?" · <a href=\""+__src+"\" target=\"_blank\" rel=\"noopener\" style=\"color:#c2410c\">nguon: "+CHANNEL+"</a>":"");
+    } } }catch(e){}
   if(v.noi_dung!=null) NOIDUNG=v.noi_dung;
   if(v.duration) DURATION=v.duration;
   if(v.level!=null) LEVEL=v.level;
