@@ -836,6 +836,8 @@ async function loadDashboard(){
   const icons=['📖','🎓'];
   const labels=['Từ vựng','Khoá học'];
   const counts=await Promise.all(tbls.map(t=>_sb.from(t).select('*',{count:'exact',head:true}).then(r=>r.count??0).catch(()=>0)));
+  // thẻ "Từ vựng" chỉ đếm từ của Admin (trừ từ học viên tự thêm)
+  try{ const {count:uc}=await _sb.from('words').select('*',{count:'exact',head:true}).eq('topic',EU_USER_TOPIC); if(typeof uc==='number') counts[0]=Math.max(0,counts[0]-uc); }catch(e){}
   document.getElementById('dash-stats').innerHTML=tbls.map((t,i)=>`<div class="stat-card"><div class="st-val" style="color:${colors[i]}">${icons[i]} ${counts[i]}</div><div class="st-lbl">${labels[i]}</div></div>`).join('');
   let {data:rw}=await _sb.from('words').select('term,definition_vi,level,topic').order('created_at',{ascending:false}).limit(30);
   rw=(rw||[]).filter(w=>(w.topic||'')!==EU_USER_TOPIC).slice(0,5);
@@ -849,12 +851,13 @@ async function loadNavCounts(){
     const el=document.getElementById('nav-count-'+id);
     if(el) el.textContent=count??'—';
   }
-  // đếm riêng: từ học viên tự thêm (topic 'Từ video') — và trừ khỏi ô Từ vựng
+  // đếm riêng: từ học viên tự thêm (topic 'Từ video') — ô Từ vựng chỉ đếm từ của Admin
   try{
     const {count:uc}=await _sb.from('words').select('*',{count:'exact',head:true}).eq('topic',EU_USER_TOPIC);
+    const {count:tot}=await _sb.from('words').select('*',{count:'exact',head:true});
     const eu=document.getElementById('nav-count-uwords'); if(eu) eu.textContent=uc??'—';
     const ew=document.getElementById('nav-count-words');
-    if(ew){ const tot=parseInt(ew.textContent,10); if(!isNaN(tot)&&typeof uc==='number') ew.textContent=Math.max(0,tot-uc); }
+    if(ew&&typeof tot==='number'&&typeof uc==='number') ew.textContent=Math.max(0,tot-uc);
   }catch(e){}
 }
 
