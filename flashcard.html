@@ -115,9 +115,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .field input:focus{outline:none;border-color:var(--accent)}
 .field textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:14px;resize:vertical}
 .field textarea:focus{outline:none;border-color:var(--accent)}
-.edit-row{display:none;justify-content:center;margin-top:14px}
+.edit-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
 .edit-row button{background:var(--card);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .edit-row button:hover{border-color:var(--accent);color:#fff}
+.edit-row button.danger-btn{color:#f4879a}
+.edit-row button.danger-btn:hover{border-color:var(--danger);color:#ff9fae}
 .err{color:var(--danger);font-size:12px;min-height:16px;margin-bottom:6px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -211,7 +213,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <button class="rate-btn r-known" onclick="rate('known')"><span class="lab">Thuộc</span><span class="nx">5 ngày</span><span class="kk">4</span></button>
       <button class="rate-btn r-easy"  onclick="rate('easy')"><span class="lab">Dễ</span><span class="nx">14 ngày</span><span class="kk">5</span></button>
     </div>
-    <div class="edit-row" id="edit-row"><button onclick="openEditWord()">✏️ Sửa từ này</button></div>
+    <div class="edit-row" id="edit-row"><button id="btn-edit-word" onclick="openEditWord()" style="display:none">✏️ Sửa từ này</button><button class="danger-btn" onclick="openRemoveCard()">🗑 Bỏ khỏi Flashcard</button></div>
   </div>
 </div>
 
@@ -224,6 +226,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <div class="field"><label>Mật khẩu</label><input type="password" id="login-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="err" id="login-err"></div>
     <button class="btn btn-primary" id="btn-submit-login" style="width:100%" onclick="doLogin()">Đăng nhập</button>
+  </div>
+</div>
+
+<!-- REMOVE CARD MODAL -->
+<div class="overlay" id="overlay-remove" onclick="if(event.target.id==='overlay-remove')closeRemoveCard()">
+  <div class="modal-login" style="width:400px">
+    <h2>🗑 Bỏ từ khỏi Flashcard?</h2>
+    <p id="rm-desc">Thẻ ôn của từ này sẽ bị xoá khỏi bộ Flashcard của bạn. Từ vẫn còn trong danh sách "Từ mới" của video và bạn có thể thêm lại bất cứ lúc nào. Lịch sử ôn (số lần, khoảng cách) sẽ mất.</p>
+    <div class="err" id="rm-err"></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary" id="rm-ok" style="flex:1;background:var(--danger)" onclick="removeCard()">🗑 Bỏ khỏi Flashcard</button><button class="btn btn-ghost" onclick="closeRemoveCard()">Huỷ</button></div>
   </div>
 </div>
 
@@ -488,7 +500,7 @@ function renderCard(){
   document.getElementById('rate-row').classList.remove('show');
   document.getElementById('flip-cta').classList.add('show');
   fillPreviews();
-  const er=document.getElementById('edit-row'); if(er) er.style.display = euCanEditWord(w)?'flex':'none';
+  const eb=document.getElementById('btn-edit-word'); if(eb) eb.style.display = euCanEditWord(w)?'':'none';
   document.getElementById('remain-chip').textContent='Còn '+(queue.length+1);
 }
 
@@ -652,9 +664,43 @@ async function saveEditWord(){
   }
 }
 
+// ── BỎ TỪ KHỎI FLASHCARD (xoá thẻ SRS của chính học viên) ──
+function openRemoveCard(){
+  if(!_cur) return;
+  document.getElementById('rm-err').textContent='';
+  const b=document.getElementById('rm-ok'); b.disabled=false; b.textContent='🗑 Bỏ khỏi Flashcard';
+  document.getElementById('rm-desc').textContent='Bỏ "'+(_cur.word.term||'')+'" khỏi bộ Flashcard của bạn? Thẻ ôn và lịch sử ôn của từ này sẽ mất. Từ vẫn còn trong danh sách "Từ mới" của video, bạn có thể thêm lại sau.';
+  document.getElementById('overlay-remove').classList.add('open');
+}
+
+function closeRemoveCard(){ document.getElementById('overlay-remove').classList.remove('open'); }
+
+async function removeCard(){
+  if(!_cur || !currentUser) return;
+  const cur=_cur, w=cur.word;
+  const btn=document.getElementById('rm-ok'); btn.disabled=true; btn.textContent='Đang xoá…';
+  try{
+    const { error } = await sb.from('srs_cards').delete().eq('id', cur.card.id).eq('user_id', currentUser.id);
+    if(error) throw error;
+    try{ await sb.from('user_saved_words').update({added_to_flashcard:false}).eq('user_id', currentUser.id).eq('word_id', w.id); }catch(e){}
+    queue = queue.filter(x=>x.card.id!==cur.card.id);
+    totalDue = Math.max(0, totalDue-1);
+    const ds=document.getElementById('due-sub'); if(ds) ds.textContent='· '+totalDue+' thẻ';
+    closeRemoveCard();
+    toast('Đã bỏ "'+(w.term||'')+'" khỏi Flashcard');
+    try{ loadSummary(); }catch(e){}
+    _cur=null; flipped=false;
+    nextCard();
+  }catch(e){
+    document.getElementById('rm-err').textContent='Lỗi xoá: '+((e&&e.message)||e);
+    btn.disabled=false; btn.textContent='🗑 Bỏ khỏi Flashcard';
+  }
+}
+
 // ── KEYBOARD ──
 document.addEventListener('keydown', e=>{
   if(document.getElementById('overlay-login').classList.contains('open')) return;
+  if(document.getElementById('overlay-remove').classList.contains('open')){ if(e.key==='Escape') closeRemoveCard(); return; }
   if(document.getElementById('overlay-edit').classList.contains('open')){ if(e.key==='Escape') closeEditWord(); return; }
   if(document.getElementById('card-area').classList.contains('hidden')) return;
   if(e.code==='Space'){ e.preventDefault(); flip(); }
