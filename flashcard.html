@@ -113,6 +113,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
 .field input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:14px}
 .field input:focus{outline:none;border-color:var(--accent)}
+.field textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:14px;resize:vertical}
+.field textarea:focus{outline:none;border-color:var(--accent)}
+.edit-row{display:none;justify-content:center;margin-top:14px}
+.edit-row button{background:var(--card);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.edit-row button:hover{border-color:var(--accent);color:#fff}
 .err{color:var(--danger);font-size:12px;min-height:16px;margin-bottom:6px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -206,6 +211,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <button class="rate-btn r-known" onclick="rate('known')"><span class="lab">Thuộc</span><span class="nx">5 ngày</span><span class="kk">4</span></button>
       <button class="rate-btn r-easy"  onclick="rate('easy')"><span class="lab">Dễ</span><span class="nx">14 ngày</span><span class="kk">5</span></button>
     </div>
+    <div class="edit-row" id="edit-row"><button onclick="openEditWord()">✏️ Sửa từ này</button></div>
   </div>
 </div>
 
@@ -218,6 +224,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <div class="field"><label>Mật khẩu</label><input type="password" id="login-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="err" id="login-err"></div>
     <button class="btn btn-primary" id="btn-submit-login" style="width:100%" onclick="doLogin()">Đăng nhập</button>
+  </div>
+</div>
+
+<!-- EDIT WORD MODAL -->
+<div class="overlay" id="overlay-edit" onclick="if(event.target.id==='overlay-edit')closeEditWord()">
+  <div class="modal-login" style="width:420px">
+    <h2>✏️ Sửa từ của bạn</h2>
+    <p>Chỉ sửa được từ do bạn tự thêm từ video (chủ đề "Từ video").</p>
+    <div class="field"><label>Từ / cụm từ</label><input id="ew-term" onkeydown="if(event.key==='Enter')saveEditWord()"></div>
+    <div class="field"><label>Phiên âm</label><input id="ew-ipa" placeholder="ˈbɒtəm" onkeydown="if(event.key==='Enter')saveEditWord()"></div>
+    <div class="field"><label>Nghĩa tiếng Việt</label><textarea id="ew-vi" rows="2"></textarea></div>
+    <div class="err" id="ew-err"></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-primary" id="ew-save" style="flex:1" onclick="saveEditWord()">💾 Lưu</button><button class="btn btn-ghost" onclick="closeEditWord()">Huỷ</button></div>
   </div>
 </div>
 
@@ -409,6 +428,13 @@ async function loadDue(){
     if(werr) throw werr;
     const wmap = {}; (words||[]).forEach(w=>wmap[w.id]=w);
 
+    // từ do chính học viên thêm từ video → cho phép sửa
+    window.EU_OWNED = new Set();
+    try{
+      const { data: own } = await sb.from('user_saved_words').select('word_id').eq('user_id', currentUser.id).in('word_id', ids);
+      (own||[]).forEach(o=>{ if(o.word_id) window.EU_OWNED.add(o.word_id); });
+    }catch(e){ console.warn('owned words', e); }
+
     queue = cards.filter(c=>wmap[c.word_id]).map(c=>({card:c, word:wmap[c.word_id]}));
     if(!queue.length){ show('state-empty'); return; }
 
@@ -462,6 +488,7 @@ function renderCard(){
   document.getElementById('rate-row').classList.remove('show');
   document.getElementById('flip-cta').classList.add('show');
   fillPreviews();
+  const er=document.getElementById('edit-row'); if(er) er.style.display = euCanEditWord(w)?'flex':'none';
   document.getElementById('remain-chip').textContent='Còn '+(queue.length+1);
 }
 
@@ -581,9 +608,54 @@ function speakTerm(term){
   }
 }
 
+// ── SỬA TỪ (chỉ từ user tự thêm từ video) ──
+function euCanEditWord(w){ return !!(w && w.topic==='Từ video' && window.EU_OWNED && window.EU_OWNED.has(w.id)); }
+
+function openEditWord(){
+  if(!_cur || !euCanEditWord(_cur.word)) return;
+  const w=_cur.word;
+  document.getElementById('ew-term').value = w.term||'';
+  document.getElementById('ew-ipa').value = w.phonetic||'';
+  document.getElementById('ew-vi').value = w.definition_vi||'';
+  document.getElementById('ew-err').textContent='';
+  const b=document.getElementById('ew-save'); b.disabled=false; b.textContent='💾 Lưu';
+  document.getElementById('overlay-edit').classList.add('open');
+  setTimeout(()=>{ const v=document.getElementById('ew-vi'); v.focus(); v.setSelectionRange(v.value.length,v.value.length); },100);
+}
+
+function closeEditWord(){ document.getElementById('overlay-edit').classList.remove('open'); }
+
+async function saveEditWord(){
+  if(!_cur) return;
+  const w=_cur.word;
+  const term=(document.getElementById('ew-term').value||'').trim();
+  const ipa=(document.getElementById('ew-ipa').value||'').replace(/[\/]/g,'').trim();
+  const vi=(document.getElementById('ew-vi').value||'').trim();
+  const err=document.getElementById('ew-err'); err.textContent='';
+  if(!term){ err.textContent='Chưa nhập từ.'; return; }
+  if(!euCanEditWord(w)){ err.textContent='Từ này thuộc kho chung, không sửa được.'; return; }
+  const btn=document.getElementById('ew-save'); btn.disabled=true; btn.textContent='Đang lưu…';
+  try{
+    const { error } = await sb.from('words').update({term:term, phonetic:ipa, definition_vi:vi}).eq('id', w.id);
+    if(error) throw error;
+    try{ await sb.from('user_saved_words').update({term:term, phonetic:ipa, definition_vi:vi}).eq('user_id', currentUser.id).eq('word_id', w.id); }catch(e){}
+    w.term=term; w.phonetic=ipa; w.definition_vi=vi;
+    closeEditWord();
+    const wasFlipped=flipped;
+    renderCard();
+    if(wasFlipped){ flipped=true; document.getElementById('flashcard').classList.add('flipped'); document.getElementById('flip-cta').classList.remove('show'); document.getElementById('rate-row').classList.add('show'); }
+    try{ loadSummary(); }catch(e){}
+    toast('Đã cập nhật "'+term+'"');
+  }catch(e){
+    err.textContent='Lỗi lưu: '+((e&&e.message)||e);
+    btn.disabled=false; btn.textContent='💾 Lưu';
+  }
+}
+
 // ── KEYBOARD ──
 document.addEventListener('keydown', e=>{
   if(document.getElementById('overlay-login').classList.contains('open')) return;
+  if(document.getElementById('overlay-edit').classList.contains('open')){ if(e.key==='Escape') closeEditWord(); return; }
   if(document.getElementById('card-area').classList.contains('hidden')) return;
   if(e.code==='Space'){ e.preventDefault(); flip(); }
   else if(flipped && ['1','2','3','4','5'].includes(e.key)){
