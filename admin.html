@@ -224,6 +224,7 @@ select.input{cursor:pointer}
       <button class="nav-btn active" data-section="dashboard" onclick="nav('dashboard',this)"><span class="nbi">📊</span>Dashboard</button>
       <div class="nav-group-label">Nội dung</div>
       <button class="nav-btn" data-section="words" onclick="nav('words',this)"><span class="nbi">📖</span>Từ vựng<span class="nav-count" id="nav-count-words">—</span></button>
+      <button class="nav-btn" data-section="uwords" onclick="nav('uwords',this)"><span class="nbi">🧑‍🎓</span>Từ vựng học viên<span class="nav-count" id="nav-count-uwords">—</span></button>
       <button class="nav-btn" data-section="courses" onclick="nav('courses',this)"><span class="nbi">🎓</span>Khoá học<span class="nav-count" id="nav-count-courses">—</span></button>
       <button class="nav-btn" data-section="video" onclick="nav('video',this)"><span class="nbi">🎬</span>Video<span class="nav-count" id="nav-count-video">—</span></button>
       <button class="nav-btn" onclick="location.href='admin-shorts.html'"><span class="nbi">📱</span>Shorts</button>
@@ -293,6 +294,22 @@ select.input{cursor:pointer}
           </div>
           <div id="words-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
           <div class="pagination" id="words-pagination"></div>
+        </div>
+      </div>
+
+      <!-- TỪ VỰNG HỌC VIÊN (topic 'Từ video') -->
+      <div class="section-page" id="sec-uwords">
+        <div class="page-header">
+          <h1>🧑‍🎓 Từ vựng của học viên</h1>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <span class="table-toolbar-title" id="uwords-count-label">Tất cả</span>
+            <div class="search-wrap"><input class="search-input" id="uwords-search" placeholder="Tìm từ…" oninput="filterUserWords(this.value)"></div>
+          </div>
+          <div style="padding:10px 18px;color:var(--muted);font-size:12px;line-height:1.5;border-bottom:1px solid var(--border)">Đây là các từ học viên tự lưu khi xem video (chủ đề <b>Từ video</b>). Chúng <b>không hiện</b> trong kho Từ vựng chung, Game hay trang Từ vựng của học viên khác. Sửa nghĩa/phiên âm ở đây sẽ áp dụng cho thẻ Flashcard đang dùng từ này. Xoá có thể làm mất thẻ Flashcard của học viên.</div>
+          <div id="uwords-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
+          <div class="pagination" id="uwords-pagination"></div>
         </div>
       </div>
 
@@ -710,6 +727,7 @@ let _sb = null;
 let _user = null;
 let _words=[], _courses=[], _users=[];
 let _wordsFiltered=[], _wordPage=0, _topicTree={};
+const EU_USER_TOPIC='Từ video'; // chủ đề riêng cho từ học viên tự thêm khi xem video
 const PAGE=15;
 let _pendingImport=[];
 let _imgFile=null,_audioFile=null;
@@ -808,7 +826,7 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers})[section]?.();
+  ({words:loadWords,uwords:loadUserWords,courses:loadCourses,video:loadVideos,users:loadUsers})[section]?.();
 }
 
 // ── DASHBOARD ──
@@ -820,7 +838,7 @@ async function loadDashboard(){
   const counts=await Promise.all(tbls.map(t=>_sb.from(t).select('*',{count:'exact',head:true}).then(r=>r.count??0).catch(()=>0)));
   document.getElementById('dash-stats').innerHTML=tbls.map((t,i)=>`<div class="stat-card"><div class="st-val" style="color:${colors[i]}">${icons[i]} ${counts[i]}</div><div class="st-lbl">${labels[i]}</div></div>`).join('');
   let {data:rw}=await _sb.from('words').select('term,definition_vi,level,topic').order('created_at',{ascending:false}).limit(30);
-  rw=(rw||[]).filter(w=>(w.topic||'')!=='Từ video').slice(0,5);
+  rw=(rw||[]).filter(w=>(w.topic||'')!==EU_USER_TOPIC).slice(0,5);
   document.getElementById('dash-recent-words').innerHTML=(rw||[]).length?rw.map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${w.term}</strong><span style="color:var(--muted);font-size:12px">${w.definition_vi||''}</span><span class="badge badge-blue">${w.level||'—'}</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có từ nào</p></div>';
   const {data:ru}=await _sb.from('user_profiles').select('display_name,email,level,xp').order('created_at',{ascending:false}).limit(5).catch(()=>({data:[]}));
   document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${u.display_name||u.email||'—'}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
@@ -831,6 +849,13 @@ async function loadNavCounts(){
     const el=document.getElementById('nav-count-'+id);
     if(el) el.textContent=count??'—';
   }
+  // đếm riêng: từ học viên tự thêm (topic 'Từ video') — và trừ khỏi ô Từ vựng
+  try{
+    const {count:uc}=await _sb.from('words').select('*',{count:'exact',head:true}).eq('topic',EU_USER_TOPIC);
+    const eu=document.getElementById('nav-count-uwords'); if(eu) eu.textContent=uc??'—';
+    const ew=document.getElementById('nav-count-words');
+    if(ew){ const tot=parseInt(ew.textContent,10); if(!isNaN(tot)&&typeof uc==='number') ew.textContent=Math.max(0,tot-uc); }
+  }catch(e){}
 }
 
 // ── WORDS ──
@@ -838,8 +863,55 @@ async function loadWords(){
   document.getElementById('words-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
   const {data,error}=await _sb.from('words').select('*').order('created_at',{ascending:false});
   if(error){document.getElementById('words-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
-  // ẩn từ do học viên tự thêm từ video — kho từ vựng chỉ do Admin quản lý
-  _words=(data||[]).filter(w=>(w.topic||'')!=='Từ video'); _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
+  // ẩn từ do học viên tự thêm từ video — xem mục riêng "Từ vựng của học viên"
+  _words=(data||[]).filter(w=>(w.topic||'')!==EU_USER_TOPIC); _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
+}
+
+// ── TỪ VỰNG CỦA HỌC VIÊN (topic 'Từ video') ──
+let _uwords=[], _uwordsFiltered=[], _uwordPage=0;
+async function loadUserWords(){
+  document.getElementById('uwords-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
+  const {data,error}=await _sb.from('words').select('*').eq('topic',EU_USER_TOPIC).order('created_at',{ascending:false});
+  if(error){document.getElementById('uwords-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
+  _uwords=data||[]; _uwordsFiltered=[..._uwords]; _uwordPage=0;
+  const el=document.getElementById('nav-count-uwords'); if(el) el.textContent=_uwords.length;
+  const s=document.getElementById('uwords-search'); if(s&&s.value) filterUserWords(s.value); else renderUserWords();
+}
+function filterUserWords(q){
+  q=(q==null?(document.getElementById('uwords-search')||{}).value:q)||'';
+  q=q.trim().toLowerCase();
+  _uwordsFiltered=!q?[..._uwords]:_uwords.filter(w=>((w.term||'')+' '+(w.definition_vi||'')).toLowerCase().includes(q));
+  _uwordPage=0; renderUserWords();
+}
+function renderUserWords(){
+  const total=_uwordsFiltered.length;
+  const start=_uwordPage*PAGE;
+  const slice=_uwordsFiltered.slice(start,start+PAGE);
+  document.getElementById('uwords-count-label').textContent=`${total} từ của học viên`;
+  if(!slice.length){document.getElementById('uwords-table-body').innerHTML='<div class="empty-state"><div class="es-icon">🔍</div><p>Chưa có từ nào</p></div>';document.getElementById('uwords-pagination').innerHTML='';return;}
+  const fmt=d=>{ try{ return new Date(d).toLocaleDateString('vi-VN'); }catch(e){ return '—'; } };
+  document.getElementById('uwords-table-body').innerHTML=`<table><thead><tr><th>Từ vựng</th><th>Phiên âm</th><th>Nghĩa TV</th><th>Cấp độ</th><th>Ngày thêm</th><th style="text-align:right">Thao tác</th></tr></thead><tbody>${slice.map(w=>`<tr><td><strong>${w.term||'—'}</strong></td><td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${w.phonetic||''}</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.definition_vi||'—'}</td><td><span class="badge badge-blue">${w.level||'—'}</span></td><td style="color:var(--muted);font-size:12px">${fmt(w.created_at)}</td><td style="text-align:right"><div class="row-actions" style="justify-content:flex-end"><button class="btn-icon" onclick="editUserWord('${w.id}')">✏️</button><button class="btn-icon del" onclick="confirmDelUserWord('${w.id}','${(w.term||'').replace(/'/g,"\\'")}')">🗑</button></div></td></tr>`).join('')}</tbody></table>`;
+  const totalPages=Math.ceil(total/PAGE);
+  document.getElementById('uwords-pagination').innerHTML=totalPages<=1?'':`<span>${start+1}–${Math.min(start+PAGE,total)} / ${total}</span><div class="page-btns">${_uwordPage>0?`<button class="page-btn" onclick="setUWP(${_uwordPage-1})">←</button>`:''}${Array.from({length:Math.min(totalPages,7)},(_,i)=>`<button class="page-btn${i===_uwordPage?' active':''}" onclick="setUWP(${i})">${i+1}</button>`).join('')}${_uwordPage<totalPages-1?`<button class="page-btn" onclick="setUWP(${_uwordPage+1})">→</button>`:''}</div>`;
+}
+function setUWP(p){_uwordPage=p;renderUserWords();}
+function editUserWord(id){const w=_uwords.find(x=>x.id===id);if(w)openWordModal(w);}
+function confirmDelUserWord(id,name){
+  document.getElementById('confirm-title').textContent=`Xoá "${name}"?`;
+  document.getElementById('confirm-msg').textContent='Đây là từ của học viên. Nếu học viên đang có thẻ Flashcard cho từ này, thẻ đó sẽ mất hoặc không xoá được.';
+  document.getElementById('confirm-ok').onclick=async()=>{
+    try{
+      const {error}=await _sb.from('words').delete().eq('id',id);
+      if(error){
+        if(error.code==='23503'||/foreign key/i.test(error.message||'')) throw new Error('Không xoá được: học viên đang dùng từ này trong Flashcard.');
+        throw error;
+      }
+      toast(`🗑 Đã xoá "${name}"`, 'success');
+      loadUserWords(); loadNavCounts();
+    }catch(e){toast('❌ '+e.message,'error');}
+    closeConfirm();
+  };
+  document.getElementById('confirm-overlay').classList.add('open');
 }
 // Tách topic "Cha - Con" thành {parent, child} (separator " - ")
 function splitTopic(t){
@@ -961,7 +1033,7 @@ async function saveWord(){
     else{({error:err}=await _sb.from('words').insert(data));}
     if(err)throw err;
     toast(`✅ Đã lưu "${term}"`, 'success');
-    closeModal('modal-word');loadWords();loadNavCounts();
+    closeModal('modal-word');loadWords();try{if(document.getElementById('sec-uwords').classList.contains('active'))loadUserWords();}catch(e){}loadNavCounts();
   }catch(e){toast('❌ '+e.message,'error');}
   finally{btn.disabled=false;btn.textContent='💾 Lưu từ vựng';}
 }
