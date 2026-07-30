@@ -1550,6 +1550,9 @@ function updateHero() {
   else bg.style.display = 'none';
 }
 
+// Chủ đề dành cho từ học viên tự thêm từ video → KHÔNG hiện trong kho học liệu chung
+const EU_USER_TOPIC = 'Từ video';
+
 // ── LOAD WORDS ───────────────────────────────────────
 async function loadWords() {
   if (euGateLocked()) { euRenderLockPanel(); return; }
@@ -1571,7 +1574,8 @@ async function loadWords() {
 
     const { data, error } = await q;
     if (error) throw error;
-    currentWords = data || [];
+    // Kho từ vựng chung chỉ gồm từ do Admin thêm — ẩn từ học viên tự lưu từ video
+    currentWords = (data || []).filter(w => (w.topic || '') !== EU_USER_TOPIC);
 
     document.getElementById('all-count').textContent = (currentTopic || currentGroup) ? currentWords.length : (await getTotalCount());
     document.getElementById('hero-word-count').textContent = currentWords.length;
@@ -1591,7 +1595,8 @@ function getTopicName(id) {
 
 async function getTotalCount() {
   try {
-    const { count } = await sb.from('words').select('id', { count: 'exact', head: true });
+    const { data } = await sb.from('words').select('id,topic');
+    const count = (data || []).filter(w => (w.topic || '') !== EU_USER_TOPIC).length;
     document.getElementById('all-count').textContent = count || 0;
     return count;
   } catch(e) { return '?'; }

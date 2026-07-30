@@ -819,7 +819,8 @@ async function loadDashboard(){
   const labels=['Từ vựng','Khoá học'];
   const counts=await Promise.all(tbls.map(t=>_sb.from(t).select('*',{count:'exact',head:true}).then(r=>r.count??0).catch(()=>0)));
   document.getElementById('dash-stats').innerHTML=tbls.map((t,i)=>`<div class="stat-card"><div class="st-val" style="color:${colors[i]}">${icons[i]} ${counts[i]}</div><div class="st-lbl">${labels[i]}</div></div>`).join('');
-  const {data:rw}=await _sb.from('words').select('term,definition_vi,level').order('created_at',{ascending:false}).limit(5);
+  let {data:rw}=await _sb.from('words').select('term,definition_vi,level,topic').order('created_at',{ascending:false}).limit(30);
+  rw=(rw||[]).filter(w=>(w.topic||'')!=='Từ video').slice(0,5);
   document.getElementById('dash-recent-words').innerHTML=(rw||[]).length?rw.map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${w.term}</strong><span style="color:var(--muted);font-size:12px">${w.definition_vi||''}</span><span class="badge badge-blue">${w.level||'—'}</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có từ nào</p></div>';
   const {data:ru}=await _sb.from('user_profiles').select('display_name,email,level,xp').order('created_at',{ascending:false}).limit(5).catch(()=>({data:[]}));
   document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${u.display_name||u.email||'—'}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
@@ -837,7 +838,8 @@ async function loadWords(){
   document.getElementById('words-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
   const {data,error}=await _sb.from('words').select('*').order('created_at',{ascending:false});
   if(error){document.getElementById('words-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
-  _words=data||[]; _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
+  // ẩn từ do học viên tự thêm từ video — kho từ vựng chỉ do Admin quản lý
+  _words=(data||[]).filter(w=>(w.topic||'')!=='Từ video'); _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
 }
 // Tách topic "Cha - Con" thành {parent, child} (separator " - ")
 function splitTopic(t){

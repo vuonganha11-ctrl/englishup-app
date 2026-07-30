@@ -520,7 +520,8 @@ async function loadAvailWords(){
   if(selLevel) q=q.eq('level',selLevel);
   const {data,error}=await q;
   if(error){ console.warn('words',error.message); availWords=[]; return; }
-  availWords=(data||[]).filter(w=>w.term&&(w.definition_vi||w.definition_en));
+  // bỏ từ do học viên tự thêm từ video (chủ đề 'Từ video') — game chỉ dùng kho của Admin
+  availWords=(data||[]).filter(w=>w.term&&(w.definition_vi||w.definition_en)&&(w.topic||'')!=='Từ video');
 }
 
 let _availTimer=null;
