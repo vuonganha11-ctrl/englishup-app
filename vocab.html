@@ -781,6 +781,14 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
   cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
 .ph-tree { font-size: 13px; line-height: 1.7; }
 .ph-tree b { color: var(--text); }
+
+/* Ghi công ảnh minh hoạ */
+.wm-credit {
+  padding: 7px 20px 0; font-size: 11px; color: var(--muted);
+  text-align: right; flex-shrink: 0;
+}
+.wm-credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.wm-credit a:hover { color: var(--text); }
 .ph-tree .sep { color: var(--muted); padding: 0 5px; }
 .vt-reset.on { border-color: var(--accent); color: var(--accent); }
 
@@ -1429,6 +1437,8 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
         <button class="wm-audio-btn" id="wm-audio-btn" onclick="playWordAudio()" title="Nghe phát âm">▶</button>
       </div>
     </div>
+
+    <div class="wm-credit" id="wm-credit" style="display:none"></div>
 
     <div class="wm-body" id="wm-body">
       <!-- Definitions -->
@@ -2345,6 +2355,21 @@ function openWord(id) {
     heroImg.style.display = 'none';
     heroPlaceholder.style.display = 'grid';
     heroPlaceholder.textContent = '🔤';
+  }
+
+  // Ghi công ảnh (Pexels yêu cầu nêu tên tác giả + đặt link về Pexels)
+  const _cr = document.getElementById('wm-credit');
+  if (_cr){
+    if (w.image_url && w.image_credit){
+      const who = w.image_credit_url
+        ? `<a href="${esc(w.image_credit_url)}" target="_blank" rel="noopener nofollow">${esc(w.image_credit)}</a>`
+        : esc(w.image_credit);
+      const src = w.image_source === 'Pexels'
+        ? ' / <a href="https://www.pexels.com" target="_blank" rel="noopener nofollow">Pexels</a>'
+        : (w.image_source ? ' / ' + esc(w.image_source) : '');
+      _cr.innerHTML = 'Ảnh: ' + who + src;
+      _cr.style.display = 'block';
+    } else _cr.style.display = 'none';
   }
 
   // Term + phonetic
