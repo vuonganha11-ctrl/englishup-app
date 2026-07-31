@@ -2385,12 +2385,14 @@ function bloomAudioBars(sentence){
   return `<div class="ex-audio-section">${bar('male','👨')}${bar('female','👩')}</div>`;
 }
 
-function bloomCard(r, w){
+function bloomCard(r, w, lvlLab){
   const alts = r.alternatives ? clickableGloss(r.alternatives, 'alt') : '';
   const opps = r.opposites    ? clickableGloss(r.opposites, 'opp')    : '';
+  // chỉ hiện nhãn gốc khi nó khác tên bậc Bloom (dữ liệu cũ ghi 5 loại văn)
+  const src = (r.type && String(r.type).trim() !== lvlLab) ? String(r.type).trim() : '';
   return `
     <div class="bloom-card">
-      ${r.type ? `<div class="bloom-src">${esc(r.type)}</div>` : ''}
+      ${src ? `<div class="bloom-src">${esc(src)}</div>` : ''}
       <div class="ex-sentence">${clickableSentence(r.sentence || '', w.term)}</div>
       ${r.meaning ? `<div class="ex-meaning">↳ ${esc(r.meaning)}</div>` : ''}
       ${alts ? `<div class="ex-alts">🔄 ${alts}</div>` : ''}
@@ -2440,7 +2442,7 @@ function renderWordExamples(w) {
           ${l.desc ? `<div class="bloom-desc">${esc(l.desc)}</div>` : ''}
         </div>
       </div>
-      ${buckets[l.key].map(r => bloomCard(r, w)).join('')}
+      ${buckets[l.key].map(r => bloomCard(r, w, l.lab)).join('')}
     </div>`).join('');
 
   wrap.innerHTML =
