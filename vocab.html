@@ -784,6 +784,30 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
 .ph-tree .sep { color: var(--muted); padding: 0 5px; }
 .vt-reset.on { border-color: var(--accent); color: var(--accent); }
 
+/* Thẻ tab chọn kho từ vựng */
+.col-tabs {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px 24px 0; flex-shrink: 0;
+}
+.col-tab {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 14px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.col-tab:hover { border-color: var(--border2); color: var(--text); }
+.col-tab.active { background: var(--card2); border-color: var(--accent); color: var(--text); }
+.col-tab .n {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  background: var(--surface); border-radius: 20px; padding: 1px 8px; color: var(--muted);
+}
+.col-tab.active .n { color: var(--accent); }
+.col-tabs-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase;
+  color: var(--muted); align-self: center; padding-right: 2px;
+}
+
 /* Dải mời nâng cấp */
 .eu-upgrade-bar {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -1346,6 +1370,9 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
       </div>
     </div>
 
+    <!-- Chọn kho từ vựng -->
+    <div class="col-tabs" id="col-tabs"></div>
+
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-search">
@@ -1480,6 +1507,8 @@ let currentLevel   = '';     // '' = tất cả
 let currentSearch  = '';
 let currentView    = 'grid'; // 'grid' | 'list'
 let currentWords   = [];
+let _collections   = [];     // [{name, n}] các kho từ vựng
+let currentCollection = null;
 let openedWord     = null;
 let currentUser    = null;
 let _srsAdded      = new Set(); // word IDs đã thêm
@@ -1492,6 +1521,7 @@ let _collapsedGroups = new Set(); // các prefix đang thu gọn
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SB_URL, SB_KEY);
   await checkAuth();
+  await loadCollections();
   await Promise.all([loadTopics(), loadWords()]);
 });
 
@@ -1594,6 +1624,60 @@ async function handleLogout() {
   clearUser();
 }
 
+// ── KHO TỪ VỰNG ─────────────────────────────────────
+async function loadCollections() {
+  let list = [];
+  try {
+    const { data, error } = await sb.from('word_collections').select('collection,word_count');
+    if (error) throw error;
+    list = (data || []).map(r => ({ name: r.collection || 'Chưa phân kho', n: r.word_count || 0 }));
+  } catch(e) {
+    // Dự phòng khi chưa tạo view word_collections
+    try {
+      const { data } = await sb.from('words').select('collection');
+      const m = {};
+      (data || []).forEach(w => { const k = w.collection || 'Chưa phân kho'; m[k] = (m[k] || 0) + 1; });
+      list = Object.keys(m).map(k => ({ name: k, n: m[k] }));
+    } catch(_) { list = []; }
+  }
+  list.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'vi'));
+  _collections = list;
+
+  let saved = null;
+  try { saved = localStorage.getItem('eu_vocab_collection'); } catch(e) {}
+  currentCollection = (saved && list.some(c => c.name === saved))
+    ? saved
+    : (list.length ? list[0].name : null);
+  renderCollectionTabs();
+}
+
+function renderCollectionTabs() {
+  const host = document.getElementById('col-tabs');
+  if (!host) return;
+  if (!_collections.length) { host.innerHTML = ''; return; }
+  host.innerHTML =
+    '<span class="col-tabs-label">Kho từ vựng</span>' +
+    _collections.map(c => `
+      <button class="col-tab${c.name === currentCollection ? ' active' : ''}" data-col="${esc(c.name)}">
+        ${esc(c.name)}<span class="n">${c.n.toLocaleString('vi-VN')}</span>
+      </button>`).join('');
+  host.querySelectorAll('.col-tab').forEach(b =>
+    b.addEventListener('click', () => selectCollection(b.dataset.col)));
+}
+
+function selectCollection(name) {
+  if (!name || name === currentCollection) return;
+  currentCollection = name;
+  try { localStorage.setItem('eu_vocab_collection', name); } catch(e) {}
+  // đổi kho thì bỏ hết bộ lọc cũ (giá trị của kho này chưa chắc có ở kho kia)
+  Object.keys(_vtFilters).forEach(k => _vtFilters[k] = '');
+  currentSearch = '';
+  const si = document.getElementById('search-input'); if (si) si.value = '';
+  _vtSortKey = 'term'; _vtSortDir = 1;
+  renderCollectionTabs();
+  loadWords();
+}
+
 // ── CHỦ ĐỀ ──────────────────────────────────────────
 // Sidebar đã bỏ — chủ đề giờ là cột lọc trong bảng.
 // Vẫn nạp bảng topics để lấy "đoạn văn mẫu" hiển thị trong popup (nếu có).
@@ -1623,7 +1707,7 @@ function updateHero() {
   const tp = new Set((currentWords || []).map(w => w.topic).filter(Boolean)).size;
   const el = id => document.getElementById(id);
   el('hero-icon').textContent  = '📚';
-  el('hero-title').textContent = 'Kho từ vựng';
+  el('hero-title').textContent = currentCollection || 'Kho từ vựng';
   el('hero-desc').textContent  = n
     ? `${n.toLocaleString('vi-VN')} từ · ${tp} chủ đề — lọc trực tiếp trên từng cột của bảng`
     : 'Đang tải kho học liệu…';
@@ -1646,8 +1730,9 @@ async function loadWords() {
   try {
     let all = [], from = 0;
     for (;;) {
-      const { data, error } = await sb.from('words')
-        .select('*').order('term').range(from, from + WORD_PAGE - 1);
+      let q = sb.from('words').select('*').order('term');
+      if (currentCollection) q = q.eq('collection', currentCollection);
+      const { data, error } = await q.range(from, from + WORD_PAGE - 1);
       if (error) throw error;
       const batch = data || [];
       all = all.concat(batch);
