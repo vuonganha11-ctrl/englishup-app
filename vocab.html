@@ -2382,7 +2382,8 @@ function renderPhonetics(w){
   if (hasSyl){
     const parts = [];
     if (w.onset || w.rime1)
-      parts.push(`<span class="on">${esc(w.onset || '')}</span><span class="ri">${esc(w.rime1 || '')}</span>`);
+      parts.push((w.onset ? `<span class="on">${esc(w.onset)}</span>` : '') +
+                 (w.rime1 ? `<span class="ri">${esc(w.rime1)}</span>` : ''));
     sylList.forEach(s => parts.push(`<span class="ri">${esc(s)}</span>`));
     html += `<div class="syl-row">` + parts.map((p, i) =>
       `${i ? '<span class="syl-sep">·</span>' : ''}<span class="syl${w.stress === i + 1 ? ' stressed' : ''}" data-syl="${esc(String(w.onset || '') + String(w.rime1 || ''))}">${p}</span>`
