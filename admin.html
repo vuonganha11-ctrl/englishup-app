@@ -51,6 +51,84 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .qa-d{font-size:11px;color:var(--muted)}
 .stat-card .st-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700}
 .stat-card .st-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+/* ═══ BẢNG TỪ VỰNG 25 CỘT — đồng bộ với vocab.html ═══ */
+.col-tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.col-tab{display:inline-flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);transition:border-color .15s,color .15s,background .15s}
+.col-tab:hover{border-color:var(--border2);color:var(--text)}
+.col-tab.active{background:var(--card2);border-color:var(--accent);color:var(--text)}
+.col-tab .n{font-family:var(--mono);font-size:11px;font-weight:700;background:var(--surface);border-radius:20px;padding:1px 8px;color:var(--muted)}
+.col-tab.active .n{color:var(--accent)}
+.col-tabs-label{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);padding-right:2px}
+.avt-area{overflow:auto;max-height:calc(100vh - 340px);min-height:220px}
+.avt-area::-webkit-scrollbar{width:7px;height:9px}
+.avt-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
+table.vtable{width:100%;min-width:900px;border-collapse:separate;border-spacing:0;font-size:13px}
+table.vtable thead th{position:sticky;top:0;z-index:6;background:var(--card2);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;text-align:left;white-space:nowrap;padding:9px 10px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+table.vtable thead th.nosort{cursor:default}
+table.vtable thead th:not(.nosort):hover{color:var(--text)}
+table.vtable thead th.sorted{color:var(--accent)}
+.vt-sort{opacity:.3;font-size:9px;margin-left:4px}
+table.vtable th.sorted .vt-sort{opacity:1}
+table.vtable thead tr.vt-filters th{top:34px;z-index:5;background:var(--surface);padding:5px 6px;text-transform:none;letter-spacing:0;border-bottom:1px solid var(--border);cursor:default}
+.vt-f{width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;padding:4px 5px;outline:none}
+.vt-f:focus{border-color:var(--accent)}
+.vt-f::placeholder{color:var(--muted)}
+select.vt-f{cursor:pointer}
+.vt-f.on{border-color:var(--accent);background:rgba(79,142,247,.08)}
+table.vtable tbody td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.vtable tbody tr{cursor:pointer;transition:background .12s;border-bottom:none}
+table.vtable tbody tr:hover td{background:var(--card2)}
+table.vtable td.vt-stick{position:sticky;z-index:3;background:var(--card)}
+table.vtable td.vt-stick2{box-shadow:1px 0 0 var(--border)}
+table.vtable tbody tr:hover td.vt-stick{background:var(--card2)}
+table.vtable thead th.vt-stick{position:sticky;z-index:8}
+table.vtable thead tr:first-child th.vt-stick{background:var(--card2)}
+table.vtable thead tr.vt-filters th.vt-stick{background:var(--surface);z-index:7}
+.vt-thumb{width:44px;height:34px;border-radius:6px;object-fit:cover;display:block;background:var(--card2)}
+.vt-thumb-ph{width:44px;height:34px;border-radius:6px;display:grid;place-items:center;background:var(--card2);color:var(--border2);font-size:14px}
+.vt-term{font-size:14px;font-weight:700;letter-spacing:-.2px}
+.vt-ipa{font-family:var(--mono);font-size:12.5px;color:var(--accent3);white-space:nowrap}
+.vt-vi{font-size:13px}
+.vt-en{font-size:12px;color:var(--muted)}
+.vt-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vt-pos{font-size:11.5px;color:var(--accent4);white-space:nowrap}
+.vt-topic{font-size:12px;color:var(--accent2)}
+.vt-sit{font-size:12px;color:rgba(221,227,240,.75)}
+.vt-num{font-family:var(--mono);font-size:12.5px}
+.vt-chip{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:6px;background:var(--card2);color:var(--accent2)}
+.vt-suffix{font-family:var(--mono);font-size:11.5px;color:var(--accent4)}
+.vt-ex-yes{color:var(--accent3);font-size:12px;font-weight:700;white-space:nowrap}
+.vt-ex-no{color:var(--muted);font-size:12px}
+.vt-col-tag{font-family:var(--mono);font-size:11px;color:var(--accent2);white-space:nowrap}
+.col-wrap{position:relative}
+.col-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px 8px 8px;box-shadow:0 12px 32px rgba(0,0,0,.55);min-width:210px}
+.col-panel.open{display:block}
+.cp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);padding:0 8px 7px}
+.cp-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:13px;cursor:pointer}
+.cp-row:hover{background:var(--card)}
+.cp-row input{accent-color:var(--accent);cursor:pointer}
+.cp-row input:disabled{opacity:.4;cursor:default}
+.cp-note{font-size:11px;color:var(--muted);padding:7px 8px 0;margin-top:5px;border-top:1px solid var(--border);line-height:1.45}
+.cp-presets{display:flex;gap:5px;padding:0 8px 8px;flex-wrap:wrap}
+.cp-preset{flex:1;min-width:62px;font-size:11.5px;font-family:inherit;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 6px;cursor:pointer;white-space:nowrap}
+.cp-preset:hover{border-color:var(--accent);color:var(--accent)}
+.cp-scroll{max-height:44vh;overflow-y:auto}
+.cp-scroll::-webkit-scrollbar{width:5px}
+.cp-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.vt-reset{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;font-family:inherit;padding:7px 12px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.vt-reset:hover{border-color:var(--border2);color:var(--text)}
+.vt-reset.on{border-color:var(--accent);color:var(--accent)}
+.ph-link{background:none;border:none;color:var(--accent);font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+/* Nhóm ô gập trong form từ vựng */
+.wf-fold{border:1px solid var(--border);border-radius:10px;margin-bottom:14px;background:var(--surface)}
+.wf-fold>summary{cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px}
+.wf-fold>summary::-webkit-details-marker{display:none}
+.wf-fold>summary::before{content:'▸';color:var(--muted);font-size:11px}
+.wf-fold[open]>summary::before{content:'▾'}
+.wf-fold>summary small{color:var(--muted);font-weight:400;font-size:11.5px}
+.wf-fold-body{padding:4px 14px 14px}
+.field-row5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:900px){.field-row5{grid-template-columns:repeat(2,1fr)}}
 /* TABLE */
 .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .table-toolbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border)}
@@ -276,20 +354,16 @@ select.input{cursor:pointer}
           <button class="btn" onclick="openExamplesImport()" style="color:var(--a2);border-color:rgba(167,139,250,.3)">✨ Import câu mẫu</button>
           <button class="btn primary" onclick="openWordModal()">＋ Thêm từ mới</button>
         </div>
+        <div class="col-tabs" id="wcol-tabs"></div>
         <div class="table-wrap">
           <div class="table-toolbar">
             <span class="table-toolbar-title" id="words-count-label">Tất cả</span>
-            <div class="search-wrap"><input class="search-input" id="words-search" placeholder="Tìm từ vựng…" oninput="filterWords(this.value)"></div>
-            <select class="input" style="width:130px;padding:7px 10px" id="words-level-filter" onchange="filterWords()">
-              <option value="">Tất cả cấp độ</option>
-              <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option>
-            </select>
-            <select class="input" style="width:160px;padding:7px 10px" id="words-topic-filter" onchange="onTopicFilterChange()">
-              <option value="">Tất cả chủ đề</option>
-            </select>
-            <select class="input" style="width:160px;padding:7px 10px;display:none" id="words-subtopic-filter" onchange="filterWords()">
-              <option value="">Tất cả nhóm</option>
-            </select>
+            <div class="search-wrap"><input class="search-input" id="words-search" placeholder="Tìm từ / nghĩa…" oninput="filterWords(this.value)"></div>
+            <button class="vt-reset" id="wbtn-reset" onclick="resetAwFilters()">✕ Xoá bộ lọc</button>
+            <div class="col-wrap">
+              <button class="vt-reset" id="wbtn-cols" onclick="toggleAwColPanel()">⚙ Cột</button>
+              <div class="col-panel" id="wcol-panel"></div>
+            </div>
           </div>
           <div id="words-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
           <div class="pagination" id="words-pagination"></div>
@@ -322,17 +396,20 @@ select.input{cursor:pointer}
         <div id="import-pane-vocab">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
             <div class="table-wrap" style="padding:18px">
-              <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">Định dạng CSV</h3>
-              <div style="background:var(--surface);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--accent3);line-height:1.9">term, phonetic, definition_vi,<br>definition_en, part_of_speech,<br>level, topic, image_url, audio_url</div>
+              <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">Định dạng CSV — 25 cột</h3>
+              <div style="background:var(--surface);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:10.5px;color:var(--accent3);line-height:1.85">collection, term, phonetic, definition_vi,<br>definition_en, part_of_speech, level,<br>part_name, part_code, branch_name, branch_code,<br>topic, topic_code, group_code,<br>onset, rime1, syl2, syl3, syl4p,<br>syllables, stress, suffix, root_word,<br>image_url, audio_url</div>
               <button class="btn" style="margin-top:10px;font-size:12px" onclick="downloadSampleCSV()">⬇ Tải file mẫu CSV</button>
             </div>
             <div class="table-wrap" style="padding:18px">
               <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">Lưu ý</h3>
               <ul style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px;padding-left:14px">
-                <li><strong style="color:var(--accent)">term</strong> và <strong style="color:var(--accent)">definition_vi</strong> bắt buộc</li>
-                <li>Từ trùng sẽ được cập nhật (upsert)</li>
-                <li>level: A1 / A2 / B1 / B2 / C1</li>
-                <li>Tối đa 500 từ / lần</li>
+                <li>Bắt buộc: <strong style="color:var(--accent)">collection</strong> · <strong style="color:var(--accent)">term</strong> · <strong style="color:var(--accent)">definition_vi</strong></li>
+                <li>Thiếu <strong style="color:var(--accent)">collection</strong> → chọn kho ở ô <strong style="color:var(--text)">"Nạp vào kho"</strong> trong bảng xem trước</li>
+                <li>Ô để trống <strong style="color:var(--text)">không</strong> ghi đè dữ liệu cũ — nạp bổ sung ngữ âm cho từ đã có rất an toàn</li>
+                <li>Trùng <span style="font-family:var(--mono);color:var(--accent3)">(collection, term)</span> sẽ được cập nhật đè (upsert)</li>
+                <li>Phân biệt HOA/thường: <span style="font-family:var(--mono)">IT</span> ≠ <span style="font-family:var(--mono)">it</span> là 2 từ khác nhau</li>
+                <li>level: A1 / A2 / B1 / B2 / C1 / C2 · syllables &amp; stress là số</li>
+                <li>Tối đa 10.000 từ / lần · dòng trùng trong cùng file sẽ được gộp</li>
               </ul>
             </div>
           </div>
@@ -345,6 +422,7 @@ select.input{cursor:pointer}
           <div id="import-preview-wrap" style="display:none;margin-top:16px">
             <div class="table-toolbar">
               <span class="table-toolbar-title" id="import-label">0 từ sẵn sàng</span>
+              <span style="font-size:12px;color:var(--muted)">Nạp vào kho:</span><select class="input" style="width:190px;padding:6px 10px;font-size:12.5px" id="import-collection" onchange="awOnKhoChange('import-collection','import-collection-new')"></select><input class="input" style="width:170px;padding:6px 10px;font-size:12.5px;display:none" id="import-collection-new" placeholder="Tên kho mới…">
               <button class="btn" onclick="clearImport()">✕ Huỷ</button>
               <button class="btn primary" id="import-btn" onclick="confirmImport()">✅ Import</button>
             </div>
@@ -360,7 +438,8 @@ select.input{cursor:pointer}
               <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
                 <div style="padding:8px 12px;background:var(--surface);border-radius:8px;border-left:3px solid var(--accent)">
                   <strong style="color:var(--accent)">Sheet "Từ vựng"</strong><br>
-                  <span style="color:var(--muted)">term · phonetic · definition_vi · definition_en · part_of_speech · level · topic · image_url · audio_url</span>
+                  <span style="color:var(--muted)">collection · term · phonetic · definition_vi · definition_en · part_of_speech · level · part_name · part_code · branch_name · branch_code · topic · topic_code · group_code · onset · rime1 · syl2 · syl3 · syl4p · syllables · stress · suffix · root_word · image_url · audio_url</span><br>
+                  <span style="color:var(--border2);font-size:10px">Nhận cả tiêu đề tiếng Việt: Kho · Từ · IPA · Nghĩa · Loại · CEFR · Tên phần · Mã phần · Tên nhánh · Mã nhánh · Chủ đề · Mã CĐ · Nhóm · PÂ đầu · Vần 1 · Âm 2 · Âm 3 · Âm 4+ · Số âm tiết · Trọng âm · Hậu tố · Gốc</span>
                 </div>
                 <div style="padding:8px 12px;background:var(--surface);border-radius:8px;border-left:3px solid var(--a2)">
                   <strong style="color:var(--a2)">Sheet "Câu mẫu"</strong><br>
@@ -374,7 +453,9 @@ select.input{cursor:pointer}
               <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">Quy tắc</h3>
               <ul style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding-left:14px">
                 <li>Upload 1 lần → lưu cả từ vựng lẫn câu mẫu</li>
-                <li>Nếu từ đã tồn tại → chỉ cập nhật câu mẫu</li>
+                <li>Trùng <span style="font-family:var(--mono);color:var(--accent3)">(collection, term)</span> → cập nhật đè</li>
+                <li>Thiếu cột <strong style="color:var(--text)">collection</strong> → chọn kho ở ô "Nạp vào kho" trong bảng xem trước</li>
+                <li>Ô để trống không ghi đè dữ liệu cũ</li>
                 <li>type: <strong style="color:var(--text)">Tự sự / Miêu tả / Biểu cảm / Thuyết minh / Nghị luận</strong></li>
                 <li>alternatives: <span style="font-family:var(--mono);color:var(--accent3)">từ → thay1 / thay2 • từ2 → thay3</span></li>
                 <li>opposites: <span style="font-family:var(--mono);color:var(--a5)">từ1 ↔ trái1 • từ2 ↔ trái2</span></li>
@@ -399,6 +480,7 @@ select.input{cursor:pointer}
           <div id="full-import-preview" style="display:none;margin-top:16px">
             <div class="table-toolbar">
               <span class="table-toolbar-title" id="full-import-label">Đang đọc file…</span>
+              <span style="font-size:12px;color:var(--muted)">Nạp vào kho:</span><select class="input" style="width:190px;padding:6px 10px;font-size:12.5px" id="full-import-collection" onchange="awOnKhoChange('full-import-collection','full-import-collection-new')"></select><input class="input" style="width:170px;padding:6px 10px;font-size:12.5px;display:none" id="full-import-collection-new" placeholder="Tên kho mới…">
               <button class="btn" onclick="clearFullImport()">✕ Huỷ</button>
               <button class="btn primary" id="full-import-btn" onclick="confirmFullImport()">✅ Import tất cả</button>
             </div>
@@ -448,20 +530,56 @@ select.input{cursor:pointer}
     <div class="modal-header"><span style="font-size:20px">📖</span><h2 id="word-modal-title">Thêm từ vựng</h2><button class="btn-icon" onclick="closeModal('modal-word')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="wf-id">
-      <div class="field-row">
-        <div class="field"><label>Từ vựng *</label><input class="input" id="wf-term" placeholder="e.g. Ambitious"></div>
-        <div class="field"><label>Phiên âm</label><input class="input" id="wf-phonetic" placeholder="/æmˈbɪʃ.əs/"></div>
+      <div class="field-row3">
+        <div class="field"><label>Kho từ vựng *</label><input class="input" id="wf-collection" list="wf-collection-list" placeholder="Oxford 3000"><datalist id="wf-collection-list"></datalist></div>
+        <div class="field"><label>Từ vựng *</label><input class="input" id="wf-term" placeholder="e.g. ambitious"></div>
+        <div class="field"><label>Phiên âm (IPA)</label><input class="input" id="wf-phonetic" placeholder="æmˈbɪʃəs"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Nghĩa tiếng Việt *</label><input class="input" id="wf-def-vi" placeholder="Có tham vọng"></div>
+        <div class="field"><label>Nghĩa tiếng Việt *</label><input class="input" id="wf-def-vi" placeholder="có tham vọng"></div>
         <div class="field"><label>Nghĩa tiếng Anh</label><input class="input" id="wf-def-en" placeholder="Having a strong desire…"></div>
       </div>
       <div class="field-row3">
-        <div class="field"><label>Từ loại</label><select class="input" id="wf-pos"><option>Adjective</option><option>Noun</option><option>Verb</option><option>Adverb</option><option>Phrase</option><option>Idiom</option></select></div>
-        <div class="field"><label>Cấp độ</label><select class="input" id="wf-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div>
-        <div class="field"><label>Chủ đề</label><input class="input" id="wf-topic" placeholder="Business…" oninput="updateSituationChips()"></div>
+        <div class="field"><label>Từ loại</label><input class="input" id="wf-pos" list="wf-pos-list" placeholder="tt · dt/đt"><datalist id="wf-pos-list"><option value="dt">danh từ</option><option value="tt">tính từ</option><option value="đt">động từ</option><option value="trt">trạng từ</option><option value="gt">giới từ</option><option value="lt">liên từ</option><option value="đại từ">đại từ</option><option value="số">số từ</option><option value="số tt">số thứ tự</option><option value="trợ đt">trợ động từ</option><option value="đt khuyết thiếu">động từ khuyết thiếu</option><option value="dt/đt">danh từ / động từ</option><option value="tt/trt">tính từ / trạng từ</option></datalist></div>
+        <div class="field"><label>Cấp độ (CEFR)</label><select class="input" id="wf-level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div>
+        <div class="field"><label>Chủ đề</label><input class="input" id="wf-topic" list="wf-topic-list" placeholder="Ý muốn &amp; quyết tâm" oninput="updateSituationChips()"><datalist id="wf-topic-list"></datalist></div>
       </div>
       <input type="hidden" id="wf-example" value="">
+
+      <details class="wf-fold" id="wf-fold-tree">
+        <summary>🌳 Cây chủ đề <small>Phần › Nhánh › Chủ đề — dùng cho bộ lọc bên trang học viên</small></summary>
+        <div class="wf-fold-body">
+          <div class="field-row3">
+            <div class="field"><label>Tên phần</label><input class="input" id="wf-part-name" list="wf-part-name-list" placeholder="CON NGƯỜI"><datalist id="wf-part-name-list"></datalist></div>
+            <div class="field"><label>Mã phần</label><input class="input" id="wf-part-code" placeholder="I"></div>
+            <div class="field"><label>Mã chủ đề</label><input class="input" id="wf-topic-code" placeholder="C7"></div>
+          </div>
+          <div class="field-row3">
+            <div class="field"><label>Tên nhánh</label><input class="input" id="wf-branch-name" list="wf-branch-name-list" placeholder="CẢM XÚC &amp; THÁI ĐỘ"><datalist id="wf-branch-name-list"></datalist></div>
+            <div class="field"><label>Mã nhánh</label><input class="input" id="wf-branch-code" placeholder="C"></div>
+            <div class="field"><label>Nhóm</label><input class="input" id="wf-group-code" placeholder="Nhóm 3"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="wf-fold" id="wf-fold-phon">
+        <summary>🔤 Cấu tạo &amp; phát âm <small>hiện trong popup "Cấu tạo &amp; phát âm" của trang Từ vựng</small></summary>
+        <div class="wf-fold-body">
+          <div class="field-row5">
+            <div class="field"><label>PÂ đầu</label><input class="input" id="wf-onset" placeholder="r"></div>
+            <div class="field"><label>Vần 1</label><input class="input" id="wf-rime1" placeholder="ɪ"></div>
+            <div class="field"><label>Âm 2</label><input class="input" id="wf-syl2" placeholder="lʌk"></div>
+            <div class="field"><label>Âm 3</label><input class="input" id="wf-syl3" placeholder="tənt"></div>
+            <div class="field"><label>Âm 4+</label><input class="input" id="wf-syl4p" placeholder=""></div>
+          </div>
+          <div class="field-row3">
+            <div class="field"><label>Số âm tiết</label><input class="input" id="wf-syllables" type="number" min="1" max="12" placeholder="3"></div>
+            <div class="field"><label>Trọng âm (âm thứ)</label><input class="input" id="wf-stress" type="number" min="1" max="12" placeholder="2"></div>
+            <div class="field"><label>Hậu tố</label><input class="input" id="wf-suffix" placeholder="-ant"></div>
+          </div>
+          <div class="field"><label>Từ gốc</label><input class="input" id="wf-root-word" placeholder="reluctance"></div>
+        </div>
+      </details>
       <div class="field-row">
         <div class="field">
           <label>Ảnh minh hoạ</label>
@@ -844,12 +962,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   if (location.protocol === 'file:') {
     _user = { id: 'admin-local', email: 'admin@local' };
     showApp();
+    if(!_wColLoaded){_wColLoaded=true; loadWCollections();}
     return;
   }
 
   showLoginForm();
-  _sb.auth.getSession().then(({data})=>{ if(data.session){ _user=data.session.user; showApp(); } });
-  _sb.auth.onAuthStateChange((_ev,session)=>{ if(session){_user=session.user;showApp();}else{_user=null;showLoginScreen();} });
+  const afterLogin=()=>{ showApp(); if(!_wColLoaded){_wColLoaded=true; loadWCollections();} };
+  _sb.auth.getSession().then(({data})=>{ if(data.session){ _user=data.session.user; afterLogin(); } });
+  _sb.auth.onAuthStateChange((_ev,session)=>{ if(session){_user=session.user;afterLogin();}else{_user=null;showLoginScreen();} });
 });
 
 function showCfgForm(){
@@ -940,76 +1060,511 @@ async function loadNavCounts(){
   }
 }
 
-// ── WORDS ──
-async function loadWords(){
-  document.getElementById('words-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
-  const {data,error}=await _sb.from('words').select('*').order('created_at',{ascending:false});
-  if(error){document.getElementById('words-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
-  _words=data||[]; _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
-}
-// Tách topic "Cha - Con" thành {parent, child} (separator " - ")
-function splitTopic(t){
-  t=(t||'').trim(); if(!t) return {parent:'',child:''};
-  const i=t.indexOf(' - ');
-  return i<0 ? {parent:t,child:''} : {parent:t.slice(0,i).trim(),child:t.slice(i+3).trim()};
-}
-// Dựng cây chủ đề từ _words rồi đổ vào dropdown cha (giữ lựa chọn hiện tại nếu còn)
-function buildTopicFilter(){
-  const tree={};
-  _words.forEach(w=>{
-    const {parent,child}=splitTopic(w.topic);
-    if(!parent) return;
-    (tree[parent]=tree[parent]||new Set());
-    if(child) tree[parent].add(child);
-  });
-  _topicTree=tree;
-  const sel=document.getElementById('words-topic-filter'); if(!sel) return;
-  const prev=sel.value;
-  const parents=Object.keys(tree).sort((a,b)=>a.localeCompare(b,'vi'));
-  sel.innerHTML='<option value="">Tất cả chủ đề</option>'+parents.map(p=>`<option${p===prev?' selected':''}>${p}</option>`).join('');
-  onTopicFilterChange(true);
-}
-// Khi đổi chủ đề cha → đổ nhóm con tương ứng (ẩn nếu không có nhóm con)
-function onTopicFilterChange(keepSub){
-  const parent=document.getElementById('words-topic-filter').value;
-  const sub=document.getElementById('words-subtopic-filter');
-  const prevSub=keepSub?sub.value:'';
-  const children=parent&&_topicTree[parent]?[..._topicTree[parent]].sort((a,b)=>a.localeCompare(b,'vi')):[];
-  if(children.length){
-    sub.innerHTML='<option value="">Tất cả nhóm</option>'+children.map(c=>`<option${c===prevSub?' selected':''}>${c}</option>`).join('');
-    sub.style.display='';
-  }else{
-    sub.innerHTML='<option value="">Tất cả nhóm</option>'; sub.value=''; sub.style.display='none';
+// ══════════════ TỪ VỰNG — bảng 25 cột, đồng bộ với vocab.html ══════════════
+function awEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Kho từ vựng (words.collection) ──
+const AW_ALL='__all__';
+let _wCollections=[], _wCollection=null, _wColLoaded=false;
+
+async function loadWCollections(){
+  let list=[];
+  try{
+    const {data,error}=await _sb.from('word_collections').select('*');
+    if(!error&&data&&data.length) list=data.map(r=>({name:r.collection||'Khac',n:+r.word_count||0}));
+  }catch(e){}
+  if(!list.length){                       // dự phòng khi view chưa tồn tại
+    try{
+      const m={};
+      for(let from=0; from<200000; from+=1000){
+        const {data,error}=await _sb.from('words').select('collection').order('id').range(from,from+999);
+        if(error) throw error;
+        (data||[]).forEach(r=>{const k=r.collection||'Khac';m[k]=(m[k]||0)+1;});
+        if(!data||data.length<1000) break;
+      }
+      list=Object.keys(m).map(k=>({name:k,n:m[k]}));
+    }catch(e){}
   }
-  filterWords();
+  list.sort((a,b)=>b.n-a.n);
+  _wCollections=list;
+  if(!_wCollection){
+    let saved=null; try{saved=localStorage.getItem('eu_admin_collection');}catch(e){}
+    _wCollection=(saved&&(saved===AW_ALL||list.some(c=>c.name===saved)))?saved:AW_ALL;
+  }
+  renderWCollectionTabs();
 }
-function filterWords(v){
-  const q=(v??document.getElementById('words-search').value).toLowerCase();
-  const lvl=document.getElementById('words-level-filter').value;
-  const parent=document.getElementById('words-topic-filter').value;
-  const subEl=document.getElementById('words-subtopic-filter');
-  const sub=subEl&&subEl.style.display!=='none'?subEl.value:'';
-  _wordsFiltered=_words.filter(w=>{
-    if(q&&!((w.term||'').toLowerCase().includes(q)||(w.definition_vi||'').toLowerCase().includes(q))) return false;
-    if(lvl&&w.level!==lvl) return false;
-    if(parent){const t=splitTopic(w.topic); if(t.parent!==parent) return false; if(sub&&t.child!==sub) return false;}
-    return true;
+function renderWCollectionTabs(){
+  const host=document.getElementById('wcol-tabs'); if(!host) return;
+  if(!_wCollections.length){host.innerHTML='';return;}
+  const total=_wCollections.reduce((a,c)=>a+c.n,0);
+  const tabs=[{k:AW_ALL,lab:'Tất cả kho',n:total}].concat(_wCollections.map(c=>({k:c.name,lab:c.name,n:c.n})));
+  host.innerHTML='<span class="col-tabs-label">Kho từ vựng</span>'+tabs.map(t=>
+    `<button class="col-tab${t.k===_wCollection?' active':''}" data-col="${awEsc(t.k)}">${awEsc(t.lab)}<span class="n">${t.n}</span></button>`).join('');
+  host.querySelectorAll('button[data-col]').forEach(b=>b.addEventListener('click',()=>selectWCollection(b.dataset.col)));
+}
+function selectWCollection(name){
+  if(name===_wCollection) return;
+  _wCollection=name;
+  try{localStorage.setItem('eu_admin_collection',name);}catch(e){}
+  Object.keys(_awFilters).forEach(k=>_awFilters[k]='');   // giá trị lọc của kho này chưa chắc có ở kho kia
+  const si=document.getElementById('words-search'); if(si) si.value='';
+  _awSortKey='term'; _awSortDir=1; _wordPage=0;
+  renderWCollectionTabs();
+  loadWords();
+}
+
+// ── Định nghĩa cột ──
+function awPosTags(v){return String(v||'').split('/').map(x=>x.trim()).filter(Boolean);}
+const AW_POS_VI={'noun':'danh từ','verb':'động từ','adjective':'tính từ','adverb':'trạng từ',
+  'preposition':'giới từ','pronoun':'đại từ','conjunction':'liên từ','interjection':'thán từ',
+  'determiner':'từ hạn định','phrase':'cụm từ','idiom':'thành ngữ','phrasal verb':'cụm động từ',
+  'dt':'danh từ','tt':'tính từ','đt':'động từ','trt':'trạng từ','gt':'giới từ','lt':'liên từ',
+  'số':'số từ','số tt':'số thứ tự','trợ đt':'trợ động từ','đt khuyết thiếu':'động từ khuyết thiếu'};
+function awPosFull(v){
+  return awPosTags(v).map(t=>{const k=t.toLowerCase();
+    return Object.prototype.hasOwnProperty.call(AW_POS_VI,k)?AW_POS_VI[k]:t;}).join(' / ');
+}
+function awExRows(w){
+  const e=w&&w.examples;
+  if(!e) return [];
+  const first=Array.isArray(e)?e[0]:e;
+  return (first&&Array.isArray(first.rows))?first.rows.filter(Boolean):[];
+}
+function awExSituation(w){
+  const e=w&&w.examples; if(!e) return '';
+  const first=Array.isArray(e)?e[0]:e;
+  return (first&&first.situation)||'';
+}
+
+const AW_COLS=[
+  {k:'_img',          lab:'Ảnh',        w:'80px',  sort:true,  filter:'yn', ynLab:['Có ảnh','Chưa có ảnh'], get:w=>w.image_url?1:0, on:true},
+  {k:'term',          lab:'Từ',         w:'128px', sort:true,  filter:'text', on:true},
+  {k:'phonetic',      lab:'IPA',        w:'118px', sort:true,  filter:'text', on:true},
+  {k:'definition_vi', lab:'Nghĩa TV',   w:'172px', sort:true,  filter:'text', on:true},
+  {k:'definition_en', lab:'Nghĩa TA',   w:'176px', sort:true,  filter:'text', on:false},
+  {k:'part_of_speech',lab:'Loại',       w:'104px', sort:true,  filter:'pos',  on:true},
+  {k:'level',         lab:'CEFR',       w:'88px',  sort:true,  filter:'select', on:true},
+  {k:'collection',    lab:'Kho',        w:'128px', sort:true,  filter:'select', on:false},
+  {k:'part_name',     lab:'Tên phần',   w:'168px', sort:true,  filter:'select', on:false},
+  {k:'part_code',     lab:'Mã phần',    w:'94px',  sort:true,  filter:'select', on:false},
+  {k:'branch_name',   lab:'Tên nhánh',  w:'176px', sort:true,  filter:'select', on:false},
+  {k:'branch_code',   lab:'Mã nhánh',   w:'98px',  sort:true,  filter:'select', on:false},
+  {k:'topic',         lab:'Chủ đề',     w:'150px', sort:true,  filter:'select', on:true},
+  {k:'topic_code',    lab:'Mã CĐ',      w:'94px',  sort:true,  filter:'select', on:false},
+  {k:'group_code',    lab:'Nhóm',       w:'94px',  sort:true,  filter:'select', on:false},
+  {k:'onset',         lab:'PÂ đầu',     w:'96px',  sort:true,  filter:'select', on:false},
+  {k:'rime1',         lab:'Vần 1',      w:'96px',  sort:true,  filter:'select', on:false},
+  {k:'syl2',          lab:'Âm 2',       w:'94px',  sort:true,  filter:'select', on:false},
+  {k:'syl3',          lab:'Âm 3',       w:'94px',  sort:true,  filter:'select', on:false},
+  {k:'syl4p',         lab:'Âm 4+',      w:'96px',  sort:true,  filter:'select', on:false},
+  {k:'syllables',     lab:'Số âm tiết', w:'96px',  sort:true,  filter:'select', on:false},
+  {k:'stress',        lab:'Trọng âm',   w:'96px',  sort:true,  filter:'select', on:false},
+  {k:'suffix',        lab:'Hậu tố',     w:'100px',  sort:true,  filter:'select', on:false},
+  {k:'root_word',     lab:'Từ gốc',     w:'106px', sort:true,  filter:'text', on:false},
+  {k:'situation',     lab:'Tình huống', w:'150px', sort:true,  filter:'select', get:awExSituation, on:false},
+  {k:'excount',       lab:'Câu mẫu',    w:'104px',  sort:true,  filter:'exq', get:w=>awExRows(w).length, on:true},
+  {k:'audio',         lab:'Nghe',       w:'86px',  sort:true,  filter:'yn', ynLab:['Có file ghi âm','Chỉ máy đọc (TTS)'], get:w=>w.audio_url?1:0, on:true},
+  {k:'_act',          lab:'Thao tác',   w:'92px',  sort:false, filter:null, get:()=>'', on:true},
+];
+const AW_COL={};
+AW_COLS.forEach(c=>{AW_COL[c.k]=c; if(!c.get) c.get=w=>(w[c.k]==null?'':w[c.k]);});
+
+const AW_PRESETS={
+  'Quản lý': ['_img','term','phonetic','definition_vi','part_of_speech','level','topic','excount','audio'],
+  'Ngữ âm':  ['term','phonetic','onset','rime1','syl2','syl3','syl4p','syllables','stress','suffix','root_word','audio'],
+  'Chủ đề':  ['term','definition_vi','level','collection','part_name','branch_name','topic','topic_code','group_code'],
+  'Câu mẫu': ['_img','term','definition_vi','situation','excount','audio'],
+  'Tất cả':  AW_COLS.map(c=>c.k),
+};
+
+let _awFilters={};
+AW_COLS.forEach(c=>{if(c.filter)_awFilters[c.k]='';});
+let _awOn={};
+AW_COLS.forEach(c=>_awOn[c.k]=c.on!==false);
+try{
+  const saved=JSON.parse(localStorage.getItem('eu_admin_wcols')||'null');
+  if(saved) AW_COLS.forEach(c=>{if(typeof saved[c.k]==='boolean')_awOn[c.k]=saved[c.k];});
+}catch(e){}
+_awOn.term=true; _awOn._act=true;
+function awSaveCols(){try{localStorage.setItem('eu_admin_wcols',JSON.stringify(_awOn));}catch(e){}}
+function awCols(){return AW_COLS.filter(c=>_awOn[c.k]);}
+
+let _awSortKey='term', _awSortDir=1;
+const AW_PAGE=50;
+const AW_EMPTY='__none__';
+const AW_TREE_RANK={part_name:1,part_code:1,branch_name:2,branch_code:2,topic:3,topic_code:3,group_code:4};
+
+function awDistinct(words,c){
+  const st=new Set();
+  (words||[]).forEach(w=>{
+    if(c.filter==='pos') awPosTags(c.get(w)).forEach(t=>st.add(t));
+    else{const v=String(c.get(w)==null?'':c.get(w)).trim(); if(v) st.add(v);}
   });
-  _wordPage=0; renderWords();
+  const arr=Array.from(st);
+  return arr.every(x=>/^\d+$/.test(x))?arr.sort((a,b)=>a-b):arr.sort((a,b)=>a.localeCompare(b,'vi'));
 }
+// Các từ còn lại khi bỏ qua bộ lọc của chính cột này (và các cấp CON của nó trong cây chủ đề)
+// KHÔNG tính ô tìm kiếm vào đây: gõ nhầm 1 ký tự sẽ làm tập kết quả rỗng
+// → awPruneFilters xoá sạch mọi bộ lọc cột và không khôi phục lại được.
+function awFacetRows(exceptKey){
+  const exRank=AW_TREE_RANK[exceptKey];
+  const active=AW_COLS.filter(c=>c.filter&&_awFilters[c.k]&&c.k!==exceptKey
+    &&!(exRank&&AW_TREE_RANK[c.k]&&AW_TREE_RANK[c.k]>exRank));
+  if(!active.length) return _words||[];
+  return (_words||[]).filter(w=>active.every(c=>awMatch(c,w)));
+}
+function awSelectOptions(c){
+  const cur=_awFilters[c.k]||'';
+  const opt=(v,lab)=>`<option value="${awEsc(v)}"${cur===v?' selected':''}>${awEsc(lab)}</option>`;
+  let body='';
+  if(c.filter==='select'||c.filter==='pos'){
+    const rows=awFacetRows(c.k);
+    body=awDistinct(rows,c).map(o=>opt(o,o)).join('');
+    if(rows.some(w=>{const v=c.get(w);
+      return c.filter==='pos'?!awPosTags(v).length:!String(v==null?'':v).trim();})) body+=opt(AW_EMPTY,'(chưa có)');
+  }
+  else if(c.filter==='yn')  body=opt('1',c.ynLab[0])+opt('0',c.ynLab[1]);
+  else if(c.filter==='exq') body=opt('full','Đủ 5 câu')+opt('part','Thiếu câu')+opt('none','Chưa có câu');
+  return '<option value="">Tất cả</option>'+body;
+}
+function awFilterCell(c){
+  if(!c.filter) return '';
+  const cur=_awFilters[c.k]||'';
+  const on=cur?' on':'';
+  if(c.filter==='text') return `<input class="vt-f${on}" type="text" data-fk="${c.k}" value="${awEsc(cur)}" placeholder="Lọc…">`;
+  return `<select class="vt-f${on}" data-fk="${c.k}">${awSelectOptions(c)}</select>`;
+}
+function awRefreshSelects(){
+  document.querySelectorAll('#words-table-body select.vt-f').forEach(sel=>{
+    const c=AW_COL[sel.dataset.fk]; if(!c) return;
+    sel.innerHTML=awSelectOptions(c);
+    sel.value=_awFilters[c.k]||'';
+    sel.classList.toggle('on',!!_awFilters[c.k]);
+  });
+}
+function awStickCls(i){return i===0?'vt-stick':(i===1?'vt-stick vt-stick2':'');}
+function awStickLeft(i,cols){return i===0?'left:0;':(i===1?`left:${parseInt(cols[0].w,10)}px;`:'');}
+
+function awHead(){
+  const cols=awCols();
+  const ths=cols.map((c,i)=>{
+    const sorted=(_awSortKey===c.k)&&c.sort;
+    const cls=[c.sort?'':'nosort',sorted?'sorted':'',awStickCls(i)].filter(Boolean).join(' ');
+    const click=c.sort?` onclick="awSort('${c.k}')"`:'';
+    const arrow=c.sort?`<span class="vt-sort">${sorted?(_awSortDir>0?'▲':'▼'):'⇅'}</span>`:'';
+    return `<th class="${cls}" style="${awStickLeft(i,cols)}width:${c.w};min-width:${c.w}"${click}>${awEsc(c.lab)}${arrow}</th>`;
+  }).join('');
+  const fs=cols.map((c,i)=>`<th class="${awStickCls(i)}" style="${awStickLeft(i,cols)}">${awFilterCell(c)}</th>`).join('');
+  return `<thead><tr>${ths}</tr><tr class="vt-filters">${fs}</tr></thead>`;
+}
+function awCell(c,w){
+  switch(c.k){
+    case '_img': return w.image_url
+      ? `<img class="vt-thumb" src="${awEsc(w.image_url)}" loading="lazy" alt="" onerror="this.style.visibility='hidden'">`
+      : `<div class="vt-thumb-ph">📝</div>`;
+    case 'term':          return `<div class="vt-term">${awEsc(w.term)}</div>`;
+    case 'phonetic':      return `<div class="vt-ipa">${w.phonetic?'/'+awEsc(w.phonetic)+'/':''}</div>`;
+    case 'definition_vi': return `<div class="vt-vi vt-clamp">${awEsc(w.definition_vi||'')}</div>`;
+    case 'definition_en': return `<div class="vt-en vt-clamp">${awEsc(w.definition_en||'')}</div>`;
+    case 'part_of_speech':return `<span class="vt-pos" title="${awEsc(awPosFull(w.part_of_speech))}">${awEsc(w.part_of_speech||'—')}</span>`;
+    case 'level':         return `<span class="badge ${({A1:'badge-green',A2:'badge-green',B1:'badge-blue',B2:'badge-purple',C1:'badge-pink',C2:'badge-pink'})[w.level]||'badge-blue'}">${awEsc(w.level||'—')}</span>`;
+    case 'collection':    return `<span class="vt-col-tag">${awEsc(w.collection||'—')}</span>`;
+    case 'part_name':
+    case 'branch_name':   return `<div class="vt-sit vt-clamp">${awEsc(w[c.k]||'')}</div>`;
+    case 'topic':         return `<div class="vt-topic vt-clamp">${awEsc(w.topic||'')}</div>`;
+    case 'part_code': case 'branch_code': case 'topic_code': case 'group_code':
+      return `<span class="vt-num">${awEsc(w[c.k]||'—')}</span>`;
+    case 'onset': case 'rime1': case 'syl2': case 'syl3': case 'syl4p':
+      return w[c.k]?`<span class="vt-chip">${awEsc(w[c.k])}</span>`:`<span class="vt-ex-no">—</span>`;
+    case 'syllables':     return `<span class="vt-num">${w.syllables==null?'—':awEsc(w.syllables)}</span>`;
+    case 'stress':        return w.stress==null?`<span class="vt-ex-no">—</span>`
+                            :`<span class="vt-num" style="color:var(--accent4)">âm ${awEsc(w.stress)}</span>`;
+    case 'suffix':        return w.suffix?`<span class="vt-suffix">${awEsc(w.suffix)}</span>`:`<span class="vt-ex-no">—</span>`;
+    case 'root_word':     return w.root_word?`<span class="vt-term" style="font-size:13px">${awEsc(w.root_word)}</span>`:`<span class="vt-ex-no">—</span>`;
+    case 'situation':     return `<div class="vt-sit vt-clamp">${awEsc(awExSituation(w))}</div>`;
+    case 'excount':{const n=awExRows(w).length;return n?`<span class="vt-ex-yes">${n} câu</span>`:`<span class="vt-ex-no">—</span>`;}
+    case 'audio':         return w.audio_url
+      ? `<button class="play-mini js-audio" data-audio="${awEsc(w.audio_url)}" title="Nghe file ghi âm">▶</button>`
+      : `<button class="play-mini js-tts" style="background:var(--muted)" data-term="${awEsc(w.term)}" title="Máy đọc (TTS)">🔊</button>`;
+    case '_act':          return `<div class="row-actions" style="justify-content:flex-end"><button class="btn-icon js-edit" title="Sửa">✏️</button><button class="btn-icon del js-del" title="Xoá">🗑</button></div>`;
+  }
+  return '';
+}
+function awRowHtml(w){
+  const cols=awCols();
+  const tds=cols.map((c,i)=>{
+    const cls=awStickCls(i);
+    const left=awStickLeft(i,cols);
+    return `<td${cls?` class="${cls}"`:''}${left?` style="${left}"`:''}>${awCell(c,w)}</td>`;
+  }).join('');
+  return `<tr data-id="${awEsc(w.id)}">${tds}</tr>`;
+}
+function awMatch(c,w){
+  const f=_awFilters[c.k];
+  if(!f) return true;
+  const v=c.get(w);
+  switch(c.filter){
+    case 'text':   return String(v==null?'':v).toLowerCase().includes(f.toLowerCase());
+    case 'select': return f===AW_EMPTY?!String(v==null?'':v).trim():String(v==null?'':v).trim()===f;
+    case 'pos':    return f===AW_EMPTY?!awPosTags(v).length:awPosTags(v).indexOf(f)>=0;
+    case 'yn':     return (f==='1')?!!v:!v;
+    case 'exq':    return f==='full'?v>=5:f==='part'?(v>0&&v<5):v===0;
+  }
+  return true;
+}
+// Bỏ giá trị lọc không còn hợp lệ → tránh bảng trống trơn khi đổi cấp cha
+function awPruneFilters(){
+  for(let pass=0;pass<5;pass++){
+    let changed=false;
+    AW_COLS.forEach(c=>{
+      if(c.filter!=='select'&&c.filter!=='pos') return;
+      const f=_awFilters[c.k];
+      if(!f) return;
+      const rows=awFacetRows(c.k);
+      if(f===AW_EMPTY){
+        // còn từ nào bỏ trống ô này không? nếu không thì bỏ luôn bộ lọc "(chưa có)"
+        const still=rows.some(w=>{const v=c.get(w);
+          return c.filter==='pos'?!awPosTags(v).length:!String(v==null?'':v).trim();});
+        if(!still){_awFilters[c.k]='';changed=true;}
+        return;
+      }
+      if(awDistinct(rows,c).indexOf(f)<0){_awFilters[c.k]='';changed=true;}
+    });
+    if(!changed) break;
+  }
+}
+
+// ── Nạp dữ liệu ──
+let _wLoadSeq=0;
+async function loadWords(){
+  const host=document.getElementById('words-table-body');
+  if(!host) return;
+  const seq=++_wLoadSeq;                    // đổi kho liên tiếp: chỉ lượt mới nhất được ghi
+  host.innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
+  if(!_wColLoaded){_wColLoaded=true; await loadWCollections();}
+  const all=[]; const STEP=1000;
+  try{
+    for(let from=0; from<200000; from+=STEP){
+      let q=_sb.from('words').select('*');
+      if(_wCollection&&_wCollection!==AW_ALL) q=q.eq('collection',_wCollection);
+      // sắp theo id (duy nhất, ổn định) — bắt buộc để phân trang .range không trùng/sót dòng
+      const {data,error}=await q.order('id',{ascending:true}).range(from,from+STEP-1);
+      if(seq!==_wLoadSeq) return;           // đã có lượt tải mới hơn → bỏ kết quả này
+      if(error) throw error;
+      all.push.apply(all,data||[]);
+      if(!data||data.length<STEP) break;
+    }
+  }catch(e){
+    if(seq!==_wLoadSeq) return;
+    host.innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${awEsc(e.message)}</p></div>`;
+    return;
+  }
+  if(seq!==_wLoadSeq) return;
+  _words=all; _wordPage=0;
+  renderWords();
+}
+
+// ── Vẽ bảng ──
 function renderWords(){
-  const total=_wordsFiltered.length;
-  const start=_wordPage*PAGE;
-  const slice=_wordsFiltered.slice(start,start+PAGE);
-  document.getElementById('words-count-label').textContent=`${total} từ vựng`;
-  if(!slice.length){document.getElementById('words-table-body').innerHTML='<div class="empty-state"><div class="es-icon">🔍</div><p>Không tìm thấy</p></div>';document.getElementById('words-pagination').innerHTML='';return;}
-  const lC={A1:'badge-green',A2:'badge-green',B1:'badge-blue',B2:'badge-purple',C1:'badge-pink'};
-  const pC={Adjective:'badge-blue',Noun:'badge-purple',Verb:'badge-orange',Adverb:'badge-green',Phrase:'badge-pink',Idiom:'badge-orange'};
-  document.getElementById('words-table-body').innerHTML=`<table><thead><tr><th>Từ vựng</th><th>Phiên âm</th><th>Nghĩa TV</th><th>Từ loại</th><th>Cấp độ</th><th>Chủ đề</th><th>Ảnh</th><th>Audio</th><th style="text-align:right">Thao tác</th></tr></thead><tbody>${slice.map(w=>`<tr><td><strong>${w.term||'—'}</strong></td><td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${w.phonetic||''}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.definition_vi||'—'}</td><td><span class="badge ${pC[w.part_of_speech]||'badge-blue'}">${w.part_of_speech||'—'}</span></td><td><span class="badge ${lC[w.level]||'badge-blue'}">${w.level||'—'}</span></td><td style="color:var(--muted);font-size:12px">${w.topic||'—'}</td><td>${w.image_url?`<img class="td-img" src="${w.image_url}" onerror="this.style.display='none'">`:'-'}</td><td>${w.audio_url?`<button class="play-mini" onclick="playAudio('${w.audio_url}')">▶</button>`:`<button class="play-mini" style="background:var(--muted)" onclick="ttsSay('${(w.term||'').replace(/'/g,"\\'")}')">🔊</button>`}</td><td style="text-align:right"><div class="row-actions" style="justify-content:flex-end"><button class="btn-icon" onclick="editWord('${w.id}')">✏️</button><button class="btn-icon del" onclick="confirmDel('words','${w.id}','${(w.term||'').replace(/'/g,"\\'")}')">🗑</button></div></td></tr>`).join('')}</tbody></table>`;
-  const totalPages=Math.ceil(total/PAGE);
-  document.getElementById('words-pagination').innerHTML=totalPages<=1?'':`<span>${start+1}–${Math.min(start+PAGE,total)} / ${total}</span><div class="page-btns">${_wordPage>0?`<button class="page-btn" onclick="setWP(${_wordPage-1})">←</button>`:''}${Array.from({length:Math.min(totalPages,7)},(_,i)=>`<button class="page-btn${i===_wordPage?' active':''}" onclick="setWP(${i})">${i+1}</button>`).join('')}${_wordPage<totalPages-1?`<button class="page-btn" onclick="setWP(${_wordPage+1})">→</button>`:''}</div>`;
+  const host=document.getElementById('words-table-body');
+  if(!host) return;
+  if(!_words.length){
+    host.innerHTML='<div class="empty-state"><div class="es-icon">📖</div><p>Kho này chưa có từ nào</p></div>';
+    document.getElementById('words-count-label').textContent='0 từ vựng';
+    document.getElementById('words-pagination').innerHTML='';
+    return;
+  }
+  awPruneFilters();
+  host.innerHTML=`<div class="avt-area"><table class="vtable">${awHead()}<tbody id="awt-body"></tbody></table></div>`;
+  awBindFilters(); awBindRows();
+  applyAwFilters();
 }
-function setWP(p){_wordPage=p;renderWords();}
+function awBindFilters(){
+  document.querySelectorAll('#words-table-body .vt-f').forEach(el=>{
+    const fk=el.dataset.fk;
+    if(el.tagName==='SELECT'){
+      el.addEventListener('change',()=>{
+        _awFilters[fk]=el.value; el.classList.toggle('on',!!el.value);
+        _wordPage=0; applyAwFilters();
+      });
+    }else{
+      el.addEventListener('input',()=>{                 // debounce riêng từng ô
+        clearTimeout(el._awT);
+        el._awT=setTimeout(()=>{
+          _awFilters[fk]=el.value; el.classList.toggle('on',!!el.value);
+          _wordPage=0; applyAwFilters();
+        },220);
+      });
+    }
+  });
+}
+function awBindRows(){
+  const host=document.getElementById('words-table-body');
+  if(!host||host._awBound) return;
+  host._awBound=true;
+  host.addEventListener('click',ev=>{
+    const t=ev.target;
+    const au=t.closest&&t.closest('.js-audio');
+    if(au){ev.stopPropagation();playAudio(au.dataset.audio);return;}
+    const tt=t.closest&&t.closest('.js-tts');
+    if(tt){ev.stopPropagation();ttsSay(tt.dataset.term||'');return;}
+    const tr=t.closest&&t.closest('#awt-body tr[data-id]');
+    if(!tr) return;
+    const w=_words.find(x=>String(x.id)===tr.dataset.id);
+    if(!w) return;
+    if(t.closest('.js-del')){ev.stopPropagation();confirmDel('words',w.id,w.term||'');return;}
+    openWordModal(w);        // bấm bất kỳ đâu trên dòng (hoặc nút ✏️) đều mở form sửa
+  });
+}
+function awSort(key){
+  if(_awSortKey===key) _awSortDir=-_awSortDir;
+  else{_awSortKey=key;_awSortDir=1;}
+  const table=document.querySelector('#words-table-body table.vtable');
+  if(table){
+    const old=table.querySelector('thead');
+    if(old) old.outerHTML=awHead();       // vẽ lại mũi tên, giữ nguyên giá trị lọc
+    awBindFilters();
+  }
+  _wordPage=0; applyAwFilters();
+}
+let _awSearchT=null;
+function filterWords(){
+  clearTimeout(_awSearchT);
+  _awSearchT=setTimeout(()=>{_wordPage=0;applyAwFilters();},220);
+}
+function resetAwFilters(){
+  Object.keys(_awFilters).forEach(k=>_awFilters[k]='');
+  const si=document.getElementById('words-search'); if(si) si.value='';
+  _wordPage=0;
+  renderWords();
+}
+function applyAwFilters(){
+  awPruneFilters(); awRefreshSelects();
+  const active=AW_COLS.filter(c=>c.filter&&_awFilters[c.k]);
+  const q=(document.getElementById('words-search')?.value||'').toLowerCase();
+  _wordsFiltered=(_words||[]).filter(w=>{
+    if(q&&!(String(w.term||'').toLowerCase().includes(q)||String(w.definition_vi||'').toLowerCase().includes(q))) return false;
+    return active.every(c=>awMatch(c,w));
+  });
+  const c=AW_COL[_awSortKey], d=_awSortDir;
+  if(c&&c.sort){
+    _wordsFiltered.sort((a,b)=>{
+      const x=c.get(a),y=c.get(b);
+      if(typeof x==='number'&&typeof y==='number') return (x-y)*d;
+      return String(x==null?'':x).toLowerCase().localeCompare(String(y==null?'':y).toLowerCase(),'en')*d;
+    });
+  }
+  if(_wordPage*AW_PAGE>=_wordsFiltered.length) _wordPage=0;
+  const rb=document.getElementById('wbtn-reset');
+  if(rb) rb.classList.toggle('on',active.length>0||!!q);
+  renderAwBody();
+}
+function renderAwBody(){
+  const body=document.getElementById('awt-body');
+  if(!body) return;
+  const total=_wordsFiltered.length, nAll=_words.length;
+  const start=_wordPage*AW_PAGE;
+  const slice=_wordsFiltered.slice(start,start+AW_PAGE);
+  document.getElementById('words-count-label').textContent =
+    total===nAll ? `${nAll} từ vựng` : `${total} / ${nAll} từ vựng`;
+  body.innerHTML = slice.length
+    ? slice.map(awRowHtml).join('')
+    : `<tr><td colspan="${awCols().length}" style="padding:28px;text-align:center;color:var(--muted)">Không có từ nào khớp bộ lọc hiện tại — <button class="ph-link" onclick="resetAwFilters()">xoá bộ lọc</button></td></tr>`;
+  const totalPages=Math.ceil(total/AW_PAGE);
+  const pag=document.getElementById('words-pagination');
+  if(!totalPages||totalPages<=1){pag.innerHTML=total?`<span>${total} từ</span>`:'';return;}
+  const win=7, half=Math.floor(win/2);
+  let p0=Math.max(0,Math.min(_wordPage-half,totalPages-win)); if(p0<0)p0=0;
+  const pages=[];
+  for(let i=p0;i<Math.min(p0+win,totalPages);i++) pages.push(i);
+  pag.innerHTML=`<span>${start+1}–${Math.min(start+AW_PAGE,total)} / ${total}</span><div class="page-btns">`+
+    (_wordPage>0?`<button class="page-btn" onclick="setWP(${_wordPage-1})">←</button>`:'')+
+    (p0>0?`<button class="page-btn" onclick="setWP(0)">1…</button>`:'')+
+    pages.map(i=>`<button class="page-btn${i===_wordPage?' active':''}" onclick="setWP(${i})">${i+1}</button>`).join('')+
+    (p0+win<totalPages?`<button class="page-btn" onclick="setWP(${totalPages-1})">…${totalPages}</button>`:'')+
+    (_wordPage<totalPages-1?`<button class="page-btn" onclick="setWP(${_wordPage+1})">→</button>`:'')+
+    `</div>`;
+}
+function setWP(p){
+  _wordPage=p; renderAwBody();
+  const area=document.querySelector('#words-table-body .avt-area');
+  if(area) area.scrollTop=0;
+}
+
+// ── Bảng chọn cột ──
+function toggleAwColPanel(){
+  const p=document.getElementById('wcol-panel');
+  if(!p) return;
+  if(p.classList.contains('open')){p.classList.remove('open');return;}
+  p.innerHTML=
+    '<div class="cp-title">Bố cục dựng sẵn</div><div class="cp-presets">'+
+    Object.keys(AW_PRESETS).map(n=>`<button class="cp-preset" data-preset="${awEsc(n)}">${awEsc(n)}</button>`).join('')+
+    '</div><div class="cp-title">Cột hiển thị</div><div class="cp-scroll">'+
+    AW_COLS.map(c=>`<label class="cp-row"><input type="checkbox" data-ck="${c.k}"${_awOn[c.k]?' checked':''}${(c.k==='term'||c.k==='_act')?' disabled':''}><span>${awEsc(c.lab)}</span></label>`).join('')+
+    '</div><div class="cp-note">Ẩn cột nào thì bộ lọc của cột đó cũng được bỏ.</div>';
+  p.classList.add('open');
+  p.querySelectorAll('button[data-preset]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const keys=AW_PRESETS[btn.dataset.preset]||[];
+      AW_COLS.forEach(c=>{
+        const on=keys.indexOf(c.k)>=0||c.k==='term'||c.k==='_act';
+        _awOn[c.k]=on;
+        if(!on) _awFilters[c.k]='';
+      });
+      awSaveCols(); p.classList.remove('open'); renderWords();
+    });
+  });
+  p.querySelectorAll('input[data-ck]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const k=cb.dataset.ck;
+      _awOn[k]=cb.checked;
+      if(!cb.checked) _awFilters[k]='';      // ẩn cột → bỏ luôn bộ lọc, tránh lọc "ma"
+      awSaveCols(); renderWords();
+    });
+  });
+}
+document.addEventListener('click',ev=>{
+  const p=document.getElementById('wcol-panel');
+  if(!p||!p.classList.contains('open')) return;
+  if(ev.target.closest('#wcol-panel')||ev.target.closest('#wbtn-cols')) return;
+  p.classList.remove('open');
+});
+
+// 15 cột dữ liệu Oxford 3000 trong form thêm/sửa từ
+const AW_EXTRA_FIELDS=[
+  {id:'wf-part-name',   col:'part_name',   g:'tree'},
+  {id:'wf-part-code',   col:'part_code',   g:'tree'},
+  {id:'wf-branch-name', col:'branch_name', g:'tree'},
+  {id:'wf-branch-code', col:'branch_code', g:'tree'},
+  {id:'wf-topic-code',  col:'topic_code',  g:'tree'},
+  {id:'wf-group-code',  col:'group_code',  g:'tree'},
+  {id:'wf-onset',       col:'onset',       g:'phon'},
+  {id:'wf-rime1',       col:'rime1',       g:'phon'},
+  {id:'wf-syl2',        col:'syl2',        g:'phon'},
+  {id:'wf-syl3',        col:'syl3',        g:'phon'},
+  {id:'wf-syl4p',       col:'syl4p',       g:'phon'},
+  {id:'wf-syllables',   col:'syllables',   g:'phon', num:true},
+  {id:'wf-stress',      col:'stress',      g:'phon', num:true},
+  {id:'wf-suffix',      col:'suffix',      g:'phon'},
+  {id:'wf-root-word',   col:'root_word',   g:'phon'},
+];
+// Gợi ý sẵn trong ô nhập, lấy từ dữ liệu đang có
+function awFillDatalists(){
+  const uniq=key=>{
+    const st=new Set();
+    (_words||[]).forEach(w=>{const v=String(w[key]==null?'':w[key]).trim(); if(v) st.add(v);});
+    return Array.from(st).sort((a,b)=>a.localeCompare(b,'vi'));
+  };
+  const fill=(id,arr)=>{
+    const dl=document.getElementById(id); if(!dl) return;
+    dl.innerHTML=arr.slice(0,600).map(v=>`<option value="${awEsc(v)}"></option>`).join('');
+  };
+  const cols=_wCollections.map(c=>c.name);
+  fill('wf-collection-list', cols.length?cols:uniq('collection'));
+  fill('wf-topic-list',       uniq('topic'));
+  fill('wf-part-name-list',   uniq('part_name'));
+  fill('wf-branch-name-list', uniq('branch_name'));
+}
 
 function openWordModal(word){
   _editingWordId=word?.id||null; _imgFile=null; _audioFile=null;
@@ -1020,15 +1575,25 @@ function openWordModal(word){
   document.getElementById('wf-gen-btn').innerHTML='🤖 Tạo bằng AI';
   document.getElementById('wf-situation').value='';
   document.getElementById('word-modal-title').textContent=word?'Sửa từ vựng':'Thêm từ vựng mới';
+  awFillDatalists();
+  const dfCol = (_wCollection && _wCollection!==AW_ALL) ? _wCollection : (_wCollections[0]?.name || 'Oxford 3000');
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=(v==null?'':v);};
   document.getElementById('wf-id').value=word?.id||'';
-  document.getElementById('wf-term').value=word?.term||'';
-  document.getElementById('wf-phonetic').value=word?.phonetic||'';
-  document.getElementById('wf-def-vi').value=word?.definition_vi||'';
-  document.getElementById('wf-def-en').value=word?.definition_en||'';
-  document.getElementById('wf-pos').value=word?.part_of_speech||'Adjective';
+  set('wf-collection', word?.collection || dfCol);
+  set('wf-term', word?.term);
+  set('wf-phonetic', word?.phonetic);
+  set('wf-def-vi', word?.definition_vi);
+  set('wf-def-en', word?.definition_en);
+  set('wf-pos', word?.part_of_speech);
   document.getElementById('wf-level').value=word?.level||'B1';
-  document.getElementById('wf-topic').value=word?.topic||'';
-  document.getElementById('wf-example').value=word?.example_sentence||'';
+  set('wf-topic', word?.topic);
+  set('wf-example', word?.example_sentence);
+  // 15 cột Oxford 3000
+  AW_EXTRA_FIELDS.forEach(f=>set(f.id, word?.[f.col]));
+  const anyTree = AW_EXTRA_FIELDS.filter(f=>f.g==='tree').some(f=>word?.[f.col]!=null&&word[f.col]!=='');
+  const anyPhon = AW_EXTRA_FIELDS.filter(f=>f.g==='phon').some(f=>word?.[f.col]!=null&&word[f.col]!=='');
+  document.getElementById('wf-fold-tree').open=!!anyTree;
+  document.getElementById('wf-fold-phon').open=!!anyPhon;
   document.getElementById('wf-img-url').value=word?.image_url||'';
   document.getElementById('wf-audio-url').value=word?.audio_url||'';
   document.getElementById('img-preview').style.display='none';
@@ -1060,14 +1625,35 @@ async function saveWord(){
       const tutuRow = _wfExamples.rows.find(r => r.type === 'Tự sự');
       if (tutuRow?.sentence) _autoExample = tutuRow.sentence;
     }
-    const data={term,phonetic:document.getElementById('wf-phonetic').value.trim(),definition_vi:def_vi,definition_en:document.getElementById('wf-def-en').value.trim(),part_of_speech:document.getElementById('wf-pos').value,level:document.getElementById('wf-level').value,topic:document.getElementById('wf-topic').value.trim(),example_sentence:_autoExample,image_url:img_url,audio_url,examples:_wfExamples ? [_wfExamples] : undefined};
+    const val=id=>{const el=document.getElementById(id); return el?String(el.value).trim():'';};
+    const data={
+      collection: val('wf-collection') || 'Khac',
+      term,
+      phonetic: val('wf-phonetic'),
+      definition_vi: def_vi,
+      definition_en: val('wf-def-en'),
+      part_of_speech: val('wf-pos'),
+      level: document.getElementById('wf-level').value,
+      topic: val('wf-topic'),
+      example_sentence: _autoExample,
+      image_url: img_url, audio_url,
+      examples: _wfExamples ? [_wfExamples] : undefined,
+    };
+    // 15 cột Oxford 3000 — ô để trống ghi NULL, cột số ép về số
+    AW_EXTRA_FIELDS.forEach(f=>{
+      const v = val(f.id);
+      if (f.num){ const n = parseInt(v,10); data[f.col] = (v==='' || isNaN(n)) ? null : n; }
+      else data[f.col] = v || null;
+    });
     if (data.examples === undefined) delete data.examples;
     let err;
     if(_editingWordId){({error:err}=await _sb.from('words').update(data).eq('id',_editingWordId));}
     else{({error:err}=await _sb.from('words').insert(data));}
     if(err)throw err;
     toast(`✅ Đã lưu "${term}"`, 'success');
-    closeModal('modal-word');loadWords();loadNavCounts();
+    closeModal('modal-word');
+    _wColLoaded=false;                 // kho có thể vừa được tạo mới → nạp lại thẻ tab
+    loadWords();loadNavCounts();
   }catch(e){toast('❌ '+e.message,'error');}
   finally{btn.disabled=false;btn.textContent='💾 Lưu từ vựng';}
 }
@@ -1144,42 +1730,214 @@ function showPrev(file,id,kind){
 }
 
 // ── CSV IMPORT ──
+// 25 cột kho từ vựng — dùng chung cho cả CSV lẫn Excel
+const AW_IMPORT_COLS=['collection','term','phonetic','definition_vi','definition_en','part_of_speech','level',
+  'part_name','part_code','branch_name','branch_code','topic','topic_code','group_code',
+  'onset','rime1','syl2','syl3','syl4p','syllables','stress','suffix','root_word','image_url','audio_url'];
+const AW_NUM_COLS=['syllables','stress'];
+const AW_IMPORT_MAX=10000;   // trần an toàn cho 1 lần nạp
+// tiêu đề tiếng Việt (mẫu Excel) → tên cột DB
+const AW_HEADER_MAP={
+  'kho':'collection','kho từ vựng':'collection','collection':'collection',
+  'từ':'term','từ vựng':'term','từ vựng *':'term','term':'term',
+  'ipa':'phonetic','phiên âm':'phonetic','phonetic':'phonetic',
+  'nghĩa':'definition_vi','nghĩa tiếng việt':'definition_vi','nghĩa tiếng việt *':'definition_vi','nghĩa tv':'definition_vi','definition_vi':'definition_vi',
+  'nghĩa tiếng anh':'definition_en','nghĩa ta':'definition_en','definition_en':'definition_en',
+  'loại':'part_of_speech','từ loại':'part_of_speech','part_of_speech':'part_of_speech',
+  'cefr':'level','cấp độ':'level','level':'level',
+  'tên phần':'part_name','part_name':'part_name','mã phần':'part_code','part_code':'part_code',
+  'tên nhánh':'branch_name','branch_name':'branch_name','mã nhánh':'branch_code','branch_code':'branch_code',
+  'chủ đề':'topic','topic':'topic','mã cđ':'topic_code','mã chủ đề':'topic_code','topic_code':'topic_code',
+  'nhóm':'group_code','group_code':'group_code',
+  'pâ đầu':'onset','phụ âm đầu':'onset','onset':'onset',
+  'vần 1':'rime1','vần1':'rime1','rime1':'rime1',
+  'âm 2':'syl2','syl2':'syl2','âm 3':'syl3','syl3':'syl3','âm 4+':'syl4p','âm 4':'syl4p','syl4p':'syl4p',
+  'số âm tiết':'syllables','syllables':'syllables','trọng âm':'stress','stress':'stress',
+  'hậu tố':'suffix','suffix':'suffix','gốc':'root_word','từ gốc':'root_word','root_word':'root_word',
+  'url ảnh':'image_url','ảnh':'image_url','image_url':'image_url',
+  'url audio':'audio_url','audio':'audio_url','audio_url':'audio_url',
+};
+function awMapHeaders(raw){
+  return raw.map(h=>{
+    const k=String(h==null?'':h).replace(/^﻿/,'').trim().toLowerCase();
+    return AW_HEADER_MAP[k]||k;
+  });
+}
+// Dựng 1 dòng dữ liệu words từ mảng ô + mảng tên cột
+function awRowToWord(row,headers){
+  const o={};
+  AW_IMPORT_COLS.forEach(c=>{
+    const i=headers.indexOf(c);
+    let v=i<0?'':String(row[i]==null?'':row[i]).trim();
+    if(AW_NUM_COLS.indexOf(c)>=0){const n=parseInt(v,10);o[c]=(v===''||isNaN(n))?null:n;}
+    else o[c]=v;
+  });
+  return o;
+}
+// Bỏ ô rỗng để KHÔNG ghi đè dữ liệu cũ bằng chuỗi trắng — kể cả definition_vi.
+// `collection` để trống ở đây, sẽ điền sau theo kho người dùng chọn (awApplyCollection).
+function awCleanWord(o){
+  const out={term:o.term};
+  AW_IMPORT_COLS.forEach(c=>{
+    if(c==='term') return;
+    const v=o[c];
+    if(v===null||v===''||v===undefined) return;
+    out[c]=v;
+  });
+  return out;
+}
+// Điền kho cho những dòng thiếu cột collection + gộp dòng trùng (collection,term)
+// — Postgres báo lỗi 21000 nếu 1 lệnh upsert đụng cùng 1 hàng 2 lần.
+function awApplyCollection(rows,kho){
+  const map=new Map();
+  (rows||[]).forEach(r=>{
+    const o=Object.assign({},r);
+    if(!o.collection) o.collection=kho;
+    const k=o.collection+'\u0000'+o.term;      // phân biệt HOA/thường: IT ≠ it
+    map.set(k, map.has(k)?Object.assign({},map.get(k),o):o);
+  });
+  return Array.from(map.values());
+}
+// Danh sách kho cho ô chọn khi import
+function awCollectionOptions(sel){
+  const names=(_wCollections||[]).map(c=>c.name);
+  const cur=sel||(_wCollection&&_wCollection!==AW_ALL?_wCollection:(names[0]||''));
+  return names.map(n=>`<option value="${awEsc(n)}"${n===cur?' selected':''}>${awEsc(n)}</option>`).join('')
+    +`<option value="__new__">➕ Kho mới…</option>`;
+}
+function awImportKho(selId,newId){
+  const sel=document.getElementById(selId);
+  if(!sel) return awFallbackCollection();
+  if(sel.value==='__new__'){
+    const inp=document.getElementById(newId);
+    return inp?inp.value.trim():'';
+  }
+  return sel.value;
+}
+function awOnKhoChange(selId,newId){
+  const sel=document.getElementById(selId), inp=document.getElementById(newId);
+  if(!sel||!inp) return;
+  inp.style.display = sel.value==='__new__' ? '' : 'none';
+  if(sel.value==='__new__') inp.focus();
+}
+// Parser CSV chuẩn RFC4180 — chịu được dấu phẩy và xuống dòng nằm trong dấu nháy
+function awParseCSVText(text){
+  text=String(text).replace(/^﻿/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){
+      if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; }
+      else cell+=ch;
+    }else{
+      if(ch==='"') q=true;
+      else if(ch===','){ row.push(cell); cell=''; }
+      else if(ch==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; }
+      else cell+=ch;
+    }
+  }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
+}
+// Kho gợi ý sẵn cho ô chọn khi import — KHÔNG tự bịa 'Khac' nữa
+function awFallbackCollection(){
+  if(typeof _wCollection!=='undefined'&&_wCollection&&_wCollection!==AW_ALL) return _wCollection;
+  if(typeof _wCollections!=='undefined'&&_wCollections.length===1) return _wCollections[0].name;
+  return '';
+}
 function handleCSVDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)parseCSV(f);}
 function handleCSVFile(input){if(input.files[0])parseCSV(input.files[0]);}
 function parseCSV(file){
   const r=new FileReader();
   r.onload=e=>{
-    const lines=e.target.result.trim().split('\n');
-    const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
-    const rows=lines.slice(1).map(line=>{const vals=line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;}).filter(r=>r.term);
-    _pendingImport=rows.slice(0,500);showImportPreview();
+    try{
+      const rows=awParseCSVText(e.target.result);
+      if(!rows.length){toast('File rỗng.','warn');return;}
+      let hi=rows.findIndex(rw=>awMapHeaders(rw).indexOf('term')>=0);
+      if(hi<0) hi=0;
+      const headers=awMapHeaders(rows[hi]);
+      if(headers.indexOf('term')<0){toast('❌ Không tìm thấy cột "term" (hoặc "Từ") trong file.','error');return;}
+      const parsed=rows.slice(hi+1)
+        .map(rw=>awRowToWord(rw,headers))
+        .filter(o=>o.term&&o.term.toLowerCase()!=='term'&&o.definition_vi!=='Bắt buộc')
+        .map(awCleanWord);
+      _pendingImport=parsed.slice(0,AW_IMPORT_MAX);
+      if(parsed.length>AW_IMPORT_MAX)
+        toast(`⚠️ File có ${parsed.length} dòng — chỉ nạp ${AW_IMPORT_MAX} dòng đầu, hãy chia nhỏ file.`,'warn');
+      if(!_pendingImport.length){toast('Không đọc được dòng dữ liệu nào.','warn');return;}
+      showImportPreview();
+    }catch(err){toast('❌ Lỗi đọc file: '+err.message,'error');}
   };
-  r.readAsText(file);
+  r.readAsText(file,'utf-8');
 }
 function showImportPreview(){
-  document.getElementById('import-label').textContent=`${_pendingImport.length} từ sẵn sàng import`;
+  const cols=new Set(); _pendingImport.forEach(r=>Object.keys(r).forEach(k=>cols.add(k)));
+  const nCol=cols.size;
+  const nNoCol=_pendingImport.filter(r=>!r.collection).length;
+  const nNoDef=_pendingImport.filter(r=>!r.definition_vi).length;
+  document.getElementById('import-collection').innerHTML=awCollectionOptions();
+  awOnKhoChange('import-collection','import-collection-new');
+  document.getElementById('import-label').textContent=
+    `${_pendingImport.length} từ · ${nCol} cột có dữ liệu`
+    + (nNoCol?` · ${nNoCol} dòng chưa ghi kho`:'')
+    + (nNoDef?` · ${nNoDef} dòng không có nghĩa TV (chỉ cập nhật cột khác)`:'');
   const rows=_pendingImport.slice(0,10);
-  document.getElementById('import-preview-table').innerHTML=`<table><thead><tr><th>Từ vựng</th><th>Nghĩa TV</th><th>Từ loại</th><th>Cấp độ</th><th>Câu ví dụ</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${r.term}</strong> <span style="color:var(--muted);font-size:11px">${r.phonetic||''}</span></td><td>${r.definition_vi||'—'}</td><td>${r.part_of_speech||'—'}</td><td><span class="badge badge-blue">${r.level||'—'}</span></td><td style="font-size:11px;color:var(--muted)">${(r.example_sentence||'').slice(0,60)}</td></tr>`).join('')}${_pendingImport.length>10?`<tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:12px;padding:12px">…và ${_pendingImport.length-10} từ nữa</td></tr>`:''}</tbody></table>`;
+  document.getElementById('import-preview-table').innerHTML=
+    `<table><thead><tr><th>Kho</th><th>Từ vựng</th><th>Nghĩa TV</th><th>Loại</th><th>CEFR</th><th>Chủ đề</th><th>Ngữ âm</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent2)">${awEsc(r.collection||'(theo ô chọn)')}</td>
+      <td><strong>${awEsc(r.term)}</strong> <span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${awEsc(r.phonetic||'')}</span></td>
+      <td>${awEsc(r.definition_vi||'—')}</td>
+      <td style="color:var(--accent4);font-size:12px">${awEsc(r.part_of_speech||'—')}</td>
+      <td><span class="badge badge-blue">${awEsc(r.level||'—')}</span></td>
+      <td style="font-size:12px;color:var(--accent2)">${awEsc(r.topic||'—')}</td>
+      <td style="font-size:11px;color:var(--muted);font-family:var(--mono)">${awEsc([r.onset,r.rime1,r.syl2,r.syl3,r.syl4p].filter(Boolean).join('·')||'—')}</td>
+    </tr>`).join('')+
+    (_pendingImport.length>10?`<tr><td colspan="7" style="text-align:center;color:var(--muted);font-size:12px;padding:12px">…và ${_pendingImport.length-10} từ nữa</td></tr>`:'')+
+    `</tbody></table>`;
   document.getElementById('import-preview-wrap').style.display='block';
 }
 function clearImport(){_pendingImport=[];document.getElementById('import-preview-wrap').style.display='none';}
 async function confirmImport(){
+  const kho=awImportKho('import-collection','import-collection-new');
+  if(!kho){toast('Hãy chọn (hoặc đặt tên) kho từ vựng để nạp vào.','warn');return;}
+  const rows=awApplyCollection(_pendingImport,kho);
   const btn=document.getElementById('import-btn');
   btn.disabled=true;btn.textContent='⏳ Đang import…';
   try{
-    const rows=_pendingImport.map(r=>({term:r.term,phonetic:r.phonetic||'',definition_vi:r.definition_vi||'',definition_en:r.definition_en||'',part_of_speech:r.part_of_speech||'Noun',level:r.level||'B1',topic:r.topic||'',example_sentence:r.example_sentence||'',image_url:r.image_url||'',audio_url:r.audio_url||''}));
     for(let i=0;i<rows.length;i+=100){
-      const {error}=await _sb.from('words').upsert(rows.slice(i,i+100),{onConflict:'term'});
+      const {error}=await _sb.from('words').upsert(rows.slice(i,i+100),{onConflict:'collection,term'});
       if(error)throw error;
+      btn.textContent=`⏳ ${Math.min(i+100,rows.length)}/${rows.length}…`;
     }
-    toast(`✅ Import thành công ${rows.length} từ!`,'success');
-    clearImport();loadNavCounts();
+    const dup=_pendingImport.length-rows.length;
+    toast(`✅ Import thành công ${rows.length} từ vào kho "${kho}"${dup?` (đã gộp ${dup} dòng trùng)`:''}!`,'success');
+    clearImport(); _wColLoaded=false; loadNavCounts(); loadWords();
   }catch(e){toast('❌ '+e.message,'error');}
-  finally{btn.disabled=false;btn.textContent='✅ Import tất cả';}
+  finally{btn.disabled=false;btn.textContent='✅ Import';}
+}
+function awCsvCell(v){
+  v=String(v==null?'':v);
+  return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
 }
 function downloadSampleCSV(){
-  const csv=`term,phonetic,definition_vi,definition_en,part_of_speech,level,example_sentence,topic,image_url,audio_url\nAmbitious,/æmˈbɪʃ.əs/,Có tham vọng,Having a strong desire to succeed,Adjective,B1,"She is very ambitious.",Business,,\nCollaborate,/kəˈlæb.ə.reɪt/,Cộng tác,To work together,Verb,B1,"Let's collaborate on this.",Business,,`;
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='englishup_sample.csv';a.click();
+  const sample=[
+    {collection:'Oxford 5000',term:'reluctant',phonetic:'rɪˈlʌktənt',definition_vi:'miễn cưỡng, không muốn',
+     definition_en:'',part_of_speech:'tt',level:'B2',part_name:'CON NGƯỜI',part_code:'I',
+     branch_name:'CẢM XÚC & THÁI ĐỘ',branch_code:'C',topic:'Ý muốn & quyết tâm',topic_code:'C7',group_code:'',
+     onset:'r',rime1:'ɪ',syl2:'lʌk',syl3:'tənt',syl4p:'',syllables:3,stress:2,suffix:'-ant',root_word:'reluctance',
+     image_url:'',audio_url:''},
+    {collection:'Oxford 5000',term:'abolish',phonetic:'əˈbɑlɪʃ',definition_vi:'bãi bỏ, huỷ bỏ',
+     definition_en:'to officially end a law or system',part_of_speech:'đt',level:'C1',
+     part_name:'XÃ HỘI, CÔNG VIỆC & THẾ GIỚI',part_code:'IV',branch_name:'XÃ HỘI, CHÍNH TRỊ & PHÁP LUẬT',branch_code:'S',
+     topic:'Luật pháp & quy định',topic_code:'S4',group_code:'',onset:'',rime1:'ə',syl2:'bɑ',syl3:'lɪʃ',syl4p:'',
+     syllables:3,stress:2,suffix:'',root_word:'',image_url:'',audio_url:''},
+  ];
+  const csv='﻿'+AW_IMPORT_COLS.join(',')+'\n'+
+    sample.map(r=>AW_IMPORT_COLS.map(c=>awCsvCell(r[c])).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='mau_kho_tu_vung.csv';a.click();
 }
 
 // ── DELETE ──
@@ -1841,8 +2599,11 @@ async function confirmExImport() {
     label.textContent = `Đang xử lý "${item.term}"… (${done+1}/${_exImportData.length})`;
     fill.style.width = ((done / _exImportData.length) * 100) + '%';
     try {
-      // Find word by term
-      const { data: words } = await _sb.from('words').select('id').ilike('term', item.term).limit(1);
+      // Tìm từ — .eq chứ không .ilike (IT ≠ it), ưu tiên kho đang chọn
+      const col = awFallbackCollection();
+      let words = null;
+      if (col) ({ data: words } = await _sb.from('words').select('id').eq('term', item.term).eq('collection', col).limit(1));
+      if (!words?.length) ({ data: words } = await _sb.from('words').select('id').eq('term', item.term).limit(1));
       if (!words?.length) { toast(`⚠️ Không tìm thấy từ "${item.term}" trong database`, 'warn'); errors++; done++; continue; }
       const wordId = words[0].id;
       const examples = [{ situation: item.situation, rows: item.rows }];
@@ -1926,10 +2687,9 @@ function processFullImportFile(file) {
           parseExamplesRows(exRows);
         }
       } else {
-        // CSV — only vocab sheet
-        const text = new TextDecoder().decode(e.target.result);
-        const rows = text.trim().split('\n').map(l => l.split(',').map(v => v.trim().replace(/^"|"$/g,'')));
-        parseVocabRows(rows);
+        // CSV — chỉ có sheet từ vựng
+        const text = new TextDecoder('utf-8').decode(e.target.result);
+        parseVocabRows(awParseCSVText(text));
       }
       renderFullPreview();
     } catch(err) { toast('❌ Lỗi đọc file: ' + err.message, 'error'); }
@@ -1938,40 +2698,21 @@ function processFullImportFile(file) {
 }
 
 function parseVocabRows(rows) {
-  let hi = rows.findIndex(r => r.some(c => String(c).toLowerCase() === 'term'));
+  if (!rows || !rows.length) { _fullImportWords = []; return; }
+  let hi = rows.findIndex(r => Array.isArray(r) && awMapHeaders(r).indexOf('term') >= 0);
   if (hi === -1) hi = 0;
-  const rawHeaders = rows[hi].map(h => String(h).toLowerCase().trim());
-  // Map Vietnamese headers to English keys
-  const headerMap = {
-    'từ vựng *': 'term', 'từ vựng': 'term', 'term': 'term',
-    'phiên âm': 'phonetic', 'phonetic': 'phonetic',
-    'nghĩa tiếng việt *': 'definition_vi', 'nghĩa tiếng việt': 'definition_vi', 'definition_vi': 'definition_vi',
-    'nghĩa tiếng anh': 'definition_en', 'definition_en': 'definition_en',
-    'từ loại': 'part_of_speech', 'part_of_speech': 'part_of_speech',
-    'cấp độ': 'level', 'level': 'level',
-    'chủ đề': 'topic', 'topic': 'topic',
-    'url ảnh': 'image_url', 'image_url': 'image_url',
-    'url audio': 'audio_url', 'audio_url': 'audio_url',
-  };
-  const headers = rawHeaders.map(h => headerMap[h] || h);
-  const get = (row,key) => String(row[headers.indexOf(key)] ?? '').trim();
-  _fullImportWords = rows.slice(hi+1)
-    .filter(r => {
-      const t = get(r,'term');
-      // Skip empty, header repeats, note rows (note rows have no valid definition_vi or have placeholder text)
-      if (!t || t === 'term' || t === 'Từ vựng *' || t === 'Bắt buộc') return false;
-      // Skip note row: if definition_vi looks like a note/instruction
-      const dvi = get(r,'definition_vi');
-      if (dvi === 'Bắt buộc' || dvi === 'Optional' || dvi === 'Nghĩa tiếng Việt *') return false;
+  const headers = awMapHeaders(rows[hi] || []);
+  _fullImportWords = rows.slice(hi+1).filter(Array.isArray)
+    .map(r => awRowToWord(r, headers))
+    .filter(o => {
+      const t = o.term;
+      if (!t || t.toLowerCase() === 'term' || t === 'Từ vựng *' || t === 'Bắt buộc') return false;
+      // bỏ hàng ghi chú trong file mẫu
+      if (o.definition_vi === 'Bắt buộc' || o.definition_vi === 'Optional' || o.definition_vi === 'Nghĩa tiếng Việt *') return false;
       return true;
     })
-    .map(r => ({
-      term: get(r,'term'), phonetic: get(r,'phonetic'),
-      definition_vi: get(r,'definition_vi'), definition_en: get(r,'definition_en'),
-      part_of_speech: get(r,'part_of_speech')||'Noun',
-      level: get(r,'level')||'B1', topic: get(r,'topic'),
-      image_url: get(r,'image_url'), audio_url: get(r,'audio_url'),
-    }));
+    .map(awCleanWord)
+    .slice(0, AW_IMPORT_MAX);
 }
 
 function parseExamplesRows(rows) {
@@ -2018,21 +2759,29 @@ const TYPE_BADGE = {
 function renderFullPreview() {
   const nw = _fullImportWords.length;
   const ne = Object.keys(_fullImportExamples).length;
+  const noCol = _fullImportWords.filter(w=>!w.collection).length;
+  const noDef = _fullImportWords.filter(w=>!w.definition_vi).length;
+  document.getElementById('full-import-collection').innerHTML = awCollectionOptions();
+  awOnKhoChange('full-import-collection','full-import-collection-new');
   document.getElementById('full-import-label').textContent =
-    `${nw} từ vựng · ${ne} từ có câu mẫu · ${Object.values(_fullImportExamples).reduce((s,d)=>s+d.rows.length,0)} câu mẫu`;
+    `${nw} từ vựng · ${ne} từ có câu mẫu · ${Object.values(_fullImportExamples).reduce((s,d)=>s+d.rows.length,0)} câu mẫu`
+    + (noCol?` · ${noCol} dòng chưa ghi kho`:'')
+    + (noDef?` · ${noDef} dòng không có nghĩa TV`:'');
 
   // Words table
   document.getElementById('full-import-words-preview').innerHTML = nw ? `
     <table style="width:100%;border-collapse:collapse;font-size:11px">
       <thead><tr style="background:var(--card2)">
+        <th style="padding:6px 10px;text-align:left;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border)">Kho</th>
         <th style="padding:6px 10px;text-align:left;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border)">Từ</th>
         <th style="padding:6px 10px;text-align:left;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border)">Nghĩa TV</th>
         <th style="padding:6px 10px;text-align:left;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border)">Cấp</th>
       </tr></thead>
       <tbody>${_fullImportWords.map(w=>`<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:6px 10px;font-weight:700;color:var(--accent)">${w.term}</td>
-        <td style="padding:6px 10px;color:var(--muted)">${w.definition_vi||'—'}</td>
-        <td style="padding:6px 10px;color:var(--a3)">${w.level||'—'}</td>
+        <td style="padding:6px 10px;color:var(--accent2);font-family:var(--mono);font-size:10px">${awEsc(w.collection||'(theo ô chọn)')}</td>
+        <td style="padding:6px 10px;font-weight:700;color:var(--accent)">${awEsc(w.term)}</td>
+        <td style="padding:6px 10px;color:var(--muted)">${awEsc(w.definition_vi||'—')}</td>
+        <td style="padding:6px 10px;color:var(--accent3)">${awEsc(w.level||'—')}</td>
       </tr>`).join('')}</tbody>
     </table>` : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Không có dữ liệu từ vựng</div>';
 
@@ -2046,9 +2795,9 @@ function renderFullPreview() {
         <th style="padding:6px 10px;text-align:left;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border)">Câu tiếng Anh</th>
       </tr></thead>
       <tbody>${exEntries.flatMap(([term,d])=>d.rows.map((r,i)=>`<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:6px 10px;font-weight:${i===0?700:400};color:${i===0?'var(--accent)':'var(--muted)'}">${i===0?term:''}</td>
-        <td style="padding:6px 10px"><span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;${TYPE_BADGE[r.type]||''}">${r.type}</span></td>
-        <td style="padding:6px 10px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.sentence||'—'}</td>
+        <td style="padding:6px 10px;font-weight:${i===0?700:400};color:${i===0?'var(--accent)':'var(--muted)'}">${i===0?awEsc(term):''}</td>
+        <td style="padding:6px 10px"><span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;${TYPE_BADGE[r.type]||''}">${awEsc(r.type)}</span></td>
+        <td style="padding:6px 10px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${awEsc(r.sentence||'—')}</td>
       </tr>`)).join('')}</tbody>
     </table>` : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Không có câu mẫu</div>';
 
@@ -2056,9 +2805,12 @@ function renderFullPreview() {
 }
 
 async function confirmFullImport() {
-  const totalWords = _fullImportWords.length;
+  if (!_fullImportWords.length && !Object.keys(_fullImportExamples).length) { toast('Không có dữ liệu để import.','warn'); return; }
+  const kho = awImportKho('full-import-collection','full-import-collection-new');
+  if (!kho) { toast('Hãy chọn (hoặc đặt tên) kho từ vựng để nạp vào.','warn'); return; }
+  const wordRows = awApplyCollection(_fullImportWords, kho);   // điền kho + gộp dòng trùng
+  const totalWords = wordRows.length;
   const totalEx    = Object.keys(_fullImportExamples).length;
-  if (!totalWords && !totalEx) { toast('Không có dữ liệu để import.','warn'); return; }
 
   const btn = document.getElementById('full-import-btn');
   btn.disabled = true; btn.textContent = '⏳ Đang import…';
@@ -2073,9 +2825,9 @@ async function confirmFullImport() {
   // 1. Import words
   if (totalWords) {
     label.textContent = `Đang import từ vựng (${totalWords} từ)…`;
-    for (let i=0; i<_fullImportWords.length; i+=100) {
-      const chunk = _fullImportWords.slice(i,i+100);
-      const { error } = await _sb.from('words').upsert(chunk, {onConflict:'term'});
+    for (let i=0; i<wordRows.length; i+=100) {
+      const chunk = wordRows.slice(i,i+100);
+      const { error } = await _sb.from('words').upsert(chunk, {onConflict:'collection,term'});
       if (error) { errors++; toast('❌ Lỗi import từ: ' + error.message,'error'); }
       done += chunk.length;
       fill.style.width = (done/total*100) + '%';
@@ -2091,7 +2843,13 @@ async function confirmFullImport() {
       label.textContent = `Đang lưu câu mẫu "${term}"… (${i+1}/${exTerms.length})`;
       fill.style.width = ((totalWords + i) / total * 100) + '%';
       try {
-        const { data: found } = await _sb.from('words').select('id').ilike('term', term).limit(1);
+        // .eq chứ không .ilike — Oxford có IT ≠ it, May ≠ may
+        let fq = _sb.from('words').select('id').eq('term', term);
+        const inFile = wordRows.find(w => w.term === term);
+        const colOf = inFile?.collection || kho;
+        if (colOf) fq = fq.eq('collection', colOf);
+        let { data: found } = await fq.limit(1);
+        if (!found?.length) ({ data: found } = await _sb.from('words').select('id').eq('term', term).limit(1));
         if (!found?.length) { detail.textContent += ` | ⚠️ Không tìm thấy "${term}"`; errors++; continue; }
         const exData = _fullImportExamples[term];
         // Auto-set example_sentence from Tự sự row
@@ -2110,6 +2868,7 @@ async function confirmFullImport() {
   detail.textContent = `${totalWords} từ vựng · ${totalEx} câu mẫu đã được lưu`;
   toast(`✅ Import xong! ${totalWords} từ · ${totalEx} câu mẫu`, 'success');
   btn.textContent = '✅ Xong';
+  _wColLoaded = false;
   loadWords(); loadNavCounts();
 }
 
@@ -2121,8 +2880,53 @@ function clearFullImport() {
 }
 
 function downloadFullTemplate() {
-  // Download the pre-made xlsx template
-  window.open('englishup_upload_template.xlsx', '_blank');
+  if (typeof XLSX === 'undefined') { toast('⚠️ Đang tải thư viện Excel, thử lại sau 2 giây.','warn'); return; }
+  const VN = {collection:'Kho',term:'Từ',phonetic:'IPA',definition_vi:'Nghĩa',definition_en:'Nghĩa tiếng Anh',
+    part_of_speech:'Loại',level:'CEFR',part_name:'Tên phần',part_code:'Mã phần',branch_name:'Tên nhánh',
+    branch_code:'Mã nhánh',topic:'Chủ đề',topic_code:'Mã CĐ',group_code:'Nhóm',onset:'PÂ đầu',rime1:'Vần 1',
+    syl2:'Âm 2',syl3:'Âm 3',syl4p:'Âm 4+',syllables:'Số âm tiết',stress:'Trọng âm',suffix:'Hậu tố',
+    root_word:'Gốc',image_url:'URL ảnh',audio_url:'URL audio'};
+  const ex = {collection:'Oxford 5000',term:'reluctant',phonetic:'rɪˈlʌktənt',definition_vi:'miễn cưỡng, không muốn',
+    definition_en:'',part_of_speech:'tt',level:'B2',part_name:'CON NGƯỜI',part_code:'I',
+    branch_name:'CẢM XÚC & THÁI ĐỘ',branch_code:'C',topic:'Ý muốn & quyết tâm',topic_code:'C7',group_code:'',
+    onset:'r',rime1:'ɪ',syl2:'lʌk',syl3:'tənt',syl4p:'',syllables:3,stress:2,suffix:'-ant',root_word:'reluctance',
+    image_url:'',audio_url:''};
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1 — Hướng dẫn
+  const hd = [['CÁCH DÙNG FILE MẪU'],[''],
+    ['1. Điền dữ liệu vào sheet "Từ vựng" — hàng 1 là tên cột, ĐỪNG đổi tên cột.'],
+    ['2. Xoá 2 hàng ví dụ tô vàng trước khi lưu.'],
+    ['3. Bắt buộc: collection (kho) · term (từ) · definition_vi (nghĩa tiếng Việt).'],
+    ['4. Trùng (collection, term) sẽ được cập nhật đè — phân biệt HOA/thường: IT ≠ it.'],
+    ['5. Câu mẫu điền ở sheet "Câu mẫu", mỗi từ 5 hàng (Tự sự · Miêu tả · Biểu cảm · Thuyết minh · Nghị luận).'],
+    ['6. Lưu lại rồi kéo thả vào tab "File đầy đủ (Excel)" ở trang Upload dữ liệu.'],[''],
+    ['BẢNG TRA CỘT'],['Tên cột (giữ nguyên)','Nhãn tiếng Việt','Ghi chú']];
+  AW_IMPORT_COLS.forEach(c=>hd.push([c, VN[c]||c,
+    (c==='collection'||c==='term'||c==='definition_vi')?'Bắt buộc':
+    (AW_NUM_COLS.indexOf(c)>=0?'Số nguyên':'')]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hd), 'Hướng dẫn');
+
+  // Sheet 2 — Từ vựng
+  const w1 = AW_IMPORT_COLS.slice();
+  const w2 = AW_IMPORT_COLS.map(c=>ex[c]);
+  const w3 = AW_IMPORT_COLS.map(c=>c==='collection'?'Oxford 5000':(c==='term'?'abolish':(c==='definition_vi'?'bãi bỏ, huỷ bỏ':'')));
+  const wsW = XLSX.utils.aoa_to_sheet([w1,w2,w3]);
+  wsW['!cols'] = AW_IMPORT_COLS.map(c=>({wch: Math.max(10, (VN[c]||c).length+4)}));
+  XLSX.utils.book_append_sheet(wb, wsW, 'Từ vựng');
+
+  // Sheet 3 — Câu mẫu
+  const exHead = ['term','situation','type','sentence','meaning','alternatives','opposites'];
+  const types = ['Tự sự','Miêu tả','Biểu cảm','Thuyết minh','Nghị luận'];
+  const exRows = [exHead].concat(types.map((t,i)=>[
+    i===0?'reluctant':'reluctant','Nhận việc mới ở công ty',t,
+    'She was reluctant to take the new role.','Cô ấy miễn cưỡng nhận vai trò mới.',
+    'reluctant → hesitant / unwilling','reluctant ↔ eager']));
+  const wsE = XLSX.utils.aoa_to_sheet(exRows);
+  wsE['!cols'] = [{wch:14},{wch:26},{wch:13},{wch:42},{wch:34},{wch:30},{wch:24}];
+  XLSX.utils.book_append_sheet(wb, wsE, 'Câu mẫu');
+
+  XLSX.writeFile(wb, 'mau_kho_tu_vung_day_du.xlsx');
 }
 
 // ── TOAST ──
