@@ -823,6 +823,20 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
 .eu-ub-btn:hover { opacity: .88; }
 
 .vt-more { text-align: center; padding: 18px 10px 4px; color: var(--muted); font-size: 12px; }
+.vt-empty {
+  display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+  text-align: left; max-width: 640px; margin: 20px auto 0;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px;
+}
+.vt-empty-ico { font-size: 30px; opacity: .5; }
+.vt-empty b { color: var(--text); font-size: 14px; }
+.vt-empty span { font-size: 12.5px; color: var(--muted); }
+.vt-empty-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: 8px;
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 8px 14px; cursor: pointer; white-space: nowrap;
+}
+.vt-empty-btn:hover { opacity: .88; }
 .vt-reset {
   background: var(--card); border: 1px solid var(--border); border-radius: 8px;
   color: var(--muted); font-size: 12px; font-family: inherit;
@@ -1904,35 +1918,74 @@ function vtDistinct(words, c){
 }
 const VT_EMPTY = '__none__';   // giá trị đại diện cho ô trống
 
-function vtFilterCell(c, words){
+// Sơ đồ cây chủ đề: Tên phần → Tên nhánh → Chủ đề (Mã CĐ) → Nhóm.
+// Cấp con bị cấp cha thu hẹp, nhưng cấp cha KHÔNG bị con thu hẹp —
+// nhờ vậy vẫn đổi được Tên phần khi đang chọn sẵn một nhánh.
+const TREE_RANK = { part_name: 1, branch_name: 2, topic: 3, topic_code: 3, group_code: 4 };
+
+// Các từ còn lại khi bỏ qua riêng bộ lọc của cột `exceptKey`
+// (và bỏ qua cả các cấp CON của nó trong cây).
+// Nhờ vậy danh sách chọn của mỗi cột chỉ còn giá trị THỰC SỰ có từ —
+// chọn Tên phần "CON NGƯỜI" thì ô Tên nhánh chỉ liệt kê nhánh thuộc phần đó.
+function vtFacetRows(exceptKey){
+  const q = (currentSearch || '').toLowerCase();
+  const exRank = TREE_RANK[exceptKey];
+  const active = VT_COLS.filter(c => c.filter && _vtFilters[c.k] && c.k !== exceptKey
+    && !(exRank && TREE_RANK[c.k] && TREE_RANK[c.k] > exRank));
+  if (!q && !active.length) return currentWords || [];
+  return (currentWords || []).filter(w => {
+    if (q && !(String(w.term || '').toLowerCase().includes(q) ||
+               String(w.definition_vi || '').toLowerCase().includes(q))) return false;
+    return active.every(c => vtMatch(c, w));
+  });
+}
+
+// Danh sách <option> của một ô lọc dạng chọn
+function vtSelectOptions(c){
+  const cur = _vtFilters[c.k] || '';
+  const opt = (v, lab) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(lab)}</option>`;
+  let body = '';
+  if (c.filter === 'select' || c.filter === 'pos'){
+    const rows = vtFacetRows(c.k);
+    body = vtDistinct(rows, c).map(o => opt(o, o)).join('');
+    // chỉ mời "(chưa có)" khi thật sự còn từ bỏ trống ô này
+    if (rows.some(w => {
+          const v = c.get(w);
+          return c.filter === 'pos' ? !posTags(v).length : !String(v == null ? '' : v).trim();
+        })) body += opt(VT_EMPTY, '(chưa có)');
+  }
+  else if (c.filter === 'yn')  body = opt('1', c.ynLab[0]) + opt('0', c.ynLab[1]);
+  else if (c.filter === 'exq') body = opt('full', 'Đủ 5 câu') + opt('part', 'Thiếu câu') + opt('none', 'Chưa có câu');
+  else if (c.filter === 'srs') body = opt('any', 'Đã thêm') + opt('none', 'Chưa thêm') +
+                                      SRS_STATES.map(s => opt(String(s.k), s.lab)).join('');
+  return `<option value="">Tất cả</option>` + body;
+}
+
+function vtFilterCell(c){
   if (!c.filter) return '';
   const cur = _vtFilters[c.k] || '';
   const on  = cur ? ' on' : '';
-  const opt = (v, lab) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(lab)}</option>`;
   if (c.filter === 'text')
     return `<input class="vt-f${on}" type="text" data-fk="${c.k}" value="${esc(cur)}" placeholder="Lọc…">`;
-  if (c.filter === 'select' || c.filter === 'pos')
-    return `<select class="vt-f${on}" data-fk="${c.k}"><option value="">Tất cả</option>` +
-      vtDistinct(words, c).map(o => opt(o, o)).join('') +
-      opt(VT_EMPTY, '(chưa có)') + `</select>`;
-  if (c.filter === 'yn')
-    return `<select class="vt-f${on}" data-fk="${c.k}"><option value="">Tất cả</option>` +
-      opt('1', c.ynLab[0]) + opt('0', c.ynLab[1]) + `</select>`;
-  if (c.filter === 'exq')
-    return `<select class="vt-f${on}" data-fk="${c.k}"><option value="">Tất cả</option>` +
-      opt('full', 'Đủ 5 câu') + opt('part', 'Thiếu câu') + opt('none', 'Chưa có câu') + `</select>`;
-  if (c.filter === 'srs')
-    return `<select class="vt-f${on}" data-fk="${c.k}"><option value="">Tất cả</option>` +
-      opt('any', 'Đã thêm') + opt('none', 'Chưa thêm') +
-      SRS_STATES.map(s => opt(String(s.k), s.lab)).join('') + `</select>`;
-  return '';
+  return `<select class="vt-f${on}" data-fk="${c.k}">${vtSelectOptions(c)}</select>`;
+}
+
+// Vẽ lại danh sách chọn của mọi ô lọc (gọi sau mỗi lần đổi bộ lọc)
+function vtRefreshSelects(){
+  document.querySelectorAll('#words-grid select.vt-f').forEach(sel => {
+    const c = VT_COL[sel.dataset.fk];
+    if (!c) return;
+    sel.innerHTML = vtSelectOptions(c);
+    sel.value = _vtFilters[c.k] || '';
+    sel.classList.toggle('on', !!_vtFilters[c.k]);
+  });
 }
 
 // 2 cột đầu được ghim khi cuộn ngang
 function vtStickCls(i){ return i === 0 ? 'vt-stick' : (i === 1 ? 'vt-stick vt-stick2' : ''); }
 function vtStickLeft(i, cols){ return i === 0 ? 'left:0;' : (i === 1 ? `left:${parseInt(cols[0].w, 10)}px;` : ''); }
 
-function vtHead(words){
+function vtHead(){
   const cols = vtCols();
   const ths = cols.map((c, i) => {
     const sorted = (_vtSortKey === c.k) && c.sort;
@@ -1943,7 +1996,7 @@ function vtHead(words){
     return `<th class="${cls}" style="${left}width:${c.w};min-width:${c.w}"${click}>${esc(c.lab)}${arrow}</th>`;
   }).join('');
   const fs = cols.map((c, i) =>
-    `<th class="${vtStickCls(i)}" style="${vtStickLeft(i, cols)}">${vtFilterCell(c, words)}</th>`
+    `<th class="${vtStickCls(i)}" style="${vtStickLeft(i, cols)}">${vtFilterCell(c)}</th>`
   ).join('');
   return `<thead><tr>${ths}</tr><tr class="vt-filters">${fs}</tr></thead>`;
 }
@@ -2021,9 +2074,9 @@ function renderWords(words){
     const sc = document.getElementById('shown-count'); if (sc) sc.textContent = '0';
     return;
   }
-  vtPruneFilters(words);
+  vtPruneFilters();
   host.innerHTML =
-    `<table class="vtable">${vtHead(words)}<tbody id="vt-body"></tbody></table>` +
+    `<table class="vtable">${vtHead()}<tbody id="vt-body"></tbody></table>` +
     `<div class="vt-more" id="vt-more"></div>`;
   vtBindFilters();
   vtBindRowClicks();
@@ -2031,14 +2084,20 @@ function renderWords(words){
   applyVtFilters();
 }
 
-// Đổi chủ đề/cấp độ → giá trị lọc cũ có thể không còn trong danh sách → bỏ đi
-// (nếu không, bảng sẽ trống trơn mà ô lọc vẫn hiện "Tất cả")
-function vtPruneFilters(words){
-  VT_COLS.forEach(c => {
-    if (c.filter !== 'select' && c.filter !== 'pos') return;
-    const f = _vtFilters[c.k];
-    if (f && f !== VT_EMPTY && vtDistinct(words, c).indexOf(f) < 0) _vtFilters[c.k] = '';
-  });
+// Bỏ những giá trị lọc không còn hợp lệ trong ngữ cảnh hiện tại.
+// Ví dụ đang lọc nhánh "NGHỆ THUẬT…" rồi chọn phần "CON NGƯỜI" → nhánh đó bị bỏ,
+// tránh cảnh bảng trống trơn khiến học viên tưởng chủ đề không có từ nào.
+function vtPruneFilters(){
+  for (let pass = 0; pass < 5; pass++){
+    let changed = false;
+    VT_COLS.forEach(c => {
+      if (c.filter !== 'select' && c.filter !== 'pos') return;
+      const f = _vtFilters[c.k];
+      if (!f || f === VT_EMPTY) return;
+      if (vtDistinct(vtFacetRows(c.k), c).indexOf(f) < 0) { _vtFilters[c.k] = ''; changed = true; }
+    });
+    if (!changed) break;
+  }
 }
 
 // Bấm dòng để mở popup, bấm nút loa để nghe — gắn 1 lần trên container
@@ -2109,7 +2168,7 @@ function vtSort(key){
   const table = document.querySelector('#words-grid table.vtable');
   if (table){
     const old = table.querySelector('thead');
-    if (old) old.outerHTML = vtHead(currentWords);   // vẽ lại mũi tên, giữ giá trị lọc
+    if (old) old.outerHTML = vtHead();   // vẽ lại mũi tên, giữ giá trị lọc
     vtBindFilters();
   }
   applyVtFilters();
@@ -2155,6 +2214,8 @@ function vtMatch(c, w){
 }
 
 function applyVtFilters(){
+  vtPruneFilters();
+  vtRefreshSelects();
   const active = VT_COLS.filter(c => c.filter && _vtFilters[c.k]);
   const q = (currentSearch || '').toLowerCase();
   _vtRows = (currentWords || []).filter(w => {
@@ -2190,9 +2251,16 @@ function vtAppend(){
   if (!body) return;
   const more = document.getElementById('vt-more');
   if (_vtShown >= _vtRows.length){
-    if (more) more.textContent = _vtRows.length
-      ? `Đã hiển thị tất cả ${_vtRows.length} từ`
-      : '— Không có từ nào khớp bộ lọc —';
+    if (more){
+      if (_vtRows.length) more.textContent = `Đã hiển thị tất cả ${_vtRows.length} từ`;
+      else more.innerHTML =
+        '<div class="vt-empty">' +
+          '<div class="vt-empty-ico">🔍</div>' +
+          '<div><b>Không có từ nào khớp bộ lọc hiện tại</b><br>' +
+          '<span>Kho vẫn còn từ — chỉ là các ô lọc đang thu hẹp quá. Thử bỏ bớt một điều kiện.</span></div>' +
+          '<button class="vt-empty-btn" onclick="resetColFilters()">✕ Xoá toàn bộ bộ lọc</button>' +
+        '</div>';
+    }
     return;
   }
   const next = _vtRows.slice(_vtShown, _vtShown + VT_PAGE);
