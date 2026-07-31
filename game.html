@@ -260,9 +260,15 @@ select.inp:focus{border-color:var(--accent)}
 
     <div class="row">
       <div class="sect col">
+        <div class="sect-label">Kho từ vựng</div>
+        <select class="inp" id="setup-collection" onchange="selectCollection(this.value)">
+          <option value="">Đang tải…</option>
+        </select>
+      </div>
+      <div class="sect col">
         <div class="sect-label">Chủ đề</div>
         <select class="inp" id="setup-topic" onchange="updateAvail()">
-          <option value="__all__">Tất cả chủ đề được phép</option>
+          <option value="__all__">Tất cả chủ đề</option>
         </select>
       </div>
       <div class="sect col">
@@ -372,6 +378,8 @@ const MODES={
 // ── STATE ──
 let currentUser=null, myRole='student', myAllowedTopics=null;
 let allTopics=[];
+// Kho từ vựng (words.collection) — nạp cả kho 1 lần rồi lọc client-side
+let gCollections=[], gCollection=null, gPool=[], _gPoolCache={}, _gInit=false;
 let selMode='meaning', selLevel='', selCount=10;
 let availWords=[];                 // từ trong phạm vi đang chọn (đã lọc)
 let round=null;                    // {mode,kind,items|boards,idx,correct,xpEarned,answered}
@@ -397,9 +405,9 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 async function checkAuth(){
   try{
     const {data:{session}}=await sb.auth.getSession();
-    if(session?.user){ setUser(session.user); await loadUserProfile(session.user.id); }
+    if(session?.user){ setUser(session.user); await loadUserProfile(session.user.id); await ensurePool(); }
     else showGate();
-    sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user){setUser(s.user);loadUserProfile(s.user.id);} else clearUser(); });
+    sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user){setUser(s.user);loadUserProfile(s.user.id).then(ensurePool);} else clearUser(); });
   }catch(e){ console.warn('auth',e.message); showGate(); }
 }
 function showGate(){ document.getElementById('auth-gate').classList.add('open'); document.getElementById('app').style.display='none'; }
@@ -443,8 +451,7 @@ async function loadUserProfile(uid){
       myAllowedTopics=new Set((acc||[]).map(a=>a.topic_id));
     }else myAllowedTopics=null;
     await loadTopics();
-    buildTopicSelect();
-    updateAvail();
+    await ensurePool();
   }catch(e){ console.warn('profile',e.message); }
 }
 function openLogin(){ document.getElementById('overlay-login').classList.add('open'); setTimeout(()=>document.getElementById('login-email').focus(),100); }
@@ -463,7 +470,7 @@ async function doLogin(){
 async function handleLogout(){ if(!confirm('Đăng xuất?'))return; await sb.auth.signOut(); clearUser(); }
 function handleOverlayClick(evt,id){ if(evt.target.id===id) document.getElementById(id).classList.remove('open'); }
 
-// ── TOPICS ──
+// ── KHO TỪ VỰNG + CHỦ ĐỀ ──
 async function loadTopics(){
   try{
     let {data,error}=await sb.from('topics').select('id,name,level').order('name');
@@ -471,21 +478,100 @@ async function loadTopics(){
     allTopics=data||[];
   }catch(e){ console.warn('topics',e.message); allTopics=[]; }
 }
-function visibleTopics(){ return (myAllowedTopics!==null)?allTopics.filter(t=>myAllowedTopics.has(t.id)):allTopics; }
-function splitTopic(name){ const s=name||''; const i=s.indexOf(' - '); if(i===-1)return{group:null,child:s}; return{group:s.slice(0,i).trim(),child:s.slice(i+3).trim()}; }
+
+// Danh sách kho — đọc view word_collections, có nhánh dự phòng tự đếm
+async function loadCollections(){
+  let list=[];
+  try{
+    const {data,error}=await sb.from('word_collections').select('*');
+    if(!error&&data&&data.length) list=data.map(r=>({name:r.collection||'Khac',n:+r.word_count||0}));
+  }catch(e){}
+  if(!list.length){
+    try{
+      const m={};
+      for(let from=0; from<200000; from+=1000){
+        const {data,error}=await sb.from('words').select('collection').order('id').range(from,from+999);
+        if(error) throw error;
+        (data||[]).forEach(r=>{const k=r.collection||'Khac'; m[k]=(m[k]||0)+1;});
+        if(!data||data.length<1000) break;
+      }
+      list=Object.keys(m).map(k=>({name:k,n:m[k]}));
+    }catch(e){ console.warn('collections',e.message); }
+  }
+  list.sort((a,b)=>b.n-a.n);
+  gCollections=list;
+  let saved=null; try{ saved=localStorage.getItem('eu_game_collection'); }catch(e){}
+  gCollection=(saved&&list.some(c=>c.name===saved))?saved:(list[0]?list[0].name:null);
+  const sel=document.getElementById('setup-collection');
+  if(sel) sel.innerHTML=list.length
+    ? list.map(c=>`<option value="${esc(c.name)}"${c.name===gCollection?' selected':''}>${esc(c.name)} (${c.n})</option>`).join('')
+    : '<option value="">Chưa có kho từ vựng nào</option>';
+}
+function selectCollection(name){
+  if(!name||name===gCollection) return;
+  gCollection=name;
+  try{ localStorage.setItem('eu_game_collection',name); }catch(e){}
+  const t=document.getElementById('setup-topic'); if(t) t.value='__all__';
+  loadPoolThenRefresh();
+}
+
+// Nạp TOÀN BỘ từ của kho đang chọn.
+// BẮT BUỘC phân trang .range(): PostgREST mặc định chỉ trả tối đa 1000 dòng
+// → thiếu cái này thì kho Oxford 3000 chỉ vào game được 1/3.
+async function loadKhoWords(kho){
+  if(_gPoolCache[kho]) return _gPoolCache[kho];
+  const all=[]; const STEP=1000;
+  try{
+    for(let from=0; from<200000; from+=STEP){
+      let q=sb.from('words').select('id,term,phonetic,definition_vi,definition_en,level,topic,part_name,branch_name,image_url,audio_url');
+      if(kho) q=q.eq('collection',kho);
+      const {data,error}=await q.order('id',{ascending:true}).range(from,from+STEP-1);
+      if(error) throw error;
+      all.push.apply(all,data||[]);
+      if(!data||data.length<STEP) break;
+    }
+  }catch(e){ console.warn('words',e.message); return []; }
+  // bỏ từ do học viên tự thêm từ video — game chỉ dùng kho của Admin
+  const pool=all.filter(w=>w.term&&(w.definition_vi||w.definition_en)&&(w.topic||'')!=='Từ video');
+  _gPoolCache[kho]=pool;
+  return pool;
+}
+
+// Chủ đề học viên được phép — ánh xạ topic_access (id) sang TÊN chủ đề trong words.
+// Bảng `topics` là dữ liệu cũ, không khớp bộ chủ đề mới → nếu không giao nhau
+// thì coi như không giới hạn (giống vocab.html hiện nay) chứ không khoá trắng.
+function allowedTopicNames(){
+  if(myAllowedTopics===null) return null;
+  const inPool=new Set(gPool.map(w=>w.topic).filter(Boolean));
+  const names=allTopics.filter(t=>myAllowedTopics.has(t.id)).map(t=>t.name).filter(n=>inPool.has(n));
+  return names.length?names:null;
+}
+
+// Cây chủ đề dựng thẳng từ dữ liệu từ vựng: Tên phần → Chủ đề
 function buildTopicSelect(){
-  const sel=document.getElementById('setup-topic');
-  const topics=visibleTopics();
-  const groups=new Map(); const standalone=[];
-  topics.forEach(t=>{ const {group}=splitTopic(t.name); if(!group){standalone.push(t);return;} if(!groups.has(group))groups.set(group,[]); groups.get(group).push(t); });
-  let html='<option value="__all__">Tất cả chủ đề được phép</option>';
-  groups.forEach((ts,g)=>{
+  const sel=document.getElementById('setup-topic'); if(!sel) return;
+  const prev=sel.value;
+  const allow=allowedTopicNames();
+  const ok=allow?new Set(allow):null;
+  const groups=new Map(), standalone=new Set();
+  gPool.forEach(w=>{
+    const t=(w.topic||'').trim(); if(!t) return;
+    if(ok&&!ok.has(t)) return;
+    const g=(w.part_name||'').trim();
+    if(!g){ standalone.add(t); return; }
+    if(!groups.has(g)) groups.set(g,new Set());
+    groups.get(g).add(t);
+  });
+  const cmp=(a,b)=>a.localeCompare(b,'vi');
+  let html=`<option value="__all__">${allow?'Tất cả chủ đề được phép':'Tất cả chủ đề'}</option>`;
+  Array.from(groups.keys()).sort(cmp).forEach(g=>{
     html+=`<optgroup label="${esc(g)}">`;
-    ts.forEach(t=>{ html+=`<option value="${esc(t.id)}">${esc(splitTopic(t.name).child)}${t.level?' ('+esc(t.level)+')':''}</option>`; });
+    Array.from(groups.get(g)).sort(cmp).forEach(t=>{ html+=`<option value="${esc(t)}">${esc(t)}</option>`; });
     html+='</optgroup>';
   });
-  standalone.forEach(t=>{ html+=`<option value="${esc(t.id)}">${esc(t.name)}${t.level?' ('+esc(t.level)+')':''}</option>`; });
+  Array.from(standalone).sort(cmp).forEach(t=>{ html+=`<option value="${esc(t)}">${esc(t)}</option>`; });
   sel.innerHTML=html;
+  if(prev&&Array.from(sel.options).some(o=>o.value===prev)) sel.value=prev;
 }
 
 // ── SETUP CONTROLS ──
@@ -506,22 +592,36 @@ function selectLevel(lv,el){ selLevel=lv; document.querySelectorAll('#level-chip
 function selectCount(n,el){ selCount=n; document.querySelectorAll('#count-chips .chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); }
 
 function topicNamesInScope(){
-  const sel=document.getElementById('setup-topic').value;
-  if(sel&&sel!=='__all__'){ const t=allTopics.find(x=>x.id===sel); return t?[t.name]:[]; }
-  // tất cả: học viên giới hạn → chỉ chủ đề được cấp
-  if(myAllowedTopics!==null) return visibleTopics().map(t=>t.name);
-  return null; // null = không lọc theo chủ đề (toàn bộ)
+  const sel=document.getElementById('setup-topic');
+  const v=sel?sel.value:'__all__';
+  if(v&&v!=='__all__') return [v];
+  return allowedTopicNames();   // null = không giới hạn chủ đề
 }
 
-async function loadAvailWords(){
-  let q=sb.from('words').select('id,term,phonetic,definition_vi,definition_en,level,topic,image_url,audio_url').order('term');
+// Lọc hoàn toàn client-side trên kho đã nạp — không gọi mạng mỗi lần đổi lựa chọn
+function loadAvailWords(){
   const names=topicNamesInScope();
-  if(names!==null){ if(!names.length){ availWords=[]; return; } q=q.in('topic',names); }
-  if(selLevel) q=q.eq('level',selLevel);
-  const {data,error}=await q;
-  if(error){ console.warn('words',error.message); availWords=[]; return; }
-  // bỏ từ do học viên tự thêm từ video (chủ đề 'Từ video') — game chỉ dùng kho của Admin
-  availWords=(data||[]).filter(w=>w.term&&(w.definition_vi||w.definition_en)&&(w.topic||'')!=='Từ video');
+  const ok=names?new Set(names):null;
+  availWords=gPool.filter(w=>{
+    if(ok&&!ok.has((w.topic||'').trim())) return false;
+    if(selLevel&&w.level!==selLevel) return false;
+    return true;
+  });
+}
+
+// Nạp kho + từ vựng đúng 1 lần, kể cả khi truy vấn hồ sơ học viên lỗi
+async function ensurePool(){
+  if(_gInit) return;
+  _gInit=true;
+  await loadCollections();
+  await loadPoolThenRefresh();
+}
+async function loadPoolThenRefresh(){
+  const el=document.getElementById('avail'); if(el) el.textContent='Đang tải từ vựng…';
+  const btn=document.getElementById('btn-start'); if(btn) btn.disabled=true;
+  gPool=await loadKhoWords(gCollection);
+  buildTopicSelect();
+  updateAvail();
 }
 
 let _availTimer=null;
@@ -529,8 +629,8 @@ function updateAvail(){
   const el=document.getElementById('avail'); const btn=document.getElementById('btn-start');
   el.textContent='Đang tải từ vựng…'; btn.disabled=true;
   clearTimeout(_availTimer);
-  _availTimer=setTimeout(async()=>{
-    await loadAvailWords();
+  _availTimer=setTimeout(()=>{
+    loadAvailWords();
     const usable=usablePool(selMode);
     const need=minNeeded(selMode);
     if(usable.length<need){
