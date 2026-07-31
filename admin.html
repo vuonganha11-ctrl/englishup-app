@@ -224,7 +224,6 @@ select.input{cursor:pointer}
       <button class="nav-btn active" data-section="dashboard" onclick="nav('dashboard',this)"><span class="nbi">📊</span>Dashboard</button>
       <div class="nav-group-label">Nội dung</div>
       <button class="nav-btn" data-section="words" onclick="nav('words',this)"><span class="nbi">📖</span>Từ vựng<span class="nav-count" id="nav-count-words">—</span></button>
-      <button class="nav-btn" data-section="uwords" onclick="nav('uwords',this)"><span class="nbi">🧑‍🎓</span>Từ vựng học viên<span class="nav-count" id="nav-count-uwords">—</span></button>
       <button class="nav-btn" data-section="courses" onclick="nav('courses',this)"><span class="nbi">🎓</span>Khoá học<span class="nav-count" id="nav-count-courses">—</span></button>
       <button class="nav-btn" data-section="video" onclick="nav('video',this)"><span class="nbi">🎬</span>Video<span class="nav-count" id="nav-count-video">—</span></button>
       <button class="nav-btn" onclick="location.href='admin-shorts.html'"><span class="nbi">📱</span>Shorts</button>
@@ -294,22 +293,6 @@ select.input{cursor:pointer}
           </div>
           <div id="words-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
           <div class="pagination" id="words-pagination"></div>
-        </div>
-      </div>
-
-      <!-- TỪ VỰNG HỌC VIÊN (topic 'Từ video') -->
-      <div class="section-page" id="sec-uwords">
-        <div class="page-header">
-          <h1>🧑‍🎓 Từ vựng của học viên</h1>
-        </div>
-        <div class="table-wrap">
-          <div class="table-toolbar">
-            <span class="table-toolbar-title" id="uwords-count-label">Tất cả</span>
-            <div class="search-wrap"><input class="search-input" id="uwords-search" placeholder="Tìm từ…" oninput="filterUserWords(this.value)"></div>
-          </div>
-          <div style="padding:10px 18px;color:var(--muted);font-size:12px;line-height:1.5;border-bottom:1px solid var(--border)">Đây là các từ học viên tự lưu khi xem video (chủ đề <b>Từ video</b>). Chúng <b>không hiện</b> trong kho Từ vựng chung, Game hay trang Từ vựng của học viên khác. Sửa nghĩa/phiên âm ở đây sẽ áp dụng cho thẻ Flashcard đang dùng từ này. Xoá có thể làm mất thẻ Flashcard của học viên.</div>
-          <div id="uwords-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
-          <div class="pagination" id="uwords-pagination"></div>
         </div>
       </div>
 
@@ -646,7 +629,115 @@ select.input{cursor:pointer}
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-video')">Huỷ</button>
+      <button class="btn" id="vf-sync-btn" onclick="openSubSync()" style="color:var(--a3);border-color:rgba(52,211,153,.35)" title="Mở trình canh phụ đề: xem video và chỉnh từng mốc, tự lưu ngay">⏱ Canh phụ đề</button>
       <button class="btn primary" onclick="saveVideo()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CANH PHỤ ĐỀ THEO VIDEO -->
+<style>
+#modal-subsync .modal{max-width:1180px;width:96vw}
+#modal-subsync .modal-body{padding-top:10px}
+.ss-wrap{display:grid;grid-template-columns:420px 1fr;gap:14px;align-items:start}
+@media(max-width:920px){.ss-wrap{grid-template-columns:1fr}}
+.ss-left{position:sticky;top:0}
+.ss-vid{aspect-ratio:16/9;width:100%;background:#000;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.ss-vid iframe{width:100%;height:100%;display:block}
+.ss-clockbox{display:flex;align-items:center;gap:8px;margin-top:8px}
+#ss-clock{font-family:var(--mono);font-size:26px;color:var(--a3);font-weight:600;letter-spacing:.5px}
+.ss-tools{margin-top:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px}
+.ss-tools .r{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.ss-tools .r:last-child{margin-bottom:0}
+.ss-tools label{color:var(--muted);font-size:11px}
+.ss-num{width:70px;font-family:var(--mono);text-align:center}
+.ss-rows{max-height:62vh;overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:6px}
+.ss-row{display:grid;grid-template-columns:26px 28px 198px 1fr 26px;gap:6px;align-items:center;padding:5px 4px;border-radius:8px;border:1px solid transparent}
+.ss-row+.ss-row{margin-top:3px}
+.ss-row:hover{background:var(--card)}
+.ss-row.act{background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.45)}
+.ss-n{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
+.ss-play,.ss-del,.ss-mini{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;font-size:11px;line-height:1;padding:0}
+.ss-play{width:26px;height:26px}
+.ss-play:hover{border-color:var(--a3);color:var(--a3)}
+.ss-del{width:24px;height:24px;color:var(--muted)}
+.ss-del:hover{border-color:var(--danger);color:var(--danger)}
+.ss-mini{width:20px;height:22px}
+.ss-mini:hover{border-color:var(--accent);color:var(--accent)}
+.ss-tline{display:flex;gap:3px;align-items:center}
+.ss-tline+.ss-tline{margin-top:3px}
+.ss-lb{font-size:9px;color:var(--muted);width:10px;text-align:center}
+.ss-t{width:86px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-family:var(--mono);font-size:11px;padding:3px 4px;text-align:center}
+.ss-t:focus{outline:none;border-color:var(--accent)}
+.ss-t.bad{border-color:var(--danger);color:var(--danger)}
+.ss-x{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:12px;line-height:1.45;padding:5px 7px;resize:vertical;min-height:44px;font-family:inherit}
+.ss-x:focus{outline:none;border-color:var(--accent)}
+#ss-status{font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+#ss-status.wait{color:var(--a4);border-color:rgba(251,146,60,.4)}
+#ss-status.saving{color:var(--accent);border-color:rgba(79,142,247,.4)}
+#ss-status.ok{color:var(--a3);border-color:rgba(52,211,153,.4)}
+#ss-status.err{color:var(--danger);border-color:rgba(248,113,113,.5)}
+.ss-hint{font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px}
+.ss-hint kbd{background:var(--card2);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:10px;color:var(--text)}
+</style>
+<div class="modal-overlay" id="modal-subsync" onclick="if(event.target===this){event.stopImmediatePropagation();closeSubSync();}">
+  <div class="modal">
+    <div class="modal-header">
+      <span style="font-size:20px">⏱</span>
+      <h2 id="ss-title">Canh phụ đề</h2>
+      <span id="ss-status">—</span>
+      <button class="btn-icon" onclick="closeSubSync()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ss-wrap">
+        <div class="ss-left">
+          <div class="ss-vid" id="ss-player-wrap"><div id="ss-player"></div></div>
+          <div class="ss-clockbox">
+            <span id="ss-clock">0:00.00</span>
+            <button class="btn" style="font-size:12px" onclick="ssToggle()">⏯ Phát / Dừng</button>
+            <span style="margin-left:auto;color:var(--muted);font-size:11px">Tốc độ</span>
+            <select class="input" id="ss-rate" style="width:78px;font-size:12px;padding:5px" onchange="ssSetRate(this.value)">
+              <option value="0.5">0,5×</option><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.25">1,25×</option>
+            </select>
+          </div>
+          <div class="ss-tools">
+            <div class="r">
+              <label><input type="checkbox" id="ss-follow" checked style="vertical-align:-1px"> Cuộn theo câu đang phát</label>
+              <label style="margin-left:10px"><input type="checkbox" id="ss-chain" checked style="vertical-align:-1px"> Nối liền mốc câu kề</label>
+            </div>
+            <div class="r">
+              <label>Dời hàng loạt</label>
+              <input class="input ss-num" id="ss-shift" value="-0.5" title="Số giây, âm là dời sớm lên">
+              <span style="color:var(--muted)">giây</span>
+              <button class="btn" style="font-size:11px;padding:5px 8px" onclick="ssShift(false)">Toàn bộ</button>
+              <button class="btn" style="font-size:11px;padding:5px 8px" onclick="ssShift(true)">Từ câu đang chọn</button>
+            </div>
+            <div class="r">
+              <label>Nghe trước mốc</label>
+              <input class="input ss-num" id="ss-pre" value="0.5" title="Khi bấm ▶ sẽ phát sớm hơn mốc bắt đầu bấy nhiêu giây, để nghe rõ chỗ ngắt câu">
+              <span style="color:var(--muted)">giây</span>
+            </div>
+            <div class="r">
+              <button class="btn" style="font-size:11px;padding:5px 8px" onclick="ssAddCue()">＋ Thêm câu tại mốc đang phát</button>
+              <button class="btn" style="font-size:11px;padding:5px 8px" onclick="ssSaveNow()">💾 Lưu ngay</button>
+            </div>
+          </div>
+          <div class="ss-hint">
+            <kbd>Alt</kbd>+<kbd>[</kbd> lấy mốc bắt đầu · <kbd>Alt</kbd>+<kbd>]</kbd> lấy mốc kết thúc · <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd> nhích mốc bắt đầu 0,05s (thêm <kbd>Shift</kbd> = 0,01s) · <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> chuyển câu &amp; nghe thử · <kbd>Space</kbd> phát/dừng · <kbd>Ctrl</kbd>+<kbd>S</kbd> lưu ngay.<br>
+            Mốc chính xác tới <b style="color:var(--a3)">0,01 giây</b> (dạng <span style="font-family:var(--mono)">phút:giây.phần trăm</span>). Mỗi thay đổi tự lưu lên Supabase sau ~1 giây — không cần đóng cửa sổ.
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <b style="font-size:12px;color:var(--muted);letter-spacing:.4px">CÁC CÂU PHỤ ĐỀ (<span id="ss-count">0</span>)</b>
+            <span style="font-size:11px;color:var(--muted);margin-left:auto">B = bắt đầu · K = kết thúc</span>
+          </div>
+          <div class="ss-rows" id="ss-rows"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="closeSubSync()">✓ Xong</button>
     </div>
   </div>
 </div>
@@ -727,7 +818,6 @@ let _sb = null;
 let _user = null;
 let _words=[], _courses=[], _users=[];
 let _wordsFiltered=[], _wordPage=0, _topicTree={};
-const EU_USER_TOPIC='Từ video'; // chủ đề riêng cho từ học viên tự thêm khi xem video
 const PAGE=15;
 let _pendingImport=[];
 let _imgFile=null,_audioFile=null;
@@ -826,7 +916,7 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,uwords:loadUserWords,courses:loadCourses,video:loadVideos,users:loadUsers})[section]?.();
+  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers})[section]?.();
 }
 
 // ── DASHBOARD ──
@@ -836,11 +926,8 @@ async function loadDashboard(){
   const icons=['📖','🎓'];
   const labels=['Từ vựng','Khoá học'];
   const counts=await Promise.all(tbls.map(t=>_sb.from(t).select('*',{count:'exact',head:true}).then(r=>r.count??0).catch(()=>0)));
-  // thẻ "Từ vựng" chỉ đếm từ của Admin (trừ từ học viên tự thêm)
-  try{ const {count:uc}=await _sb.from('words').select('*',{count:'exact',head:true}).eq('topic',EU_USER_TOPIC); if(typeof uc==='number') counts[0]=Math.max(0,counts[0]-uc); }catch(e){}
   document.getElementById('dash-stats').innerHTML=tbls.map((t,i)=>`<div class="stat-card"><div class="st-val" style="color:${colors[i]}">${icons[i]} ${counts[i]}</div><div class="st-lbl">${labels[i]}</div></div>`).join('');
-  let {data:rw}=await _sb.from('words').select('term,definition_vi,level,topic').order('created_at',{ascending:false}).limit(30);
-  rw=(rw||[]).filter(w=>(w.topic||'')!==EU_USER_TOPIC).slice(0,5);
+  const {data:rw}=await _sb.from('words').select('term,definition_vi,level').order('created_at',{ascending:false}).limit(5);
   document.getElementById('dash-recent-words').innerHTML=(rw||[]).length?rw.map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${w.term}</strong><span style="color:var(--muted);font-size:12px">${w.definition_vi||''}</span><span class="badge badge-blue">${w.level||'—'}</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có từ nào</p></div>';
   const {data:ru}=await _sb.from('user_profiles').select('display_name,email,level,xp').order('created_at',{ascending:false}).limit(5).catch(()=>({data:[]}));
   document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${u.display_name||u.email||'—'}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
@@ -851,14 +938,6 @@ async function loadNavCounts(){
     const el=document.getElementById('nav-count-'+id);
     if(el) el.textContent=count??'—';
   }
-  // đếm riêng: từ học viên tự thêm (topic 'Từ video') — ô Từ vựng chỉ đếm từ của Admin
-  try{
-    const {count:uc}=await _sb.from('words').select('*',{count:'exact',head:true}).eq('topic',EU_USER_TOPIC);
-    const {count:tot}=await _sb.from('words').select('*',{count:'exact',head:true});
-    const eu=document.getElementById('nav-count-uwords'); if(eu) eu.textContent=uc??'—';
-    const ew=document.getElementById('nav-count-words');
-    if(ew&&typeof tot==='number'&&typeof uc==='number') ew.textContent=Math.max(0,tot-uc);
-  }catch(e){}
 }
 
 // ── WORDS ──
@@ -866,55 +945,7 @@ async function loadWords(){
   document.getElementById('words-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
   const {data,error}=await _sb.from('words').select('*').order('created_at',{ascending:false});
   if(error){document.getElementById('words-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
-  // ẩn từ do học viên tự thêm từ video — xem mục riêng "Từ vựng của học viên"
-  _words=(data||[]).filter(w=>(w.topic||'')!==EU_USER_TOPIC); _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
-}
-
-// ── TỪ VỰNG CỦA HỌC VIÊN (topic 'Từ video') ──
-let _uwords=[], _uwordsFiltered=[], _uwordPage=0;
-async function loadUserWords(){
-  document.getElementById('uwords-table-body').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
-  const {data,error}=await _sb.from('words').select('*').eq('topic',EU_USER_TOPIC).order('created_at',{ascending:false});
-  if(error){document.getElementById('uwords-table-body').innerHTML=`<div class="empty-state"><div class="es-icon">❌</div><p>${error.message}</p></div>`;return;}
-  _uwords=data||[]; _uwordsFiltered=[..._uwords]; _uwordPage=0;
-  const el=document.getElementById('nav-count-uwords'); if(el) el.textContent=_uwords.length;
-  const s=document.getElementById('uwords-search'); if(s&&s.value) filterUserWords(s.value); else renderUserWords();
-}
-function filterUserWords(q){
-  q=(q==null?(document.getElementById('uwords-search')||{}).value:q)||'';
-  q=q.trim().toLowerCase();
-  _uwordsFiltered=!q?[..._uwords]:_uwords.filter(w=>((w.term||'')+' '+(w.definition_vi||'')).toLowerCase().includes(q));
-  _uwordPage=0; renderUserWords();
-}
-function renderUserWords(){
-  const total=_uwordsFiltered.length;
-  const start=_uwordPage*PAGE;
-  const slice=_uwordsFiltered.slice(start,start+PAGE);
-  document.getElementById('uwords-count-label').textContent=`${total} từ của học viên`;
-  if(!slice.length){document.getElementById('uwords-table-body').innerHTML='<div class="empty-state"><div class="es-icon">🔍</div><p>Chưa có từ nào</p></div>';document.getElementById('uwords-pagination').innerHTML='';return;}
-  const fmt=d=>{ try{ return new Date(d).toLocaleDateString('vi-VN'); }catch(e){ return '—'; } };
-  document.getElementById('uwords-table-body').innerHTML=`<table><thead><tr><th>Từ vựng</th><th>Phiên âm</th><th>Nghĩa TV</th><th>Cấp độ</th><th>Ngày thêm</th><th style="text-align:right">Thao tác</th></tr></thead><tbody>${slice.map(w=>`<tr><td><strong>${w.term||'—'}</strong></td><td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${w.phonetic||''}</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.definition_vi||'—'}</td><td><span class="badge badge-blue">${w.level||'—'}</span></td><td style="color:var(--muted);font-size:12px">${fmt(w.created_at)}</td><td style="text-align:right"><div class="row-actions" style="justify-content:flex-end"><button class="btn-icon" onclick="editUserWord('${w.id}')">✏️</button><button class="btn-icon del" onclick="confirmDelUserWord('${w.id}','${(w.term||'').replace(/'/g,"\\'")}')">🗑</button></div></td></tr>`).join('')}</tbody></table>`;
-  const totalPages=Math.ceil(total/PAGE);
-  document.getElementById('uwords-pagination').innerHTML=totalPages<=1?'':`<span>${start+1}–${Math.min(start+PAGE,total)} / ${total}</span><div class="page-btns">${_uwordPage>0?`<button class="page-btn" onclick="setUWP(${_uwordPage-1})">←</button>`:''}${Array.from({length:Math.min(totalPages,7)},(_,i)=>`<button class="page-btn${i===_uwordPage?' active':''}" onclick="setUWP(${i})">${i+1}</button>`).join('')}${_uwordPage<totalPages-1?`<button class="page-btn" onclick="setUWP(${_uwordPage+1})">→</button>`:''}</div>`;
-}
-function setUWP(p){_uwordPage=p;renderUserWords();}
-function editUserWord(id){const w=_uwords.find(x=>x.id===id);if(w)openWordModal(w);}
-function confirmDelUserWord(id,name){
-  document.getElementById('confirm-title').textContent=`Xoá "${name}"?`;
-  document.getElementById('confirm-msg').textContent='Đây là từ của học viên. Nếu học viên đang có thẻ Flashcard cho từ này, thẻ đó sẽ mất hoặc không xoá được.';
-  document.getElementById('confirm-ok').onclick=async()=>{
-    try{
-      const {error}=await _sb.from('words').delete().eq('id',id);
-      if(error){
-        if(error.code==='23503'||/foreign key/i.test(error.message||'')) throw new Error('Không xoá được: học viên đang dùng từ này trong Flashcard.');
-        throw error;
-      }
-      toast(`🗑 Đã xoá "${name}"`, 'success');
-      loadUserWords(); loadNavCounts();
-    }catch(e){toast('❌ '+e.message,'error');}
-    closeConfirm();
-  };
-  document.getElementById('confirm-overlay').classList.add('open');
+  _words=data||[]; _wordsFiltered=[..._words]; buildTopicFilter(); renderWords();
 }
 // Tách topic "Cha - Con" thành {parent, child} (separator " - ")
 function splitTopic(t){
@@ -1036,7 +1067,7 @@ async function saveWord(){
     else{({error:err}=await _sb.from('words').insert(data));}
     if(err)throw err;
     toast(`✅ Đã lưu "${term}"`, 'success');
-    closeModal('modal-word');loadWords();try{if(document.getElementById('sec-uwords').classList.contains('active'))loadUserWords();}catch(e){}loadNavCounts();
+    closeModal('modal-word');loadWords();loadNavCounts();
   }catch(e){toast('❌ '+e.message,'error');}
   finally{btn.disabled=false;btn.textContent='💾 Lưu từ vựng';}
 }
@@ -1308,7 +1339,7 @@ function openVideoModal(v){
   document.getElementById('vf-clip-start').value=(v?.clip_start!=null&&v.clip_start!=='')?fmtTS(v.clip_start):'';
   document.getElementById('vf-clip-end').value=(v?.clip_end!=null&&v.clip_end!=='')?fmtTS(v.clip_end):'';
   const segs=Array.isArray(v?.segments)?v.segments:[];
-  const tr=segs.map((s,i)=>{const st=s.start!=null?s.start:0;const en=s.end!=null?s.end:((segs[i+1]&&segs[i+1].start!=null)?segs[i+1].start:st+3);return fmtTS(st)+' --> '+fmtTS(en)+'\n'+s.text;}).join('\n\n');
+  const tr=segs.map((s,i)=>{const st=s.start!=null?s.start:0;const en=s.end!=null?s.end:((segs[i+1]&&segs[i+1].start!=null)?segs[i+1].start:st+3);return ssFmt(st)+' --> '+ssFmt(en)+'\n'+s.text;}).join('\n\n');
   _videoSeg={text:tr.replace(/\n/g,' '),segments:segs};
   document.getElementById('vf-transcript').value=tr;
   document.getElementById('vf-quiz-json').value=Array.isArray(v?.quiz)&&v.quiz.length?JSON.stringify(v.quiz,null,1):'';
@@ -2095,6 +2126,242 @@ function downloadFullTemplate() {
 }
 
 // ── TOAST ──
+// ══════════ TRÌNH CANH PHỤ ĐỀ (đồng bộ mốc với video, tự lưu từng thay đổi) ══════════
+let _ssCues=[],_ssPlayer=null,_ssTimer=null,_ssActive=-1,_ssSaveT=null,_ssRecId='',_ssVid='',_ssDirty=false,_ssStopAt=null;
+
+function ssFmt(s){
+  s=Math.max(0,Math.round((+s||0)*100)/100);
+  const m=Math.floor(s/60);let r=+(s-m*60).toFixed(2);
+  if(r>=60)return (m+1)+':00.00';
+  return m+':'+(r<10?'0':'')+r.toFixed(2);
+}
+function ssParse(v){
+  if(v==null)return null;v=String(v).trim().replace(',','.');if(!v)return null;
+  if(/^\d+(\.\d+)?$/.test(v))return +(+v).toFixed(2);
+  const m=v.match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2}(?:\.\d+)?)$/);
+  if(!m)return null;
+  return +((+(m[1]||0))*3600+(+m[2])*60+parseFloat(m[3])).toFixed(2);
+}
+function ssEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ssSetStatus(k){
+  const el=document.getElementById('ss-status');if(!el)return;
+  const map={idle:['—',''],wait:['● chờ lưu…','wait'],saving:['⟳ đang lưu…','saving'],ok:['✓ đã lưu','ok'],err:['✕ lỗi lưu','err']};
+  const v=map[k]||map.idle;el.textContent=v[0];el.className=v[1];
+}
+
+function openSubSync(){
+  const rid=document.getElementById('vf-id').value;
+  const yid=parseYoutubeId(document.getElementById('vf-url').value);
+  if(!yid){toast('Cần link/ID YouTube hợp lệ trước khi canh phụ đề.','warn');return;}
+  if(!rid){toast('Hãy bấm 💾 Lưu video trước — cần có bản ghi thì mới lưu được từng mốc.','warn');return;}
+  const dur=parseInt(document.getElementById('vf-duration').value)||0;
+  const cues=parseTranscript(document.getElementById('vf-transcript').value,dur);
+  if(!cues.length){toast('Chưa có phụ đề nào để canh.','warn');return;}
+  _ssRecId=rid;_ssVid=yid;_ssDirty=false;_ssActive=-1;
+  _ssCues=cues.map(x=>({start:+(+x.start||0).toFixed(2),end:+(+x.end||0).toFixed(2),text:x.text||''}));
+  document.getElementById('ss-title').textContent='Canh phụ đề — '+(document.getElementById('vf-title').value||'video');
+  ssRenderRows();ssSetStatus('idle');
+  openModal('modal-subsync');
+  ssLoadPlayer();
+  if(_ssTimer)clearInterval(_ssTimer);
+  _ssTimer=setInterval(ssTick,150);
+}
+
+function ssLoadPlayer(){
+  const wrap=document.getElementById('ss-player-wrap');
+  try{if(_ssPlayer&&_ssPlayer.destroy)_ssPlayer.destroy();}catch(e){}
+  _ssPlayer=null;wrap.innerHTML='<div id="ss-player"></div>';
+  const mk=()=>{
+    try{
+      _ssPlayer=new YT.Player('ss-player',{videoId:_ssVid,playerVars:{rel:0,modestbranding:1,playsinline:1},
+        events:{onReady:()=>{try{_ssPlayer.setPlaybackRate(parseFloat(document.getElementById('ss-rate').value)||1);}catch(e){}}}});
+    }catch(e){toast('Không tạo được trình phát: '+e.message,'error');}
+  };
+  if(window.YT&&window.YT.Player){mk();return;}
+  window.onYouTubeIframeAPIReady=mk;
+  if(!document.getElementById('yt-iframe-api')){
+    const s=document.createElement('script');s.id='yt-iframe-api';s.src='https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  }
+}
+function ssNow(){try{return _ssPlayer&&_ssPlayer.getCurrentTime?(_ssPlayer.getCurrentTime()||0):0;}catch(e){return 0;}}
+function ssToggle(){
+  _ssStopAt=null;
+  try{const st=_ssPlayer.getPlayerState();if(st===1)_ssPlayer.pauseVideo();else _ssPlayer.playVideo();}catch(e){}
+}
+function ssSetRate(r){try{_ssPlayer.setPlaybackRate(parseFloat(r)||1);}catch(e){}}
+
+function ssTick(){
+  const t=ssNow();
+  if(_ssStopAt!=null&&t>=_ssStopAt){_ssStopAt=null;try{_ssPlayer.pauseVideo();}catch(e){}}
+  const cl=document.getElementById('ss-clock');if(cl)cl.textContent=ssFmt(t);
+  let idx=-1;
+  for(let i=0;i<_ssCues.length;i++){if(t>=_ssCues[i].start-0.02&&t<_ssCues[i].end){idx=i;break;}}
+  if(idx<0)for(let i=_ssCues.length-1;i>=0;i--){if(t>=_ssCues[i].start){idx=i;break;}}
+  if(idx!==_ssActive)ssSetActive(idx,true);
+}
+function ssSetActive(i,fromPlay){
+  _ssActive=i;
+  const rows=document.querySelectorAll('#ss-rows .ss-row');
+  rows.forEach(r=>r.classList.toggle('act',+r.dataset.i===i));
+  if(i<0)return;
+  const row=document.querySelector('#ss-rows .ss-row[data-i="'+i+'"]');
+  const fl=document.getElementById('ss-follow');
+  if(row&&(!fromPlay||(fl&&fl.checked)))row.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function ssRowHTML(c,i){
+  return '<div class="ss-row" data-i="'+i+'" onmousedown="ssSetActive('+i+',false)">'
+   +'<div class="ss-n">'+(i+1)+'</div>'
+   +'<button class="ss-play" title="Nghe thử đúng câu này rồi tự dừng · Shift+bấm = phát tiếp" onclick="ssPlayCue('+i+',event)">▶</button>'
+   +'<div>'
+     +'<div class="ss-tline"><span class="ss-lb">B</span>'
+       +'<button class="ss-mini" title="Lấy mốc đang phát làm điểm bắt đầu (Alt+[)" onclick="ssGrab('+i+',\'start\')">⏱</button>'
+       +'<input class="ss-t" id="ss-s'+i+'" value="'+ssFmt(c.start)+'" onchange="ssEditTime('+i+',\'start\',this.value)">'
+       +'<button class="ss-mini" title="Sớm hơn 0,1s · Shift = 0,01s · Alt = 0,5s" onclick="ssNudge('+i+',\'start\',-0.1,event)">−</button>'
+       +'<button class="ss-mini" title="Muộn hơn 0,1s · Shift = 0,01s · Alt = 0,5s" onclick="ssNudge('+i+',\'start\',0.1,event)">+</button></div>'
+     +'<div class="ss-tline"><span class="ss-lb">K</span>'
+       +'<button class="ss-mini" title="Lấy mốc đang phát làm điểm kết thúc (Alt+])" onclick="ssGrab('+i+',\'end\')">⏱</button>'
+       +'<input class="ss-t" id="ss-e'+i+'" value="'+ssFmt(c.end)+'" onchange="ssEditTime('+i+',\'end\',this.value)">'
+       +'<button class="ss-mini" title="Sớm hơn 0,1s · Shift = 0,01s · Alt = 0,5s" onclick="ssNudge('+i+',\'end\',-0.1,event)">−</button>'
+       +'<button class="ss-mini" title="Muộn hơn 0,1s · Shift = 0,01s · Alt = 0,5s" onclick="ssNudge('+i+',\'end\',0.1,event)">+</button></div>'
+   +'</div>'
+   +'<textarea class="ss-x" id="ss-x'+i+'" rows="2" oninput="ssEditText('+i+',this.value)">'+ssEsc(c.text)+'</textarea>'
+   +'<button class="ss-del" title="Xoá câu này" onclick="ssDelCue('+i+')">✕</button>'
+   +'</div>';
+}
+function ssRenderRows(){
+  document.getElementById('ss-rows').innerHTML=_ssCues.map(ssRowHTML).join('');
+  document.getElementById('ss-count').textContent=_ssCues.length;
+  if(_ssActive>=0)ssSetActive(Math.min(_ssActive,_ssCues.length-1),false);
+}
+function ssPaint(i){
+  const c=_ssCues[i];if(!c)return;
+  const s=document.getElementById('ss-s'+i),e=document.getElementById('ss-e'+i);
+  if(s){s.value=ssFmt(c.start);s.classList.toggle('bad',!!(i>0&&c.start<_ssCues[i-1].end-0.05));}
+  if(e){e.value=ssFmt(c.end);e.classList.toggle('bad',c.end<=c.start);}
+}
+
+function ssApply(i,key,t){
+  const c=_ssCues[i];if(!c)return;
+  t=Math.max(0,Math.round((+t||0)*100)/100);   // chốt 0,01 giây: mốc lưu = mốc hiển thị
+  const chain=document.getElementById('ss-chain');const ch=chain&&chain.checked;
+  if(key==='start'){
+    c.start=t;
+    if(c.end<=c.start)c.end=+(c.start+0.3).toFixed(2);
+    if(ch&&i>0){_ssCues[i-1].end=t;if(_ssCues[i-1].end<=_ssCues[i-1].start)_ssCues[i-1].start=Math.max(0,+(t-0.3).toFixed(2));ssPaint(i-1);}
+  }else{
+    c.end=t;
+    if(c.end<=c.start)c.start=Math.max(0,+(c.end-0.3).toFixed(2));
+    if(ch&&i+1<_ssCues.length){_ssCues[i+1].start=t;if(_ssCues[i+1].end<=t)_ssCues[i+1].end=+(t+0.3).toFixed(2);ssPaint(i+1);}
+  }
+  ssPaint(i);ssQueueSave();
+}
+function ssEditTime(i,key,val){
+  const t=ssParse(val);
+  if(t==null){ssPaint(i);toast('Mốc không hợp lệ. Dùng dạng <b>1:23.4</b> hoặc số giây.','warn');return;}
+  ssApply(i,key,t);
+}
+function ssNudge(i,key,d,ev){
+  let step=Math.abs(d);
+  if(ev&&ev.shiftKey)step=0.01;        // Shift = siêu mịn 1 phần trăm giây
+  else if(ev&&ev.altKey)step=0.5;      // Alt = bước lớn
+  ssApply(i,key,(_ssCues[i]?_ssCues[i][key]:0)+(d<0?-step:step));
+}
+function ssGrab(i,key){if(i<0||!_ssCues[i]){toast('Chọn một câu trước.','warn');return;}ssApply(i,key,ssNow());ssSetActive(i,false);}
+function ssEditText(i,v){if(!_ssCues[i])return;_ssCues[i].text=v;ssQueueSave();}
+function ssPlayCue(i,ev){
+  const c=_ssCues[i];if(!c)return;
+  const pre=parseFloat((document.getElementById('ss-pre')||{}).value)||0;   // nghe trước n giây
+  _ssStopAt=(ev&&ev.shiftKey)?null:c.end;                                   // Shift+▶ = phát tiếp, không tự dừng
+  try{_ssPlayer.seekTo(Math.max(0,c.start-pre),true);_ssPlayer.playVideo();}catch(e){}
+  ssSetActive(i,false);
+}
+function ssDelCue(i){
+  if(!_ssCues[i])return;
+  _ssCues.splice(i,1);ssRenderRows();ssQueueSave();
+}
+function ssAddCue(){
+  const t=Math.round(ssNow()*100)/100;
+  const c={start:t,end:+(t+2).toFixed(2),text:'…'};
+  let i=_ssCues.findIndex(x=>x.start>t);if(i<0)i=_ssCues.length;
+  _ssCues.splice(i,0,c);ssRenderRows();ssSetActive(i,false);ssQueueSave();
+  const x=document.getElementById('ss-x'+i);if(x){x.focus();x.select();}
+}
+function ssShift(fromActive){
+  const d=parseFloat(String(document.getElementById('ss-shift').value).replace(',','.'));
+  if(!isFinite(d)||d===0){toast('Nhập số giây cần dời, ví dụ <b>0.5</b> hoặc <b>-1.2</b>.','warn');return;}
+  const from=fromActive?Math.max(0,_ssActive):0;
+  if(fromActive&&_ssActive<0){toast('Chọn một câu trước (bấm vào dòng).','warn');return;}
+  for(let i=from;i<_ssCues.length;i++){
+    _ssCues[i].start=Math.max(0,Math.round((_ssCues[i].start+d)*100)/100);
+    _ssCues[i].end=Math.max(0.05,Math.round((_ssCues[i].end+d)*100)/100);
+  }
+  ssRenderRows();ssQueueSave();
+  toast('Đã dời '+(fromActive?'từ câu '+(from+1)+' trở đi':'toàn bộ')+' '+(d>0?'+':'')+d+' giây','success');
+}
+
+function ssQueueSave(){
+  _ssDirty=true;ssSetStatus('wait');
+  if(_ssSaveT)clearTimeout(_ssSaveT);
+  _ssSaveT=setTimeout(ssSaveNow,900);
+}
+async function ssSaveNow(){
+  if(_ssSaveT){clearTimeout(_ssSaveT);_ssSaveT=null;}
+  if(!_ssRecId)return;
+  if(!_ssDirty){ssSetStatus('ok');return;}
+  ssSetStatus('saving');
+  const segs=_ssCues.map(c=>({start:+(+c.start).toFixed(2),end:+(+c.end).toFixed(2),text:String(c.text||'').trim()}))
+                    .filter(c=>c.text).sort((a,b)=>a.start-b.start);
+  try{
+    const {error}=await _sb.from('video_lessons').update({segments:segs}).eq('id',_ssRecId);
+    if(error)throw error;
+    _ssDirty=false;ssSetStatus('ok');
+    const v=(_videos||[]).find(x=>String(x.id)===String(_ssRecId));if(v)v.segments=segs;
+  }catch(e){ssSetStatus('err');toast('❌ Lưu mốc lỗi: '+e.message,'error');}
+}
+function ssSyncBack(){
+  const tr=_ssCues.map(c=>ssFmt(c.start)+' --> '+ssFmt(c.end)+'\n'+String(c.text||'').trim()).filter(x=>x.split('\n')[1]).join('\n\n');
+  const el=document.getElementById('vf-transcript');if(el)el.value=tr;
+}
+async function closeSubSync(){
+  if(_ssTimer){clearInterval(_ssTimer);_ssTimer=null;}
+  try{if(_ssPlayer&&_ssPlayer.pauseVideo)_ssPlayer.pauseVideo();}catch(e){}
+  if(_ssDirty)await ssSaveNow();
+  ssSyncBack();
+  try{if(_ssPlayer&&_ssPlayer.destroy)_ssPlayer.destroy();}catch(e){}
+  _ssPlayer=null;
+  const wrap=document.getElementById('ss-player-wrap');if(wrap)wrap.innerHTML='<div id="ss-player"></div>';
+  closeModal('modal-subsync');
+  toast('Đã cập nhật mốc phụ đề vào ô Transcript.','success');
+}
+
+// phím tắt (capture để chặn handler Escape chung đóng modal mà chưa lưu)
+document.addEventListener('keydown',function(e){
+  const m=document.getElementById('modal-subsync');
+  if(!m||!m.classList.contains('open'))return;
+  const tag=((e.target&&e.target.tagName)||'').toLowerCase();
+  const typing=(tag==='input'||tag==='textarea'||tag==='select');
+  if(e.key==='Escape'){e.stopPropagation();e.preventDefault();closeSubSync();return;}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')){e.preventDefault();ssSaveNow();return;}
+  if(e.altKey&&(e.key==='['||e.code==='BracketLeft')){e.preventDefault();ssGrab(_ssActive,'start');return;}
+  if(e.altKey&&(e.key===']'||e.code==='BracketRight')){e.preventDefault();ssGrab(_ssActive,'end');return;}
+  if(e.altKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+    e.preventDefault();
+    if(_ssActive<0)return;
+    const st=e.shiftKey?0.01:0.05;
+    ssApply(_ssActive,'start',(_ssCues[_ssActive]?_ssCues[_ssActive].start:0)+(e.key==='ArrowLeft'?-st:st));
+    return;
+  }
+  if(e.altKey&&(e.key==='ArrowUp'||e.key==='ArrowDown')){
+    e.preventDefault();
+    let i=_ssActive+(e.key==='ArrowDown'?1:-1);
+    i=Math.max(0,Math.min(_ssCues.length-1,i));
+    ssPlayCue(i);return;
+  }
+  if(e.key===' '&&!typing){e.preventDefault();ssToggle();return;}
+},true);
+
 function toast(msg,type='success'){
   const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=msg;
   document.getElementById('toast-container').appendChild(el);
