@@ -685,7 +685,11 @@ function xtAttach(){
 }
 
 // "get on with" → ['on','with'] (bỏ động từ gốc đứng đầu)
-function xtParticles(phrase){ return String(phrase||'').trim().split(/\s+/).slice(1); }
+// Bỏ các chỗ đại diện trong cụm: "pin something on somebody" → ['on']
+const XT_PLACEHOLDER=/^\(?(something|somebody|someone|sth|sb|one|oneself|yourself|it)('s)?\)?$/i;
+function xtParticles(phrase){
+  return String(phrase||'').trim().split(/\s+/).slice(1).filter(w=>!XT_PLACEHOLDER.test(w));
+}
 
 // Tìm vị trí một chuỗi từ trong câu (không phân biệt hoa/thường), trả {i,len} hoặc null
 function xtFindSpan(sentence, words, fromIdx){

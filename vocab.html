@@ -802,6 +802,7 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
 .xt-tag.sep   { color: var(--a4);     border-color: rgba(251,146,60,.45); }
 .xt-tag.nosep { color: var(--muted); }
 .xt-tag.bong  { color: var(--a5);     border-color: rgba(244,114,182,.45); }
+.xt-tag.idiom { color: var(--a4);     border-color: rgba(251,146,60,.45); }
 .xt-tag.prepv { color: var(--a3); border-color: rgba(52,211,153,.45); font-family: var(--mono); }
 .xt-star { color: var(--a4); font-size: 11px; letter-spacing: 1px; margin-left: auto; }
 .xt-note { font-size: 12px; color: var(--muted); line-height: 1.55; margin-top: 3px; }
@@ -2794,7 +2795,8 @@ function renderSenses(w){
         <span class="xt-no">${esc(r.sense_no || '')}</span>
         ${r.part_of_speech ? `<span class="xt-tag pos" title="${esc(posFull(r.part_of_speech))}">${esc(r.part_of_speech)}</span>` : ''}
         <span class="xt-mean">${esc(r.meaning_vi || '')}</span>
-        ${r.literal === 'bóng' ? `<span class="xt-tag bong">nghĩa bóng</span>` : ''}
+        ${r.literal === 'bóng'      ? `<span class="xt-tag bong">nghĩa bóng</span>` : ''}
+        ${r.literal === 'thành ngữ' ? `<span class="xt-tag idiom">thành ngữ</span>`  : ''}
         ${r.phonetic ? `<span class="xt-ipa">/${esc(r.phonetic)}/</span>` : ''}
         ${xtStars(r.frequency)}
       </div>
