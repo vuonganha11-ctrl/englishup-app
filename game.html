@@ -132,6 +132,28 @@ select.inp:focus{border-color:var(--accent)}
 .tile{min-width:44px;height:48px;padding:0 10px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;font-size:22px;font-weight:700;font-family:var(--mono);cursor:pointer;color:var(--text);transition:all .12s}
 .tile:hover{border-color:var(--accent);transform:translateY(-2px)}
 .tile.used{opacity:.25;pointer-events:none}
+
+/* SPELLING BEE */
+.sp-head{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.sp-pill{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sp-time{color:var(--a3)}
+.sp-time.low{color:var(--danger);border-color:rgba(248,113,113,.5)}
+.sp-combo{color:var(--a4)}
+.sp-score{color:var(--accent)}
+.sp-img{width:100%;max-width:280px;height:180px;object-fit:cover;border-radius:var(--radius);margin:4px auto 10px;display:block;background:var(--card2);transition:filter .35s}
+.sp-vi{text-align:center;font-size:20px;font-weight:700;line-height:1.35;margin:2px 0 14px}
+.sp-slots{display:flex;gap:6px;justify-content:center;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;min-height:34px}
+.sp-ch{width:26px;height:32px;border-bottom:3px solid var(--border2);display:grid;place-items:center;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent)}
+.sp-ch.rev{border-bottom-color:var(--accent)}
+.sp-fixed{align-self:center;font-family:var(--mono);font-size:20px;color:var(--muted)}
+.sp-gap{width:14px}
+.sp-len{align-self:center;font-size:12px;color:var(--muted);margin-left:8px}
+.sp-hintline{font-size:13.5px;color:var(--muted)}
+.sp-hintline b{color:var(--accent);font-family:var(--mono);font-size:17px}
+.sp-input{width:100%;max-width:340px;display:block;margin:0 auto 16px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:13px 16px;font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);text-align:center;letter-spacing:2px}
+.sp-input:focus{outline:none;border-color:var(--accent)}
+.sp-input:disabled{opacity:.6}
+@media(max-width:520px){.sp-vi{font-size:17px}.sp-input{font-size:19px;letter-spacing:1px}.sp-ch{width:22px;font-size:17px}.sp-img{height:150px}}
 .scr-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-g{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
 .btn-g:hover{border-color:var(--border2)}
@@ -292,6 +314,7 @@ select.inp:focus{border-color:var(--accent)}
         <div class="chip active" data-count="10" onclick="selectCount(10,this)">10</div>
         <div class="chip" data-count="15" onclick="selectCount(15,this)">15</div>
         <div class="chip" data-count="20" onclick="selectCount(20,this)">20</div>
+        <div class="chip" id="chip-endless" data-count="0" style="display:none" onclick="selectCount(0,this)">∞ Vô tận</div>
       </div>
     </div>
 
@@ -372,6 +395,7 @@ const MODES={
   image:    {name:'Đoán từ qua ảnh',   ico:'🖼️', desc:'Xem ảnh → chọn từ'},
   scramble: {name:'Xếp chữ / Đánh vần',ico:'🔤', desc:'Sắp lại chữ cái thành từ'},
   matching: {name:'Nối cặp từ – nghĩa',ico:'🔗', desc:'Ghép từ với nghĩa của nó'},
+  spelling: {name:'Đánh vần (Spelling Bee)', ico:'🐝', desc:'Xem ảnh/nghĩa → gõ đúng cả từ'},
   mixed:    {name:'Trộn ngẫu nhiên',   ico:'🎲', desc:'Kết hợp nhiều kiểu chơi'},
 };
 
@@ -398,6 +422,7 @@ function euShowUpgrade(){
 window.addEventListener('DOMContentLoaded', async ()=>{
   sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
   renderModeGrid();
+  syncCountChips();
   await checkAuth();
 });
 
@@ -576,7 +601,7 @@ function buildTopicSelect(){
 
 // ── SETUP CONTROLS ──
 function renderModeGrid(){
-  const order=['meaning','listening','image','scramble','matching','mixed'];
+  const order=['meaning','listening','image','spelling','scramble','matching','mixed'];
   document.getElementById('mode-grid').innerHTML=order.map(k=>{
     const m=MODES[k]; const active=(k===selMode)?' active':'';
     return `<button class="mode-card${active}" data-mode="${k}" onclick="selectMode('${k}')">
@@ -587,9 +612,19 @@ function renderModeGrid(){
     </button>`;
   }).join('');
 }
-function selectMode(k){ selMode=k; document.querySelectorAll('.mode-card').forEach(c=>c.classList.toggle('active',c.dataset.mode===k)); updateAvail(); }
+function selectMode(k){ selMode=k; document.querySelectorAll('.mode-card').forEach(c=>c.classList.toggle('active',c.dataset.mode===k)); syncCountChips(); updateAvail(); }
+// Ô "∞ Vô tận" chỉ có nghĩa với chế độ Đánh vần
+function syncCountChips(){
+  const ch=document.getElementById('chip-endless'); if(!ch) return;
+  const isSp=(selMode==='spelling');
+  ch.style.display=isSp?'':'none';
+  if(!isSp && selCount===0){
+    selCount=10;
+    document.querySelectorAll('#count-chips .chip').forEach(c=>c.classList.toggle('active',c.dataset.count==='10'));
+  }
+}
 function selectLevel(lv,el){ selLevel=lv; document.querySelectorAll('#level-chips .chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); updateAvail(); }
-function selectCount(n,el){ selCount=n; document.querySelectorAll('#count-chips .chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); }
+function selectCount(n,el){ selCount=n; document.querySelectorAll('#count-chips .chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); updateAvail(); }
 
 function topicNamesInScope(){
   const sel=document.getElementById('setup-topic');
@@ -636,6 +671,9 @@ function updateAvail(){
     if(usable.length<need){
       el.innerHTML=`Cần ít nhất <strong>${need}</strong> từ phù hợp · hiện có <strong>${usable.length}</strong>`;
       btn.disabled=true;
+    }else if(selMode==='spelling'&&selCount===0){
+      el.innerHTML=`Có <strong>${usable.length}</strong> từ phù hợp · chơi <strong>vô tận</strong> tới khi hết 3 mạng`;
+      btn.disabled=false;
     }else{
       const playable=(selMode==='matching')?usable.length:Math.min(selCount,usable.length);
       el.innerHTML=`Có <strong>${usable.length}</strong> từ phù hợp · sẽ chơi <strong>${selMode==='matching'?usable.length:playable}</strong>`;
@@ -646,6 +684,10 @@ function updateAvail(){
 // Lọc pool theo kiểu chơi (ảnh cần image_url; còn lại cần nghĩa VI)
 function usablePool(mode){
   if(mode==='image') return availWords.filter(w=>w.image_url);
+  if(mode==='spelling') return availWords.filter(w=>{
+    const t=(w.term||'').trim();
+    return t && t.length<=18 && /[A-Za-z]/.test(t) && (w.definition_vi||w.definition_en||w.image_url);
+  });
   if(mode==='matching'||mode==='meaning') return availWords.filter(w=>w.definition_vi);
   return availWords;
 }
@@ -665,6 +707,7 @@ function pickDistinct(pool,key,exclude,n){
 function startGame(){
   if(!euIsPremium() && _euRoundsPlayed >= 1){ euShowUpgrade(); return; }
   _euRoundsPlayed++;
+  if(selMode==='spelling'){ startSpelling(); return; }
   const cardModes=['meaning','listening','image','scramble'];
   let kind,items=[],boards=[];
   if(selMode==='matching'){
@@ -887,6 +930,7 @@ function nextStep(){
   renderStep();
 }
 function finishGame(){
+  spSetResultLabels(false);
   document.getElementById('play-bar').style.width='100%';
   stopAudio();
   if(currentUser&&round.xpEarned>0) awardXP(round.xpEarned);
@@ -904,15 +948,233 @@ function finishGame(){
   document.getElementById('screen-play').classList.add('hidden');
   document.getElementById('screen-result').classList.remove('hidden');
 }
-function exitGame(){ if(!confirm('Thoát lượt chơi? Tiến trình hiện tại sẽ không được lưu.'))return; stopAudio(); backToSetup(); }
+function exitGame(){ if(!confirm('Thoát lượt chơi? Tiến trình hiện tại sẽ không được lưu.'))return; spCleanup(); stopAudio(); backToSetup(); }
 function backToSetup(){
-  stopAudio(); round=null;
+  spCleanup(); stopAudio(); round=null;
   document.getElementById('screen-play').classList.add('hidden');
   document.getElementById('screen-result').classList.add('hidden');
   document.getElementById('screen-setup').classList.remove('hidden');
   updateAvail();
 }
 function replay(){ startGame(); }
+
+// ── SPELLING BEE (chế độ Đánh vần) ──────────────────────────────────
+// Bám lối chơi Endless Spelling Bee: mỗi lượt 1 từ, đồng hồ đếm ngược,
+// 3 mạng, độ khó tăng dần (ảnh mờ dần · bớt thời gian · bớt gợi ý chữ cái).
+// KHÔNG ghi gì vào database — chơi tự do, hết ván là xong.
+let sp=null, _spTimer=null;
+
+const SP_TIERS=[
+  {from:0,  time:40, blur:0,  showLen:true,  showFirst:true },
+  {from:10, time:35, blur:3,  showLen:true,  showFirst:false},
+  {from:20, time:30, blur:6,  showLen:true,  showFirst:false},
+  {from:30, time:25, blur:9,  showLen:false, showFirst:false},
+  {from:40, time:20, blur:12, showLen:false, showFirst:false},
+];
+function spTier(i){ let t=SP_TIERS[0]; for(const x of SP_TIERS){ if(i>=x.from) t=x; } return t; }
+
+const SP_CEFR={A1:1,A2:2,B1:3,B2:4,C1:5,C2:6};
+function spDifficulty(w){
+  const letters=((w.term||'').match(/[A-Za-z]/g)||[]).length;
+  return (SP_CEFR[w.level]||3)*6 + letters;
+}
+// So khớp "lỏng": bỏ dấu cách/nháy/gạch → gõ oclock cũng chấp nhận cho o'clock
+function spNorm(s){ return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]+/g,''); }
+function spLives(){ return '❤️'.repeat(Math.max(0,sp.lives))+'🖤'.repeat(Math.max(0,3-sp.lives)); }
+
+function startSpelling(){
+  const pool=usablePool('spelling');
+  if(!pool.length) return;
+  const endless=(selCount===0);
+  const picked = endless ? pool.slice() : sample(pool, Math.min(selCount,pool.length));
+  // xếp dễ → khó (có nhiễu nhẹ để lượt sau không lặp y hệt thứ tự lượt trước)
+  const queue = picked.map(w=>({w,d:spDifficulty(w)+Math.random()*5}))
+                      .sort((a,b)=>a.d-b.d).map(x=>x.w);
+  sp={queue, idx:0, take:(endless?queue.length:Math.min(selCount,queue.length)), endless,
+      lives:3, score:0, combo:0, bestCombo:0, correct:0, wrong:0,
+      answered:false, time:40, timeMax:40, hints:0, reveal:0, _auto:null};
+  round={mode:'spelling',kind:'spell',items:[],boards:[],idx:0,correct:0,total:0,xpEarned:0,answered:false};
+  document.getElementById('screen-setup').classList.add('hidden');
+  document.getElementById('screen-result').classList.add('hidden');
+  document.getElementById('screen-play').classList.remove('hidden');
+  document.getElementById('play-mode').textContent=MODES.spelling.name;
+  spRenderStep();
+}
+
+function spRenderStep(){
+  spStopTimer();
+  const w=sp.queue[sp.idx];
+  if(!w){ finishSpelling(); return; }
+  sp.answered=false; sp.hints=0; sp.reveal=0;
+  const tier=spTier(sp.idx);
+  sp.timeMax=tier.time; sp.time=tier.time;
+  document.getElementById('play-count').textContent = sp.endless ? `Câu ${sp.idx+1}` : `${sp.idx+1}/${sp.take}`;
+  document.getElementById('play-score').textContent = `${sp.score} điểm`;
+  document.getElementById('play-bar').style.width='100%';
+  const img = w.image_url
+    ? `<img class="sp-img" src="${esc(w.image_url)}" alt="" style="filter:blur(${tier.blur}px)" onerror="this.remove()">`
+    : '';
+  document.getElementById('question-host').innerHTML=`<div class="q-card">
+    <div class="sp-head">
+      <span class="sp-pill sp-time" id="sp-time">⏱ ${tier.time}s</span>
+      <span class="sp-pill" id="sp-lives">${spLives()}</span>
+      <span class="sp-pill sp-combo" id="sp-combo">🔥 x${sp.combo}</span>
+      <span class="sp-pill sp-score" id="sp-score">${sp.score} điểm</span>
+    </div>
+    <div class="q-prompt">Gõ đúng từ tiếng Anh</div>
+    ${img}
+    <div class="sp-vi">${esc(w.definition_vi||w.definition_en||'(xem ảnh)')}</div>
+    <div class="sp-slots" id="sp-slots"></div>
+    <input class="sp-input" id="sp-input" type="text" inputmode="text" autocomplete="off"
+           autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="gõ từ rồi Enter">
+    <div class="scr-actions">
+      <button class="btn-g" onclick="spSpeak()">🔊 Nghe</button>
+      <button class="btn-g" id="sp-hint" onclick="spHint()">💡 Mở 1 chữ (−50)</button>
+      <button class="btn-g primary" onclick="spCheck()">Kiểm tra</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div class="next-bar hidden" id="next-bar"><button class="btn-next" onclick="spNext()">Tiếp theo →</button></div>
+  </div>`;
+  spRenderSlots();
+  const inp=document.getElementById('sp-input');
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(sp.answered) spNext(); else spCheck(); } });
+  setTimeout(()=>{ try{inp.focus();}catch(e){} },60);
+  spStartTimer();
+}
+
+function spRenderSlots(){
+  const el=document.getElementById('sp-slots'); if(!el||!sp) return;
+  const term=(sp.queue[sp.idx].term||'').trim();
+  const tier=spTier(sp.idx);
+  const nRev=Math.min(term.length, Math.max(sp.reveal, tier.showFirst?1:0));
+  if(!tier.showLen){
+    el.innerHTML = nRev>0
+      ? `<span class="sp-hintline">Bắt đầu bằng: <b>${esc(term.slice(0,nRev).toLowerCase())}</b></span>`
+      : `<span class="sp-hintline">Cấp khó — không gợi ý chữ cái</span>`;
+    return;
+  }
+  let html='';
+  for(let i=0;i<term.length;i++){
+    const ch=term[i];
+    if(ch===' '){ html+='<span class="sp-gap"></span>'; continue; }
+    if(!/[A-Za-z0-9]/.test(ch)){ html+=`<span class="sp-fixed">${esc(ch)}</span>`; continue; }
+    html += (i<nRev) ? `<span class="sp-ch rev">${esc(ch.toLowerCase())}</span>` : '<span class="sp-ch"></span>';
+  }
+  el.innerHTML = html + `<span class="sp-len">${term.replace(/[^A-Za-z0-9]/g,'').length} chữ cái</span>`;
+}
+
+function spStartTimer(){
+  spStopTimer();
+  _spTimer=setInterval(()=>{
+    if(!sp||sp.answered) return;
+    sp.time--;
+    const t=document.getElementById('sp-time');
+    if(t){ t.textContent=`⏱ ${Math.max(0,sp.time)}s`; t.classList.toggle('low', sp.time<=10); }
+    const bar=document.getElementById('play-bar');
+    if(bar) bar.style.width=`${Math.max(0,sp.time)/sp.timeMax*100}%`;
+    if(sp.time<=0) spResolve(false,true);
+  },1000);
+}
+function spStopTimer(){ if(_spTimer){ clearInterval(_spTimer); _spTimer=null; } }
+function spCleanup(){ spStopTimer(); if(sp&&sp._auto){ clearTimeout(sp._auto); sp._auto=null; } sp=null; }
+
+function spSpeak(){ if(sp) speakTerm(sp.queue[sp.idx].term); }
+
+function spHint(){
+  if(!sp||sp.answered) return;
+  const term=(sp.queue[sp.idx].term||'').trim();
+  const tier=spTier(sp.idx);
+  const cur=Math.max(sp.reveal, tier.showFirst?1:0);
+  if(cur>=term.length) return;
+  sp.reveal=cur+1; sp.hints++;
+  spRenderSlots();
+  const b=document.getElementById('sp-hint');
+  if(b&&sp.hints>=3) b.disabled=true;
+}
+
+function spCheck(){
+  if(!sp||sp.answered) return;
+  const inp=document.getElementById('sp-input'); if(!inp) return;
+  const guess=spNorm(inp.value);
+  if(!guess){ try{inp.focus();}catch(e){} return; }
+  spResolve(guess===spNorm(sp.queue[sp.idx].term), false);
+}
+
+function spResolve(ok, timedOut){
+  if(!sp||sp.answered) return;
+  sp.answered=true; spStopTimer();
+  const w=sp.queue[sp.idx];
+  const inp=document.getElementById('sp-input'); if(inp) inp.disabled=true;
+  const hb=document.getElementById('sp-hint'); if(hb) hb.disabled=true;
+  let gained=0;
+  if(ok){
+    sp.correct++; sp.combo++; sp.bestCombo=Math.max(sp.bestCombo,sp.combo);
+    gained = 100 + Math.max(0,sp.time)*2 + Math.min(100,(sp.combo-1)*10) - sp.hints*50;
+    if(gained<10) gained=10;
+    sp.score+=gained;
+  }else{
+    sp.combo=0; sp.wrong++; sp.lives--;
+  }
+  const lv=document.getElementById('sp-lives'); if(lv) lv.textContent=spLives();
+  const sc=document.getElementById('sp-score'); if(sc) sc.textContent=`${sp.score} điểm`;
+  const cb=document.getElementById('sp-combo'); if(cb) cb.textContent=`🔥 x${sp.combo}`;
+  const im=document.querySelector('.sp-img'); if(im) im.style.filter='none';
+  const fb=document.getElementById('feedback');
+  if(fb){
+    fb.className='feedback show '+(ok?'ok':'no');
+    fb.innerHTML = ok
+      ? `✓ Chính xác! <b>${esc(w.term)}</b> · +${gained} điểm`
+      : `${timedOut?'⏱ Hết giờ':'✗ Chưa đúng'} · đáp án: <b>${esc(w.term)}</b> = ${esc(w.definition_vi||w.definition_en||'')}`;
+  }
+  const nb=document.getElementById('next-bar');
+  if(nb){
+    nb.classList.remove('hidden');
+    const btn=nb.querySelector('.btn-next');
+    if(btn) btn.textContent = (sp.lives<=0) ? 'Xem kết quả →' : 'Tiếp theo →';
+  }
+  document.getElementById('play-score').textContent=`${sp.score} điểm`;
+  round.correct=sp.correct; round.total=sp.correct+sp.wrong;
+  speakTerm(w.term);
+  clearTimeout(sp._auto);
+  sp._auto=setTimeout(spNext, ok?1500:2600);
+}
+
+function spNext(){
+  if(!sp) return;
+  clearTimeout(sp._auto); sp._auto=null;
+  if(sp.lives<=0){ finishSpelling(); return; }
+  sp.idx++;
+  if(sp.idx>=sp.queue.length || (!sp.endless && sp.idx>=sp.take)){ finishSpelling(); return; }
+  spRenderStep();
+}
+
+function spSetResultLabels(spelling){
+  const a=document.querySelector('#screen-result .rstat.xp .l');
+  if(a) a.textContent = spelling?'Điểm':'XP nhận';
+}
+
+function finishSpelling(){
+  spStopTimer(); if(sp&&sp._auto){ clearTimeout(sp._auto); sp._auto=null; }
+  stopAudio();
+  const done=sp.correct+sp.wrong;
+  const pct=done?Math.round(sp.correct/done*100):0;
+  spSetResultLabels(true);
+  document.getElementById('play-bar').style.width='100%';
+  document.getElementById('res-acc').textContent=pct+'%';
+  document.getElementById('res-score').textContent=`${sp.correct}/${done}`;
+  document.getElementById('res-xp').textContent=String(sp.score);
+  let emoji='💪', title='Hết mạng rồi!';
+  if(sp.lives>0){ emoji='🐝'; title='Hoàn thành!'; }
+  if(sp.score>=2000){ emoji='🏆'; title='Xuất sắc!'; }
+  else if(sp.score>=1000){ emoji='🎉'; title='Làm tốt lắm!'; }
+  document.getElementById('res-emoji').textContent=emoji;
+  document.getElementById('res-title').textContent=title;
+  document.getElementById('res-sub').textContent=
+    `Đánh vần đúng ${sp.correct} từ · chuỗi đúng dài nhất ${sp.bestCombo} · kết quả không được lưu`;
+  document.getElementById('screen-play').classList.add('hidden');
+  document.getElementById('screen-result').classList.remove('hidden');
+  sp=null;
+}
 
 // ── AUDIO ──
 let _audio=null;
