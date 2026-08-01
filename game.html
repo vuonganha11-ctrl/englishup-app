@@ -108,6 +108,23 @@ select.inp:focus{border-color:var(--accent)}
 .q-phon{font-size:16px;color:var(--a3);font-family:var(--mono);text-align:center;margin-top:4px}
 .q-img{width:100%;max-width:300px;height:200px;object-fit:cover;border-radius:var(--radius);margin:6px auto 4px;display:block;background:var(--card2)}
 .q-hint{text-align:center;font-size:14px;color:var(--text);margin-top:6px}
+/* ─── 3 chế độ mở rộng: nghĩa · cụm động từ · giới từ ─── */
+.xg-sent{font-size:19px;line-height:1.7;text-align:center;color:var(--text);padding:4px 2px}
+.xg-sent b{color:var(--accent)}
+.xg-blank{display:inline-block;min-width:74px;border-bottom:3px solid var(--a4);
+  color:var(--a4);font-weight:800;text-align:center;margin:0 3px;letter-spacing:2px}
+.xg-vi{text-align:center;font-size:13.5px;color:var(--muted);margin-top:8px;font-style:italic}
+.xg-clue{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  margin-top:12px;font-size:14px}
+.xg-clue .lab{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.xg-clue b{color:var(--a3);font-size:16px}
+.xg-verb{font-family:var(--mono,monospace);font-size:15px;font-weight:700;color:var(--a2)}
+.opt .xg-opt{font-family:var(--mono,monospace);font-weight:700;letter-spacing:.3px}
+.xg-note{margin-top:8px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.xg-note.err{color:var(--danger)}
+/* .feedback là flex — bọc nội dung mở rộng vào 1 khối để các dòng xuống hàng đúng */
+.xg-fb{flex:1 1 100%;min-width:0}
+.xg-fb .xg-vi{text-align:left;margin-top:6px}
 .q-hint small{color:var(--muted)}
 
 .listen-btn{width:84px;height:84px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:32px;cursor:pointer;display:grid;place-items:center;margin:6px auto 2px;transition:transform .15s}
@@ -460,6 +477,9 @@ const MODES={
   matching: {name:'Nối cặp từ – nghĩa',ico:'🔗', desc:'Ghép từ với nghĩa của nó'},
   spelling: {name:'Đánh vần (Spelling Bee)', ico:'🐝', desc:'Xem ảnh/nghĩa → gõ đúng cả từ'},
   dressup:  {name:'Mặc đồ cho nhân vật', ico:'👕', desc:'Đọc câu → kéo đúng món lên đúng người'},
+  sense:    {name:'Đúng nghĩa nào?',   ico:'🎭', desc:'Đọc câu → chọn nghĩa từ đa nghĩa'},
+  phrasal:  {name:'Cụm động từ',       ico:'🧩', desc:'Điền tiểu từ cho đúng nghĩa'},
+  prep:     {name:'Điền giới từ',      ico:'🔗', desc:'Chọn giới từ đi kèm đúng'},
   mixed:    {name:'Trộn ngẫu nhiên',   ico:'🎲', desc:'Kết hợp nhiều kiểu chơi'},
 };
 
@@ -626,6 +646,78 @@ async function loadKhoWords(kho){
   return pool;
 }
 
+// ══════════ DỮ LIỆU MỞ RỘNG: nghĩa · cụm động từ · giới từ ══════════
+let gSenses=[], gPhrasals=[], gPreps=[];   // đã nối sẵn với từ gốc (trường .w)
+let _xtRaw=null;                           // {senses, phrasals, preps} bản thô, nạp 1 lần
+let _senseCount={};                        // term thường → số nghĩa
+
+async function xtFetch(table, ord){
+  const all=[]; const STEP=1000;
+  try{
+    for(let from=0; from<40000; from+=STEP){
+      const {data,error}=await sb.from(table).select('*').order(ord).range(from,from+STEP-1);
+      if(error) throw error;
+      all.push.apply(all,data||[]);
+      if(!data||data.length<STEP) break;
+    }
+  }catch(e){ console.warn('xtFetch '+table+':',e.message); return []; }
+  return all;
+}
+async function loadGameExtras(){
+  if(_xtRaw) return;
+  const [s,p,g]=await Promise.all([
+    xtFetch('word_senses','term'), xtFetch('phrasal_verbs','term'), xtFetch('word_preps','term')]);
+  _xtRaw={senses:s, phrasals:p, preps:g};
+  _senseCount={};
+  s.forEach(r=>{ const k=String(r.term||'').toLowerCase(); _senseCount[k]=(_senseCount[k]||0)+1; });
+}
+// Nối dòng phụ với từ gốc trong kho đang chọn (gọi lại mỗi lần đổi kho)
+function xtAttach(){
+  if(!_xtRaw){ gSenses=[]; gPhrasals=[]; gPreps=[]; return; }
+  const by={}; gPool.forEach(w=>{ const k=String(w.term||'').toLowerCase(); if(!by[k]) by[k]=w; });
+  const join=rows=>rows.map(r=>{ const w=by[String(r.term||'').toLowerCase()]; return w?Object.assign({w},r):null; })
+                       .filter(Boolean);
+  // chỉ giữ nghĩa có ví dụ VÀ nhìn thấy được từ gốc trong câu (nếu không thì câu hỏi mơ hồ)
+  gSenses   = join(_xtRaw.senses).filter(r=>r.example && _senseCount[String(r.term).toLowerCase()]>=2
+                                            && xtFindStem(r.example, String(r.term||'').split(/\s+/)[0]));
+  gPhrasals = join(_xtRaw.phrasals).filter(r=>r.example && xtParticles(r.phrase).length && xtFindSpan(r.example, xtParticles(r.phrase).join(' ')));
+  gPreps    = join(_xtRaw.preps).filter(r=>r.example && xtPrepOf(r));
+}
+
+// "get on with" → ['on','with'] (bỏ động từ gốc đứng đầu)
+function xtParticles(phrase){ return String(phrase||'').trim().split(/\s+/).slice(1); }
+
+// Tìm vị trí một chuỗi từ trong câu (không phân biệt hoa/thường), trả {i,len} hoặc null
+function xtFindSpan(sentence, words, fromIdx){
+  if(!words) return null;
+  const re=new RegExp('\\b'+String(words).split(/\s+/).map(escRe).join('\\s+')+'\\b','i');
+  const s=String(sentence||''); const off=fromIdx||0;
+  const m=re.exec(s.slice(off));
+  return m?{i:off+m.index, len:m[0].length, text:m[0]}:null;
+}
+function escRe(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+// Như xtFindSpan nhưng cho phép đuôi biến đổi: depend → depends / depended
+function xtFindStem(sentence, word, fromIdx){
+  if(!word) return null;
+  const re=new RegExp('\\b'+escRe(word)+'\\w*\\b','i');
+  const s=String(sentence||''); const off=fromIdx||0;
+  const m=re.exec(s.slice(off));
+  return m?{i:off+m.index, len:m[0].length, text:m[0]}:null;
+}
+
+// Giới từ thật sự xuất hiện trong ví dụ ("of, from" → lấy cái nào có mặt)
+function xtPrepOf(r){
+  const cands=String(r.prep||'').split(/[,\/]/).map(x=>x.trim()).filter(Boolean);
+  for(const c of cands){
+    // ưu tiên lần xuất hiện SAU từ gốc, tránh trúng "to" của động từ nguyên mẫu
+    const base=xtFindStem(r.example, String(r.term||'').split(/\s+/)[0]);
+    const after=base?xtFindSpan(r.example, c, base.i+base.len):null;
+    const any=after||xtFindSpan(r.example, c);
+    if(any) return {prep:c, span:any};
+  }
+  return null;
+}
+
 // Chủ đề học viên được phép — ánh xạ topic_access (id) sang TÊN chủ đề trong words.
 // Bảng `topics` là dữ liệu cũ, không khớp bộ chủ đề mới → nếu không giao nhau
 // thì coi như không giới hạn (giống vocab.html hiện nay) chứ không khoá trắng.
@@ -665,7 +757,7 @@ function buildTopicSelect(){
 
 // ── SETUP CONTROLS ──
 function renderModeGrid(){
-  const order=['meaning','listening','image','spelling','dressup','scramble','matching','mixed'];
+  const order=['meaning','listening','image','spelling','sense','phrasal','prep','dressup','scramble','matching','mixed'];
   document.getElementById('mode-grid').innerHTML=order.map(k=>{
     const m=MODES[k]; const active=(k===selMode)?' active':'';
     return `<button class="mode-card${active}" data-mode="${k}" onclick="selectMode('${k}')">
@@ -705,6 +797,7 @@ function topicNamesInScope(){
 }
 
 // Lọc hoàn toàn client-side trên kho đã nạp — không gọi mạng mỗi lần đổi lựa chọn
+let _availIds=new Set();
 function loadAvailWords(){
   const names=topicNamesInScope();
   const ok=names?new Set(names):null;
@@ -713,6 +806,12 @@ function loadAvailWords(){
     if(selLevel&&w.level!==selLevel) return false;
     return true;
   });
+  _availIds=new Set(availWords.map(w=>w.id));
+}
+const XT_MODES=['sense','phrasal','prep'];
+function xtRowsInScope(mode){
+  const src = mode==='sense'?gSenses : mode==='phrasal'?gPhrasals : gPreps;
+  return src.filter(r=>_availIds.has(r.w.id));
 }
 
 // Nạp kho + từ vựng đúng 1 lần, kể cả khi truy vấn hồ sơ học viên lỗi
@@ -726,6 +825,8 @@ async function loadPoolThenRefresh(){
   const el=document.getElementById('avail'); if(el) el.textContent='Đang tải từ vựng…';
   const btn=document.getElementById('btn-start'); if(btn) btn.disabled=true;
   gPool=await loadKhoWords(gCollection);
+  await loadGameExtras();
+  xtAttach();
   buildTopicSelect();
   updateAvail();
 }
@@ -740,8 +841,14 @@ function updateAvail(){
     const usable=usablePool(selMode);
     const need=minNeeded(selMode);
     if(usable.length<need){
-      el.innerHTML=`Cần ít nhất <strong>${need}</strong> từ phù hợp · hiện có <strong>${usable.length}</strong>`;
+      const dv=XT_MODES.indexOf(selMode)>=0?'câu hỏi':'từ';
+      el.innerHTML=`Cần ít nhất <strong>${need}</strong> ${dv} phù hợp · hiện có <strong>${usable.length}</strong>` +
+        (XT_MODES.indexOf(selMode)>=0?` <small style="color:var(--muted)">— thử bỏ giới hạn chủ đề / cấp độ</small>`:'');
       btn.disabled=true;
+    }else if(XT_MODES.indexOf(selMode)>=0){
+      const lab={sense:'từ đa nghĩa', phrasal:'cụm động từ', prep:'cụm giới từ'}[selMode];
+      el.innerHTML=`Có <strong>${usable.length}</strong> câu hỏi ${lab} · sẽ chơi <strong>${Math.min(selCount,usable.length)}</strong>`;
+      btn.disabled=false;
     }else if(selMode==='dressup'){
       el.innerHTML=`Bộ <strong>${esc(dzCurrentSet().name)}</strong> · <strong>${usable.length}</strong> món trang phục · 10 màu`;
       btn.disabled=usable.length<3;
@@ -757,6 +864,7 @@ function updateAvail(){
 }
 // Lọc pool theo kiểu chơi (ảnh cần image_url; còn lại cần nghĩa VI)
 function usablePool(mode){
+  if(XT_MODES.indexOf(mode)>=0) return xtRowsInScope(mode);
   if(mode==='dressup') return dzSetItems();
   if(mode==='image') return availWords.filter(w=>w.image_url);
   if(mode==='spelling') return availWords.filter(w=>{
@@ -766,7 +874,7 @@ function usablePool(mode){
   if(mode==='matching'||mode==='meaning') return availWords.filter(w=>w.definition_vi);
   return availWords;
 }
-function minNeeded(mode){ if(mode==='matching')return 2; if(mode==='mixed'||mode==='meaning'||mode==='listening')return 2; return 1; }
+function minNeeded(mode){ if(XT_MODES.indexOf(mode)>=0)return 4; if(mode==='matching')return 2; if(mode==='mixed'||mode==='meaning'||mode==='listening')return 2; return 1; }
 
 // ── UTILS ──
 function esc(s){ if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -786,6 +894,18 @@ function startGame(){
   if(selMode==='dressup'){ startDressup(); return; }
   const cardModes=['meaning','listening','image','scramble'];
   let kind,items=[],boards=[];
+  if(XT_MODES.indexOf(selMode)>=0){
+    kind='cards';
+    const pool=usablePool(selMode);
+    sample(pool, Math.min(selCount, pool.length)).forEach(r=>items.push(buildXtItem(r, selMode)));
+    round={mode:selMode,kind,items,boards,idx:0,correct:0,total:items.length,xpEarned:0,answered:false};
+    document.getElementById('screen-setup').classList.add('hidden');
+    document.getElementById('screen-result').classList.add('hidden');
+    document.getElementById('screen-play').classList.remove('hidden');
+    document.getElementById('play-mode').textContent=MODES[selMode].name;
+    renderStep();
+    return;
+  }
   if(selMode==='matching'){
     kind='match';
     const pool=usablePool('matching');
@@ -814,6 +934,141 @@ function startGame(){
   renderStep();
 }
 
+// ══════════ 3 CHẾ ĐỘ MỞ RỘNG ══════════
+const XT_PREP_BANK=['of','to','in','on','for','with','from','at','by','about','into','under','over','between'];
+
+function xtUniqOpts(correct, pool, n){
+  const seen=new Set([String(correct).toLowerCase()]);
+  const out=[];
+  for(const v of shuffle(pool)){
+    const t=String(v||'').trim(); if(!t) continue;
+    const lo=t.toLowerCase(); if(seen.has(lo)) continue;
+    seen.add(lo); out.push(t); if(out.length>=n) break;
+  }
+  return out;
+}
+
+function buildXtItem(r, mode){
+  const item={mode, row:r, word:r.w};
+  if(mode==='sense'){
+    const key=String(r.term).toLowerCase();
+    // mồi nhử tốt nhất = nghĩa KHÁC của chính từ đó
+    const sameWord=gSenses.filter(x=>String(x.term).toLowerCase()===key && x.sense_no!==r.sense_no)
+                          .map(x=>x.meaning_vi);
+    let d=xtUniqOpts(r.meaning_vi, sameWord, 3);
+    if(d.length<3) d=d.concat(xtUniqOpts(r.meaning_vi, gSenses.map(x=>x.meaning_vi).filter(m=>d.indexOf(m)<0), 3-d.length));
+    item.options=shuffle([{text:r.meaning_vi,correct:true},...d.map(t=>({text:t,correct:false}))]);
+    item.answerText=r.meaning_vi;
+  }
+  else if(mode==='phrasal'){
+    const key=String(r.term).toLowerCase();
+    const mine=xtParticles(r.phrase).join(' ');
+    const sameVerb=gPhrasals.filter(x=>String(x.term).toLowerCase()===key && x.phrase!==r.phrase)
+                            .map(x=>xtParticles(x.phrase).join(' '));
+    let d=xtUniqOpts(mine, sameVerb, 3);
+    if(d.length<3) d=d.concat(xtUniqOpts(mine, gPhrasals.map(x=>xtParticles(x.phrase).join(' ')).filter(m=>d.indexOf(m)<0), 3-d.length));
+    item.options=shuffle([{text:mine,correct:true},...d.map(t=>({text:t,correct:false}))]);
+    item.answerText=r.phrase;
+    item.mono=true;
+  }
+  else {   // prep
+    const pk=xtPrepOf(r);
+    const d=xtUniqOpts(pk.prep, XT_PREP_BANK, 3);
+    item.options=shuffle([{text:pk.prep,correct:true},...d.map(t=>({text:t,correct:false}))]);
+    item.answerText=pk.prep;
+    item.prepSpan=pk.span;
+    item.mono=true;
+  }
+  return item;
+}
+
+// Thay đoạn khớp trong câu bằng ô trống
+function xtBlankSentence(sentence, span){
+  const s=String(sentence||'');
+  if(!span) return esc(s);
+  return esc(s.slice(0,span.i)) + '<span class="xg-blank">____</span>' + esc(s.slice(span.i+span.len));
+}
+// Bôi đậm từ gốc trong câu (chế độ "Đúng nghĩa nào?")
+function xtBoldTerm(sentence, term){
+  const span=xtFindStem(sentence, String(term||'').split(/\s+/)[0]);
+  const s=String(sentence||'');
+  if(!span) return esc(s);
+  return esc(s.slice(0,span.i)) + '<b>' + esc(span.text) + '</b>' + esc(s.slice(span.i+span.len));
+}
+
+function tplXt(item){
+  const r=item.row;
+  const keys=['A','B','C','D'];
+  const opts=item.options.map((o,i)=>`<button class="opt" data-correct="${o.correct?1:0}">
+      <span class="k">${keys[i]||''}</span><span class="${item.mono?'xg-opt':''}">${esc(o.text)}</span></button>`).join('');
+
+  let prompt='', head='';
+  if(item.mode==='sense'){
+    prompt=`Trong câu này, <b>${esc(r.term)}</b> mang nghĩa nào?`;
+    head=`<div class="xg-sent">${xtBoldTerm(r.example, r.term)}</div>` +
+         (r.phonetic?`<div class="xg-clue"><span class="lab">Phát âm ở đây</span><b>/${esc(r.phonetic)}/</b>` +
+            (/^CÓ/i.test(String(r.pron_diff||''))?`<span class="lab" style="color:var(--a4)">⚠ đổi theo nghĩa</span>`:'')+`</div>`:'');
+  }
+  else if(item.mode==='phrasal'){
+    const span=xtFindSpan(r.example, xtParticles(r.phrase).join(' '));
+    prompt='Điền tiểu từ để cụm động từ mang đúng nghĩa';
+    head=`<div class="xg-sent">${xtBlankSentence(r.example, span)}</div>` +
+         `<div class="xg-clue"><span class="lab">Nghĩa cần diễn đạt</span><b>${esc(r.meaning_vi||'')}</b></div>` +
+         `<div class="xg-clue"><span class="lab">Động từ gốc</span><span class="xg-verb">${esc(r.term)} …</span></div>`;
+  }
+  else {
+    prompt='Chọn giới từ đúng cho chỗ trống';
+    head=`<div class="xg-sent">${xtBlankSentence(r.example, item.prepSpan)}</div>` +
+         `<div class="xg-clue"><span class="lab">Nghĩa</span><b>${esc(r.meaning_vi||'')}</b></div>`;
+  }
+
+  return `<div class="q-card">
+    <div class="q-prompt">${prompt}</div>
+    ${head}
+    <div class="options">${opts}</div>
+    <div class="feedback" id="feedback"></div>
+    <div class="next-bar hidden" id="next-bar"><button class="btn-next" onclick="nextStep()">Tiếp theo →</button></div>
+  </div>`;
+}
+
+function answerXt(btn,item){
+  if(round.answered)return; round.answered=true;
+  const ok=btn.dataset.correct==='1';
+  document.querySelectorAll('#question-host .opt').forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.correct==='1') b.classList.add('correct');
+  });
+  if(!ok) btn.classList.add('wrong');
+  if(ok){ round.correct++; round.xpEarned+=4; }
+
+  const r=item.row;
+  const fb=document.getElementById('feedback');
+  fb.className='feedback show '+(ok?'ok':'no');
+  let main;
+  if(item.mode==='sense')
+    main=`<b>${esc(r.term)}</b> ở đây = ${esc(r.meaning_vi)}`;
+  else if(item.mode==='phrasal')
+    main=`<b>${esc(r.phrase)}</b> = ${esc(r.meaning_vi||'')}`;
+  else
+    main=`<b>${esc(r.phrase)}</b> = ${esc(r.meaning_vi||'')}`;
+
+  let note='';
+  if(item.mode==='sense' && /^CÓ/i.test(String(r.pron_diff||'')))
+    note=`<div class="xg-note">🔉 ${esc(r.pron_diff)}</div>`;
+  else if(item.mode==='sense' && r.context_note)
+    note=`<div class="xg-note">${esc(r.context_note)}</div>`;
+  else if(item.mode==='phrasal' && r.separable!=null)
+    note=`<div class="xg-note">${r.separable?'Tách được — chen tân ngữ vào giữa: '+esc(r.term)+' <i>it</i> '+esc(xtParticles(r.phrase).join(' ')):'Không tách — luôn đi liền nhau'}</div>`;
+  else if(item.mode==='prep' && r.common_error)
+    note=`<div class="xg-note${/^SAI/i.test(r.common_error)?' err':''}">${/^SAI/i.test(r.common_error)?'❌ ':'💡 '}${esc(r.common_error)}</div>`;
+
+  fb.innerHTML=`<div class="xg-fb">`+(ok?'✓ Chính xác! ':'✗ Đáp án đúng: ')+main+
+    `<div class="xg-vi">${esc(r.example_vi||'')}</div>`+note+`</div>`;
+  document.getElementById('next-bar').classList.remove('hidden');
+  document.getElementById('play-score').textContent=`${round.correct} ✓`;
+  setTimeout(()=>speakTerm(r.example),200);
+}
+
 function buildCardItem(w,mode){
   const item={mode,word:w};
   if(mode==='meaning'){
@@ -833,6 +1088,12 @@ function renderStep(){
   const item=round.items[round.idx];
   round.answered=false;
   updatePlayHead(round.idx, round.items.length);
+  if(XT_MODES.indexOf(item.mode)>=0){
+    host.innerHTML=tplXt(item);
+    document.querySelectorAll('#question-host .opt').forEach(b=>
+      b.addEventListener('click',()=>answerXt(b,item),{once:true}));
+    return;
+  }
   if(item.mode==='meaning')   host.innerHTML=tplChoice(item,'Từ này nghĩa là gì?', headTerm(item.word));
   else if(item.mode==='image')host.innerHTML=tplChoice(item,'Đây là từ nào?', headImage(item.word));
   else if(item.mode==='listening') host.innerHTML=tplChoice(item,'Nghe và chọn từ đúng', headListen(item.word));
