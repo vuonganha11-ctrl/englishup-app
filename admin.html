@@ -302,6 +302,7 @@ select.input{cursor:pointer}
       <button class="nav-btn active" data-section="dashboard" onclick="nav('dashboard',this)"><span class="nbi">📊</span>Dashboard</button>
       <div class="nav-group-label">Nội dung</div>
       <button class="nav-btn" data-section="words" onclick="nav('words',this)"><span class="nbi">📖</span>Từ vựng<span class="nav-count" id="nav-count-words">—</span></button>
+      <button class="nav-btn" data-section="extras" onclick="nav('extras',this)"><span class="nbi">🧩</span>Mở rộng từ<span class="nav-count" id="nav-count-extras">—</span></button>
       <button class="nav-btn" data-section="courses" onclick="nav('courses',this)"><span class="nbi">🎓</span>Khoá học<span class="nav-count" id="nav-count-courses">—</span></button>
       <button class="nav-btn" data-section="video" onclick="nav('video',this)"><span class="nbi">🎬</span>Video<span class="nav-count" id="nav-count-video">—</span></button>
       <button class="nav-btn" onclick="location.href='admin-shorts.html'"><span class="nbi">📱</span>Shorts</button>
@@ -367,6 +368,24 @@ select.input{cursor:pointer}
           </div>
           <div id="words-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
           <div class="pagination" id="words-pagination"></div>
+        </div>
+      </div>
+
+      <!-- MỞ RỘNG TỪ: đa nghĩa · cụm động từ · giới từ -->
+      <div class="section-page" id="sec-extras">
+        <div class="page-header">
+          <h1>🧩 Mở rộng từ</h1>
+          <button class="btn" onclick="xaImport()">📥 Nạp CSV</button>
+          <button class="btn primary" onclick="xaOpen()">＋ Thêm dòng</button>
+        </div>
+        <div class="col-tabs" id="xa-tabs"></div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <span class="table-toolbar-title" id="xa-count-label">Đang tải…</span>
+            <div class="search-wrap"><input class="search-input" id="xa-search" placeholder="Tìm từ / cụm / nghĩa…" oninput="xaFilter(this.value)"></div>
+          </div>
+          <div id="xa-table"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
+          <div class="pagination" id="xa-pagination"></div>
         </div>
       </div>
 
@@ -673,6 +692,40 @@ select.input{cursor:pointer}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-course')">Huỷ</button>
       <button class="btn primary" onclick="saveCourse()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MỞ RỘNG TỪ -->
+<div class="modal-overlay" id="modal-xa">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header"><span style="font-size:20px">🧩</span><h2 id="xa-modal-title">Thêm dòng</h2><button class="btn-icon" onclick="closeModal('modal-xa')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="xa-id">
+      <div id="xa-form"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-xa')">Huỷ</button>
+      <button class="btn primary" onclick="xaSave()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NẠP CSV MỞ RỘNG TỪ -->
+<div class="modal-overlay" id="modal-xa-import">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header"><span style="font-size:20px">📥</span><h2 id="xa-imp-title">Nạp CSV</h2><button class="btn-icon" onclick="closeModal('modal-xa-import')">✕</button></div>
+    <div class="modal-body">
+      <div id="xa-imp-hint" style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px"></div>
+      <input type="file" id="xa-imp-file" accept=".csv" class="input">
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+        Dòng trùng khoá (đã có sẵn) sẽ được <b>cập nhật đè</b>, dòng mới thì thêm vào.
+      </div>
+      <div id="xa-imp-log" style="margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--muted);max-height:180px;overflow:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-xa-import')">Đóng</button>
+      <button class="btn primary" id="xa-imp-go" onclick="xaImportRun()">⬆ Nạp lên</button>
     </div>
   </div>
 </div>
@@ -1036,7 +1089,7 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers})[section]?.();
+  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers,extras:loadExtras})[section]?.();
 }
 
 // ── DASHBOARD ──
@@ -1058,6 +1111,14 @@ async function loadNavCounts(){
     const el=document.getElementById('nav-count-'+id);
     if(el) el.textContent=count??'—';
   }
+  // Mở rộng từ = tổng 3 bảng phụ
+  let xn=0, xok=false;
+  for(const t of XA_DEFS.map(d=>d.table)){
+    try{ const {count,error}=await _sb.from(t).select('*',{count:'exact',head:true});
+         if(!error){ xn+=count||0; xok=true; } }catch(e){}
+  }
+  const xe=document.getElementById('nav-count-extras');
+  if(xe) xe.textContent = xok ? xn : '—';
 }
 
 // ══════════════ TỪ VỰNG — bảng 25 cột, đồng bộ với vocab.html ══════════════
@@ -3165,6 +3226,280 @@ document.addEventListener('keydown',function(e){
   }
   if(e.key===' '&&!typing){e.preventDefault();ssToggle();return;}
 },true);
+
+// ══════════════ MỞ RỘNG TỪ: đa nghĩa · cụm động từ · giới từ ══════════════
+// Cả 3 bảng dùng chung một bộ khung; muốn thêm cột chỉ cần sửa mảng fields.
+const XA_DEFS=[
+  { key:'senses', tab:'Từ đa nghĩa', table:'word_senses', order:['term','sense_no'],
+    conflict:'term,sense_no',
+    fields:[
+      {k:'term',          lab:'Từ gốc *',        w:1, req:true,  ph:'record'},
+      {k:'sense_no',      lab:'Nghĩa số *',      w:1, req:true,  num:true, ph:'1'},
+      {k:'part_of_speech',lab:'Loại từ',         w:1, ph:'dt'},
+      {k:'meaning_vi',    lab:'Nghĩa tiếng Việt *', w:3, req:true, ph:'bản ghi chép, hồ sơ'},
+      {k:'phonetic',      lab:'IPA của nghĩa này',  w:1, ph:'ˈrekɔːd'},
+      {k:'frequency',     lab:'Phổ biến (1-3)',  w:1, num:true, sel:['','1','2','3']},
+      {k:'literal',       lab:'Nghĩa đen / bóng',w:1, sel:['','đen','bóng']},
+      {k:'context_note',  lab:'Dùng khi nào / ngữ cảnh', w:3, area:true},
+      {k:'pron_diff',     lab:'Khác biệt phát âm', w:3, ph:'CÓ — danh từ nhấn âm 1: RE-cord  ·  hoặc: Không'},
+      {k:'example',       lab:'Ví dụ (EN)',      w:3},
+      {k:'example_vi',    lab:'Nghĩa ví dụ (VI)',w:3},
+    ],
+    cols:[['term','Từ gốc'],['sense_no','#'],['part_of_speech','Loại'],['meaning_vi','Nghĩa'],
+          ['phonetic','IPA'],['frequency','★'],['literal','Đen/Bóng'],['example','Ví dụ']] },
+
+  { key:'phrasal', tab:'Cụm động từ', table:'phrasal_verbs', order:['term','phrase'],
+    conflict:'phrase',
+    fields:[
+      {k:'term',      lab:'Động từ gốc *', w:1, req:true, ph:'get'},
+      {k:'phrase',    lab:'Cụm động từ *', w:1, req:true, ph:'get up'},
+      {k:'level',     lab:'CEFR',          w:1, sel:['','A1','A2','B1','B2','C1','C2']},
+      {k:'separable', lab:'Tách được?',    w:1, bool:true, sel:['','Tách được','Không tách']},
+      {k:'frequency', lab:'Phổ biến (1-3)',w:1, num:true, sel:['','1','2','3']},
+      {k:'meaning_vi',lab:'Nghĩa tiếng Việt *', w:3, req:true},
+      {k:'example',   lab:'Ví dụ (EN)',    w:3},
+      {k:'example_vi',lab:'Nghĩa ví dụ (VI)', w:3},
+    ],
+    cols:[['term','Động từ'],['phrase','Cụm'],['separable','Tách?'],['meaning_vi','Nghĩa'],
+          ['level','CEFR'],['frequency','★'],['example','Ví dụ']] },
+
+  { key:'preps', tab:'Giới từ đi kèm', table:'word_preps', order:['term','phrase'],
+    conflict:'phrase',
+    fields:[
+      {k:'term',           lab:'Từ gốc *',    w:1, req:true, ph:'depend'},
+      {k:'phrase',         lab:'Cụm cố định *', w:1, req:true, ph:'depend on'},
+      {k:'prep',           lab:'Giới từ',     w:1, ph:'on'},
+      {k:'part_of_speech', lab:'Loại từ',     w:1, ph:'đt'},
+      {k:'level',          lab:'CEFR',        w:1, sel:['','A1','A2','B1','B2','C1','C2']},
+      {k:'frequency',      lab:'Phổ biến (1-3)', w:1, num:true, sel:['','1','2','3']},
+      {k:'meaning_vi',     lab:'Nghĩa tiếng Việt *', w:3, req:true},
+      {k:'common_error',   lab:'Lỗi thường gặp', w:3, ph:'SAI: depend of / depend to'},
+      {k:'example',        lab:'Ví dụ (EN)',  w:3},
+      {k:'example_vi',     lab:'Nghĩa ví dụ (VI)', w:3},
+    ],
+    cols:[['term','Từ gốc'],['phrase','Cụm cố định'],['prep','Giới từ'],['meaning_vi','Nghĩa'],
+          ['common_error','Lỗi thường gặp'],['frequency','★'],['example','Ví dụ']] },
+];
+
+let _xaKey='senses', _xaRows=[], _xaView=[], _xaPage=1, _xaQ='';
+const XA_PER=20;
+const xaDef = () => XA_DEFS.find(d=>d.key===_xaKey) || XA_DEFS[0];
+
+function xaTabs(){
+  document.getElementById('xa-tabs').innerHTML = XA_DEFS.map(d=>
+    `<button class="col-tab${d.key===_xaKey?' active':''}" onclick="xaSelect('${d.key}')">${awEsc(d.tab)}</button>`
+  ).join('');
+}
+function xaSelect(k){ _xaKey=k; _xaQ=''; _xaPage=1;
+  const s=document.getElementById('xa-search'); if(s) s.value='';
+  xaTabs(); loadExtras(); }
+
+async function loadExtras(){
+  xaTabs();
+  const d=xaDef();
+  document.getElementById('xa-table').innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
+  try{
+    let all=[], from=0;
+    for(;;){
+      let q=_sb.from(d.table).select('*');
+      d.order.forEach(o=>{ q=q.order(o); });
+      const {data,error}=await q.range(from, from+999);
+      if(error) throw error;
+      all=all.concat(data||[]);
+      if((data||[]).length<1000) break;
+      from+=1000; if(from>40000) break;
+    }
+    _xaRows=all;
+  }catch(e){
+    _xaRows=[];
+    document.getElementById('xa-table').innerHTML=
+      `<div class="empty-state"><div class="es-icon">⚠️</div><p>Chưa đọc được bảng <b>${awEsc(d.table)}</b>.<br>${awEsc(e.message||'')}<br><small>Nếu chưa chạy migration, hãy chạy file <code>migration_dangnghia_cumdongtu.sql</code> trên Supabase SQL Editor.</small></p></div>`;
+    document.getElementById('xa-count-label').textContent='—';
+    document.getElementById('xa-pagination').innerHTML='';
+    return;
+  }
+  xaRender();
+}
+
+function xaFilter(v){ _xaQ=(v||'').toLowerCase().trim(); _xaPage=1; xaRender(); }
+
+function xaRender(){
+  const d=xaDef();
+  _xaView = _xaQ
+    ? _xaRows.filter(r=>d.cols.some(([k])=>String(r[k]==null?'':r[k]).toLowerCase().includes(_xaQ)))
+    : _xaRows.slice();
+
+  const nTerm = new Set(_xaRows.map(r=>String(r.term||'').toLowerCase())).size;
+  document.getElementById('xa-count-label').textContent =
+    `${d.tab} — ${_xaView.length} dòng / ${nTerm} từ gốc` + (_xaQ?` (lọc từ ${_xaRows.length})`:'');
+
+  if(!_xaView.length){
+    document.getElementById('xa-table').innerHTML='<div class="empty-state"><div class="es-icon">📭</div><p>Chưa có dòng nào</p></div>';
+    document.getElementById('xa-pagination').innerHTML='';
+    return;
+  }
+  const pages=Math.max(1,Math.ceil(_xaView.length/XA_PER));
+  if(_xaPage>pages) _xaPage=pages;
+  const slice=_xaView.slice((_xaPage-1)*XA_PER, _xaPage*XA_PER);
+
+  const cell=(r,k)=>{
+    const v=r[k];
+    if(k==='separable') return v===true?'<span class="badge badge-blue">tách được</span>'
+                             :v===false?'<span class="badge">không tách</span>':'—';
+    if(k==='frequency')  return v?'<span style="color:var(--a4)">'+'★'.repeat(v)+'</span>':'—';
+    if(k==='phrase')     return `<strong style="font-family:var(--mono)">${awEsc(v)}</strong>`;
+    if(k==='term')       return `<strong>${awEsc(v)}</strong>`;
+    if(k==='common_error'&&v) return `<span style="color:var(--danger);font-size:12px">${awEsc(v)}</span>`;
+    const s=String(v==null?'':v);
+    return s.length>70 ? awEsc(s.slice(0,70))+'…' : (awEsc(s)||'—');
+  };
+
+  document.getElementById('xa-table').innerHTML =
+    `<table><thead><tr>${d.cols.map(c=>`<th>${awEsc(c[1])}</th>`).join('')}<th style="width:96px">Thao tác</th></tr></thead><tbody>` +
+    slice.map(r=>`<tr>${d.cols.map(c=>`<td>${cell(r,c[0])}</td>`).join('')}` +
+      `<td><div style="display:flex;gap:4px"><button class="btn-icon" title="Sửa" onclick="xaOpen(${r.id})">✏️</button>` +
+      `<button class="btn-icon" title="Xoá" onclick="xaDelete(${r.id})">🗑️</button></div></td></tr>`).join('') +
+    `</tbody></table>`;
+
+  document.getElementById('xa-pagination').innerHTML =
+    `<span>Trang ${_xaPage}/${pages} — ${_xaView.length} dòng</span><span>` +
+    `<button class="btn" style="padding:5px 12px" ${_xaPage<=1?'disabled':''} onclick="xaGo(${_xaPage-1})">‹ Trước</button> ` +
+    `<button class="btn" style="padding:5px 12px" ${_xaPage>=pages?'disabled':''} onclick="xaGo(${_xaPage+1})">Sau ›</button></span>`;
+}
+function xaGo(p){ _xaPage=p; xaRender(); document.getElementById('xa-table').scrollIntoView({block:'nearest'}); }
+
+// ── Thêm / sửa ──
+function xaOpen(id){
+  const d=xaDef();
+  const r = id!=null ? _xaRows.find(x=>x.id===id) : null;
+  document.getElementById('xa-id').value = r ? r.id : '';
+  document.getElementById('xa-modal-title').textContent = (r?'Sửa — ':'Thêm — ')+d.tab;
+
+  // w = 1 → 3 ô/hàng · w = 2 → 2 ô/hàng · w = 3 → chiếm trọn hàng
+  let html='', buf=[], curW=0;
+  const CAP={1:3, 2:2};
+  const flush=()=>{ if(!buf.length) return;
+    const cls = curW===1 ? 'field-row3' : 'field-row';
+    html += `<div class="${cls}">${buf.join('')}</div>`;
+    buf=[]; curW=0; };
+
+  d.fields.forEach(f=>{
+    let val = r ? r[f.k] : '';
+    if(f.bool) val = val===true?'Tách được':val===false?'Không tách':'';
+    if(val==null) val='';
+    let inp;
+    if(f.sel)       inp=`<select class="input" id="xaf-${f.k}">`+f.sel.map(o=>
+                        `<option value="${awEsc(o)}"${String(val)===o?' selected':''}>${awEsc(o||'—')}</option>`).join('')+`</select>`;
+    else if(f.area) inp=`<textarea class="input" id="xaf-${f.k}" style="min-height:62px" placeholder="${awEsc(f.ph||'')}">${awEsc(val)}</textarea>`;
+    else            inp=`<input class="input" id="xaf-${f.k}" value="${awEsc(val)}" placeholder="${awEsc(f.ph||'')}">`;
+    const cell=`<div class="field"><label>${awEsc(f.lab)}</label>${inp}</div>`;
+    if(f.w===3){ flush(); html+=cell; return; }
+    if(curW && curW!==f.w) flush();
+    curW=f.w; buf.push(cell);
+    if(buf.length>=CAP[f.w]) flush();
+  });
+  flush();
+  document.getElementById('xa-form').innerHTML=html;
+  openModal('modal-xa');
+}
+
+async function xaSave(){
+  const d=xaDef();
+  const rec={};
+  for(const f of d.fields){
+    const el=document.getElementById('xaf-'+f.k);
+    let v = el ? el.value.trim() : '';
+    if(f.bool) v = v==='Tách được'?true : v==='Không tách'?false : null;
+    else if(f.num) v = v===''?null:Number(v);
+    else if(v==='') v=null;
+    if(f.req && (v===null||v==='')){ toast('⚠️ Thiếu "'+f.lab.replace(' *','')+'"','error'); return; }
+    rec[f.k]=v;
+  }
+  const id=document.getElementById('xa-id').value;
+  try{
+    if(id){ const {error}=await _sb.from(d.table).update(rec).eq('id',id); if(error) throw error; }
+    else  { const {error}=await _sb.from(d.table).insert(rec);             if(error) throw error; }
+    closeModal('modal-xa'); toast('💾 Đã lưu'); loadExtras(); loadNavCounts();
+  }catch(e){ toast('❌ '+(e.message||'Lỗi lưu'),'error'); }
+}
+
+async function xaDelete(id){
+  const r=_xaRows.find(x=>x.id===id); if(!r) return;
+  if(!confirm('Xoá dòng "'+(r.phrase||r.meaning_vi||r.term)+'"?')) return;
+  try{
+    const {error}=await _sb.from(xaDef().table).delete().eq('id',id); if(error) throw error;
+    toast('🗑️ Đã xoá'); loadExtras(); loadNavCounts();
+  }catch(e){ toast('❌ '+(e.message||'Lỗi xoá'),'error'); }
+}
+
+// ── Nạp CSV ──
+function xaImport(){
+  const d=xaDef();
+  document.getElementById('xa-imp-title').textContent='Nạp CSV — '+d.tab;
+  document.getElementById('xa-imp-hint').innerHTML=
+    `Bảng <b>${awEsc(d.table)}</b>. Dòng đầu file là tên cột, đúng các cột sau:<br>` +
+    `<code style="color:var(--a3)">${d.fields.map(f=>f.k).join(', ')}</code>`;
+  document.getElementById('xa-imp-log').innerHTML='';
+  document.getElementById('xa-imp-file').value='';
+  openModal('modal-xa-import');
+}
+
+// Đọc CSV có dấu ngoặc kép, hỗ trợ xuống dòng trong ô
+function xaParseCSV(text){
+  const rows=[]; let row=[], cur='', q=false;
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+    else cur+=c;
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=>r.some(x=>String(x).trim()!==''));
+}
+
+async function xaImportRun(){
+  const d=xaDef();
+  const f=document.getElementById('xa-imp-file').files[0];
+  const log=document.getElementById('xa-imp-log');
+  if(!f){ toast('⚠️ Chọn file CSV đã','error'); return; }
+  const btn=document.getElementById('xa-imp-go'); btn.disabled=true;
+  const say=t=>{ log.innerHTML+=t+'<br>'; log.scrollTop=log.scrollHeight; };
+  try{
+    const rows=xaParseCSV(await f.text());
+    const head=rows[0].map(h=>h.trim());
+    const known=d.fields.map(x=>x.k);
+    const lack=d.fields.filter(x=>x.req).map(x=>x.k).filter(k=>head.indexOf(k)<0);
+    if(lack.length) throw new Error('Thiếu cột bắt buộc: '+lack.join(', '));
+    say('Đọc được '+(rows.length-1)+' dòng.');
+
+    const recs=rows.slice(1).map(r=>{
+      const o={};
+      head.forEach((h,i)=>{
+        if(known.indexOf(h)<0) return;
+        const fd=d.fields.find(x=>x.k===h);
+        let v=(r[i]==null?'':String(r[i])).trim();
+        if(fd.bool) o[h] = v==='true'||v==='Tách được' ? true : (v==='false'||v==='Không tách' ? false : null);
+        else if(fd.num) o[h] = v===''?null:Number(v);
+        else o[h] = v===''?null:v;
+      });
+      return o;
+    }).filter(o=>o.term);
+
+    let done=0;
+    for(let i=0;i<recs.length;i+=200){
+      const lot=recs.slice(i,i+200);
+      const {error}=await _sb.from(d.table).upsert(lot,{onConflict:d.conflict});
+      if(error) throw error;
+      done+=lot.length; say('… đã nạp '+done+'/'+recs.length);
+    }
+    say('<b style="color:var(--a3)">✅ Xong '+done+' dòng.</b>');
+    toast('✅ Đã nạp '+done+' dòng'); loadExtras(); loadNavCounts();
+  }catch(e){ say('<b style="color:var(--danger)">❌ '+(e.message||e)+'</b>'); toast('❌ '+(e.message||'Lỗi nạp'),'error'); }
+  btn.disabled=false;
+}
 
 function toast(msg,type='success'){
   const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=msg;

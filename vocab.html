@@ -777,18 +777,64 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
 .syl.stressed { border-color: var(--a4); box-shadow: 0 0 0 2px rgba(251,146,60,.18); }
 .syl.stressed::before { content: 'ˈ'; color: var(--a4); font-weight: 800; padding-left: 5px; }
 .syl-sep { color: var(--muted); font-size: 13px; }
+/* ─── TỪ ĐA NGHĨA · CỤM ĐỘNG TỪ · GIỚI TỪ ĐI KÈM ─── */
+.xt-card {
+  background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--border2);
+  border-radius: 10px; padding: 11px 13px; margin-bottom: 9px;
+}
+.xt-card:last-child { margin-bottom: 0; }
+.xt-card.sense  { border-left-color: var(--accent); }
+.xt-card.phv    { border-left-color: var(--a2); }
+.xt-card.prep   { border-left-color: var(--a3); }
+.xt-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 5px; }
+.xt-no {
+  flex: none; width: 20px; height: 20px; border-radius: 6px; background: var(--accent);
+  color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center;
+  align-self: center;
+}
+.xt-phrase { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+.xt-mean { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.xt-tag {
+  font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+  border: 1px solid var(--border2); color: var(--muted); white-space: nowrap;
+}
+.xt-tag.pos   { color: var(--accent); border-color: rgba(79,142,247,.45); }
+.xt-tag.sep   { color: var(--a4);     border-color: rgba(251,146,60,.45); }
+.xt-tag.nosep { color: var(--muted); }
+.xt-tag.bong  { color: var(--a5);     border-color: rgba(244,114,182,.45); }
+.xt-tag.prepv { color: var(--a3); border-color: rgba(52,211,153,.45); font-family: var(--mono); }
+.xt-star { color: var(--a4); font-size: 11px; letter-spacing: 1px; margin-left: auto; }
+.xt-note { font-size: 12px; color: var(--muted); line-height: 1.55; margin-top: 3px; }
+.xt-ipa  { font-family: var(--mono); font-size: 12px; color: var(--a3); }
+.xt-warn {
+  font-size: 11.5px; color: var(--a4); background: rgba(251,146,60,.10);
+  border: 1px solid rgba(251,146,60,.30); border-radius: 7px;
+  padding: 4px 8px; margin-top: 6px; line-height: 1.45;
+}
+.xt-err {
+  font-size: 11.5px; color: var(--danger); background: rgba(248,113,113,.10);
+  border: 1px solid rgba(248,113,113,.30); border-radius: 7px;
+  padding: 4px 8px; margin-top: 6px; line-height: 1.45;
+}
+.xt-ex { margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--border); }
+.xt-ex .ex-sentence { font-size: 12.5px; }
+.xt-speak {
+  background: none; border: 1px solid var(--border2); color: var(--muted);
+  border-radius: 6px; font-size: 11px; padding: 1px 7px; cursor: pointer; margin-left: 6px;
+}
+.xt-speak:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.xt-speak.playing { background: var(--a3); color: #fff; border-color: var(--a3); }
+.xt-sub { font-size: 11.5px; color: var(--muted); margin: -4px 0 9px; }
+.vt-xt { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px;
+  border-radius: 20px; border: 1px solid var(--border2); }
+.vt-xt.s { color: var(--accent); border-color: rgba(79,142,247,.45); }
+.vt-xt.p { color: var(--a2);     border-color: rgba(167,139,250,.45); }
+.vt-xt.g { color: var(--a3);     border-color: rgba(52,211,153,.45); }
+
 .ph-link { background: none; border: none; color: var(--accent); font: inherit; font-size: 13px;
   cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
 .ph-tree { font-size: 13px; line-height: 1.7; }
 .ph-tree b { color: var(--text); }
-
-/* Ghi công ảnh minh hoạ */
-.wm-credit {
-  padding: 7px 20px 0; font-size: 11px; color: var(--muted);
-  text-align: right; flex-shrink: 0;
-}
-.wm-credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
-.wm-credit a:hover { color: var(--text); }
 .ph-tree .sep { color: var(--muted); padding: 0 5px; }
 .vt-reset.on { border-color: var(--accent); color: var(--accent); }
 
@@ -1438,8 +1484,6 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
       </div>
     </div>
 
-    <div class="wm-credit" id="wm-credit" style="display:none"></div>
-
     <div class="wm-body" id="wm-body">
       <!-- Definitions -->
       <div class="wm-section">
@@ -1460,6 +1504,24 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
       <div class="wm-section" id="wm-phon-section" style="display:none">
         <div class="wm-paragraph-label">Cấu tạo &amp; phát âm</div>
         <div id="wm-phon"></div>
+      </div>
+
+      <!-- Các nghĩa của từ đa nghĩa -->
+      <div class="wm-section" id="wm-senses-section" style="display:none">
+        <div class="wm-paragraph-label">Các nghĩa của từ</div>
+        <div id="wm-senses"></div>
+      </div>
+
+      <!-- Cụm động từ -->
+      <div class="wm-section" id="wm-phrasal-section" style="display:none">
+        <div class="wm-paragraph-label">Cụm động từ (phrasal verbs)</div>
+        <div id="wm-phrasal"></div>
+      </div>
+
+      <!-- Giới từ đi kèm -->
+      <div class="wm-section" id="wm-preps-section" style="display:none">
+        <div class="wm-paragraph-label">Giới từ đi kèm</div>
+        <div id="wm-preps"></div>
       </div>
 
       <!-- Hướng dẫn dùng từ -->
@@ -1546,7 +1608,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SB_URL, SB_KEY);
   await checkAuth();
   await loadCollections();
-  await Promise.all([loadTopics(), loadWords()]);
+  await Promise.all([loadTopics(), loadWordExtras(), loadWords()]);
 });
 
 // ── AUTH ─────────────────────────────────────────────
@@ -1742,6 +1804,63 @@ function updateHero() {
 // Chủ đề dành cho từ học viên tự thêm từ video → KHÔNG hiện trong kho học liệu chung
 const EU_USER_TOPIC = 'Từ video';
 
+// ── DỮ LIỆU MỞ RỘNG: nghĩa · cụm động từ · giới từ ────
+// Khoá của cả 3 map là term viết thường (khớp words.term không phân biệt hoa/thường)
+let _senseMap   = {};   // term → [{sense_no, meaning_vi, ...}]
+let _phrasalMap = {};   // term → [{phrase, separable, ...}]
+let _prepMap    = {};   // term → [{phrase, prep, ...}]
+let _xtLoaded   = false;
+
+const XT_PAGE = 1000;   // PostgREST trả tối đa 1000 dòng/lần
+
+// Đọc trọn một bảng, chia lô 1000 dòng
+async function xtFetchAll(table, orderBy){
+  let all = [], from = 0;
+  for (;;){
+    const { data, error } = await sb.from(table).select('*')
+      .order(orderBy).range(from, from + XT_PAGE - 1);
+    if (error) throw error;
+    const batch = data || [];
+    all = all.concat(batch);
+    if (batch.length < XT_PAGE) break;
+    from += XT_PAGE;
+    if (from > 40000) break;
+  }
+  return all;
+}
+
+function xtGroup(rows){
+  const m = {};
+  (rows || []).forEach(r => {
+    const k = String(r.term || '').toLowerCase();
+    if (!k) return;
+    (m[k] = m[k] || []).push(r);
+  });
+  return m;
+}
+
+// Bảng phụ chưa tồn tại (chưa chạy migration) → bỏ qua, trang vẫn chạy bình thường
+async function loadWordExtras(){
+  if (!sb || _xtLoaded) return;
+  const grab = async (t, ord) => { try { return await xtFetchAll(t, ord); }
+                                   catch(e){ console.warn('loadWordExtras ' + t + ':', e.message); return []; } };
+  const [s, p, g] = await Promise.all([
+    grab('word_senses',   'term'),
+    grab('phrasal_verbs', 'term'),
+    grab('word_preps',    'term'),
+  ]);
+  s.sort((a, b) => (a.sense_no || 0) - (b.sense_no || 0));
+  _senseMap   = xtGroup(s);
+  _phrasalMap = xtGroup(p);
+  _prepMap    = xtGroup(g);
+  _xtLoaded   = true;
+}
+
+const xtKey     = w => String((w && w.term) || '').toLowerCase();
+const senseList = w => _senseMap[xtKey(w)]   || [];
+const phvList   = w => _phrasalMap[xtKey(w)] || [];
+const prepList  = w => _prepMap[xtKey(w)]    || [];
+
 // ── LOAD WORDS ───────────────────────────────────────
 const WORD_PAGE = 1000;   // PostgREST trả tối đa 1000 dòng/lần
 
@@ -1879,6 +1998,12 @@ const VT_COLS = [
     get:w => exRows(w).length, on:false },
   { k:'exblob',         lab:'Nội dung câu', excel:'Câu mẫu',   w:'140px', sort:false, filter:'text',
     get:exBlob, on:false },
+  { k:'nsense',         lab:'Đa nghĩa',   excel:'Từ đa nghĩa', w:'96px',  sort:true,  filter:'yn',
+    ynLab:['Có nhiều nghĩa','Chỉ một nghĩa'], get:w => senseList(w).length, on:true },
+  { k:'nphrasal',       lab:'Cụm ĐT',     excel:'Cụm động từ', w:'92px',  sort:true,  filter:'yn',
+    ynLab:['Có cụm động từ','Không có'],      get:w => phvList(w).length,   on:true },
+  { k:'nprep',          lab:'Giới từ',    excel:'Giới từ đi kèm', w:'92px', sort:true, filter:'yn',
+    ynLab:['Có giới từ đi kèm','Không có'],   get:w => prepList(w).length,  on:true },
   { k:'srs',            lab:'Flashcard',  excel:'—',           w:'100px', sort:true,  filter:'srs',
     get:w => { const c = _srsMap[w.id]; return c ? srsBucket(c.interval_days) : -1; }, on:true },
   { k:'audio',          lab:'Nghe',       excel:'—',           w:'68px',  sort:true,  filter:'yn',
@@ -1892,6 +2017,7 @@ const VT_PRESETS = {
   'Học từ':  ['term','phonetic','definition_vi','part_of_speech','level','topic','srs','audio'],
   'Ngữ âm':  ['term','phonetic','onset','rime1','syl2','syl3','syl4p','syllables','stress','suffix','root_word','audio'],
   'Chủ đề':  ['term','definition_vi','level','part_name','branch_name','topic','topic_code','group_code','srs'],
+  'Mở rộng': ['term','phonetic','definition_vi','part_of_speech','level','nsense','nphrasal','nprep','audio'],
   'Tất cả':  VT_COLS.map(c => c.k),
 };
 
@@ -2052,6 +2178,18 @@ function vtCell(c, w){
       const a = exAltCount(w), o = exOppCount(w);
       if (!a && !o) return `<span class="vt-ex-no">—</span>`;
       return `<span class="vt-mini">${a ? `<b style="color:var(--a3)">🔄 ${a}</b>` : ''}${a && o ? ' · ' : ''}${o ? `<b style="color:var(--a5)">↔ ${o}</b>` : ''}</span>`;
+    }
+    case 'nsense': {
+      const k = senseList(w).length;
+      return k > 1 ? `<span class="vt-xt s">${k} nghĩa</span>` : `<span class="vt-ex-no">—</span>`;
+    }
+    case 'nphrasal': {
+      const k = phvList(w).length;
+      return k ? `<span class="vt-xt p">${k} cụm</span>` : `<span class="vt-ex-no">—</span>`;
+    }
+    case 'nprep': {
+      const k = prepList(w).length;
+      return k ? `<span class="vt-xt g">${k} cụm</span>` : `<span class="vt-ex-no">—</span>`;
     }
     case 'srs':           return vtSrsCell(w.id);
     case 'audio':
@@ -2357,21 +2495,6 @@ function openWord(id) {
     heroPlaceholder.textContent = '🔤';
   }
 
-  // Ghi công ảnh (Pexels yêu cầu nêu tên tác giả + đặt link về Pexels)
-  const _cr = document.getElementById('wm-credit');
-  if (_cr){
-    if (w.image_url && w.image_credit){
-      const who = w.image_credit_url
-        ? `<a href="${esc(w.image_credit_url)}" target="_blank" rel="noopener nofollow">${esc(w.image_credit)}</a>`
-        : esc(w.image_credit);
-      const src = w.image_source === 'Pexels'
-        ? ' / <a href="https://www.pexels.com" target="_blank" rel="noopener nofollow">Pexels</a>'
-        : (w.image_source ? ' / ' + esc(w.image_source) : '');
-      _cr.innerHTML = 'Ảnh: ' + who + src;
-      _cr.style.display = 'block';
-    } else _cr.style.display = 'none';
-  }
-
   // Term + phonetic
   document.getElementById('wm-term').textContent = w.term;
   document.getElementById('wm-phonetic').textContent = w.phonetic ? `/${w.phonetic}/` : '';
@@ -2422,6 +2545,14 @@ function openWord(id) {
     console.error('renderPhonetics:', err);
     const _p = document.getElementById('wm-phon-section'); if (_p) _p.style.display = 'none';
   }
+  [['renderSenses',  renderSenses,  'wm-senses-section'],
+   ['renderPhrasals', renderPhrasals, 'wm-phrasal-section'],
+   ['renderPreps',   renderPreps,   'wm-preps-section']].forEach(([nm, fn, sid]) => {
+    try { fn(w); } catch(err){
+      console.error(nm + ':', err);
+      const el = document.getElementById(sid); if (el) el.style.display = 'none';
+    }
+  });
 
   // SRS button
   const srsBtn = document.getElementById('btn-srs');
@@ -2600,6 +2731,129 @@ function renderPhonetics(w){
   host.querySelectorAll('.syl').forEach(el => {
     el.addEventListener('click', () => speakTerm(w.term));
   });
+}
+
+// ── TỪ ĐA NGHĨA · CỤM ĐỘNG TỪ · GIỚI TỪ ĐI KÈM ────────
+function xtStars(n){
+  n = Number(n) || 0;
+  return n ? `<span class="xt-star" title="Mức độ phổ biến">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span>` : '';
+}
+
+// Nút loa nhỏ cho ví dụ (dùng chung cho cả 3 khối)
+function xtSpeakBtn(sentence){
+  const a = String(sentence || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                                  .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<button class="xt-speak" data-xt-say="${a}" onclick="xtSay(this)" title="Nghe câu">🔊</button>`;
+}
+
+function xtSay(btn){
+  const text = btn.getAttribute('data-xt-say') || '';
+  if (!text || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.92;
+  document.querySelectorAll('.xt-speak.playing').forEach(b => b.classList.remove('playing'));
+  btn.classList.add('playing');
+  u.onend = () => btn.classList.remove('playing');
+  window.speechSynthesis.speak(u);
+}
+
+// Khối ví dụ EN + nghĩa TV, dùng lại cơ chế chạm-vào-từ của câu mẫu Bloom
+function xtExample(r, term){
+  if (!r.example) return '';
+  return `<div class="xt-ex">
+      <div class="ex-sentence">${clickableSentence(r.example, term)}${xtSpeakBtn(r.example)}</div>
+      ${r.example_vi ? `<div class="ex-meaning">↳ ${esc(r.example_vi)}</div>` : ''}
+    </div>`;
+}
+
+function xtShow(secId, hostId, html){
+  const sec = document.getElementById(secId), host = document.getElementById(hostId);
+  if (!sec || !host) return;
+  if (!html){ sec.style.display = 'none'; return; }
+  host.innerHTML = html;
+  sec.style.display = 'block';
+}
+
+// 1 ── Các nghĩa của từ đa nghĩa
+function renderSenses(w){
+  const rows = senseList(w);
+  // chỉ 1 nghĩa thì đã có sẵn ở ô "Nghĩa tiếng Việt" phía trên → không lặp lại
+  if (rows.length < 2){ xtShow('wm-senses-section', 'wm-senses', ''); return; }
+
+  const diff = rows.filter(r => /^CÓ/i.test(String(r.pron_diff || '')));
+  const sub = `<div class="xt-sub">Từ này có <b>${rows.length}</b> nghĩa` +
+    (diff.length ? ` — ⚠️ <b style="color:var(--a4)">phát âm đổi theo nghĩa</b>, xem kỹ ô màu cam.` : '.') +
+    `</div>`;
+
+  const cards = rows.map(r => {
+    const warn = /^CÓ/i.test(String(r.pron_diff || ''))
+      ? `<div class="xt-warn">🔉 ${esc(r.pron_diff)}</div>` : '';
+    return `<div class="xt-card sense">
+      <div class="xt-head">
+        <span class="xt-no">${esc(r.sense_no || '')}</span>
+        ${r.part_of_speech ? `<span class="xt-tag pos" title="${esc(posFull(r.part_of_speech))}">${esc(r.part_of_speech)}</span>` : ''}
+        <span class="xt-mean">${esc(r.meaning_vi || '')}</span>
+        ${r.literal === 'bóng' ? `<span class="xt-tag bong">nghĩa bóng</span>` : ''}
+        ${r.phonetic ? `<span class="xt-ipa">/${esc(r.phonetic)}/</span>` : ''}
+        ${xtStars(r.frequency)}
+      </div>
+      ${r.context_note ? `<div class="xt-note">${esc(r.context_note)}</div>` : ''}
+      ${warn}
+      ${xtExample(r, w.term)}
+    </div>`;
+  }).join('');
+
+  xtShow('wm-senses-section', 'wm-senses', sub + cards);
+}
+
+// 2 ── Cụm động từ
+function renderPhrasals(w){
+  const rows = phvList(w);
+  if (!rows.length){ xtShow('wm-phrasal-section', 'wm-phrasal', ''); return; }
+
+  const sub = `<div class="xt-sub"><b>${rows.length}</b> cụm động từ dựng từ <b>${esc(w.term)}</b>. ` +
+    `<b style="color:var(--a4)">Tách được</b> = chen tân ngữ vào giữa (turn <i>it</i> off); ` +
+    `<b>không tách</b> = luôn đi liền.</div>`;
+
+  const cards = rows.map(r => `
+    <div class="xt-card phv">
+      <div class="xt-head">
+        <span class="xt-phrase">${esc(r.phrase || '')}</span>
+        ${r.separable === true  ? `<span class="xt-tag sep">tách được</span>` : ''}
+        ${r.separable === false ? `<span class="xt-tag nosep">không tách</span>` : ''}
+        ${xtStars(r.frequency)}
+      </div>
+      <div class="xt-note" style="color:var(--text)">${esc(r.meaning_vi || '')}</div>
+      ${xtExample(r, r.phrase || w.term)}
+    </div>`).join('');
+
+  xtShow('wm-phrasal-section', 'wm-phrasal', sub + cards);
+}
+
+// 3 ── Giới từ đi kèm
+function renderPreps(w){
+  const rows = prepList(w);
+  if (!rows.length){ xtShow('wm-preps-section', 'wm-preps', ''); return; }
+
+  const sub = `<div class="xt-sub">Những cụm cố định của <b>${esc(w.term)}</b> — ` +
+    `học nguyên cụm thay vì học rời từng từ.</div>`;
+
+  const cards = rows.map(r => `
+    <div class="xt-card prep">
+      <div class="xt-head">
+        <span class="xt-phrase">${esc(r.phrase || '')}</span>
+        ${r.prep ? `<span class="xt-tag prepv">+ ${esc(r.prep)}</span>` : ''}
+        ${xtStars(r.frequency)}
+      </div>
+      <div class="xt-note" style="color:var(--text)">${esc(r.meaning_vi || '')}</div>
+      ${r.common_error ? (/^SAI/i.test(String(r.common_error))
+          ? `<div class="xt-err">❌ ${esc(r.common_error)}</div>`
+          : `<div class="xt-note">💡 ${esc(r.common_error)}</div>`) : ''}
+      ${xtExample(r, r.phrase || w.term)}
+    </div>`).join('');
+
+  xtShow('wm-preps-section', 'wm-preps', sub + cards);
 }
 
 // ── HƯỚNG DẪN DÙNG TỪ ─────────────────────
