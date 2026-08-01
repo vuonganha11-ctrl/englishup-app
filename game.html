@@ -153,6 +153,64 @@ select.inp:focus{border-color:var(--accent)}
 .sp-input{width:100%;max-width:340px;display:block;margin:0 auto 16px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:13px 16px;font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);text-align:center;letter-spacing:2px}
 .sp-input:focus{outline:none;border-color:var(--accent)}
 .sp-input:disabled{opacity:.6}
+
+/* MẶC ĐỒ CHO NHÂN VẬT */
+.dz-skin{fill:#f0c9a0}.dz-hair{fill:#3b2b22}.dz-under{fill:#dfe6f2}
+.dz-eye{fill:#2b2b2b}
+.dz-lash{fill:none;stroke:#2b2b2b;stroke-width:2;stroke-linecap:round}
+.dz-mouth{fill:none;stroke:#b06a56;stroke-width:2.4;stroke-linecap:round}
+.dz-shape{stroke:rgba(0,0,0,.35);stroke-width:2;stroke-linejoin:round}
+.dz-detail{fill:none;stroke:rgba(0,0,0,.32);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dz-stroke{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+
+.dz-stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.dz-pill{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dz-t{color:var(--a3)} .dz-t.low{color:var(--danger);border-color:rgba(248,113,113,.5)}
+.dz-g{color:var(--a4)} .dz-s{color:var(--accent)}
+.dz-timebar{height:8px;background:var(--card2);border-radius:6px;overflow:hidden;margin-bottom:16px}
+.dz-timebar i{display:block;height:100%;background:linear-gradient(90deg,var(--a3),var(--accent));width:100%;transition:width .25s linear}
+.dz-timebar.low i{background:var(--danger)}
+
+.dz-prompt{text-align:center;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+.dz-sent{font-size:20px;font-weight:700;letter-spacing:-.2px}
+.dz-sent b{color:var(--accent)}
+.dz-vi{font-size:13.5px;color:var(--muted);margin-top:4px}
+.dz-say{margin-top:8px}
+
+.dz-stage{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.dz-person{background:var(--card);border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:10px 6px 6px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.dz-person.hover{border-color:var(--accent);background:rgba(79,142,247,.1)}
+.dz-person.ok{border-color:var(--a3);background:rgba(52,211,153,.12)}
+.dz-person.bad{border-color:var(--danger);background:rgba(248,113,113,.12)}
+.dz-person svg{width:100%;max-width:180px;height:auto;display:block;margin:0 auto}
+.dz-tag{font-size:15px;font-weight:800;color:var(--text);margin-top:4px}
+.dz-tag small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+
+.dz-tray{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.dz-card{background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:8px 6px 6px;width:92px;cursor:grab;touch-action:none;user-select:none;transition:transform .12s,border-color .12s}
+.dz-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.dz-card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,142,247,.35)}
+.dz-card.gone{opacity:0;pointer-events:none;transform:scale(.7)}
+.dz-card svg{width:100%;height:52px;display:block;background:#eef2f8;border-radius:8px}
+.dz-cap{font-size:11px;text-align:center;color:var(--muted);margin-top:5px;line-height:1.25}
+.dz-ghost{position:fixed;z-index:999;pointer-events:none;width:92px;opacity:.92;transform:translate(-50%,-50%) scale(1.1)}
+.dz-ghost svg{width:100%;height:52px;display:block;background:#eef2f8;border-radius:8px}
+
+.dz-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 20px;text-align:center}
+.dz-preview h3{font-size:19px;margin-bottom:4px}
+.dz-preview .sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.dz-vocab{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.dz-vword{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;width:104px}
+.dz-vword svg{width:100%;height:56px;display:block;background:#eef2f8;border-radius:8px}
+.dz-vword .en{font-size:13px;font-weight:700;margin-top:6px}
+.dz-vword .vi{font-size:11px;color:var(--muted)}
+@media(max-width:520px){
+  .dz-sent{font-size:16px}
+  .dz-card{width:74px}.dz-card svg{height:44px}
+  .dz-vword{width:88px}
+  .dz-stage{gap:8px}
+}
+
 @media(max-width:520px){.sp-vi{font-size:17px}.sp-input{font-size:19px;letter-spacing:1px}.sp-ch{width:22px;font-size:17px}.sp-img{height:150px}}
 .scr-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-g{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
@@ -280,7 +338,7 @@ select.inp:focus{border-color:var(--accent)}
       <div class="mode-grid" id="mode-grid"></div>
     </div>
 
-    <div class="row">
+    <div class="row" id="scope-row">
       <div class="sect col">
         <div class="sect-label">Kho từ vựng</div>
         <select class="inp" id="setup-collection" onchange="selectCollection(this.value)">
@@ -307,7 +365,12 @@ select.inp:focus{border-color:var(--accent)}
       </div>
     </div>
 
-    <div class="sect">
+    <div class="sect hidden" id="dz-sect">
+      <div class="sect-label">Bộ trang phục</div>
+      <div class="chips" id="dz-chips"></div>
+    </div>
+
+    <div class="sect" id="count-sect">
       <div class="sect-label">Số câu</div>
       <div class="chips" id="count-chips">
         <div class="chip" data-count="5" onclick="selectCount(5,this)">5</div>
@@ -396,6 +459,7 @@ const MODES={
   scramble: {name:'Xếp chữ / Đánh vần',ico:'🔤', desc:'Sắp lại chữ cái thành từ'},
   matching: {name:'Nối cặp từ – nghĩa',ico:'🔗', desc:'Ghép từ với nghĩa của nó'},
   spelling: {name:'Đánh vần (Spelling Bee)', ico:'🐝', desc:'Xem ảnh/nghĩa → gõ đúng cả từ'},
+  dressup:  {name:'Mặc đồ cho nhân vật', ico:'👕', desc:'Đọc câu → kéo đúng món lên đúng người'},
   mixed:    {name:'Trộn ngẫu nhiên',   ico:'🎲', desc:'Kết hợp nhiều kiểu chơi'},
 };
 
@@ -601,7 +665,7 @@ function buildTopicSelect(){
 
 // ── SETUP CONTROLS ──
 function renderModeGrid(){
-  const order=['meaning','listening','image','spelling','scramble','matching','mixed'];
+  const order=['meaning','listening','image','spelling','dressup','scramble','matching','mixed'];
   document.getElementById('mode-grid').innerHTML=order.map(k=>{
     const m=MODES[k]; const active=(k===selMode)?' active':'';
     return `<button class="mode-card${active}" data-mode="${k}" onclick="selectMode('${k}')">
@@ -615,6 +679,13 @@ function renderModeGrid(){
 function selectMode(k){ selMode=k; document.querySelectorAll('.mode-card').forEach(c=>c.classList.toggle('active',c.dataset.mode===k)); syncCountChips(); updateAvail(); }
 // Ô "∞ Vô tận" chỉ có nghĩa với chế độ Đánh vần
 function syncCountChips(){
+  // Chế độ Mặc đồ dùng bộ trang phục riêng, không dùng kho/chủ đề/cấp độ/số câu
+  const isDz=(selMode==='dressup');
+  const el=id=>document.getElementById(id);
+  if(el('scope-row'))  el('scope-row').classList.toggle('hidden',isDz);
+  if(el('count-sect')) el('count-sect').classList.toggle('hidden',isDz);
+  if(el('dz-sect'))    el('dz-sect').classList.toggle('hidden',!isDz);
+  if(isDz) dzRenderChips();
   const ch=document.getElementById('chip-endless'); if(!ch) return;
   const isSp=(selMode==='spelling');
   ch.style.display=isSp?'':'none';
@@ -671,6 +742,9 @@ function updateAvail(){
     if(usable.length<need){
       el.innerHTML=`Cần ít nhất <strong>${need}</strong> từ phù hợp · hiện có <strong>${usable.length}</strong>`;
       btn.disabled=true;
+    }else if(selMode==='dressup'){
+      el.innerHTML=`Bộ <strong>${esc(dzCurrentSet().name)}</strong> · <strong>${usable.length}</strong> món trang phục · 10 màu`;
+      btn.disabled=usable.length<3;
     }else if(selMode==='spelling'&&selCount===0){
       el.innerHTML=`Có <strong>${usable.length}</strong> từ phù hợp · chơi <strong>vô tận</strong> tới khi hết 3 mạng`;
       btn.disabled=false;
@@ -683,6 +757,7 @@ function updateAvail(){
 }
 // Lọc pool theo kiểu chơi (ảnh cần image_url; còn lại cần nghĩa VI)
 function usablePool(mode){
+  if(mode==='dressup') return dzSetItems();
   if(mode==='image') return availWords.filter(w=>w.image_url);
   if(mode==='spelling') return availWords.filter(w=>{
     const t=(w.term||'').trim();
@@ -708,6 +783,7 @@ function startGame(){
   if(!euIsPremium() && _euRoundsPlayed >= 1){ euShowUpgrade(); return; }
   _euRoundsPlayed++;
   if(selMode==='spelling'){ startSpelling(); return; }
+  if(selMode==='dressup'){ startDressup(); return; }
   const cardModes=['meaning','listening','image','scramble'];
   let kind,items=[],boards=[];
   if(selMode==='matching'){
@@ -948,15 +1024,592 @@ function finishGame(){
   document.getElementById('screen-play').classList.add('hidden');
   document.getElementById('screen-result').classList.remove('hidden');
 }
-function exitGame(){ if(!confirm('Thoát lượt chơi? Tiến trình hiện tại sẽ không được lưu.'))return; spCleanup(); stopAudio(); backToSetup(); }
+function exitGame(){ if(!confirm('Thoát lượt chơi? Tiến trình hiện tại sẽ không được lưu.'))return; spCleanup(); dzCleanup(); stopAudio(); backToSetup(); }
 function backToSetup(){
-  spCleanup(); stopAudio(); round=null;
+  spCleanup(); dzCleanup(); stopAudio(); round=null;
   document.getElementById('screen-play').classList.add('hidden');
   document.getElementById('screen-result').classList.add('hidden');
   document.getElementById('screen-setup').classList.remove('hidden');
   updateAvail();
 }
 function replay(){ startGame(); }
+
+// ── MẶC ĐỒ CHO NHÂN VẬT ─────────────────────────────────────────────
+// Đọc câu tiếng Anh → kéo đúng món trang phục (đúng màu) lên đúng nhân vật.
+// Đồng hồ chạy cho cả màn; xong nhanh được huy hiệu vàng → nhân điểm và
+// đồng hồ màn sau ngắn hơn. Hết giờ là kết thúc. KHÔNG ghi gì vào database.
+
+// ── BỘ TRANH VECTOR "MẶC ĐỒ" ─────────────────────────────────────────
+// Mọi hình vẽ trong CÙNG hệ toạ độ thân người: viewBox "0 0 200 430".
+// → mặc vào là khớp ngay, không cần transform riêng; thẻ trong khay dùng
+//   getBBox() tự cắt khung.
+// Nam và nữ DÙNG CHUNG khung xương (vai, tay, chân giống hệt nhau) để mọi
+// món đồ vừa cả hai; chỉ khác tóc và mi mắt.
+
+const DZ_SKELETON = `
+  <circle class="dz-skin" cx="100" cy="54" r="30"/>
+  <rect class="dz-skin" x="90" y="76" width="20" height="30" rx="7"/>
+  <path class="dz-skin" d="M62,102 Q100,93 138,102 L133,214 Q100,223 67,214 Z"/>
+  <path class="dz-skin" d="M63,104 L46,112 L35,198 Q34,208 43,209 Q52,210 54,200 L65,126 Z"/>
+  <path class="dz-skin" d="M137,104 L154,112 L165,198 Q166,208 157,209 Q148,210 146,200 L135,126 Z"/>
+  <circle class="dz-skin" cx="44" cy="214" r="10"/>
+  <circle class="dz-skin" cx="156" cy="214" r="10"/>
+  <path class="dz-skin" d="M67,208 L133,208 L130,238 L70,238 Z"/>
+  <path class="dz-skin" d="M71,232 L99,232 L95,378 Q95,386 86,386 Q77,386 76,378 Z"/>
+  <path class="dz-skin" d="M101,232 L129,232 L124,378 Q123,386 114,386 Q105,386 105,378 Z"/>
+  <path class="dz-under" d="M74,106 L126,106 L124,198 L76,198 Z"/>
+  <path class="dz-under" d="M73,200 L127,200 L125,234 Q100,240 75,234 Z"/>`;
+
+const DZ_FACE = `
+  <circle class="dz-eye" cx="90" cy="54" r="3.4"/>
+  <circle class="dz-eye" cx="110" cy="54" r="3.4"/>
+  <path class="dz-mouth" d="M92,66 Q100,72 108,66"/>`;
+
+const DZ_BODY = {
+  man: `<path class="dz-hair" d="M69,52 Q69,15 100,15 Q131,15 131,52 L131,42 Q100,29 69,44 Z"/>`
+     + DZ_SKELETON
+     + `<path class="dz-hair" d="M70,45 Q75,21 100,21 Q125,21 130,45 Q112,32 100,34 Q86,34 70,45 Z"/>`
+     + DZ_FACE,
+
+  woman: `<path class="dz-hair" d="M64,54 Q64,13 100,13 Q136,13 136,54 L136,128 Q127,132 125,118 L128,52 Q100,33 72,52 L75,118 Q73,132 64,128 Z"/>`
+       + DZ_SKELETON
+       + `<path class="dz-hair" d="M69,47 Q73,19 100,19 Q127,19 131,47 Q113,30 100,32 Q83,32 69,47 Z"/>`
+       + DZ_FACE
+       + `<path class="dz-lash" d="M82,51 L78,47 M118,51 L122,47"/>`,
+};
+
+// slot: chỗ mặc (mỗi chỗ chỉ 1 món) · z: thứ tự lớp trong cùng chỗ (lớn = ngoài)
+// shape: hình chính tô màu người chơi chọn · detail: nét trang trí luôn màu tối
+const DZ_ITEMS = {
+  /* ── ĐẦU & MẶT ─────────────────────────────── */
+  hat: {
+    slot: 'head', z: 1,
+    shape: 'M50,45 Q100,32 150,45 Q152,51 150,54 Q100,66 50,54 Q48,51 50,45 Z M71,47 Q71,11 100,11 Q129,11 129,47 Q100,38 71,47 Z',
+    detail: 'M71,42 Q100,33 129,42',
+  },
+  cap: {
+    slot: 'head', z: 1,
+    shape: 'M69,45 Q69,11 100,11 Q131,11 131,45 Q100,36 69,45 Z M129,40 Q160,43 165,53 Q163,59 152,57 Q139,50 128,48 Z',
+    detail: 'M100,12 L100,40 M84,15 Q100,36 116,15',
+  },
+  beanie: {
+    slot: 'head', z: 1,
+    shape: 'M67,43 Q67,9 100,9 Q133,9 133,43 Q133,47 129,47 L71,47 Q67,47 67,43 Z M64,45 L136,45 Q140,45 140,51 L140,58 Q140,62 136,62 L64,62 Q60,62 60,58 L60,51 Q60,45 64,45 Z',
+    detail: 'M84,11 L80,45 M100,8 L100,45 M116,11 L120,45',
+  },
+  sunglasses: {
+    slot: 'eyes', z: 1,
+    shape: 'M71,45 L96,45 Q99,45 99,49 L99,58 Q99,65 91,65 L78,65 Q71,65 70,57 L69,49 Q69,45 71,45 Z M104,45 L129,45 Q131,45 131,49 L130,57 Q129,65 122,65 L109,65 Q101,65 101,58 L101,49 Q101,45 104,45 Z',
+    detail: 'M99,49 L101,49 M69,47 L60,43 M131,47 L140,43',
+  },
+  glasses: {
+    slot: 'eyes', z: 1, stroke: true,
+    shape: 'M73,47 Q73,44 76,44 L94,44 Q97,44 97,47 L97,58 Q97,62 93,62 L77,62 Q73,62 73,58 Z M103,47 Q103,44 106,44 L124,44 Q127,44 127,47 L127,58 Q127,62 123,62 L107,62 Q103,62 103,58 Z M97,51 L103,51 M73,49 L61,44 M127,49 L139,44',
+  },
+
+  /* ── CỔ ────────────────────────────────────── */
+  tie: {
+    slot: 'neck', z: 1,
+    shape: 'M91,102 L109,102 L113,118 L100,127 L87,118 Z M94,129 L106,129 L113,180 L100,195 L87,180 Z',
+    detail: 'M91,106 Q100,113 109,106',
+  },
+  scarf: {
+    slot: 'neck', z: 2,
+    shape: 'M74,92 Q100,112 126,92 Q133,99 133,108 Q100,128 67,108 Q67,99 74,92 Z M90,118 L110,118 L114,172 Q103,179 92,172 Z',
+    detail: 'M72,102 Q100,119 128,102 M94,132 L111,132 M95,150 L112,150',
+  },
+
+  /* ── THÂN ──────────────────────────────────── */
+  swimsuit: {
+    slot: 'torso', z: 1,
+    shape: 'M78,100 Q100,118 122,100 L130,110 L131,180 Q131,212 118,238 L82,238 Q69,212 69,180 L70,110 Z',
+    detail: 'M78,100 Q100,118 122,100 M69,152 L131,152 M69,172 L131,172',
+  },
+  tshirt: {
+    slot: 'torso', z: 2,
+    shape: 'M78,96 Q100,116 122,96 L140,102 L160,113 L151,158 L135,151 L133,214 Q100,223 67,214 L65,151 L49,158 L40,113 L60,102 Z',
+    detail: 'M78,96 Q100,116 122,96 M65,151 L67,214 M135,151 L133,214',
+  },
+  dress: {
+    slot: 'torso', z: 2,
+    shape: 'M79,96 Q100,115 121,96 L139,103 L157,113 L148,156 L133,149 L131,208 L160,304 Q100,326 40,304 L69,208 L67,149 L52,156 L43,113 L61,103 Z',
+    detail: 'M79,96 Q100,115 121,96 M69,208 L131,208 M84,232 L74,296 M116,232 L126,296 M100,226 L100,304',
+  },
+  shirt: {
+    slot: 'torso', z: 3,
+    shape: 'M80,96 L100,122 L120,96 L140,102 L158,113 L166,199 Q166,209 156,209 Q147,210 146,200 L137,142 L133,216 Q100,225 67,216 L63,142 L54,200 Q53,210 44,209 Q34,209 34,199 L42,113 L60,102 Z',
+    detail: 'M80,96 L100,122 L120,96 M100,124 L100,220 M96,148 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0 M96,180 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0',
+  },
+  sweater: {
+    slot: 'torso', z: 4,
+    shape: 'M76,94 Q100,112 124,94 L143,101 L161,113 L169,196 Q169,207 158,207 Q148,207 147,197 L139,143 L136,212 L64,212 L61,143 L53,197 Q52,207 42,207 Q31,207 31,196 L39,113 L57,101 Z M62,208 L138,208 L137,226 Q100,235 63,226 Z',
+    detail: 'M76,94 Q100,112 124,94 M74,132 L74,202 M126,132 L126,202 M64,212 L136,212',
+  },
+  jacket: {
+    slot: 'torso', z: 5,
+    shape: 'M78,95 L96,120 L96,222 Q78,220 66,216 L62,142 L53,201 Q52,210 43,209 Q33,209 33,200 L41,112 L59,101 Z M122,95 L104,120 L104,222 Q122,220 134,216 L138,142 L147,201 Q148,210 157,209 Q167,209 167,200 L159,112 L141,101 Z',
+    detail: 'M78,95 L96,120 M122,95 L104,120 M96,144 L96,212 M104,144 L104,212 M70,156 L86,156 M130,156 L114,156',
+  },
+  coat: {
+    slot: 'torso', z: 6,
+    shape: 'M78,95 L96,122 L96,302 Q75,300 63,292 L60,142 L51,201 Q50,210 41,209 Q31,209 31,200 L40,112 L58,101 Z M122,95 L104,122 L104,302 Q125,300 137,292 L140,142 L149,201 Q150,210 159,209 Q169,209 169,200 L160,112 L142,101 Z',
+    detail: 'M78,95 L96,122 M122,95 L104,122 M96,152 L96,292 M104,152 L104,292 M68,198 L86,198 M132,198 L114,198',
+  },
+
+  /* ── TAY ───────────────────────────────────── */
+  gloves: {
+    slot: 'hands', z: 1,
+    shape: 'M33,199 L55,199 L57,216 Q57,229 45,229 Q32,229 31,216 Z M145,199 L167,199 L169,216 Q169,229 157,229 Q144,229 143,216 Z',
+    detail: 'M32,206 L56,206 M144,206 L168,206 M44,214 L44,227 M156,214 L156,227',
+  },
+  mittens: {
+    slot: 'hands', z: 1,
+    shape: 'M31,197 L57,197 Q61,197 61,205 L60,219 Q58,234 44,234 Q30,234 28,219 L27,205 Q27,197 31,197 Z M143,197 L169,197 Q173,197 173,205 L172,219 Q170,234 156,234 Q142,234 140,219 L139,205 Q139,197 143,197 Z',
+    detail: 'M27,206 L61,206 M139,206 L173,206 M59,215 Q68,215 65,226 M141,215 Q132,215 135,226',
+  },
+
+  /* ── CHÂN ──────────────────────────────────── */
+  pants: {
+    slot: 'legs', z: 1,
+    shape: 'M66,204 L134,204 L130,242 L126,378 Q125,386 116,386 L107,386 Q102,386 102,378 L100,264 L98,378 Q98,386 93,386 L84,386 Q75,386 74,378 L70,242 Z',
+    detail: 'M66,222 L134,222 M100,238 L100,264',
+  },
+  jeans: {
+    slot: 'legs', z: 1,
+    shape: 'M66,204 L134,204 L130,242 L126,378 Q125,386 116,386 L107,386 Q102,386 102,378 L100,264 L98,378 Q98,386 93,386 L84,386 Q75,386 74,378 L70,242 Z',
+    detail: 'M66,222 L134,222 M100,238 L100,264 M74,230 L88,230 L88,246 M126,230 L112,230 L112,246 M78,302 L96,302 M104,302 L122,302',
+  },
+  shorts: {
+    slot: 'legs', z: 1,
+    shape: 'M66,204 L134,204 L132,242 L130,294 Q116,299 104,294 L100,260 L96,294 Q84,299 70,294 L68,242 Z',
+    detail: 'M66,222 L134,222 M100,238 L100,260',
+  },
+  skirt: {
+    slot: 'legs', z: 1,
+    shape: 'M67,204 L133,204 L136,224 L155,304 Q100,322 45,304 L64,224 Z',
+    detail: 'M67,224 L133,224 M84,234 L70,300 M116,234 L130,300 M100,232 L100,310',
+  },
+
+  /* ── BÀN CHÂN ──────────────────────────────── */
+  socks: {
+    slot: 'feet', z: 1,
+    shape: 'M73,344 L99,344 L99,384 Q99,392 88,392 L69,392 Q61,392 61,386 Q61,381 69,378 Q73,374 73,364 Z M127,344 L101,344 L101,384 Q101,392 112,392 L131,392 Q139,392 139,386 Q139,381 131,378 Q127,374 127,364 Z',
+    detail: 'M73,355 L99,355 M127,355 L101,355',
+  },
+  shoes: {
+    slot: 'feet', z: 2,
+    shape: 'M71,366 L98,366 L98,388 Q98,399 85,399 L63,399 Q55,399 55,392 Q55,386 63,382 Q71,378 71,366 Z M129,366 L102,366 L102,388 Q102,399 115,399 L137,399 Q145,399 145,392 Q145,386 137,382 Q129,378 129,366 Z',
+    detail: 'M55,393 L98,393 M145,393 L102,393 M77,373 L94,373 M123,373 L106,373',
+  },
+  boots: {
+    slot: 'feet', z: 2,
+    shape: 'M69,316 L99,316 L99,388 Q99,399 86,399 L63,399 Q55,399 55,392 Q55,386 63,382 Q69,378 69,368 Z M131,316 L101,316 L101,388 Q101,399 114,399 L137,399 Q145,399 145,392 Q145,386 137,382 Q131,378 131,368 Z',
+    detail: 'M69,332 L99,332 M131,332 L101,332 M55,393 L99,393 M145,393 L101,393',
+  },
+  sandals: {
+    slot: 'feet', z: 2,
+    shape: 'M57,386 L98,386 Q102,386 102,391 Q102,399 95,399 L61,399 Q55,399 55,392 Q55,386 57,386 Z M143,386 L102,386 Q98,386 98,391 Q98,399 105,399 L139,399 Q145,399 145,392 Q145,386 143,386 Z',
+    detail: 'M64,387 L81,366 L95,387 M136,387 L119,366 L105,387',
+  },
+};
+
+const DZ_COLORS=[
+  {k:'red',en:'red',vi:'đỏ',hex:'#ef4444'},
+  {k:'blue',en:'blue',vi:'xanh dương',hex:'#3b82f6'},
+  {k:'green',en:'green',vi:'xanh lá',hex:'#22c55e'},
+  {k:'yellow',en:'yellow',vi:'vàng',hex:'#facc15'},
+  {k:'black',en:'black',vi:'đen',hex:'#334155'},
+  {k:'white',en:'white',vi:'trắng',hex:'#f1f5f9'},
+  {k:'pink',en:'pink',vi:'hồng',hex:'#f472b6'},
+  {k:'orange',en:'orange',vi:'cam',hex:'#fb923c'},
+  {k:'purple',en:'purple',vi:'tím',hex:'#a78bfa'},
+  {k:'brown',en:'brown',vi:'nâu',hex:'#a1743c'},
+];
+
+// plural: danh từ số nhiều → không có mạo từ a/an
+const DZ_VOCAB={
+  hat:{en:'hat',vi:'mũ vành'},
+  cap:{en:'cap',vi:'mũ lưỡi trai'},
+  beanie:{en:'beanie',vi:'mũ len'},
+  sunglasses:{en:'sunglasses',vi:'kính râm',plural:true},
+  glasses:{en:'glasses',vi:'kính cận',plural:true},
+  scarf:{en:'scarf',vi:'khăn quàng cổ'},
+  tie:{en:'tie',vi:'cà vạt'},
+  tshirt:{en:'T-shirt',vi:'áo phông'},
+  shirt:{en:'shirt',vi:'áo sơ mi'},
+  sweater:{en:'sweater',vi:'áo len'},
+  jacket:{en:'jacket',vi:'áo khoác'},
+  coat:{en:'coat',vi:'áo măng tô'},
+  dress:{en:'dress',vi:'váy liền'},
+  swimsuit:{en:'swimsuit',vi:'đồ bơi'},
+  gloves:{en:'gloves',vi:'găng tay',plural:true},
+  mittens:{en:'mittens',vi:'găng tay bao',plural:true},
+  pants:{en:'pants',vi:'quần dài',plural:true},
+  jeans:{en:'jeans',vi:'quần bò',plural:true},
+  shorts:{en:'shorts',vi:'quần đùi',plural:true},
+  skirt:{en:'skirt',vi:'chân váy'},
+  shoes:{en:'shoes',vi:'giày',plural:true},
+  boots:{en:'boots',vi:'bốt',plural:true},
+  sandals:{en:'sandals',vi:'dép xăng đan',plural:true},
+  socks:{en:'socks',vi:'tất',plural:true},
+};
+
+const DZ_SETS=[
+  {key:'summer',  ico:'☀️', name:'Mùa hè',      items:['tshirt','shorts','skirt','sandals','cap','sunglasses']},
+  {key:'winter',  ico:'❄️', name:'Mùa đông',    items:['coat','sweater','scarf','mittens','gloves','boots','beanie']},
+  {key:'spring',  ico:'🌸', name:'Mùa xuân',    items:['jacket','jeans','tshirt','shoes','hat','socks']},
+  {key:'school',  ico:'🎒', name:'Học sinh',    items:['shirt','pants','skirt','sweater','shoes','socks']},
+  {key:'formal',  ico:'👔', name:'Trang trọng', items:['shirt','tie','pants','dress','coat','shoes']},
+  {key:'casual',  ico:'🧢', name:'Thường ngày', items:['tshirt','jeans','shorts','sweater','cap','shoes']},
+  {key:'beach',   ico:'🏖️', name:'Bãi biển',    items:['swimsuit','shorts','tshirt','sandals','hat','sunglasses']},
+];
+
+// Động từ tiếng Việt theo chỗ mặc — dạy luôn cách dùng từ
+const DZ_VERB={head:'đội',eyes:'đeo',neck:'quàng',torso:'mặc',legs:'mặc',hands:'đeo',feet:'đi'};
+function dzVerb(key){ if(key==='tie') return 'thắt'; return DZ_VERB[DZ_ITEMS[key].slot]||'mặc'; }
+
+let dzSetKey='summer';
+try{ dzSetKey=localStorage.getItem('eu_dz_set')||'summer'; }catch(e){}
+let dz=null, _dzTimer=null, _dzDrag=null;
+
+function dzCurrentSet(){
+  if(dzSetKey==='all') return {key:'all',ico:'🎲',name:'Tất cả',items:Object.keys(DZ_VOCAB)};
+  return DZ_SETS.find(s=>s.key===dzSetKey)||DZ_SETS[0];
+}
+function dzSetItems(){ return dzCurrentSet().items.slice(); }
+
+function dzRenderChips(){
+  const host=document.getElementById('dz-chips'); if(!host) return;
+  const all=DZ_SETS.concat([{key:'all',ico:'🎲',name:'Tất cả'}]);
+  host.innerHTML=all.map(x=>
+    `<div class="chip${x.key===dzSetKey?' active':''}" data-dz="${x.key}" onclick="dzSelectSet('${x.key}',this)">${x.ico} ${esc(x.name)}</div>`
+  ).join('');
+}
+function dzSelectSet(k,el){
+  dzSetKey=k; try{localStorage.setItem('eu_dz_set',k);}catch(e){}
+  document.querySelectorAll('#dz-chips .chip').forEach(c=>c.classList.toggle('active',c.dataset.dz===k));
+  updateAvail();
+}
+
+// ── VẼ ──
+function dzPaint(key,hex){
+  const it=DZ_ITEMS[key];
+  const shape=it.stroke
+    ? `<path class="dz-stroke" d="${it.shape}" stroke="${hex}"/>`
+    : `<path class="dz-shape" d="${it.shape}" fill="${hex}"/>`;
+  return shape+(it.detail?`<path class="dz-detail" d="${it.detail}"/>`:'');
+}
+const DZ_SLOT_ORDER=['torso','legs','feet','hands','neck','head','eyes'];
+function dzRank(key){ const it=DZ_ITEMS[key]; return DZ_SLOT_ORDER.indexOf(it.slot)*10+(it.z||1); }
+
+function dzPersonSVG(who,worn){
+  const g=worn.slice().sort((a,b)=>dzRank(a.key)-dzRank(b.key)).map(w=>dzPaint(w.key,w.hex)).join('');
+  return `<svg viewBox="0 0 200 430">${DZ_BODY[who]}${g}</svg>`;
+}
+// Thẻ trong khay: vẽ nguyên hệ toạ độ thân người rồi để dzCrop() cắt khung bằng getBBox
+function dzCardSVG(key,hex){
+  return `<svg viewBox="0 0 200 430"><g class="dz-crop">${dzPaint(key,hex)}</g></svg>`;
+}
+function dzCrop(root){
+  (root||document).querySelectorAll('svg > g.dz-crop').forEach(g=>{
+    try{
+      const b=g.getBBox(); if(!b.width||!b.height) return;
+      const pad=Math.max(b.width,b.height)*0.08+4;
+      g.parentNode.setAttribute('viewBox',`${b.x-pad} ${b.y-pad} ${b.width+pad*2} ${b.height+pad*2}`);
+    }catch(e){}
+  });
+}
+
+// ── CÂU ──
+function dzSentence(t){
+  const v=DZ_VOCAB[t.key], c=t.color;
+  const who=t.who==='man'?'He':'She';
+  const art=v.plural?'':(/^[aeiou]/i.test(c.en)?'an ':'a ');
+  const en=`${who} is wearing ${art}${c.en} ${v.en}.`;
+  const whoVi=t.who==='man'?'Anh ấy':'Cô ấy';
+  const vi=`${whoVi} đang ${dzVerb(t.key)} ${v.vi} màu ${c.vi}.`;
+  return {en,vi};
+}
+
+// ── VÀO GAME ──
+function startDressup(){
+  const pool=dzSetItems();
+  if(pool.length<3) return;
+  dz={ level:1, score:0, golds:0, mult:1, done:0, wrong:0, sets:0,
+       time:0, timeMax:0, targets:[], tray:[], idx:0, worn:{man:[],woman:[]},
+       setName:'', running:false, sel:null };
+  round={mode:'dressup',kind:'dress',items:[],boards:[],idx:0,correct:0,total:0,xpEarned:0,answered:false};
+  document.getElementById('screen-setup').classList.add('hidden');
+  document.getElementById('screen-result').classList.add('hidden');
+  document.getElementById('screen-play').classList.remove('hidden');
+  document.getElementById('play-mode').textContent=MODES.dressup.name;
+  dzBuildLevel();
+  dzShowPreview();
+}
+
+function dzPickSet(){
+  if(dzSetKey==='all') return DZ_SETS[Math.floor(Math.random()*DZ_SETS.length)];
+  return dzCurrentSet();
+}
+
+function dzBuildLevel(){
+  const set=dzPickSet();
+  dz.setName=`${set.ico} ${set.name}`;
+  const items=set.items.slice();
+  const n=Math.min(5,items.length);
+  const chosen=sample(items,n);
+  // mỗi chỗ mặc chỉ 1 món để không đè lên nhau trong cùng một màn
+  const usedSlot=new Set(); const targets=[];
+  chosen.forEach(k=>{
+    const sl=DZ_ITEMS[k].slot;
+    if(usedSlot.has(sl)) return;
+    usedSlot.add(sl);
+    targets.push({key:k, color:sample(DZ_COLORS,1)[0], who:Math.random()<.5?'man':'woman', done:false});
+  });
+  dz.targets=targets;
+  dz.idx=0;
+  dz.worn={man:[],woman:[]};
+  // khay: các món đúng + mồi nhử (cùng món khác màu / món khác trong bộ)
+  const nDist=Math.min(4,1+Math.floor(dz.level/2));
+  const tray=targets.map(t=>({key:t.key,color:t.color}));
+  const seen=new Set(tray.map(x=>x.key+'|'+x.color.k));
+  let guard=0;
+  while(tray.length<targets.length+nDist && guard++<60){
+    const k=items[Math.floor(Math.random()*items.length)];
+    const c=DZ_COLORS[Math.floor(Math.random()*DZ_COLORS.length)];
+    const id=k+'|'+c.k;
+    if(seen.has(id)) continue;
+    seen.add(id); tray.push({key:k,color:c});
+  }
+  dz.tray=shuffle(tray).map((x,i)=>({...x,i,used:false}));
+  dz.timeMax=Math.max(24,48-(dz.level-1)*3);
+  dz.time=dz.timeMax;
+}
+
+function dzShowPreview(){
+  dz.running=false; dzStopTimer();
+  const set=dz.setName;
+  const keys=[...new Set(dz.targets.map(t=>t.key))];
+  document.getElementById('play-count').textContent=`Màn ${dz.level}`;
+  document.getElementById('play-score').textContent=`${dz.score} điểm`;
+  document.getElementById('play-bar').style.width='100%';
+  document.getElementById('question-host').innerHTML=`<div class="dz-preview">
+    <div style="font-size:34px">👕</div>
+    <h3>Màn ${dz.level} · ${esc(set)}</h3>
+    <div class="sub">Xem trước từ vựng, sẵn sàng thì bấm Bắt đầu — đồng hồ mới chạy.</div>
+    <div class="dz-vocab">${keys.map(k=>{
+      const v=DZ_VOCAB[k];
+      return `<div class="dz-vword">${dzCardSVG(k,'#7c9cc4')}<div class="en">${esc(v.en)}</div><div class="vi">${esc(v.vi)}</div></div>`;
+    }).join('')}</div>
+    <button class="btn-g primary" onclick="dzStartLevel()">Bắt đầu màn ${dz.level} ▶</button>
+  </div>`;
+  dzCrop(document.getElementById('question-host'));
+}
+
+function dzStartLevel(){
+  dz.running=true;
+  dz.time=dz.timeMax;
+  dzRenderPlay();
+  dzStartTimer();
+}
+
+function dzRenderPlay(){
+  const t=dz.targets[dz.idx];
+  const host=document.getElementById('question-host');
+  document.getElementById('play-count').textContent=`Màn ${dz.level} · ${dz.idx+1}/${dz.targets.length}`;
+  document.getElementById('play-score').textContent=`${dz.score} điểm`;
+  const st=t?dzSentence(t):{en:'',vi:''};
+  host.innerHTML=`
+    <div class="dz-stats">
+      <span class="dz-pill dz-t" id="dz-time">⏱ ${Math.ceil(dz.time)}s</span>
+      <span class="dz-pill dz-g" id="dz-gold">${'🏅'.repeat(dz.golds)||'🏅×0'}</span>
+      <span class="dz-pill dz-s" id="dz-score">${dz.score} điểm</span>
+      <span class="dz-pill">×${dz.mult}</span>
+    </div>
+    <div class="dz-timebar" id="dz-timebar"><i id="dz-timefill"></i></div>
+    <div class="dz-prompt">
+      <div class="dz-sent" id="dz-sent">${esc(st.en)}</div>
+      <div class="dz-vi">${esc(st.vi)}</div>
+      <div class="dz-say"><button class="btn-g" onclick="dzSay()">🔊 Nghe câu</button></div>
+    </div>
+    <div class="dz-stage">
+      <div class="dz-person" data-who="man" id="dz-man">${dzPersonSVG('man',dz.worn.man)}<div class="dz-tag">He <small>bạn nam</small></div></div>
+      <div class="dz-person" data-who="woman" id="dz-woman">${dzPersonSVG('woman',dz.worn.woman)}<div class="dz-tag">She <small>bạn nữ</small></div></div>
+    </div>
+    <div class="dz-tray" id="dz-tray">${dz.tray.filter(c=>!c.used).map(c=>`
+      <div class="dz-card" data-i="${c.i}">
+        ${dzCardSVG(c.key,c.color.hex)}
+        <div class="dz-cap">${esc(c.color.en)} ${esc(DZ_VOCAB[c.key].en)}</div>
+      </div>`).join('')}</div>
+    <div class="feedback" id="feedback"></div>`;
+  dzCrop(host);
+  dzBind();
+  dzTick(true);
+}
+
+function dzSay(){ const t=dz&&dz.targets[dz.idx]; if(t) ttsSpeak(dzSentence(t).en); }
+
+// ── ĐỒNG HỒ ──
+function dzStartTimer(){
+  dzStopTimer();
+  _dzTimer=setInterval(()=>{
+    if(!dz||!dz.running) return;
+    dz.time-=0.25;
+    dzTick();
+    if(dz.time<=0){ dz.time=0; dzFinish(true); }
+  },250);
+}
+function dzStopTimer(){ if(_dzTimer){ clearInterval(_dzTimer); _dzTimer=null; } }
+function dzTick(force){
+  const el=document.getElementById('dz-time'); if(!el) return;
+  const sec=Math.ceil(Math.max(0,dz.time));
+  if(force||el.textContent!==`⏱ ${sec}s`) el.textContent=`⏱ ${sec}s`;
+  el.classList.toggle('low',dz.time<=8);
+  const bar=document.getElementById('dz-timebar');
+  const fill=document.getElementById('dz-timefill');
+  if(fill) fill.style.width=`${Math.max(0,dz.time)/dz.timeMax*100}%`;
+  if(bar) bar.classList.toggle('low',dz.time<=8);
+  const pb=document.getElementById('play-bar');
+  if(pb) pb.style.width=`${Math.max(0,dz.time)/dz.timeMax*100}%`;
+}
+function dzCleanup(){ dzStopTimer(); dzKillGhost(); dz=null; }
+
+// ── KÉO THẢ (chuột + cảm ứng) ──
+function dzBind(){
+  document.querySelectorAll('#dz-tray .dz-card').forEach(card=>{
+    card.addEventListener('pointerdown',e=>dzDown(e,card));
+  });
+  document.querySelectorAll('.dz-person').forEach(p=>{
+    p.addEventListener('click',()=>{ if(dz&&dz.sel!=null) dzDrop(dz.sel,p.dataset.who,p); });
+  });
+}
+function dzKillGhost(){ const g=document.getElementById('dz-ghost'); if(g) g.remove(); _dzDrag=null; }
+
+function dzDown(e,card){
+  if(!dz||!dz.running||card.classList.contains('gone')) return;
+  const i=+card.dataset.i;
+  const c=dz.tray[i]; if(!c||c.used) return;
+  try{ card.setPointerCapture(e.pointerId); }catch(err){}
+  _dzDrag={i,card,x0:e.clientX,y0:e.clientY,moved:false};
+  const onMove=ev=>{
+    if(!_dzDrag) return;
+    const dx=ev.clientX-_dzDrag.x0, dy=ev.clientY-_dzDrag.y0;
+    if(!_dzDrag.moved && Math.hypot(dx,dy)<8) return;
+    if(!_dzDrag.moved){
+      _dzDrag.moved=true;
+      const g=document.createElement('div');
+      g.className='dz-ghost'; g.id='dz-ghost';
+      g.innerHTML=dzCardSVG(c.key,c.color.hex);
+      document.body.appendChild(g); dzCrop(g);
+      card.style.opacity='.35';
+    }
+    const g=document.getElementById('dz-ghost');
+    if(g){ g.style.left=ev.clientX+'px'; g.style.top=ev.clientY+'px'; }
+    dzHighlight(ev.clientX,ev.clientY);
+  };
+  const onUp=ev=>{
+    window.removeEventListener('pointermove',onMove);
+    window.removeEventListener('pointerup',onUp);
+    window.removeEventListener('pointercancel',onUp);
+    card.style.opacity='';
+    const moved=_dzDrag&&_dzDrag.moved;
+    dzKillGhost();
+    document.querySelectorAll('.dz-person').forEach(p=>p.classList.remove('hover'));
+    if(!dz||!dz.running) return;
+    if(!moved){                                  // chạm chọn — rồi chạm nhân vật
+      dz.sel=(dz.sel===i)?null:i;
+      document.querySelectorAll('#dz-tray .dz-card').forEach(x=>x.classList.toggle('sel',+x.dataset.i===dz.sel));
+      return;
+    }
+    const p=dzPersonAt(ev.clientX,ev.clientY);
+    if(p) dzDrop(i,p.dataset.who,p);
+  };
+  // gắn trên window: nếu setPointerCapture bị chặn thì kéo ra ngoài thẻ vẫn nhận được sự kiện
+  window.addEventListener('pointermove',onMove);
+  window.addEventListener('pointerup',onUp);
+  window.addEventListener('pointercancel',onUp);
+}
+function dzPersonAt(x,y){
+  return [...document.querySelectorAll('.dz-person')].find(p=>{
+    const r=p.getBoundingClientRect();
+    return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
+  })||null;
+}
+function dzHighlight(x,y){
+  const hit=dzPersonAt(x,y);
+  document.querySelectorAll('.dz-person').forEach(p=>p.classList.toggle('hover',p===hit));
+}
+
+// ── XỬ LÝ THẢ ──
+function dzDrop(i,who,personEl){
+  if(!dz||!dz.running) return;
+  const c=dz.tray[i]; const t=dz.targets[dz.idx];
+  if(!c||c.used||!t) return;
+  dz.sel=null;
+  document.querySelectorAll('#dz-tray .dz-card').forEach(x=>x.classList.remove('sel'));
+  const ok=(c.key===t.key && c.color.k===t.color.k && who===t.who);
+  const fb=document.getElementById('feedback');
+  if(ok){
+    c.used=true; t.done=true;
+    dz.done++; dz.score+=10*dz.mult;
+    dz.worn[who]=dz.worn[who].filter(w=>DZ_ITEMS[w.key].slot!==DZ_ITEMS[c.key].slot);
+    dz.worn[who].push({key:c.key,hex:c.color.hex});
+    round.correct=dz.done; round.total=dz.done+dz.wrong;
+    personEl.classList.add('ok');
+    const card=document.querySelector(`#dz-tray .dz-card[data-i="${i}"]`);
+    if(card) card.classList.add('gone');
+    personEl.innerHTML=dzPersonSVG(who,dz.worn[who])+`<div class="dz-tag">${who==='man'?'He <small>bạn nam</small>':'She <small>bạn nữ</small>'}</div>`;
+    setTimeout(()=>personEl.classList.remove('ok'),450);
+    if(fb){ fb.className='feedback show ok'; fb.innerHTML=`✓ Đúng rồi! <b>+${10*dz.mult}</b> điểm`; }
+    dz.idx++;
+    if(dz.idx>=dz.targets.length){ setTimeout(dzLevelDone,650); return; }
+    setTimeout(()=>{ if(dz&&dz.running) dzRenderPlay(); },500);
+  }else{
+    dz.wrong++; dz.time=Math.max(0,dz.time-3);
+    round.total=dz.done+dz.wrong;
+    personEl.classList.add('bad');
+    setTimeout(()=>personEl.classList.remove('bad'),450);
+    let why='Chưa đúng';
+    if(c.key!==t.key) why='Sai món đồ';
+    else if(c.color.k!==t.color.k) why='Đúng món nhưng sai màu';
+    else why='Đúng món nhưng nhầm người';
+    if(fb){ fb.className='feedback show no'; fb.innerHTML=`✗ ${why} · −3 giây`; }
+    dzTick(true);
+    if(dz.time<=0) dzFinish(true);
+  }
+}
+
+function dzLevelDone(){
+  if(!dz) return;
+  dz.sets++;
+  const fast=dz.time>=dz.timeMax*0.5;
+  if(fast&&dz.golds<5){ dz.golds++; dz.mult=1+dz.golds; }
+  dz.score+=Math.round(dz.time)*2;
+  dz.level++;
+  dzBuildLevel();
+  dzShowPreview();
+}
+
+function dzFinish(timeUp){
+  dzStopTimer(); dzKillGhost();
+  const total=dz.done+dz.wrong;
+  const pct=total?Math.round(dz.done/total*100):0;
+  spSetResultLabels(true);
+  document.getElementById('play-bar').style.width='100%';
+  document.getElementById('res-acc').textContent=pct+'%';
+  document.getElementById('res-score').textContent=`${dz.done}/${total}`;
+  document.getElementById('res-xp').textContent=String(dz.score);
+  let emoji='⏱',title='Hết giờ rồi!';
+  if(dz.score>=600){ emoji='🏆'; title='Xuất sắc!'; }
+  else if(dz.score>=300){ emoji='🎉'; title='Làm tốt lắm!'; }
+  document.getElementById('res-emoji').textContent=emoji;
+  document.getElementById('res-title').textContent=title;
+  document.getElementById('res-sub').textContent=
+    `Mặc xong ${dz.sets} màn · ${dz.golds} huy hiệu vàng · kết quả không được lưu`;
+  document.getElementById('screen-play').classList.add('hidden');
+  document.getElementById('screen-result').classList.remove('hidden');
+  dz=null;
+}
 
 // ── SPELLING BEE (chế độ Đánh vần) ──────────────────────────────────
 // Bám lối chơi Endless Spelling Bee: mỗi lượt 1 từ, đồng hồ đếm ngược,
