@@ -1004,9 +1004,13 @@ async function euFetchIn(table, cols, col, ids){
   const out=[];
   for(let i=0;i<ids.length;i+=200){
     const chunk=ids.slice(i,i+200);
-    const {data,error}=await sb.from(table).select(cols).in(col,chunk);
-    if(error) throw error;
-    out.push.apply(out,data||[]);
+    // 200 term có thể trả về > 1000 dòng (word_senses nhiều nghĩa/từ) → phân trang trong lô
+    for(let from=0; from<200000; from+=1000){
+      const {data,error}=await sb.from(table).select(cols).in(col,chunk).range(from,from+999);
+      if(error) throw error;
+      out.push.apply(out,data||[]);
+      if(!data||data.length<1000) break;
+    }
   }
   return out;
 }

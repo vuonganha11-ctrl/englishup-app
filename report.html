@@ -321,6 +321,35 @@ table.tbl tbody tr:hover{background:var(--card2)}
 const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
 const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 let sb=null, currentUser=null, myRole='student';
+
+/* ══════ ĐỌC DỮ LIỆU LỚN AN TOÀN ══════
+   PostgREST trả TỐI ĐA 1000 dòng mỗi lần → phải phân trang bằng .range().
+   .in('id', [...]) với danh sách dài làm URL quá dài → Bad Request → phải chia lô.
+   (đo thật 2026-08-02: 1000 UUID = 37.000 ký tự URL → hỏng) */
+async function euFetchAll(build, orderCol){
+  const out = [], STEP = 1000;
+  for (let from = 0; from < 200000; from += STEP){
+    const { data, error } = await build().order(orderCol || 'id', { ascending: true }).range(from, from + STEP - 1);
+    if (error) throw error;
+    out.push.apply(out, data || []);
+    if (!data || data.length < STEP) break;
+  }
+  return out;
+}
+async function euFetchIn(table, cols, col, ids){
+  const out = [], LOT = 200;
+  for (let i = 0; i < ids.length; i += LOT){
+    const chunk = ids.slice(i, i + LOT);
+    for (let from = 0; from < 200000; from += 1000){          // 1 lô vẫn có thể > 1000 dòng
+      const { data, error } = await sb.from(table).select(cols).in(col, chunk).range(from, from + 999);
+      if (error) throw error;
+      out.push.apply(out, data || []);
+      if (!data || data.length < 1000) break;
+    }
+  }
+  return out;
+}
+
 let _students=[], _gradesMap={}, _evalsMap={}, _activeStudent=null;
 let _chartClass=null, _chartSkill=null, _chartSelf=null;
 let _topicsCache=null;
@@ -392,11 +421,12 @@ async function boot(){
 // ── TEACHER ──
 async function loadTeacher(){
   show('state-loading');
-  const [{data:profiles}, {data:cards}, {data:grades}, {data:evals}] = await Promise.all([
-    sb.from('user_profiles').select('id,email,full_name,role,xp,streak,created_at'),
-    sb.from('srs_cards').select('user_id,review_count,last_reviewed'),
-    sb.from('grades').select('*'),
-    sb.from('evaluations').select('*').order('created_at',{ascending:false})
+  // ⚠️ phải phân trang: srs_cards của MỌI học viên nay đã vượt xa 1.000 dòng
+  const [profiles, cards, grades, evals] = await Promise.all([
+    euFetchAll(()=>sb.from('user_profiles').select('id,email,full_name,role,xp,streak,created_at')),
+    euFetchAll(()=>sb.from('srs_cards').select('user_id,review_count,last_reviewed')),
+    euFetchAll(()=>sb.from('grades').select('*')),
+    euFetchAll(()=>sb.from('evaluations').select('*'))
   ]);
   const cardAgg={};
   (cards||[]).forEach(c=>{ const a=cardAgg[c.user_id]||(cardAgg[c.user_id]={n:0,rev:0,lastRev:null}); a.n++; a.rev+=(c.review_count||0); if(c.last_reviewed){ const t=new Date(c.last_reviewed).getTime(); if(a.lastRev==null||t>a.lastRev)a.lastRev=t; } });
@@ -581,9 +611,10 @@ const SSR_META=[
 async function loadStudentSelf(){
   show('state-loading');
   const uid=currentUser.id;
-  const [{data:prof},{data:cards}]=await Promise.all([
+  const [{data:prof},cards]=await Promise.all([
     sb.from('user_profiles').select('email,full_name,xp,streak,created_at,plan,plan_expires_at').eq('id',uid).maybeSingle(),
-    sb.from('srs_cards').select('word_id,interval_days,review_count,last_reviewed,due_date').eq('user_id',uid)
+    // ⚠️ phải phân trang: 1 học viên nay có tới 2.981 thẻ
+    euFetchAll(()=>sb.from('srs_cards').select('word_id,interval_days,review_count,last_reviewed,due_date').eq('user_id',uid))
   ]);
   const cardList=cards||[];
   const xp=prof?.xp||0;
@@ -593,7 +624,9 @@ async function loadStudentSelf(){
   const wordIds=[...new Set(cardList.map(c=>c.word_id).filter(Boolean))];
   let wmap={};
   if(wordIds.length){
-    try{ const {data:ws}=await sb.from('words').select('id,term').in('id',wordIds); (ws||[]).forEach(w=>wmap[w.id]=w.term); }catch(e){}
+    // ⚠️ .in() với vài nghìn id sẽ làm URL quá dài → phải chia lô
+    try{ (await euFetchIn('words','id,term','id',wordIds)).forEach(w=>wmap[w.id]=w.term); }
+    catch(e){ console.warn('words theo thẻ:', e && e.message); }
   }
 
   // Đếm ngày học (từ last_reviewed) cho lịch + chuỗi

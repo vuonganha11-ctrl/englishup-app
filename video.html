@@ -534,11 +534,76 @@ const trWrap=$("#transcript");
 let activeIdx=-1;
 /* ============ FLASHCARD STATE COLORS ============ */
 window.FC_STATE = window.FC_STATE || new Map();
+/* Màu theo trạng thái SRS. FC_STATE lưu {iv, n} — n = review_count.
+   n === 0 → đã nằm trong Flashcard nhưng CHƯA ôn lần nào → xám nhạt, chữ thường.
+   Ôn rồi mới lên màu: 0 Lại đỏ · 1 Khó cam · 3 Nhớ tím · 5 Thuộc lá · 14+ Dễ xanh dương. */
+
+/* ══════ ĐỌC DỮ LIỆU LỚN AN TOÀN ══════
+   PostgREST trả TỐI ĐA 1000 dòng mỗi lần → phải phân trang bằng .range().
+   .in('id', [...]) với danh sách dài làm URL quá dài → Bad Request → phải chia lô.
+   (đo thật 2026-08-02: 1000 UUID = 37.000 ký tự URL → hỏng) */
+async function euFetchAll(build, orderCol){
+  const out = [], STEP = 1000;
+  for (let from = 0; from < 200000; from += STEP){
+    const { data, error } = await build().order(orderCol || 'id', { ascending: true }).range(from, from + STEP - 1);
+    if (error) throw error;
+    out.push.apply(out, data || []);
+    if (!data || data.length < STEP) break;
+  }
+  return out;
+}
+async function euFetchIn(sb, table, cols, col, ids){
+  const out = [], LOT = 200;
+  for (let i = 0; i < ids.length; i += LOT){
+    const chunk = ids.slice(i, i + LOT);
+    for (let from = 0; from < 200000; from += 1000){          // 1 lô vẫn có thể > 1000 dòng
+      const { data, error } = await sb.from(table).select(cols).in(col, chunk).range(from, from + 999);
+      if (error) throw error;
+      out.push.apply(out, data || []);
+      if (!data || data.length < 1000) break;
+    }
+  }
+  return out;
+}
+
+var FC_NEW_COLOR = '#8b97ad';
 function fcColor(iv){ iv=(iv==null)?0:iv; if(iv<=0) return '#f87171'; if(iv<=1) return '#fb923c'; if(iv<=3) return '#a78bfa'; if(iv<=5) return '#34d399'; return '#4f8ef7'; }
-function fcColorFor(word){ if(!word||!window.FC_STATE||!window.FC_STATE.size) return ''; var iv=window.FC_STATE.get(String(word).toLowerCase()); return (iv===undefined)?'':fcColor(iv); }
-function paintSpWords(){ try{ document.querySelectorAll('.sp-word').forEach(function(sp){ var c=fcColorFor(sp.dataset.w); sp.style.color=c||''; sp.style.fontWeight=c?'700':''; }); if(!window.FC_STATE) return; var phrases=[]; window.FC_STATE.forEach(function(iv,term){ if(term.indexOf(' ')>-1) phrases.push(term); }); if(!phrases.length) return; ['now-playing','sp-text'].forEach(function(id){ var box=document.getElementById(id); if(!box) return; var list=[].slice.call(box.querySelectorAll('.sp-word')); var words=list.map(function(s){ return (s.dataset.w||'').toLowerCase(); }); phrases.forEach(function(term){ var pw=term.toLowerCase().split(' ').map(function(x){ return x.replace(/[^a-z']/g,''); }).filter(Boolean); if(pw.length<2) return; for(var i=0;i+pw.length<=words.length;i++){ var ok=true; for(var j=0;j<pw.length;j++){ if(words[i+j]!==pw[j]){ ok=false; break; } } if(ok){ var c=fcColor(window.FC_STATE.get(term)); for(var j2=0;j2<pw.length;j2++){ list[i+j2].style.color=c; list[i+j2].style.fontWeight='700'; } } } }); }); }catch(e){} }
-function colorizeSentence(text){ if(!window.FC_STATE||!window.FC_STATE.size) return String(text); var s=String(text), lower=s.toLowerCase(); var phrases=[]; window.FC_STATE.forEach(function(iv,term){ if(term.indexOf(' ')>-1) phrases.push(term); }); phrases.sort(function(a,b){ return b.length-a.length; }); var marks=[]; phrases.forEach(function(term){ var t=term.toLowerCase(), from=0, idx; while((idx=lower.indexOf(t, from))!==-1){ var end=idx+t.length, ov=false; for(var mi=0;mi<marks.length;mi++){ if(idx<marks[mi].e && end>marks[mi].s){ ov=true; break; } } if(!ov) marks.push({s:idx,e:end,c:fcColor(window.FC_STATE.get(term))}); from=end; } }); marks.sort(function(a,b){ return a.s-b.s; }); function wcolor(seg){ return seg.replace(/[A-Za-z][A-Za-z'’-]*/g, function(m){ var key=m.replace(/[’]/g,"'").replace(/-+$/,''); var c=fcColorFor(key); return c?'<span class="fc-w" style="color:'+c+'">'+m+'</span>':m; }); } var out='', pos=0; marks.forEach(function(mk){ if(mk.s<pos) return; out+=wcolor(s.slice(pos,mk.s)); out+='<span class="fc-w" style="color:'+mk.c+'">'+s.slice(mk.s,mk.e)+'</span>'; pos=mk.e; }); out+=wcolor(s.slice(pos)); return out; }
-async function loadFlashcardStates(){ try{ var u=await euUser(); if(!u) return; var sb=euClient(); var res=await sb.from('srs_cards').select('word_id,interval_days').eq('user_id',u.id); var cards=res.data||[]; var ids=[]; cards.forEach(function(c){ if(c.word_id&&ids.indexOf(c.word_id)<0) ids.push(c.word_id); }); var tmap={}; if(ids.length){ var wr=await sb.from('words').select('id,term').in('id',ids); (wr.data||[]).forEach(function(w){ tmap[w.id]=w.term; }); } var M=new Map(); cards.forEach(function(c){ var t=tmap[c.word_id]; if(t) M.set(String(t).toLowerCase(), c.interval_days==null?0:c.interval_days); }); window.FC_STATE=M; if(typeof buildTranscript==='function') buildTranscript(); paintSpWords(); }catch(e){} }
+function fcState(word){ if(!word||!window.FC_STATE||!window.FC_STATE.size) return null; var st=window.FC_STATE.get(String(word).toLowerCase()); return (st===undefined)?null:st; }
+function fcIsNew(st){ return !!st && !st.n; }
+function fcColorOf(st){ if(!st) return ''; return st.n ? fcColor(st.iv) : FC_NEW_COLOR; }
+function fcColorFor(word){ return fcColorOf(fcState(word)); }
+function paintSpWords(){ try{ document.querySelectorAll('.sp-word').forEach(function(sp){ var st=fcState(sp.dataset.w); var c=fcColorOf(st); sp.style.color=c||''; sp.style.fontWeight=(c&&!fcIsNew(st))?'700':''; }); if(!window.FC_STATE) return; var phrases=[]; window.FC_STATE.forEach(function(iv,term){ if(term.indexOf(' ')>-1) phrases.push(term); }); if(!phrases.length) return; ['now-playing','sp-text'].forEach(function(id){ var box=document.getElementById(id); if(!box) return; var list=[].slice.call(box.querySelectorAll('.sp-word')); var words=list.map(function(s){ return (s.dataset.w||'').toLowerCase(); }); phrases.forEach(function(term){ var pw=term.toLowerCase().split(' ').map(function(x){ return x.replace(/[^a-z']/g,''); }).filter(Boolean); if(pw.length<2) return; for(var i=0;i+pw.length<=words.length;i++){ var ok=true; for(var j=0;j<pw.length;j++){ if(words[i+j]!==pw[j]){ ok=false; break; } } if(ok){ var stp=window.FC_STATE.get(term); var c=fcColorOf(stp); var bold=(c&&!fcIsNew(stp))?'700':''; for(var j2=0;j2<pw.length;j2++){ list[i+j2].style.color=c; list[i+j2].style.fontWeight=bold; } } } }); }); }catch(e){} }
+function colorizeSentence(text){ if(!window.FC_STATE||!window.FC_STATE.size) return String(text); var s=String(text), lower=s.toLowerCase(); var phrases=[]; window.FC_STATE.forEach(function(iv,term){ if(term.indexOf(' ')>-1) phrases.push(term); }); phrases.sort(function(a,b){ return b.length-a.length; }); var marks=[]; phrases.forEach(function(term){ var t=term.toLowerCase(), from=0, idx; while((idx=lower.indexOf(t, from))!==-1){ var end=idx+t.length, ov=false; for(var mi=0;mi<marks.length;mi++){ if(idx<marks[mi].e && end>marks[mi].s){ ov=true; break; } } if(!ov){ var stm=window.FC_STATE.get(term); marks.push({s:idx,e:end,c:fcColorOf(stm),nw:fcIsNew(stm)}); } from=end; } }); marks.sort(function(a,b){ return a.s-b.s; }); function wcolor(seg){ return seg.replace(/[A-Za-z][A-Za-z'’-]*/g, function(m){ var key=m.replace(/[’]/g,"'").replace(/-+$/,''); var st=fcState(key); var c=fcColorOf(st); if(!c) return m; return '<span class="fc-w'+(fcIsNew(st)?' fc-new':'')+'" style="color:'+c+'">'+m+'</span>'; }); } var out='', pos=0; marks.forEach(function(mk){ if(mk.s<pos) return; out+=wcolor(s.slice(pos,mk.s)); out+='<span class="fc-w'+(mk.nw?' fc-new':'')+'" style="color:'+mk.c+'">'+s.slice(mk.s,mk.e)+'</span>'; pos=mk.e; }); out+=wcolor(s.slice(pos)); return out; }
+/* ⚠️ 2026-08-02 — SỬA LỖI KHÔNG TÔ MÀU CHỮ NÀO.
+   Bản cũ đọc srs_cards và words KHÔNG chia lô. Khi học viên có 2.981 thẻ:
+     · srs_cards chỉ trả 1.000 dòng (PostgREST chặn)
+     · .in('id', 1000 UUID) → URL 37.000 ký tự → Bad Request → words trả rỗng
+   Cả hàm nằm trong catch rỗng nên hỏng âm thầm, FC_STATE = 0 từ.
+   Nay dùng euFetchAll (phân trang) + euFetchIn (chia lô 200 id). */
+async function loadFlashcardStates(){
+  try{
+    var u = await euUser(); if(!u) return;
+    var sb = euClient();
+    var cards = await euFetchAll(function(){
+      return sb.from('srs_cards').select('word_id,interval_days,review_count').eq('user_id', u.id);
+    });
+    var ids = [];
+    var seen = {};
+    cards.forEach(function(c){ if(c.word_id && !seen[c.word_id]){ seen[c.word_id]=1; ids.push(c.word_id); } });
+    var tmap = {};
+    if(ids.length){
+      (await euFetchIn(sb, 'words', 'id,term', 'id', ids)).forEach(function(w){ tmap[w.id] = w.term; });
+    }
+    var M = new Map();
+    cards.forEach(function(c){
+      var t = tmap[c.word_id]; if(!t) return;
+      M.set(String(t).toLowerCase(), { iv: (c.interval_days==null?0:c.interval_days), n: (c.review_count||0) });
+    });
+    window.FC_STATE = M;
+    if(typeof buildTranscript === 'function') buildTranscript();
+    paintSpWords();
+  }catch(e){ console.warn('loadFlashcardStates:', e && e.message); }
+}
 
 function buildTranscript(){
   trWrap.innerHTML=""; activeIdx=-1;
@@ -905,7 +970,8 @@ init();
   #wordpop .wp-spk:hover{background:#33415f}
   #wordpop .wp-ipa{color:#7aa2ff;font-size:13px;margin-top:3px}
   #wordpop .wp-vipa{color:#f0a860;font-size:13px;font-style:italic;margin-top:1px}
-  #wordpop .wp-mean{margin-top:7px;color:#dfe6f5;border-top:1px solid #2a3346;padding-top:6px}.wp-save{margin-top:9px;width:100%;cursor:pointer;background:#2b6cb0;border:none;border-radius:8px;padding:7px 10px;font-size:13px;color:#fff;font-weight:600}.wp-save:hover{background:#3b7fca}.wp-save.saved{background:#2f855a;cursor:default}.wp-ext{display:none;margin-top:9px;width:100%;cursor:pointer;background:#26314a;border:1px dashed #3b4a6b;border-radius:8px;padding:6px 10px;font-size:12px;color:#cdd7ee}.wp-ext:hover{background:#33415f}.fc-w{font-weight:700}.nw-hint{color:#8b97ad;font-size:13px;margin:2px 0 14px;line-height:1.5}.nw-sub{color:#8b97ad;font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}.nw-item{display:flex;align-items:center;gap:10px;background:#151a25;border:1px solid #232d42;border-radius:12px;padding:10px 12px;margin-bottom:8px}.nw-main{flex:1;min-width:0}.nw-term{font-weight:700;color:#fff;font-size:15px}.nw-ipa{color:#7aa2ff;font-size:12px;font-weight:400}.nw-vi{color:#cdd7ee;font-size:13px;margin-top:2px}.nw-btn{cursor:pointer;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;white-space:nowrap}.nw-fc{background:#7c3aed;color:#fff}.nw-fc:hover{background:#8b4ff5}.nw-fc.done{background:#22303f;color:#5fd39a;cursor:default}.nw-del{background:#2a2030;color:#f4879a}.nw-del:hover{background:#3a2632}.nw-spk{background:#26314a;color:#cdd7ee}.nw-empty{color:#64748b;text-align:center;padding:26px 10px}.nw-ed-open{background:#26314a;color:#cdd7ee}.nw-ed-open:hover{background:#33415f}.nw-item.nw-editing{display:block}.nw-ed{width:100%}.nw-ed-row{display:flex;gap:8px;flex-wrap:wrap}.nw-in{background:#0e1018;border:1px solid #2e3a55;border-radius:8px;color:#e8edf7;font-size:14px;padding:8px 10px;font-family:inherit;outline:none;box-sizing:border-box}.nw-in:focus{border-color:#4f8ef7}.nw-in-term{flex:1 1 150px;font-weight:700}.nw-in-ipa{flex:1 1 150px;color:#7aa2ff}.nw-in-vi{width:100%;margin-top:8px;resize:vertical}.nw-ed-act{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}.nw-ed-save{background:#2b6cb0;color:#fff}.nw-ed-save:hover{background:#3b7fca}.nw-ed-cancel{background:#26314a;color:#cdd7ee}.nw-note{color:#8b97ad;font-size:11px}.nw-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2740;border:1px solid #33415f;color:#e8edf7;padding:10px 18px;border-radius:10px;font-size:14px;z-index:100000;opacity:0;transition:opacity .25s;pointer-events:none}.nw-toast.show{opacity:1}
+  #wordpop .wp-mean{margin-top:7px;color:#dfe6f5;border-top:1px solid #2a3346;padding-top:6px}.wp-save{margin-top:9px;width:100%;cursor:pointer;background:#2b6cb0;border:none;border-radius:8px;padding:7px 10px;font-size:13px;color:#fff;font-weight:600}.wp-save:hover{background:#3b7fca}.wp-save.saved{background:#2f855a;cursor:default}.wp-ext{display:none;margin-top:9px;width:100%;cursor:pointer;background:#26314a;border:1px dashed #3b4a6b;border-radius:8px;padding:6px 10px;font-size:12px;color:#cdd7ee}.wp-ext:hover{background:#33415f}.fc-w{font-weight:700}
+.fc-w.fc-new{font-weight:400}   /* đã trong Flashcard nhưng chưa ôn lần nào */.nw-hint{color:#8b97ad;font-size:13px;margin:2px 0 14px;line-height:1.5}.nw-sub{color:#8b97ad;font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}.nw-item{display:flex;align-items:center;gap:10px;background:#151a25;border:1px solid #232d42;border-radius:12px;padding:10px 12px;margin-bottom:8px}.nw-main{flex:1;min-width:0}.nw-term{font-weight:700;color:#fff;font-size:15px}.nw-ipa{color:#7aa2ff;font-size:12px;font-weight:400}.nw-vi{color:#cdd7ee;font-size:13px;margin-top:2px}.nw-btn{cursor:pointer;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;white-space:nowrap}.nw-fc{background:#7c3aed;color:#fff}.nw-fc:hover{background:#8b4ff5}.nw-fc.done{background:#22303f;color:#5fd39a;cursor:default}.nw-del{background:#2a2030;color:#f4879a}.nw-del:hover{background:#3a2632}.nw-spk{background:#26314a;color:#cdd7ee}.nw-empty{color:#64748b;text-align:center;padding:26px 10px}.nw-ed-open{background:#26314a;color:#cdd7ee}.nw-ed-open:hover{background:#33415f}.nw-item.nw-editing{display:block}.nw-ed{width:100%}.nw-ed-row{display:flex;gap:8px;flex-wrap:wrap}.nw-in{background:#0e1018;border:1px solid #2e3a55;border-radius:8px;color:#e8edf7;font-size:14px;padding:8px 10px;font-family:inherit;outline:none;box-sizing:border-box}.nw-in:focus{border-color:#4f8ef7}.nw-in-term{flex:1 1 150px;font-weight:700}.nw-in-ipa{flex:1 1 150px;color:#7aa2ff}.nw-in-vi{width:100%;margin-top:8px;resize:vertical}.nw-ed-act{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}.nw-ed-save{background:#2b6cb0;color:#fff}.nw-ed-save:hover{background:#3b7fca}.nw-ed-cancel{background:#26314a;color:#cdd7ee}.nw-note{color:#8b97ad;font-size:11px}.nw-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1f2740;border:1px solid #33415f;color:#e8edf7;padding:10px 18px;border-radius:10px;font-size:14px;z-index:100000;opacity:0;transition:opacity .25s;pointer-events:none}.nw-toast.show{opacity:1}
   #wordpop .wp-x{position:absolute;top:5px;right:9px;cursor:pointer;color:#8894ad;font-size:13px}
   #wordpop .wp-x:hover{color:#cdd7ee}`;
   document.head.appendChild(st);

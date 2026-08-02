@@ -1721,7 +1721,7 @@ async function loadCollections() {
   } catch(e) {
     // Dự phòng khi chưa tạo view word_collections
     try {
-      const { data } = await sb.from('words').select('collection');
+      const data = await euFetchAll(() => sb.from('words').select('id,collection'));
       const m = {};
       (data || []).forEach(w => { const k = w.collection || 'Chưa phân kho'; m[k] = (m[k] || 0) + 1; });
       list = Object.keys(m).map(k => ({ name: k, n: m[k] }));
@@ -1863,6 +1863,35 @@ const phvList   = w => _phrasalMap[xtKey(w)] || [];
 const prepList  = w => _prepMap[xtKey(w)]    || [];
 
 // ── LOAD WORDS ───────────────────────────────────────
+
+/* ══════ ĐỌC DỮ LIỆU LỚN AN TOÀN ══════
+   PostgREST trả TỐI ĐA 1000 dòng mỗi lần → phải phân trang bằng .range().
+   .in('id', [...]) với danh sách dài làm URL quá dài → Bad Request → phải chia lô.
+   (đo thật 2026-08-02: 1000 UUID = 37.000 ký tự URL → hỏng) */
+async function euFetchAll(build, orderCol){
+  const out = [], STEP = 1000;
+  for (let from = 0; from < 200000; from += STEP){
+    const { data, error } = await build().order(orderCol || 'id', { ascending: true }).range(from, from + STEP - 1);
+    if (error) throw error;
+    out.push.apply(out, data || []);
+    if (!data || data.length < STEP) break;
+  }
+  return out;
+}
+async function euFetchIn(table, cols, col, ids){
+  const out = [], LOT = 200;
+  for (let i = 0; i < ids.length; i += LOT){
+    const chunk = ids.slice(i, i + LOT);
+    for (let from = 0; from < 200000; from += 1000){          // 1 lô vẫn có thể > 1000 dòng
+      const { data, error } = await sb.from(table).select(cols).in(col, chunk).range(from, from + 999);
+      if (error) throw error;
+      out.push.apply(out, data || []);
+      if (!data || data.length < 1000) break;
+    }
+  }
+  return out;
+}
+
 const WORD_PAGE = 1000;   // PostgREST trả tối đa 1000 dòng/lần
 
 async function loadWords() {
@@ -1928,8 +1957,10 @@ function srsInfo(id){
 async function loadSrsMap(){
   if (!currentUser) { _srsMap = {}; _srsLoaded = false; return; }
   try {
-    const { data } = await sb.from('srs_cards')
-      .select('word_id,interval_days,due_date').eq('user_id', currentUser.id);
+    // ⚠️ phải phân trang: học viên có thể có vài nghìn thẻ, nếu không cột
+    //    "Flashcard" sẽ báo "chưa thêm" cho từ thứ 1.001 trở đi
+    const data = await euFetchAll(() => sb.from('srs_cards')
+      .select('word_id,interval_days,due_date').eq('user_id', currentUser.id));
     _srsMap = {};
     (data || []).forEach(c => { _srsMap[c.word_id] = c; _srsAdded.add(c.word_id); });
     _srsLoaded = true;
