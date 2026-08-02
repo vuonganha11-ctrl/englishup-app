@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EnglishUp · Giáo trình</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
+  --border:#232d42; --border2:#2e3a55;
+  --accent:#4f8ef7; --a2:#a78bfa; --a3:#34d399; --a4:#fb923c; --a5:#f472b6;
+  --danger:#f87171; --text:#dde3f0; --muted:#64748b;
+  --topbar-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font-family:inherit}
+
+/* ── TOPBAR ─────────────────────────────────────── */
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;
+  align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:300}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;white-space:nowrap;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px;white-space:nowrap}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+.top-nav a.active{color:var(--accent);background:rgba(79,142,247,.12)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.xp-badge,.streak-badge{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:3px 12px 3px 3px;font-size:13px;cursor:pointer;max-width:220px}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700}
+.user-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-login{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-size:13px;
+  font-weight:600;cursor:pointer}
+
+/* ── LAYOUT ─────────────────────────────────────── */
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 90px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:16px;flex-wrap:wrap}
+.crumb a{color:var(--accent);text-decoration:none;cursor:pointer}
+.crumb a:hover{text-decoration:underline}
+
+/* ── HERO ───────────────────────────────────────── */
+.hero{background:linear-gradient(135deg,rgba(79,142,247,.13),rgba(167,139,250,.08));border:1px solid var(--border2);
+  border-radius:20px;padding:28px 30px;margin-bottom:24px}
+.hero h1{font-size:27px;line-height:1.25;margin-bottom:8px;font-weight:700}
+.hero p{color:#93a2bd;font-size:14px;line-height:1.75;max-width:860px}
+.stats{display:flex;gap:26px;margin-top:18px;flex-wrap:wrap}
+.stat b{display:block;font-size:22px;color:var(--accent);font-weight:700}
+.stat span{font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+
+/* ── LƯỚI GIÁO TRÌNH ────────────────────────────── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.ccard{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;cursor:pointer;
+  transition:.16s;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.ccard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ccard .bar{position:absolute;left:0;top:0;width:100%;height:4px;background:var(--accent)}
+.ccard .emo{font-size:34px;line-height:1;margin-bottom:12px}
+.ccard h3{font-size:17px;font-weight:700;margin-bottom:5px;line-height:1.35}
+.ccard .sub{font-size:13px;color:var(--muted);line-height:1.6;min-height:40px}
+.ccard .meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--card2);
+  border:1px solid var(--border2);color:#9fb0cc}
+.pill.lv{background:rgba(79,142,247,.14);border-color:transparent;color:var(--accent)}
+.ccard .prog{margin-top:15px}
+.pbar{height:7px;background:#1d2434;border-radius:99px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--a3);border-radius:99px}
+.ptext{font-size:11.5px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+.ccard.soon{opacity:.5;cursor:default}
+.ccard.soon:hover{border-color:var(--border);transform:none}
+.ccard.add{border-style:dashed;align-items:center;justify-content:center;text-align:center;color:var(--muted);min-height:210px}
+.ccard.add:hover{color:var(--accent)}
+.ccard.add .emo{font-size:28px;margin-bottom:6px}
+.tagsoon{position:absolute;right:14px;top:14px;font-size:10px;font-weight:800;letter-spacing:.5px;
+  background:rgba(251,146,60,.15);color:var(--a4);padding:3px 9px;border-radius:99px}
+
+/* ── MÔ HÌNH 3 BƯỚC ─────────────────────────────── */
+.model{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-bottom:26px}
+.mcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.mcard .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.mcard h4{font-size:15px;margin-bottom:6px}
+.mcard p{font-size:13px;color:var(--muted);line-height:1.65}
+
+/* ── THANH LỌC ──────────────────────────────────── */
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;position:sticky;top:var(--topbar-h);
+  background:var(--bg);padding:12px 0;z-index:150;border-bottom:1px solid var(--border)}
+input[type=search],input[type=text]{background:var(--card);border:1px solid var(--border2);color:var(--text);
+  border-radius:10px;padding:9px 13px;font-size:13.5px;font-family:inherit;outline:none}
+input[type=search]{min-width:230px;flex:1;max-width:340px}
+input:focus{border-color:var(--accent)}
+.chip{padding:7px 14px;border-radius:99px;font-size:12.5px;font-weight:600;cursor:pointer;user-select:none;
+  background:var(--card);border:1px solid var(--border);color:var(--muted)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.a1.on{background:var(--a3);border-color:var(--a3);color:#052e20}
+.chip.b1.on{background:var(--a2);border-color:var(--a2);color:#1d1233}
+.cnt{font-size:12.5px;color:var(--muted);margin-left:auto}
+
+/* ── NHÓM & CHỦ ĐỀ ──────────────────────────────── */
+.unit{margin-bottom:28px}
+.uhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.uhead .num{font-size:12px;font-weight:700;color:#0b1220;background:var(--a4);border-radius:7px;padding:3px 9px}
+.uhead h2{font-size:19px;font-weight:700}
+.uhead .vi{color:var(--a2);font-size:15px}
+.uhead .meta{font-size:12px;color:var(--muted);margin-left:auto}
+.unote{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:13px;max-width:920px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:13px}
+.t{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px 16px;cursor:pointer;transition:.15s}
+.t:hover{border-color:var(--accent);transform:translateY(-2px)}
+.trow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.code{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted);border:1px solid var(--border2);
+  border-radius:6px;padding:2px 7px}
+.lv{font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px}
+.lv.A1{background:rgba(52,211,153,.16);color:var(--a3)}
+.lv.A2{background:rgba(79,142,247,.16);color:var(--accent)}
+.lv.B1{background:rgba(167,139,250,.18);color:var(--a2)}
+.lv.B2{background:rgba(244,114,182,.18);color:var(--a5)}
+.t h3{font-size:15px;font-weight:600;margin-top:9px}
+.t .vi{font-size:13.5px;color:var(--a2);margin-top:2px}
+.t .ob{font-size:12.6px;color:var(--muted);line-height:1.6;margin-top:8px}
+.t .prog{margin-top:12px}
+.t .prog .pbar{height:6px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:11.5px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:3px 9px;color:#a9b6cf}
+
+/* ── BÀI HỌC ────────────────────────────────────── */
+.lhead{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px 24px;margin-bottom:18px}
+.lhead h1{font-size:24px;font-weight:700;margin:8px 0 3px}
+.lhead .vi{font-size:16px;color:var(--a2)}
+.lhead .ob{font-size:14px;color:#93a2bd;line-height:1.7;margin-top:12px;max-width:880px}
+.pat{font-family:ui-monospace,monospace;font-size:13px;color:var(--a3);background:rgba(52,211,153,.07);
+  border:1px solid rgba(52,211,153,.2);border-radius:9px;padding:8px 12px;display:inline-block;margin-top:12px}
+.steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.step{flex:1;min-width:180px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px 14px;
+  cursor:pointer;display:flex;gap:11px;align-items:center;transition:.15s}
+.step:hover{border-color:var(--border2)}
+.step.on{border-color:var(--accent);background:rgba(79,142,247,.09)}
+.step.done .sn{background:var(--a3);color:#052e20}
+.sn{width:28px;height:28px;border-radius:50%;background:var(--card2);color:var(--muted);font-weight:700;font-size:13px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step.on .sn{background:var(--accent);color:#fff}
+.step b{font-size:13.5px;display:block}
+.step small{font-size:11.5px;color:var(--muted)}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px 24px;min-height:260px}
+.panel h3{font-size:16px;margin-bottom:4px}
+.panel .hint{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px}
+
+/* thẻ từ */
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:13px}
+.wc{background:var(--card2);border:1px solid var(--border2);border-radius:14px;overflow:hidden;transition:.15s}
+.wc:hover{border-color:var(--accent)}
+.wc .img{height:112px;background:#0f1420;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.wc .img img{width:100%;height:100%;object-fit:cover}
+.wc .noimg{font-size:26px;font-weight:800;color:#2f3b55}
+.wc .b{padding:11px 12px 13px}
+.wc .term{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.wc .ipa{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--muted);margin-top:2px}
+.wc .def{font-size:13px;color:var(--a2);margin-top:5px;line-height:1.5}
+.spk{background:transparent;border:0;color:var(--accent);cursor:pointer;font-size:14px;padding:0 2px}
+
+/* trắc nghiệm */
+.qbox{max-width:640px;margin:0 auto}
+.qprog{height:7px;background:#1d2434;border-radius:99px;overflow:hidden;margin-bottom:18px}
+.qprog i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+.qmeta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.qtext{font-size:22px;font-weight:700;text-align:center;padding:24px 10px;line-height:1.4}
+.qtext small{display:block;font-size:12.5px;color:var(--muted);font-weight:500;margin-bottom:8px;letter-spacing:.4px;
+  text-transform:uppercase}
+.opts{display:grid;gap:10px}
+.opt{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:13px 16px;font-size:14.5px;
+  cursor:pointer;text-align:left;color:var(--text);transition:.12s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{background:rgba(52,211,153,.14);border-color:var(--a3);color:#8ff0c8}
+.opt.wrong{background:rgba(248,113,113,.13);border-color:var(--danger);color:#ffb4b4}
+.opt:disabled{cursor:default}
+.qfoot{margin-top:16px;display:flex;gap:10px;align-items:center;min-height:42px}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--text)}
+.btn.a3{background:var(--a3);color:#052e20}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.fb{font-size:13.5px;font-weight:600}
+.fb.ok{color:var(--a3)} .fb.no{color:var(--danger)}
+
+/* kết quả */
+.res{text-align:center;padding:26px 10px}
+.res .emo{font-size:56px}
+.res h2{font-size:24px;margin:10px 0 4px}
+.res p{color:var(--muted);font-size:14px}
+.rstat{display:flex;justify-content:center;gap:34px;margin:22px 0 26px;flex-wrap:wrap}
+.rstat b{display:block;font-size:26px;color:var(--accent)}
+.rstat span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+/* câu hỏi nói */
+.qa{background:var(--card2);border:1px solid var(--border2);border-radius:14px;padding:16px 18px;margin-bottom:13px}
+.qa .q{font-size:16px;font-weight:600;display:flex;gap:9px;align-items:flex-start;line-height:1.5}
+.qa textarea{width:100%;margin-top:11px;background:var(--card);border:1px solid var(--border2);border-radius:10px;
+  color:var(--text);padding:11px 13px;font-size:14px;font-family:inherit;min-height:74px;resize:vertical;outline:none}
+.qa textarea:focus{border-color:var(--accent)}
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.kw b{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px}
+
+/* thông báo */
+.note{background:rgba(251,146,60,.07);border:1px solid rgba(251,146,60,.22);border-radius:12px;padding:14px 17px;
+  font-size:13px;color:#d5a271;line-height:1.75}
+.note code{font-family:ui-monospace,monospace;background:rgba(0,0,0,.3);padding:1px 6px;border-radius:5px;color:#ffcf9e}
+.empty{color:var(--muted);font-size:14px;padding:34px 0;text-align:center}
+.loading{color:var(--muted);font-size:14px;padding:44px 0;text-align:center}
+
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(4,6,12,.78);backdrop-filter:blur(3px);display:none;align-items:center;
+  justify-content:center;z-index:500;padding:20px}
+.ov.show{display:flex}
+.mo{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:24px;max-width:460px;width:100%}
+.mo h3{font-size:18px;margin-bottom:6px}
+.mo p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.fld input{width:100%}
+.mo .row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+
+@media(max-width:768px){
+  .top-nav{display:none}
+  .wrap{padding:16px 13px 70px}
+  .hero{padding:20px}.hero h1{font-size:21px}
+  .tools{position:static}
+  .qtext{font-size:19px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ─────────────────────────────────────── -->
+<header class="topbar">
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="video.html">🎬 Video</a>
+    <a href="shorts.html">📱 Shorts</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="vocab.html">📚 Từ vựng</a>
+    <a href="giaotrinh.html" class="active">📖 Giáo trình</a>
+    <a href="game.html">🎮 Game</a>
+    <a href="report.html">📊 Thống kê</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="xp-badge" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>
+    <button class="btn-login" id="btn-login-top" onclick="location.href='vocab.html'">Đăng nhập</button>
+    <div class="user-chip" id="user-chip" style="display:none">
+      <div class="user-av" id="user-av">?</div><span id="user-email-display">user</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="app"><div class="loading">Đang tải giáo trình…</div></div>
+
+<!-- ── MODAL THÊM GIÁO TRÌNH ──────────────────────── -->
+<div class="ov" id="ov-add" onclick="if(event.target===this)closeAdd()">
+  <div class="mo">
+    <h3>Thêm giáo trình mới</h3>
+    <p>Tạo một mục giáo trình trống. Sau đó nạp nhóm và chủ đề bằng file SQL hoặc Excel, dùng đúng mã bạn đặt ở đây làm tiền tố mã chủ đề.</p>
+    <div class="fld"><label>Mã giáo trình (viết hoa, không dấu — vd IELTS)</label><input type="text" id="f-code" maxlength="16" placeholder="IELTS"></div>
+    <div class="fld"><label>Tên hiển thị</label><input type="text" id="f-title" placeholder="IELTS Vocabulary 4.5 → 6.5"></div>
+    <div class="fld"><label>Mô tả ngắn</label><input type="text" id="f-sub" placeholder="Từ vựng học thuật theo 8 chủ đề thi"></div>
+    <div class="fld"><label>Biểu tượng &amp; bậc</label>
+      <div style="display:flex;gap:10px"><input type="text" id="f-emo" value="📘" style="width:70px;text-align:center">
+      <input type="text" id="f-lv" placeholder="B1 – B2" style="flex:1"></div></div>
+    <div class="row"><button class="btn ghost" onclick="closeAdd()">Huỷ</button><button class="btn" onclick="saveCurriculum()">Tạo giáo trình</button></div>
+  </div>
+</div>
+
+<script>
+// ══════════════ SUPABASE ══════════════
+const SB_URL = 'https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY = 'sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+let sb = null, currentUser = null;
+
+// ══════════════ STATE ══════════════
+let CURRICULA = [];
+let CURR = null;          // giáo trình đang mở
+let UNITS = [], TOPICS = [];
+let WCOUNT = {};          // topic_code → {n, img}
+let TOPIC = null;         // chủ đề đang học
+let WORDS = [];           // từ của chủ đề đang học
+let stepNow = 1, stepDone = {1:false,2:false,3:false};
+let quiz = null;
+let WCODES = {};          // tra nhanh mã chủ đề của giáo trình đang mở
+let fLevel = '', fSearch = '', fOnlyReady = false;
+
+// ══════════════ TIỆN ÍCH ══════════════
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function nrm(s){return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d');}
+function el(id){return document.getElementById(id);}
+function speak(t){ if(!('speechSynthesis' in window))return; window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=.9; window.speechSynthesis.speak(u); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+
+// PostgREST cắt im lặng ở 1.000 dòng → luôn phân trang
+async function fetchAll(build, orderCol){
+  const out=[], STEP=1000;
+  for(let from=0; from<100000; from+=STEP){
+    const {data,error} = await build().order(orderCol||'code',{ascending:true}).range(from,from+STEP-1);
+    if(error) throw error;
+    out.push.apply(out,data||[]);
+    if(!data || data.length<STEP) break;
+  }
+  return out;
+}
+// .in() với danh sách dài làm URL quá dài → chia lô 150
+async function fetchIn(table, cols, col, vals){
+  const out=[];
+  for(let i=0;i<vals.length;i+=150){
+    const chunk=vals.slice(i,i+150);
+    for(let from=0; from<100000; from+=1000){
+      const {data,error}=await sb.from(table).select(cols).in(col,chunk).range(from,from+999);
+      if(error) throw error;
+      out.push.apply(out,data||[]);
+      if(!data || data.length<1000) break;
+    }
+  }
+  return out;
+}
+
+// ══════════════ KHỞI ĐỘNG ══════════════
+(async function init(){
+  try{
+    sb = supabase.createClient(SB_URL, SB_KEY);
+    const {data:{session}} = await sb.auth.getSession();
+    if(session && session.user){
+      currentUser = session.user;
+      el('btn-login-top').style.display='none';
+      el('user-chip').style.display='flex';
+      el('user-email-display').textContent = currentUser.email || 'user';
+      el('user-av').textContent = (currentUser.email||'?').charAt(0).toUpperCase();
+      const {data:p} = await sb.from('user_profiles').select('xp').eq('id',currentUser.id).maybeSingle();
+      if(p){ el('xp-val').textContent=p.xp||0; el('xp-display').style.display='flex'; }
+    }
+    CURRICULA = await fetchAll(()=>sb.from('curricula').select('*'),'ord');
+    CURRICULA.sort((a,b)=>(a.ord||0)-(b.ord||0));
+    await countCurricula();
+  }catch(e){
+    el('app').innerHTML = '<div class="note">Không tải được danh mục giáo trình.<br>'+esc(e.message||e)+
+      '<br><br>Nếu đây là lần đầu: hãy chạy file <code>migration_giaotrinh.sql</code> trên Supabase (SQL Editor) để tạo 3 bảng <code>curricula</code> · <code>curriculum_units</code> · <code>curriculum_topics</code>.</div>';
+    return;
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+
+// đếm số từ đã có của mỗi giáo trình (theo tiền tố mã chủ đề)
+async function countCurricula(){
+  for(const c of CURRICULA){
+    c._words = 0;
+    if(c.status==='soon') continue;
+    try{
+      const {count} = await sb.from('words').select('id',{count:'exact',head:true}).like('topic_code', c.code+'-%');
+      c._words = count || 0;
+    }catch(e){}
+  }
+}
+
+// ══════════════ ĐỊNH TUYẾN ══════════════
+function route(){
+  const h = location.hash.replace(/^#\/?/,'');
+  window.scrollTo(0,0);
+  if(h.startsWith('t/')) return viewLesson(decodeURIComponent(h.slice(2)));
+  if(h.startsWith('c/')) return viewCurriculum(decodeURIComponent(h.slice(2)));
+  return viewHome();
+}
+function go(hash){ location.hash = hash; }
+
+// ══════════════ MÀN 1 · CHỌN GIÁO TRÌNH ══════════════
+function viewHome(){
+  CURR=null; TOPIC=null;
+  const ready = CURRICULA.filter(c=>c.status!=='soon');
+  const totalTopics = ready.reduce((s,c)=>s+(c.n_topics||0),0);
+  const totalWords  = ready.reduce((s,c)=>s+(c.target_words||0),0);
+
+  let cards = CURRICULA.map(c=>{
+    if(c.status==='soon'){
+      return '<div class="ccard soon"><div class="bar" style="background:'+esc(c.color||'#64748b')+'"></div>'+
+        '<div class="tagsoon">SẮP CÓ</div>'+
+        '<div class="emo">'+esc(c.cover_emoji||'📘')+'</div>'+
+        '<h3>'+esc(c.title)+'</h3><div class="sub">'+esc(c.subtitle||'')+'</div>'+
+        '<div class="meta">'+(c.level_range?'<span class="pill lv">'+esc(c.level_range)+'</span>':'')+
+        '<span class="pill">Đang biên soạn</span></div></div>';
+    }
+    const pct = c.target_words ? Math.min(100, Math.round(c._words/c.target_words*100)) : 0;
+    return '<div class="ccard" onclick="go(\'#/c/'+esc(c.code)+'\')">'+
+      '<div class="bar" style="background:'+esc(c.color||'#4f8ef7')+'"></div>'+
+      '<div class="emo">'+esc(c.cover_emoji||'📘')+'</div>'+
+      '<h3>'+esc(c.title)+'</h3>'+
+      '<div class="sub">'+esc(c.subtitle||'')+'</div>'+
+      '<div class="meta">'+
+        (c.level_range?'<span class="pill lv">'+esc(c.level_range)+'</span>':'')+
+        '<span class="pill">'+(c.n_units||0)+' nhóm</span>'+
+        '<span class="pill">'+(c.n_topics||0)+' chủ đề</span>'+
+        '<span class="pill">'+(c.target_words||0).toLocaleString('vi-VN')+' từ mục tiêu</span>'+
+      '</div>'+
+      '<div class="prog"><div class="pbar"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="ptext"><span>Đã soạn '+(c._words||0).toLocaleString('vi-VN')+' từ</span><span>'+pct+'%</span></div></div>'+
+      '</div>';
+  }).join('');
+
+  cards += '<div class="ccard add" onclick="openAdd()"><div class="emo">➕</div>'+
+           '<b style="font-size:14px">Thêm giáo trình</b>'+
+           '<div style="font-size:12.5px;margin-top:5px;max-width:210px;line-height:1.6">Tạo một giáo trình mới rồi nạp nhóm &amp; chủ đề sau</div></div>';
+
+  el('app').innerHTML =
+    '<div class="hero"><h1>Giáo trình EnglishUp</h1>'+
+    '<p>Mỗi giáo trình là một lộ trình học có sẵn: chia thành nhóm chủ đề, mỗi chủ đề là một bài học ba bước — học từ qua tranh, luyện tập trắc nghiệm, rồi trả lời ba câu hỏi mở. Chọn một giáo trình để bắt đầu.</p>'+
+    '<div class="stats">'+
+      '<div class="stat"><b>'+CURRICULA.length+'</b><span>Giáo trình</span></div>'+
+      '<div class="stat"><b>'+ready.length+'</b><span>Đang dùng được</span></div>'+
+      '<div class="stat"><b>'+totalTopics+'</b><span>Chủ đề</span></div>'+
+      '<div class="stat"><b>'+totalWords.toLocaleString('vi-VN')+'</b><span>Từ mục tiêu</span></div>'+
+    '</div></div>'+
+    '<div class="cgrid">'+cards+'</div>';
+}
+
+// ══════════════ MÀN 2 · MỘT GIÁO TRÌNH ══════════════
+async function viewCurriculum(code){
+  TOPIC=null;
+  CURR = CURRICULA.find(c=>c.code===code);
+  if(!CURR){ el('app').innerHTML='<div class="empty">Không tìm thấy giáo trình này.</div>'; return; }
+  el('app').innerHTML='<div class="loading">Đang tải chủ đề…</div>';
+  try{
+    UNITS  = await fetchAll(()=>sb.from('curriculum_units').select('*').eq('curriculum_code',code),'no');
+    TOPICS = await fetchAll(()=>sb.from('curriculum_topics').select('*').eq('curriculum_code',code),'code');
+    UNITS.sort((a,b)=>(a.no||0)-(b.no||0));
+    TOPICS.sort((a,b)=>String(a.code).localeCompare(String(b.code)));
+    await countTopics();
+  }catch(e){ el('app').innerHTML='<div class="note">Lỗi tải chủ đề: '+esc(e.message||e)+'</div>'; return; }
+  renderCurriculum();
+}
+
+async function countTopics(){
+  WCOUNT = {}; WCODES = {}; TOPICS.forEach(t=>WCODES[t.code]=1);
+  const codes = TOPICS.map(t=>t.code);
+  if(!codes.length) return;
+  let rows=[];
+  try{ rows = await fetchIn('words','id,topic_code,branch_code,image_url','topic_code',codes); }catch(e){}
+  try{
+    const more = await fetchIn('words','id,topic_code,branch_code,image_url','branch_code',codes);
+    const seen={}; rows.forEach(r=>seen[r.id]=1);
+    more.forEach(r=>{ if(!seen[r.id]){ seen[r.id]=1; rows.push(r); } });
+  }catch(e){}
+  rows.forEach(r=>{
+    const k = (r.topic_code && WCODES[r.topic_code]) ? r.topic_code : r.branch_code;
+    if(!k) return;
+    if(!WCOUNT[k]) WCOUNT[k]={n:0,img:0};
+    WCOUNT[k].n++; if(r.image_url) WCOUNT[k].img++;
+  });
+}
+
+function renderCurriculum(){
+  const done = TOPICS.filter(t=>(WCOUNT[t.code]||{}).n>0).length;
+  const nw   = TOPICS.reduce((s,t)=>s+((WCOUNT[t.code]||{}).n||0),0);
+  const tw   = TOPICS.reduce((s,t)=>s+(t.target_words||0),0);
+  const pct  = tw ? Math.round(nw/tw*100) : 0;
+
+  let html =
+   '<div class="crumb"><a onclick="go(\'#/\')">📖 Giáo trình</a><span>›</span><span>'+esc(CURR.title)+'</span></div>'+
+   '<div class="hero"><h1>'+esc(CURR.cover_emoji||'📘')+' '+esc(CURR.title)+'</h1>'+
+   '<p>'+esc(CURR.description||CURR.subtitle||'')+'</p>'+
+   '<div class="stats">'+
+     '<div class="stat"><b>'+UNITS.length+'</b><span>Nhóm chủ đề</span></div>'+
+     '<div class="stat"><b>'+TOPICS.length+'</b><span>Chủ đề</span></div>'+
+     '<div class="stat"><b>'+done+'</b><span>Chủ đề đã có từ</span></div>'+
+     '<div class="stat"><b>'+nw.toLocaleString('vi-VN')+'/'+tw.toLocaleString('vi-VN')+'</b><span>Từ đã soạn</span></div>'+
+     '<div class="stat"><b>'+pct+'%</b><span>Hoàn thành</span></div>'+
+   '</div></div>'+
+   '<div class="model">'+
+     '<div class="mcard"><div class="n">1</div><h4>Học từ</h4><p>Lưới thẻ tranh: ảnh, từ tiếng Anh, nghĩa tiếng Việt và nút nghe phát âm.</p></div>'+
+     '<div class="mcard"><div class="n">2</div><h4>Luyện tập</h4><p>8 câu trắc nghiệm xen kẽ Anh→Việt và Việt→Anh, đáp án nhiễu lấy ngay trong chủ đề.</p></div>'+
+     '<div class="mcard"><div class="n">3</div><h4>Câu hỏi</h4><p>3 câu hỏi mở để nói và viết, có sẵn mẫu câu cùng từ khoá gợi ý.</p></div>'+
+   '</div>'+
+   '<div class="tools">'+
+     '<input type="search" id="q" placeholder="Tìm chủ đề, mục tiêu, mẫu câu…" value="'+esc(fSearch)+'" oninput="fSearch=this.value;renderUnits()">'+
+     '<span class="chip'+(fLevel===''?' on':'')+'" onclick="setLv(\'\')">Tất cả</span>'+
+     '<span class="chip a1'+(fLevel==='A1'?' on':'')+'" onclick="setLv(\'A1\')">A1</span>'+
+     '<span class="chip'+(fLevel==='A2'?' on':'')+'" onclick="setLv(\'A2\')">A2</span>'+
+     '<span class="chip b1'+(fLevel==='B1'?' on':'')+'" onclick="setLv(\'B1\')">B1</span>'+
+     '<span class="chip'+(fOnlyReady?' on':'')+'" onclick="fOnlyReady=!fOnlyReady;renderCurriculum()">✅ Đã có từ</span>'+
+     '<span class="cnt" id="cnt"></span>'+
+   '</div><div id="units"></div>';
+
+  if(nw===0){
+    html += '<div class="note" style="margin-top:22px">Giáo trình này chưa có từ nào trong kho — bước <b>Học từ</b> và <b>Luyện tập</b> sẽ trống, riêng bước <b>Câu hỏi</b> vẫn dùng được.<br>'+
+      'Để nạp từ: dùng Admin → Import Excel, điền cột <code>topic_code</code> đúng mã chủ đề (vd <code>'+esc(TOPICS.length?TOPICS[0].code:'CDS-U01-01')+'</code>), cột <code>term</code>, <code>definition_vi</code> và <code>image_url</code>.</div>';
+  }
+  el('app').innerHTML = html;
+  renderUnits();
+}
+function setLv(v){ fLevel=v; renderCurriculum(); }
+
+function renderUnits(){
+  const kw = nrm(fSearch).trim();
+  const match = t => {
+    if(fLevel && t.cefr!==fLevel) return false;
+    if(fOnlyReady && !((WCOUNT[t.code]||{}).n>0)) return false;
+    if(!kw) return true;
+    return nrm([t.name_en,t.name_vi,t.objective,t.pattern,t.code,(t.focus||[]).join(' '),(t.prompts||[]).join(' ')].join(' ')).indexOf(kw)>=0;
+  };
+  let n=0, out='';
+  UNITS.forEach(u=>{
+    const ts = TOPICS.filter(t=>t.unit_code===u.code && match(t));
+    if(!ts.length) return;
+    n += ts.length;
+    out += '<div class="unit"><div class="uhead">'+
+      '<span class="num">'+String(u.no).padStart(2,'0')+'</span>'+
+      '<h2>'+esc(u.name_en)+'</h2><span class="vi">'+esc(u.name_vi)+'</span>'+
+      '<span class="meta">'+ts.length+' chủ đề · '+(u.target_words||0)+' từ mục tiêu</span></div>'+
+      (u.note?'<div class="unote">'+esc(u.note)+'</div>':'')+
+      '<div class="tgrid">'+ts.map(cardTopic).join('')+'</div></div>';
+  });
+  el('units').innerHTML = out || '<div class="empty">Không có chủ đề nào khớp bộ lọc.</div>';
+  const c=el('cnt'); if(c) c.textContent = n+' / '+TOPICS.length+' chủ đề';
+}
+
+function cardTopic(t){
+  const w = WCOUNT[t.code]||{n:0,img:0};
+  const pct = t.target_words ? Math.min(100,Math.round(w.n/t.target_words*100)) : (w.n?100:0);
+  const col = w.n===0 ? '#334155' : (pct>=100?'var(--a3)':'var(--accent)');
+  return '<div class="t" onclick="go(\'#/t/'+esc(t.code)+'\')">'+
+    '<div class="trow"><span class="code">'+esc(t.code)+'</span>'+
+      '<span class="lv '+esc(t.cefr||'')+'">'+esc(t.cefr||'')+'</span>'+
+      (w.n>0?'<span class="pill" style="margin-left:auto">'+w.n+' từ</span>':'<span class="pill" style="margin-left:auto;opacity:.6">chưa có từ</span>')+
+    '</div>'+
+    '<h3>'+esc(t.name_en)+'</h3><div class="vi">'+esc(t.name_vi)+'</div>'+
+    '<div class="ob">'+esc(t.objective||'')+'</div>'+
+    '<div class="prog"><div class="pbar"><i style="width:'+pct+'%;background:'+col+'"></i></div>'+
+    '<div class="ptext"><span>'+w.n+'/'+(t.target_words||0)+' từ</span><span>'+(w.img?w.img+' có ảnh':'')+'</span></div></div>'+
+    '</div>';
+}
+
+// ══════════════ MÀN 3 · BÀI HỌC 3 BƯỚC ══════════════
+async function viewLesson(code){
+  el('app').innerHTML='<div class="loading">Đang mở bài học…</div>';
+  try{
+    if(!TOPIC || TOPIC.code!==code){
+      const {data,error} = await sb.from('curriculum_topics').select('*').eq('code',code).maybeSingle();
+      if(error) throw error;
+      TOPIC = data;
+    }
+    if(!TOPIC){ el('app').innerHTML='<div class="empty">Không tìm thấy chủ đề '+esc(code)+'.</div>'; return; }
+    if(!CURR || CURR.code!==TOPIC.curriculum_code) CURR = CURRICULA.find(c=>c.code===TOPIC.curriculum_code) || CURR;
+    WORDS = await loadWords(TOPIC);
+  }catch(e){ el('app').innerHTML='<div class="note">Lỗi mở bài học: '+esc(e.message||e)+'</div>'; return; }
+  stepNow=1; stepDone={1:false,2:false,3:false}; quiz=null;
+  renderLesson();
+}
+
+async function loadWords(t){
+  const COLS='id,term,phonetic,definition_vi,definition_en,part_of_speech,level,image_url,audio_url';
+  let r=[];
+  try{ const {data}=await sb.from('words').select(COLS).eq('topic_code',t.code).limit(400); r=data||[]; }catch(e){}
+  if(!r.length){ try{ const {data}=await sb.from('words').select(COLS).eq('branch_code',t.code).limit(400); r=data||[]; }catch(e){} }
+  if(!r.length && t.word_terms && t.word_terms.length){
+    try{ r = await fetchIn('words',COLS,'term',t.word_terms); }catch(e){}
+  }
+  const seen={}, out=[];
+  r.forEach(w=>{ if(w.term && !seen[w.term.toLowerCase()]){ seen[w.term.toLowerCase()]=1; out.push(w); } });
+  return out;
+}
+
+function renderLesson(){
+  const t=TOPIC;
+  const cCode = CURR? CURR.code : (t.curriculum_code||'');
+  el('app').innerHTML =
+   '<div class="crumb"><a onclick="go(\'#/\')">📖 Giáo trình</a><span>›</span>'+
+     '<a onclick="go(\'#/c/'+esc(cCode)+'\')">'+esc(CURR?CURR.title:cCode)+'</a><span>›</span><span>'+esc(t.name_en)+'</span></div>'+
+   '<div class="lhead">'+
+     '<div class="trow"><span class="code">'+esc(t.code)+'</span><span class="lv '+esc(t.cefr||'')+'">'+esc(t.cefr||'')+'</span>'+
+       '<span class="pill">'+WORDS.length+' từ trong kho</span><span class="pill">mục tiêu '+(t.target_words||0)+' từ</span></div>'+
+     '<h1>'+esc(t.name_en)+'</h1><div class="vi">'+esc(t.name_vi)+'</div>'+
+     '<div class="ob">🎯 '+esc(t.objective||'')+'</div>'+
+     (t.pattern?'<div class="pat">'+esc(t.pattern)+'</div>':'')+
+     ((t.focus&&t.focus.length)?'<div class="tags">'+t.focus.map(f=>'<span class="tag">'+esc(f)+'</span>').join('')+'</div>':'')+
+   '</div>'+
+   '<div class="steps" id="steps"></div>'+
+   '<div class="panel" id="panel"></div>';
+  renderSteps(); renderStep();
+}
+
+function renderSteps(){
+  const S=[[1,'Học từ','Thẻ tranh + nghe'],[2,'Luyện tập','8 câu trắc nghiệm'],[3,'Câu hỏi','3 câu hỏi mở']];
+  el('steps').innerHTML = S.map(s=>
+    '<div class="step'+(stepNow===s[0]?' on':'')+(stepDone[s[0]]?' done':'')+'" onclick="setStep('+s[0]+')">'+
+    '<div class="sn">'+(stepDone[s[0]]?'✓':s[0])+'</div><div><b>'+s[1]+'</b><small>'+s[2]+'</small></div></div>').join('');
+}
+function setStep(n){ stepNow=n; renderSteps(); renderStep(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function renderStep(){
+  if(stepNow===1) return stepWords();
+  if(stepNow===2) return stepQuiz();
+  return stepPrompts();
+}
+
+// ── BƯỚC 1 · HỌC TỪ ──
+function stepWords(){
+  const t=TOPIC;
+  if(!WORDS.length){
+    el('panel').innerHTML =
+      '<h3>Bước 1 · Học từ</h3>'+
+      '<div class="hint">Chủ đề này chưa có từ nào trong kho.</div>'+
+      (t.image_brief?'<div class="qa"><div class="q">🖼️ Gợi ý tranh minh hoạ</div><div style="font-size:13.5px;color:#93a2bd;line-height:1.7;margin-top:8px">'+esc(t.image_brief)+'</div></div>':'')+
+      '<div class="note">Để nạp từ cho chủ đề này: vào <b>Admin → Import Excel</b>, đặt cột <code>topic_code</code> = <code>'+esc(t.code)+'</code>, kèm <code>term</code>, <code>definition_vi</code>, <code>image_url</code>. Mục tiêu của chủ đề là <b>'+(t.target_words||0)+' từ</b>.</div>'+
+      '<div style="margin-top:18px"><button class="btn" onclick="setStep(3)">Bỏ qua, sang bước 3 →</button></div>';
+    stepDone[1]=false; renderSteps(); return;
+  }
+  el('panel').innerHTML =
+    '<h3>Bước 1 · Học từ</h3><div class="hint">Nhìn tranh, đọc nghĩa rồi bấm 🔊 để nghe phát âm. Học hết '+WORDS.length+' từ rồi sang bước luyện tập.</div>'+
+    '<div class="wgrid">'+WORDS.map((w,i)=>
+      '<div class="wc">'+
+      '<div class="img">'+(w.image_url?'<img src="'+esc(w.image_url)+'" alt="'+esc(w.term)+'" loading="lazy" onerror="this.style.display=&quot;none&quot;">':'<div class="noimg">'+(i+1)+'</div>')+'</div>'+
+      '<div class="b"><div class="term">'+esc(w.term)+'<button class="spk" onclick="speak('+JSON.stringify(w.term).replace(/"/g,'&quot;')+')">🔊</button></div>'+
+      (w.phonetic?'<div class="ipa">'+esc(w.phonetic)+'</div>':'')+
+      '<div class="def">'+esc(w.definition_vi||'')+'</div></div></div>').join('')+'</div>'+
+    '<div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap">'+
+      '<button class="btn" onclick="stepDone[1]=true;setStep(2)">Đã học xong → Luyện tập</button>'+
+      '<button class="btn ghost" onclick="readAll()">🔊 Nghe lần lượt tất cả</button>'+
+    '</div>';
+  stepDone[1]=true; renderSteps();
+}
+function readAll(){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  WORDS.forEach(w=>{ const u=new SpeechSynthesisUtterance(w.term); u.lang='en-US'; u.rate=.9; window.speechSynthesis.speak(u); });
+}
+
+// ── BƯỚC 2 · TRẮC NGHIỆM ──
+function stepQuiz(){
+  if(WORDS.length<4){
+    el('panel').innerHTML='<h3>Bước 2 · Luyện tập</h3>'+
+      '<div class="note">Cần ít nhất <b>4 từ</b> trong chủ đề để tạo đáp án nhiễu. Hiện có '+WORDS.length+' từ.</div>'+
+      '<div style="margin-top:18px"><button class="btn" onclick="setStep(3)">Sang bước 3 →</button></div>';
+    return;
+  }
+  if(!quiz) buildQuiz();
+  if(quiz.i>=quiz.q.length) return quizResult();
+  const q=quiz.q[quiz.i];
+  el('panel').innerHTML='<h3>Bước 2 · Luyện tập</h3>'+
+   '<div class="hint">Chọn đáp án đúng. Đáp án nhiễu lấy ngay trong chủ đề này.</div>'+
+   '<div class="qbox">'+
+     '<div class="qprog"><i style="width:'+Math.round(quiz.i/quiz.q.length*100)+'%"></i></div>'+
+     '<div class="qmeta"><span>Câu '+(quiz.i+1)+' / '+quiz.q.length+'</span><span>Đúng: '+quiz.right+'</span></div>'+
+     '<div class="qtext"><small>'+(q.dir==='en'?'Từ này nghĩa là gì?':'Từ tiếng Anh của nghĩa này?')+'</small>'+
+       esc(q.ask)+(q.dir==='en'?' <button class="spk" onclick="speak('+JSON.stringify(q.ask).replace(/"/g,'&quot;')+')">🔊</button>':'')+'</div>'+
+     '<div class="opts" id="opts">'+q.opts.map((o,k)=>'<button class="opt" id="o'+k+'" onclick="answer('+k+')">'+esc(o)+'</button>').join('')+'</div>'+
+     '<div class="qfoot"><span class="fb" id="fb"></span><button class="btn" id="nextb" style="margin-left:auto;display:none" onclick="nextQ()">Câu tiếp →</button></div>'+
+   '</div>';
+}
+function buildQuiz(){
+  const pool = WORDS.filter(w=>w.term && w.definition_vi);
+  const src  = pool.length>=4 ? pool : WORDS;
+  const n = Math.min(8, src.length*2, 8);
+  const picked = shuffle(src.slice()).slice(0, Math.max(4, Math.min(src.length, 8)));
+  const qs=[];
+  for(let i=0;i<n;i++){
+    const w = picked[i % picked.length];
+    const dir = i%2===0 ? 'en' : 'vi';
+    const others = shuffle(src.filter(x=>x.id!==w.id)).slice(0,3);
+    const correct = dir==='en' ? (w.definition_vi||w.term) : w.term;
+    const opts = shuffle([correct].concat(others.map(x=>dir==='en'?(x.definition_vi||x.term):x.term)));
+    qs.push({ask: dir==='en'?w.term:(w.definition_vi||w.term), dir:dir, correct:correct, opts:opts, word:w});
+  }
+  quiz={q:qs,i:0,right:0,answered:false,wrong:[]};
+}
+function answer(k){
+  if(quiz.answered) return;
+  quiz.answered=true;
+  const q=quiz.q[quiz.i];
+  const ok = q.opts[k]===q.correct;
+  q.opts.forEach((o,j)=>{
+    const b=el('o'+j); if(!b) return; b.disabled=true;
+    if(o===q.correct) b.classList.add('right');
+    else if(j===k) b.classList.add('wrong');
+  });
+  if(ok){ quiz.right++; el('fb').className='fb ok'; el('fb').textContent='✓ Chính xác!'; }
+  else { quiz.wrong.push(q.word); el('fb').className='fb no'; el('fb').textContent='✗ Đáp án đúng: '+q.correct; }
+  if(q.dir==='vi') speak(q.correct); else speak(q.ask);
+  el('nextb').style.display='block';
+  el('nextb').textContent = (quiz.i>=quiz.q.length-1)?'Xem kết quả →':'Câu tiếp →';
+}
+function nextQ(){ quiz.i++; quiz.answered=false; stepQuiz(); }
+function quizResult(){
+  const pct = Math.round(quiz.right/quiz.q.length*100);
+  let emo='💪', tit='Cố lên nhé!', sub='Ôn lại bước 1 rồi thử lại';
+  if(pct>=90){emo='🏆';tit='Xuất sắc!';sub='Bạn nắm rất chắc chủ đề này';}
+  else if(pct>=70){emo='🎉';tit='Làm tốt lắm!';sub='Chỉ còn vài từ cần ôn thêm';}
+  else if(pct>=50){emo='👍';tit='Khá ổn!';sub='Ôn lại vài từ sai là ổn ngay';}
+  const xp = quiz.right*2;
+  if(!stepDone[2] && currentUser && xp>0) awardXP(xp);
+  stepDone[2]=true; renderSteps();
+  el('panel').innerHTML='<div class="res"><div class="emo">'+emo+'</div><h2>'+tit+'</h2><p>'+sub+'</p>'+
+    '<div class="rstat">'+
+      '<div><b>'+pct+'%</b><span>Chính xác</span></div>'+
+      '<div><b>'+quiz.right+'/'+quiz.q.length+'</b><span>Câu đúng</span></div>'+
+      '<div><b>+'+xp+'</b><span>XP</span></div>'+
+    '</div>'+
+    (quiz.wrong.length?'<div class="hint" style="margin-bottom:14px">Từ cần ôn lại: '+
+      quiz.wrong.map(w=>'<b>'+esc(w.term)+'</b>').filter((v,i,a)=>a.indexOf(v)===i).join(' · ')+'</div>':'')+
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
+      '<button class="btn ghost" onclick="quiz=null;stepQuiz()">↺ Làm lại</button>'+
+      '<button class="btn" onclick="setStep(3)">Sang bước 3 · Câu hỏi →</button>'+
+    '</div></div>';
+}
+
+// ── BƯỚC 3 · CÂU HỎI ──
+function stepPrompts(){
+  const t=TOPIC;
+  const ps = t.prompts||[];
+  const kws = WORDS.slice(0,10).map(w=>'<span class="tag">'+esc(w.term)+'</span>').join('');
+  el('panel').innerHTML='<h3>Bước 3 · Câu hỏi</h3>'+
+   '<div class="hint">Trả lời bằng lời hoặc gõ câu trả lời của bạn. Cố dùng lại từ vừa học và mẫu câu của chủ đề.</div>'+
+   (t.pattern?'<div class="pat" style="margin-bottom:16px">Mẫu câu: '+esc(t.pattern)+'</div>':'')+
+   (kws?'<div class="kw"><b>Từ gợi ý</b>'+kws+'</div>':'')+
+   '<div style="margin-top:16px">'+ps.map((p,i)=>
+     '<div class="qa"><div class="q"><span>'+(i+1)+'.</span><span>'+esc(p)+'</span>'+
+     '<button class="spk" onclick="speak('+JSON.stringify(p).replace(/"/g,'&quot;')+')">🔊</button></div>'+
+     '<textarea id="ans'+i+'" placeholder="Viết câu trả lời của bạn…"></textarea></div>').join('')+'</div>'+
+   (ps.length?'':'<div class="empty">Chủ đề này chưa có câu hỏi.</div>')+
+   '<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">'+
+     '<button class="btn a3" onclick="finishLesson()">✓ Hoàn thành bài học</button>'+
+     '<button class="btn ghost" onclick="go(\'#/c/'+esc(CURR?CURR.code:t.curriculum_code)+'\')">← Về danh sách chủ đề</button>'+
+   '</div>';
+}
+function finishLesson(){
+  if(!stepDone[3] && currentUser) awardXP(10);
+  stepDone[3]=true; renderSteps();
+  el('panel').innerHTML='<div class="res"><div class="emo">🎓</div><h2>Hoàn thành bài học!</h2>'+
+    '<p>'+esc(TOPIC.name_en)+' · '+esc(TOPIC.name_vi)+'</p>'+
+    '<div class="rstat"><div><b>'+WORDS.length+'</b><span>Từ đã học</span></div>'+
+    '<div><b>'+(quiz?quiz.right+'/'+quiz.q.length:'—')+'</b><span>Trắc nghiệm</span></div>'+
+    '<div><b>+'+(currentUser?10:0)+'</b><span>XP</span></div></div>'+
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
+    '<button class="btn" onclick="go(\'#/c/'+esc(CURR?CURR.code:TOPIC.curriculum_code)+'\')">Chọn chủ đề tiếp theo →</button>'+
+    '<button class="btn ghost" onclick="setStep(1)">↺ Học lại bài này</button></div></div>';
+}
+
+async function awardXP(amount){
+  if(!currentUser) return;
+  try{
+    const {data} = await sb.from('user_profiles').select('xp').eq('id',currentUser.id).maybeSingle();
+    const newXP=(data&&data.xp?data.xp:0)+amount;
+    await sb.from('user_profiles').upsert({id:currentUser.id,email:currentUser.email,xp:newXP,last_study:new Date().toISOString()});
+    el('xp-val').textContent=newXP; el('xp-display').style.display='flex';
+  }catch(e){}
+}
+
+// ══════════════ THÊM GIÁO TRÌNH ══════════════
+function openAdd(){ el('ov-add').classList.add('show'); }
+function closeAdd(){ el('ov-add').classList.remove('show'); }
+async function saveCurriculum(){
+  const code=(el('f-code').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const title=(el('f-title').value||'').trim();
+  if(!code||!title){ alert('Cần có mã và tên giáo trình.'); return; }
+  if(CURRICULA.some(c=>c.code===code)){ alert('Mã '+code+' đã tồn tại.'); return; }
+  try{
+    const row={code:code,title:title,subtitle:(el('f-sub').value||'').trim(),cover_emoji:(el('f-emo').value||'📘').trim(),
+      level_range:(el('f-lv').value||'').trim(),status:'draft',ord:(CURRICULA.length+1),
+      description:'Giáo trình mới — chưa có nhóm và chủ đề.'};
+    const {error}=await sb.from('curricula').insert(row);
+    if(error) throw error;
+    row._words=0; CURRICULA.push(row); closeAdd(); viewHome();
+  }catch(e){ alert('Lỗi tạo giáo trình: '+(e.message||e)); }
+}
+</script>
+</body>
+</html>
