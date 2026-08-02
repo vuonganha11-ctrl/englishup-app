@@ -360,6 +360,12 @@ async function countCurricula(){
       const {count} = await sb.from('words').select('id',{count:'exact',head:true}).like('topic_code', c.code+'-%');
       c._words = count || 0;
     }catch(e){}
+    if(!c._words){ // chưa gắn topic_code → đếm theo danh sách từ mượn
+      try{
+        const rows = await fetchAll(()=>sb.from('curriculum_topics').select('code,word_terms').eq('curriculum_code',c.code));
+        c._words = rows.reduce((s,r)=>s+((r.word_terms||[]).length),0);
+      }catch(e){}
+    }
   }
 }
 
@@ -454,6 +460,11 @@ async function countTopics(){
     if(!k) return;
     if(!WCOUNT[k]) WCOUNT[k]={n:0,img:0};
     WCOUNT[k].n++; if(r.image_url) WCOUNT[k].img++;
+  });
+  // chủ đề chưa có từ gắn topic_code nhưng có danh sách từ mượn (word_terms)
+  TOPICS.forEach(t=>{
+    if(!WCOUNT[t.code] && t.word_terms && t.word_terms.length)
+      WCOUNT[t.code]={n:t.word_terms.length,img:0};
   });
 }
 
