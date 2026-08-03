@@ -1147,8 +1147,10 @@ async function loadFlashcardStates(){
   }catch(e){ console.warn('loadFlashcardStates:', e && e.message); }
 }
 
+const EU_NOSUB='<div class="note" style="padding:14px 4px;color:#93a2bd;line-height:1.7">Video này chưa có phụ đề nên phần Phụ đề · Nói theo · Nghe chép chính tả tạm thời trống. Bạn vẫn xem được video bình thường.</div>';
 function buildTranscript(){
   trWrap.innerHTML=""; activeIdx=-1;
+  if(!SEGMENTS.length){ trWrap.innerHTML=EU_NOSUB; return; }
   SEGMENTS.forEach((s,i)=>{
     const d=document.createElement("div");
     d.className="sent"; d.dataset.i=i;
@@ -1189,6 +1191,7 @@ async function showNowVi(en){
 /* ============ SHADOWING (SPEAK) TAB ============ */
 let spIdx=0;
 function renderSpeak(){
+  if(!SEGMENTS.length){ const p=document.getElementById("pane-speak"); if(p) p.innerHTML=EU_NOSUB; return; }
   spIdx=Math.max(0,Math.min(SEGMENTS.length-1,spIdx));
   $("#sp-num").textContent=spIdx+1;
   $("#sp-text").textContent=SEGMENTS[spIdx].text;
@@ -1269,6 +1272,7 @@ function flagInsecure(){
 /* ============ LISTEN (DICTATION) TAB ============ */
 let lsIdx=0;
 function renderListen(){
+  if(!SEGMENTS.length){ const p=document.getElementById("pane-listen"); if(p) p.innerHTML=EU_NOSUB; return; }
   lsIdx=Math.max(0,Math.min(SEGMENTS.length-1,lsIdx));
   $("#ls-num").textContent=lsIdx+1;
   $("#ls-input").value=""; $("#ls-scorebox").classList.remove("show");
@@ -2135,7 +2139,7 @@ const SB_KEY = localStorage.getItem('sb_key') || "sb_publishable_3h3EQvxWr0kba8T
 
 function applyLesson(v){
   if(v.youtube_id) VIDEO_ID=v.youtube_id;
-  if(Array.isArray(v.segments)&&v.segments.length) SEGMENTS=v.segments;
+  if(Array.isArray(v.segments)) SEGMENTS=v.segments;   // mảng rỗng cũng phải nhận: video chưa có phụ đề, đừng giữ phụ đề mẫu
   if(Array.isArray(v.vocab)) VOCAB=v.vocab;
   if(Array.isArray(v.quiz)) QUIZ=v.quiz;
   if(v.title) TITLE=v.title;
