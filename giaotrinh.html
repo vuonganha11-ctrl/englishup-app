@@ -140,6 +140,10 @@ input:focus{border-color:var(--accent)}
 .vwrap{position:relative;width:100%;max-width:900px;margin:0 auto;border-radius:16px;overflow:hidden;
   background:#000;border:1px solid var(--border2);aspect-ratio:16/9}
 .vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vframe{position:relative;width:100%;border:1px solid var(--border2);border-radius:16px;overflow:hidden;
+  background:var(--surface);height:min(84vh,820px);min-height:560px;transition:height .2s}
+.vframe.big{height:min(94vh,1100px)}
+.vframe iframe{width:100%;height:100%;border:0;display:block}
 .vfb{display:block;text-decoration:none;cursor:pointer}
 .vfb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.62}
 .vfb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;color:#fff;
@@ -305,6 +309,7 @@ let CURRICULA = [];
 let CURR = null;          // giáo trình đang mở
 let UNITS = [], TOPICS = [];
 let WCOUNT = {};          // topic_code → {n, img}
+let VLESSON = null;       // youtube_id → video_lessons.id
 let TOPIC = null;         // chủ đề đang học
 let WORDS = [];           // từ của chủ đề đang học
 let stepNow = 1, stepDone = {}, STEPS = [], SENT = [];
@@ -586,10 +591,21 @@ async function viewLesson(code){
     if(!TOPIC){ el('app').innerHTML='<div class="empty">Không tìm thấy chủ đề '+esc(code)+'.</div>'; return; }
     if(!CURR || CURR.code!==TOPIC.curriculum_code) CURR = CURRICULA.find(c=>c.code===TOPIC.curriculum_code) || CURR;
     WORDS = await loadWords(TOPIC);
+    if(TOPIC.video_id) await loadLessonMap();
   }catch(e){ el('app').innerHTML='<div class="note">Lỗi mở bài học: '+esc(e.message||e)+'</div>'; return; }
   SENT = (TOPIC.sentences||[]).filter(s=>s && s.en);
   stepNow=1; stepDone={}; quiz=null; quizAwarded=false; lessonAwarded=false;
   renderLesson();
+}
+
+async function loadLessonMap(){
+  if(VLESSON) return VLESSON;
+  VLESSON = {};
+  try{
+    const {data} = await sb.from('video_lessons').select('id,youtube_id').limit(500);
+    (data||[]).forEach(v=>{ if(v.youtube_id) VLESSON[v.youtube_id]=v.id; });
+  }catch(e){}
+  return VLESSON;
 }
 
 async function loadWords(t){
@@ -667,29 +683,35 @@ function renderStep(){
 }
 
 // ── XEM VIDEO ──
-const NO_EMBED = ['mJ39VDtllDQ','AQdd1uGzT18','_2eWSVs27A8','mvKw7C10vJk','fhg9onuO3dA','RgX5HnRTJd4','sTmac1D3VRo'];
 function stepVideo(){
   const t=TOPIC, s=Math.max(0,t.video_start||0), e=t.video_end||0;
-  const link='https://www.youtube.com/watch?v='+encodeURIComponent(t.video_id)+'&t='+s+'s';
-  const embed = NO_EMBED.indexOf(t.video_id)<0;
-  const player = embed
-    ? '<div class="vwrap"><iframe id="ytf" src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(t.video_id)+
-      '?start='+s+(e?'&end='+e:'')+'&rel=0&modestbranding=1&cc_load_policy=1" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
-    : '<a class="vwrap vfb" href="'+link+'" target="_blank" rel="noopener">'+
-      '<img src="https://i.ytimg.com/vi/'+encodeURIComponent(t.video_id)+'/hqdefault.jpg" alt="">'+
-      '<span class="play">▶</span><span class="cap">Mở đoạn '+hms(s)+' trên YouTube</span></a>';
+  const lid = (VLESSON||{})[t.video_id];
+  if(!lid){
+    el('panel').innerHTML='<h3>Bước '+stepNow+' · Xem video</h3>'+
+      '<div class="note">Video của chủ đề này chưa được thêm vào Thư viện video nên chưa mở được trình phát. '+
+      'Vào <b>Admin → Video</b> thêm video rồi quay lại.</div>'+
+      '<div style="margin-top:18px"><button class="btn" onclick="nextStep()">Bỏ qua → Học từ</button></div>';
+    stepDone[stepNow]=true; renderSteps(); return;
+  }
+  const src='video.html?id='+encodeURIComponent(lid)+'&s='+s+(e?'&e='+e:'')+'&embed=1';
   el('panel').innerHTML='<h3>Bước '+stepNow+' · Xem video</h3>'+
-   '<div class="hint">Xem đoạn <b>'+hms(s)+' – '+hms(e)+'</b> của bài giảng gốc. Nghe kỹ cách thầy đọc, sau đó sang bước học từ.</div>'+
-   player+
-   (embed?'':'<div class="note" style="max-width:900px;margin:14px auto 0">Chủ kênh không cho phát video này ngoài YouTube, nên bấm vào ảnh để mở tab mới — YouTube sẽ tự tua đúng phút <b>'+hms(s)+'</b>. Xem tới <b>'+hms(e)+'</b> rồi quay lại đây học từ.</div>')+
+   '<div class="hint">Đoạn <b>'+hms(s)+' – '+hms(e)+'</b> của bài giảng. Bấm từng câu ở tab <b>Phụ đề</b> để nghe lại, '+
+   'sang tab <b>Nói theo</b> để đọc nhại &amp; chấm điểm, tab <b>Nghe</b> để chép chính tả. Bấm vào bất kỳ từ nào trong phụ đề để tra nghĩa.</div>'+
+   '<div class="vframe" id="vframe"><iframe id="euvf" src="'+esc(src)+'" allow="microphone; autoplay; clipboard-write; encrypted-media" allowfullscreen></iframe></div>'+
    '<div class="vmeta"><span>⏱️ '+hms(Math.max(0,e-s))+'</span>'+
-     (embed?'<button class="btn ghost" onclick="replayVideo()">↺ Xem lại từ đầu đoạn</button>':'')+
-     '<a class="btn ghost" href="'+link+'" target="_blank" rel="noopener">▶ Mở trên YouTube</a>'+
+     '<button class="btn ghost" onclick="replayVideo()">↺ Tải lại đoạn</button>'+
+     '<button class="btn ghost" onclick="bigVideo(this)">⤢ Phóng to</button>'+
    '</div>'+
    '<div style="margin-top:20px"><button class="btn" onclick="nextStep()">Đã xem xong → Học từ</button></div>';
   stepDone[stepNow]=true; renderSteps();
 }
-function replayVideo(){ const f=el('ytf'); if(f) f.src=f.src; }
+function bigVideo(b){
+  const f=el('vframe'); if(!f) return;
+  f.classList.toggle('big');
+  b.textContent = f.classList.contains('big') ? '⤡ Thu nhỏ' : '⤢ Phóng to';
+  f.scrollIntoView({block:'start',behavior:'smooth'});
+}
+function replayVideo(){ const f=el('euvf'); if(f) f.src=f.src; }
 
 // ── MẪU CÂU ──
 function stepSent(){

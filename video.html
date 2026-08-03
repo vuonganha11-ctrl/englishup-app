@@ -545,6 +545,14 @@ html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.5}
 a{color:inherit;text-decoration:none}
 /* topbar */
+/* ── CHẾ ĐỘ NHÚNG (?embed=1): dùng trong bài học của trang Giáo trình ── */
+body.eu-embed .topbar, body.eu-embed #libwrap{display:none!important}
+body.eu-embed{background:transparent}
+body.eu-embed .wrap{max-width:none;padding:0;gap:14px}
+body.eu-embed .col-video{position:static;top:auto}
+body.eu-embed .vmeta h1{font-size:17px;line-height:1.35}
+body.eu-embed .now-playing .np-note{display:none}
+@media(max-width:1000px){ body.eu-embed .wrap{grid-template-columns:minmax(0,1fr)} }
 .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;padding:12px 20px;background:rgba(14,16,24,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
 .logo{font-weight:800;font-size:18px;letter-spacing:.3px}
 .logo span{color:var(--accent)}
@@ -931,9 +939,9 @@ function resolveClip(){
   const ce = e!=null ? e : (DURATION>0?DURATION:1e9);
   if(ce<=cs) return;
   const filtered = SEGMENTS.filter(sg=> sg.start >= cs-0.5 && sg.start < ce+0.01);
-  if(!filtered.length) return;          // đoạn không khớp transcript → bỏ khóa cho an toàn
+  if(!filtered.length && SEGMENTS.length) return;   // CÓ phụ đề mà đoạn không khớp → bỏ khóa cho an toàn
   CLIP_START=cs; CLIP_END=ce; CLIP_ACTIVE=true;
-  SEGMENTS=filtered;
+  if(SEGMENTS.length) SEGMENTS=filtered;            // video chưa có phụ đề vẫn khóa được đoạn
 }
 const norm = s => s.toLowerCase().replace(/[^a-z0-9\s']/g," ").replace(/\s+/g," ").trim();
 function lcsRatio(target, said){
@@ -2202,7 +2210,22 @@ function renderLibrary(rows){
     g.appendChild(a);
   });
 }
+function euApplyEmbed(){
+  const qs=new URLSearchParams(location.search);
+  if(qs.get("embed")!=="1") return;
+  document.body.classList.add("eu-embed");
+  const KEEP=["playerwrap","wordpop"];
+  const sweep=()=>{ [...document.body.children].forEach(el=>{
+      const tag=el.tagName;
+      if(tag==="SCRIPT"||tag==="STYLE"||tag==="LINK"||tag==="TEMPLATE") return;
+      if(KEEP.indexOf(el.id)>=0) return;
+      if(/pop|tip|toast|modal|overlay|ov-/i.test((el.id||"")+" "+(el.className||""))) return;
+      if(el.id==="libwrap"||el.classList.contains("topbar")||/nav/i.test((el.id||"")+" "+(el.className||""))) el.style.display="none";
+    }); };
+  sweep(); setTimeout(sweep,400); setTimeout(sweep,1500);
+}
 async function init(){
+  euApplyEmbed();
   const id=new URLSearchParams(location.search).get("id");
   const pill=document.querySelector(".pill");
   // KHÔNG có ?id= → hiển thị thư viện toàn bộ video
