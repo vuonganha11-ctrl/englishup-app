@@ -137,6 +137,19 @@ input:focus{border-color:var(--accent)}
 .pat{font-family:ui-monospace,monospace;font-size:13px;color:var(--a3);background:rgba(52,211,153,.07);
   border:1px solid rgba(52,211,153,.2);border-radius:9px;padding:8px 12px;display:inline-block;margin-top:12px}
 .steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.vwrap{position:relative;width:100%;max-width:900px;margin:0 auto;border-radius:16px;overflow:hidden;
+  background:#000;border:1px solid var(--border2);aspect-ratio:16/9}
+.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vmeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px auto 0;max-width:900px;
+  font-size:12.5px;color:var(--muted)}
+.sgrid{display:grid;gap:11px}
+.sc{background:var(--card2);border:1px solid var(--border2);border-radius:13px;padding:13px 15px;transition:.15s}
+.sc:hover{border-color:var(--accent)}
+.sc .en{font-size:15.5px;font-weight:600;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.sc .vi2{font-size:13.5px;color:var(--a2);margin-top:5px;line-height:1.55}
+.sc .nt{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.6;border-top:1px dashed var(--border2);padding-top:7px}
+.wc .ex{font-size:12px;color:#93a2bd;margin-top:7px;line-height:1.55;border-top:1px dashed var(--border2);padding-top:6px}
+.wc .ex i{display:block;color:var(--muted);font-style:normal;margin-top:2px}
 .step{flex:1;min-width:180px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px 14px;
   cursor:pointer;display:flex;gap:11px;align-items:center;transition:.15s}
 .step:hover{border-color:var(--border2)}
@@ -287,7 +300,8 @@ let UNITS = [], TOPICS = [];
 let WCOUNT = {};          // topic_code → {n, img}
 let TOPIC = null;         // chủ đề đang học
 let WORDS = [];           // từ của chủ đề đang học
-let stepNow = 1, stepDone = {1:false,2:false,3:false};
+let stepNow = 1, stepDone = {}, STEPS = [], SENT = [];
+let quizAwarded = false, lessonAwarded = false;
 let quiz = null;
 let WCODES = {};          // tra nhanh mã chủ đề của giáo trình đang mở
 let fLevel = '', fSearch = '', fOnlyReady = false;
@@ -363,8 +377,8 @@ async function countCurricula(){
     }catch(e){}
     if(!c._words){ // chưa gắn topic_code → đếm theo danh sách từ mượn
       try{
-        const rows = await fetchAll(()=>sb.from('curriculum_topics').select('code,word_terms').eq('curriculum_code',c.code));
-        c._words = rows.reduce((s,r)=>s+((r.word_terms||[]).length),0);
+        const rows = await fetchAll(()=>sb.from('curriculum_topics').select('code,word_terms,n_vocab').eq('curriculum_code',c.code));
+        c._words = rows.reduce((s,r)=>s+(r.n_vocab||(r.word_terms||[]).length),0);
       }catch(e){}
     }
   }
@@ -437,7 +451,8 @@ async function viewCurriculum(code){
   el('app').innerHTML='<div class="loading">Đang tải chủ đề…</div>';
   try{
     UNITS  = await fetchAll(()=>sb.from('curriculum_units').select('*').eq('curriculum_code',code),'no');
-    TOPICS = await fetchAll(()=>sb.from('curriculum_topics').select('*').eq('curriculum_code',code),'code');
+    const TCOLS='code,unit_code,curriculum_code,ord,name_en,name_vi,cefr,target_words,objective,focus,pattern,image_brief,prompts,word_terms,image_url,video_id,video_start,video_end,n_vocab';
+    TOPICS = await fetchAll(()=>sb.from('curriculum_topics').select(TCOLS).eq('curriculum_code',code),'code');
     UNITS.sort((a,b)=>(a.no||0)-(b.no||0));
     TOPICS.sort((a,b)=>String(a.code).localeCompare(String(b.code)));
     await countTopics();
@@ -464,8 +479,8 @@ async function countTopics(){
   });
   // chủ đề chưa có từ gắn topic_code nhưng có danh sách từ mượn (word_terms)
   TOPICS.forEach(t=>{
-    if(!WCOUNT[t.code] && t.word_terms && t.word_terms.length)
-      WCOUNT[t.code]={n:t.word_terms.length,img:0};
+    if(!WCOUNT[t.code] && (t.n_vocab || (t.word_terms&&t.word_terms.length)))
+      WCOUNT[t.code]={n:(t.n_vocab||t.word_terms.length),img:0};
   });
 }
 
@@ -563,13 +578,20 @@ async function viewLesson(code){
     if(!CURR || CURR.code!==TOPIC.curriculum_code) CURR = CURRICULA.find(c=>c.code===TOPIC.curriculum_code) || CURR;
     WORDS = await loadWords(TOPIC);
   }catch(e){ el('app').innerHTML='<div class="note">Lỗi mở bài học: '+esc(e.message||e)+'</div>'; return; }
-  stepNow=1; stepDone={1:false,2:false,3:false}; quiz=null;
+  SENT = (TOPIC.sentences||[]).filter(s=>s && s.en);
+  stepNow=1; stepDone={}; quiz=null; quizAwarded=false; lessonAwarded=false;
   renderLesson();
 }
 
 async function loadWords(t){
   const COLS='id,term,phonetic,definition_vi,definition_en,part_of_speech,level,image_url,audio_url';
   let r=[];
+  // ưu tiên từ vựng soạn sẵn ngay trong chủ đề (giáo trình dựng từ video)
+  if(t.vocab && t.vocab.length){
+    return t.vocab.map((w,i)=>({id:'v'+i, term:(w.term||'').trim(), phonetic:w.phonetic||'',
+      definition_vi:w.vi||'', part_of_speech:w.pos||'', image_url:null,
+      ex_en:w.ex_en||'', ex_vi:w.ex_vi||''}));
+  }
   try{ const {data}=await sb.from('words').select(COLS).eq('topic_code',t.code).limit(400); r=data||[]; }catch(e){}
   if(!r.length){ try{ const {data}=await sb.from('words').select(COLS).eq('branch_code',t.code).limit(400); r=data||[]; }catch(e){} }
   if(!r.length && t.word_terms && t.word_terms.length){
@@ -588,7 +610,9 @@ function renderLesson(){
      '<a onclick="go(\'#/c/'+esc(cCode)+'\')">'+esc(CURR?CURR.title:cCode)+'</a><span>›</span><span>'+esc(t.name_en)+'</span></div>'+
    '<div class="lhead">'+
      '<div class="trow"><span class="code">'+esc(t.code)+'</span><span class="lv '+esc(t.cefr||'')+'">'+esc(t.cefr||'')+'</span>'+
-       '<span class="pill">'+WORDS.length+' từ trong kho</span><span class="pill">mục tiêu '+(t.target_words||0)+' từ</span></div>'+
+       '<span class="pill">'+WORDS.length+' từ</span>'+
+       (SENT.length?'<span class="pill">'+SENT.length+' mẫu câu</span>':'')+
+       (t.video_id?'<span class="pill">🎬 '+hms(t.video_start||0)+' – '+hms(t.video_end||0)+'</span>':'')+'</div>'+
      '<h1>'+esc(t.name_en)+'</h1><div class="vi">'+esc(t.name_vi)+'</div>'+
      '<div class="ob">🎯 '+esc(t.objective||'')+'</div>'+
      (t.pattern?'<div class="pat">'+esc(t.pattern)+'</div>':'')+
@@ -596,21 +620,77 @@ function renderLesson(){
    '</div>'+
    '<div class="steps" id="steps"></div>'+
    '<div class="panel" id="panel"></div>';
-  renderSteps(); renderStep();
+  buildSteps(); renderSteps(); renderStep();
 }
 
+function hms(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); }
+
+function buildSteps(){
+  const t=TOPIC; STEPS=[];
+  if(t.video_id) STEPS.push({k:'video',b:'Xem video',s:'Đoạn '+hms(t.video_start||0)+' – '+hms(t.video_end||0)});
+  STEPS.push({k:'words',b:'Học từ',s:WORDS.length+' thẻ từ + nghe'});
+  if(SENT.length) STEPS.push({k:'sent',b:'Mẫu câu',s:SENT.length+' câu trong bài'});
+  STEPS.push({k:'quiz',b:'Luyện tập',s:'8 câu trắc nghiệm'});
+  STEPS.push({k:'ask',b:'Câu hỏi',s:((t.prompts||[]).length)+' câu hỏi mở'});
+  stepDone={}; stepNow=1;
+}
+function idxOf(k){ const i=STEPS.findIndex(s=>s.k===k); return i<0?1:i+1; }
+function goKey(k){ setStep(idxOf(k)); }
+function doneKey(k){ stepDone[idxOf(k)]=true; renderSteps(); }
+function nextStep(){ stepDone[stepNow]=true; setStep(Math.min(stepNow+1, STEPS.length)); }
+
 function renderSteps(){
-  const S=[[1,'Học từ','Thẻ tranh + nghe'],[2,'Luyện tập','8 câu trắc nghiệm'],[3,'Câu hỏi','3 câu hỏi mở']];
-  el('steps').innerHTML = S.map(s=>
-    '<div class="step'+(stepNow===s[0]?' on':'')+(stepDone[s[0]]?' done':'')+'" onclick="setStep('+s[0]+')">'+
-    '<div class="sn">'+(stepDone[s[0]]?'✓':s[0])+'</div><div><b>'+s[1]+'</b><small>'+s[2]+'</small></div></div>').join('');
+  if(!el('steps')) return;
+  el('steps').innerHTML = STEPS.map((s,i)=>{ const n=i+1;
+    return '<div class="step'+(stepNow===n?' on':'')+(stepDone[n]?' done':'')+'" onclick="setStep('+n+')">'+
+    '<div class="sn">'+(stepDone[n]?'✓':n)+'</div><div><b>'+esc(s.b)+'</b><small>'+esc(s.s)+'</small></div></div>'; }).join('');
 }
 function setStep(n){ stepNow=n; renderSteps(); renderStep(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function renderStep(){
-  if(stepNow===1) return stepWords();
-  if(stepNow===2) return stepQuiz();
-  return stepPrompts();
+  const k=(STEPS[stepNow-1]||{}).k;
+  if(k==='video') return stepVideo();
+  if(k==='sent')  return stepSent();
+  if(k==='quiz')  return stepQuiz();
+  if(k==='ask')   return stepPrompts();
+  return stepWords();
+}
+
+// ── XEM VIDEO ──
+function stepVideo(){
+  const t=TOPIC, s=Math.max(0,t.video_start||0), e=t.video_end||0;
+  const src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(t.video_id)+
+            '?start='+s+(e?'&end='+e:'')+'&rel=0&modestbranding=1&cc_load_policy=1';
+  el('panel').innerHTML='<h3>Bước '+stepNow+' · Xem video</h3>'+
+   '<div class="hint">Xem đoạn <b>'+hms(s)+' – '+hms(e)+'</b> của bài giảng gốc. Nghe kỹ cách thầy đọc, sau đó sang bước học từ.</div>'+
+   '<div class="vwrap"><iframe id="ytf" src="'+src+'" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'+
+   '<div class="vmeta"><span>⏱️ '+hms(Math.max(0,e-s))+'</span>'+
+     '<button class="btn ghost" onclick="replayVideo()">↺ Xem lại từ đầu đoạn</button>'+
+     '<a class="btn ghost" href="https://www.youtube.com/watch?v='+encodeURIComponent(t.video_id)+'&t='+s+'s" target="_blank" rel="noopener">▶ Mở trên YouTube</a>'+
+   '</div>'+
+   '<div style="margin-top:20px"><button class="btn" onclick="nextStep()">Đã xem xong → Học từ</button></div>';
+  stepDone[stepNow]=true; renderSteps();
+}
+function replayVideo(){ const f=el('ytf'); if(f) f.src=f.src; }
+
+// ── MẪU CÂU ──
+function stepSent(){
+  el('panel').innerHTML='<h3>Bước '+stepNow+' · Mẫu câu</h3>'+
+   '<div class="hint">Các câu này lấy đúng từ bài giảng. Bấm 🔊 để nghe rồi đọc nhại theo.</div>'+
+   '<div class="sgrid">'+SENT.map((s,i)=>
+     '<div class="sc"><div class="en"><button class="spk" onclick="speak('+JSON.stringify(s.en).replace(/"/g,'&quot;')+')">🔊</button><span>'+esc(s.en)+'</span></div>'+
+     '<div class="vi2">'+esc(s.vi||'')+'</div>'+
+     (s.note?'<div class="nt">💡 '+esc(s.note)+'</div>':'')+'</div>').join('')+'</div>'+
+   '<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">'+
+     '<button class="btn" onclick="nextStep()">Xong → Luyện tập</button>'+
+     '<button class="btn ghost" onclick="readSent()">🔊 Nghe lần lượt tất cả</button></div>';
+  stepDone[stepNow]=true; renderSteps();
+}
+function readSent(){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  SENT.forEach(s=>{ const u=new SpeechSynthesisUtterance(s.en); u.lang='en-US'; u.rate=.9; window.speechSynthesis.speak(u); });
 }
 
 // ── BƯỚC 1 · HỌC TỪ ──
@@ -618,26 +698,28 @@ function stepWords(){
   const t=TOPIC;
   if(!WORDS.length){
     el('panel').innerHTML =
-      '<h3>Bước 1 · Học từ</h3>'+
+      '<h3>Bước '+stepNow+' · Học từ</h3>'+
       '<div class="hint">Chủ đề này chưa có từ nào trong kho.</div>'+
       (t.image_brief?'<div class="qa"><div class="q">🖼️ Gợi ý tranh minh hoạ</div><div style="font-size:13.5px;color:#93a2bd;line-height:1.7;margin-top:8px">'+esc(t.image_brief)+'</div></div>':'')+
       '<div class="note">Để nạp từ cho chủ đề này: vào <b>Admin → Import Excel</b>, đặt cột <code>topic_code</code> = <code>'+esc(t.code)+'</code>, kèm <code>term</code>, <code>definition_vi</code>, <code>image_url</code>. Mục tiêu của chủ đề là <b>'+(t.target_words||0)+' từ</b>.</div>'+
-      '<div style="margin-top:18px"><button class="btn" onclick="setStep(3)">Bỏ qua, sang bước 3 →</button></div>';
-    stepDone[1]=false; renderSteps(); return;
+      '<div style="margin-top:18px"><button class="btn" onclick="goKey(\'ask\')">Bỏ qua, sang phần câu hỏi →</button></div>';
+    renderSteps(); return;
   }
   el('panel').innerHTML =
-    '<h3>Bước 1 · Học từ</h3><div class="hint">Nhìn tranh, đọc nghĩa rồi bấm 🔊 để nghe phát âm. Học hết '+WORDS.length+' từ rồi sang bước luyện tập.</div>'+
+    '<h3>Bước '+stepNow+' · Học từ</h3><div class="hint">Đọc nghĩa, xem câu ví dụ rồi bấm 🔊 để nghe phát âm. Học hết '+WORDS.length+' từ rồi sang bước sau.</div>'+
     '<div class="wgrid">'+WORDS.map((w,i)=>
       '<div class="wc">'+
       '<div class="img">'+(w.image_url?'<img src="'+esc(w.image_url)+'" alt="'+esc(w.term)+'" loading="lazy" onerror="this.style.display=&quot;none&quot;">':'<div class="noimg">'+(i+1)+'</div>')+'</div>'+
       '<div class="b"><div class="term">'+esc(w.term)+'<button class="spk" onclick="speak('+JSON.stringify(w.term).replace(/"/g,'&quot;')+')">🔊</button></div>'+
       (w.phonetic?'<div class="ipa">'+esc(w.phonetic)+'</div>':'')+
-      '<div class="def">'+esc(w.definition_vi||'')+'</div></div></div>').join('')+'</div>'+
+      '<div class="def">'+esc(w.definition_vi||'')+'</div>'+
+      (w.ex_en?'<div class="ex">'+esc(w.ex_en)+(w.ex_vi?'<i>'+esc(w.ex_vi)+'</i>':'')+'</div>':'')+
+      '</div></div>').join('')+'</div>'+
     '<div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap">'+
-      '<button class="btn" onclick="stepDone[1]=true;setStep(2)">Đã học xong → Luyện tập</button>'+
+      '<button class="btn" onclick="nextStep()">Đã học xong →</button>'+
       '<button class="btn ghost" onclick="readAll()">🔊 Nghe lần lượt tất cả</button>'+
     '</div>';
-  stepDone[1]=true; renderSteps();
+  stepDone[stepNow]=true; renderSteps();
 }
 function readAll(){
   if(!('speechSynthesis' in window)) return;
@@ -648,15 +730,15 @@ function readAll(){
 // ── BƯỚC 2 · TRẮC NGHIỆM ──
 function stepQuiz(){
   if(WORDS.length<4){
-    el('panel').innerHTML='<h3>Bước 2 · Luyện tập</h3>'+
+    el('panel').innerHTML='<h3>Bước '+stepNow+' · Luyện tập</h3>'+
       '<div class="note">Cần ít nhất <b>4 từ</b> trong chủ đề để tạo đáp án nhiễu. Hiện có '+WORDS.length+' từ.</div>'+
-      '<div style="margin-top:18px"><button class="btn" onclick="setStep(3)">Sang bước 3 →</button></div>';
+      '<div style="margin-top:18px"><button class="btn" onclick="goKey(\'ask\')">Sang phần câu hỏi →</button></div>';
     return;
   }
   if(!quiz) buildQuiz();
   if(quiz.i>=quiz.q.length) return quizResult();
   const q=quiz.q[quiz.i];
-  el('panel').innerHTML='<h3>Bước 2 · Luyện tập</h3>'+
+  el('panel').innerHTML='<h3>Bước '+stepNow+' · Luyện tập</h3>'+
    '<div class="hint">Chọn đáp án đúng. Đáp án nhiễu lấy ngay trong chủ đề này.</div>'+
    '<div class="qbox">'+
      '<div class="qprog"><i style="width:'+Math.round(quiz.i/quiz.q.length*100)+'%"></i></div>'+
@@ -707,8 +789,8 @@ function quizResult(){
   else if(pct>=70){emo='🎉';tit='Làm tốt lắm!';sub='Chỉ còn vài từ cần ôn thêm';}
   else if(pct>=50){emo='👍';tit='Khá ổn!';sub='Ôn lại vài từ sai là ổn ngay';}
   const xp = quiz.right*2;
-  if(!stepDone[2] && currentUser && xp>0) awardXP(xp);
-  stepDone[2]=true; renderSteps();
+  if(!quizAwarded && currentUser && xp>0){ quizAwarded=true; awardXP(xp); }
+  stepDone[idxOf('quiz')]=true; renderSteps();
   el('panel').innerHTML='<div class="res"><div class="emo">'+emo+'</div><h2>'+tit+'</h2><p>'+sub+'</p>'+
     '<div class="rstat">'+
       '<div><b>'+pct+'%</b><span>Chính xác</span></div>'+
@@ -719,7 +801,7 @@ function quizResult(){
       quiz.wrong.map(w=>'<b>'+esc(w.term)+'</b>').filter((v,i,a)=>a.indexOf(v)===i).join(' · ')+'</div>':'')+
     '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
       '<button class="btn ghost" onclick="quiz=null;stepQuiz()">↺ Làm lại</button>'+
-      '<button class="btn" onclick="setStep(3)">Sang bước 3 · Câu hỏi →</button>'+
+      '<button class="btn" onclick="goKey(\'ask\')">Sang phần câu hỏi →</button>'+
     '</div></div>';
 }
 
@@ -728,7 +810,7 @@ function stepPrompts(){
   const t=TOPIC;
   const ps = t.prompts||[];
   const kws = WORDS.slice(0,10).map(w=>'<span class="tag">'+esc(w.term)+'</span>').join('');
-  el('panel').innerHTML='<h3>Bước 3 · Câu hỏi</h3>'+
+  el('panel').innerHTML='<h3>Bước '+stepNow+' · Câu hỏi</h3>'+
    '<div class="hint">Trả lời bằng lời hoặc gõ câu trả lời của bạn. Cố dùng lại từ vừa học và mẫu câu của chủ đề.</div>'+
    (t.pattern?'<div class="pat" style="margin-bottom:16px">Mẫu câu: '+esc(t.pattern)+'</div>':'')+
    (kws?'<div class="kw"><b>Từ gợi ý</b>'+kws+'</div>':'')+
@@ -743,8 +825,8 @@ function stepPrompts(){
    '</div>';
 }
 function finishLesson(){
-  if(!stepDone[3] && currentUser) awardXP(10);
-  stepDone[3]=true; renderSteps();
+  if(!lessonAwarded && currentUser){ lessonAwarded=true; awardXP(10); }
+  stepDone[idxOf('ask')]=true; renderSteps();
   el('panel').innerHTML='<div class="res"><div class="emo">🎓</div><h2>Hoàn thành bài học!</h2>'+
     '<p>'+esc(TOPIC.name_en)+' · '+esc(TOPIC.name_vi)+'</p>'+
     '<div class="rstat"><div><b>'+WORDS.length+'</b><span>Từ đã học</span></div>'+
