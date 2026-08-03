@@ -140,6 +140,13 @@ input:focus{border-color:var(--accent)}
 .vwrap{position:relative;width:100%;max-width:900px;margin:0 auto;border-radius:16px;overflow:hidden;
   background:#000;border:1px solid var(--border2);aspect-ratio:16/9}
 .vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vfb{display:block;text-decoration:none;cursor:pointer}
+.vfb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.62}
+.vfb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;color:#fff;
+  text-shadow:0 3px 16px rgba(0,0,0,.7)}
+.vfb .cap{position:absolute;left:0;right:0;bottom:0;padding:12px 16px;background:linear-gradient(transparent,rgba(0,0,0,.85));
+  color:#fff;font-size:14px;font-weight:600}
+.vfb:hover .play{transform:scale(1.1)}
 .vmeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px auto 0;max-width:900px;
   font-size:12.5px;color:var(--muted)}
 .sgrid{display:grid;gap:11px}
@@ -502,9 +509,11 @@ function renderCurriculum(){
      '<div class="stat"><b>'+pct+'%</b><span>Hoàn thành</span></div>'+
    '</div></div>'+
    '<div class="model">'+
-     '<div class="mcard"><div class="n">1</div><h4>Học từ</h4><p>Lưới thẻ tranh: ảnh, từ tiếng Anh, nghĩa tiếng Việt và nút nghe phát âm.</p></div>'+
-     '<div class="mcard"><div class="n">2</div><h4>Luyện tập</h4><p>8 câu trắc nghiệm xen kẽ Anh→Việt và Việt→Anh, đáp án nhiễu lấy ngay trong chủ đề.</p></div>'+
-     '<div class="mcard"><div class="n">3</div><h4>Câu hỏi</h4><p>3 câu hỏi mở để nói và viết, có sẵn mẫu câu cùng từ khoá gợi ý.</p></div>'+
+     '<div class="mcard"><div class="n">1</div><h4>Xem video</h4><p>Đúng đoạn video bài giảng gốc của chủ đề (có mốc bắt đầu – kết thúc).</p></div>'+
+     '<div class="mcard"><div class="n">2</div><h4>Học từ</h4><p>Thẻ từ: từ tiếng Anh, phiên âm, nghĩa tiếng Việt, câu ví dụ và nút nghe.</p></div>'+
+     '<div class="mcard"><div class="n">3</div><h4>Mẫu câu</h4><p>Các câu thầy dạy trong đoạn video, kèm bản dịch và ghi chú cách dùng.</p></div>'+
+     '<div class="mcard"><div class="n">4</div><h4>Luyện tập</h4><p>8 câu trắc nghiệm xen kẽ Anh→Việt và Việt→Anh, đáp án nhiễu lấy ngay trong chủ đề.</p></div>'+
+     '<div class="mcard"><div class="n">5</div><h4>Câu hỏi</h4><p>3 câu hỏi mở để nói và viết, có sẵn mẫu câu cùng từ khoá gợi ý.</p></div>'+
    '</div>'+
    '<div class="tools">'+
      '<input type="search" id="q" placeholder="Tìm chủ đề, mục tiêu, mẫu câu…" value="'+esc(fSearch)+'" oninput="fSearch=this.value;renderUnits()">'+
@@ -658,16 +667,24 @@ function renderStep(){
 }
 
 // ── XEM VIDEO ──
+const NO_EMBED = ['mJ39VDtllDQ','AQdd1uGzT18','_2eWSVs27A8','mvKw7C10vJk','fhg9onuO3dA','RgX5HnRTJd4','sTmac1D3VRo'];
 function stepVideo(){
   const t=TOPIC, s=Math.max(0,t.video_start||0), e=t.video_end||0;
-  const src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(t.video_id)+
-            '?start='+s+(e?'&end='+e:'')+'&rel=0&modestbranding=1&cc_load_policy=1';
+  const link='https://www.youtube.com/watch?v='+encodeURIComponent(t.video_id)+'&t='+s+'s';
+  const embed = NO_EMBED.indexOf(t.video_id)<0;
+  const player = embed
+    ? '<div class="vwrap"><iframe id="ytf" src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(t.video_id)+
+      '?start='+s+(e?'&end='+e:'')+'&rel=0&modestbranding=1&cc_load_policy=1" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
+    : '<a class="vwrap vfb" href="'+link+'" target="_blank" rel="noopener">'+
+      '<img src="https://i.ytimg.com/vi/'+encodeURIComponent(t.video_id)+'/hqdefault.jpg" alt="">'+
+      '<span class="play">▶</span><span class="cap">Mở đoạn '+hms(s)+' trên YouTube</span></a>';
   el('panel').innerHTML='<h3>Bước '+stepNow+' · Xem video</h3>'+
    '<div class="hint">Xem đoạn <b>'+hms(s)+' – '+hms(e)+'</b> của bài giảng gốc. Nghe kỹ cách thầy đọc, sau đó sang bước học từ.</div>'+
-   '<div class="vwrap"><iframe id="ytf" src="'+src+'" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'+
+   player+
+   (embed?'':'<div class="note" style="max-width:900px;margin:14px auto 0">Chủ kênh không cho phát video này ngoài YouTube, nên bấm vào ảnh để mở tab mới — YouTube sẽ tự tua đúng phút <b>'+hms(s)+'</b>. Xem tới <b>'+hms(e)+'</b> rồi quay lại đây học từ.</div>')+
    '<div class="vmeta"><span>⏱️ '+hms(Math.max(0,e-s))+'</span>'+
-     '<button class="btn ghost" onclick="replayVideo()">↺ Xem lại từ đầu đoạn</button>'+
-     '<a class="btn ghost" href="https://www.youtube.com/watch?v='+encodeURIComponent(t.video_id)+'&t='+s+'s" target="_blank" rel="noopener">▶ Mở trên YouTube</a>'+
+     (embed?'<button class="btn ghost" onclick="replayVideo()">↺ Xem lại từ đầu đoạn</button>':'')+
+     '<a class="btn ghost" href="'+link+'" target="_blank" rel="noopener">▶ Mở trên YouTube</a>'+
    '</div>'+
    '<div style="margin-top:20px"><button class="btn" onclick="nextStep()">Đã xem xong → Học từ</button></div>';
   stepDone[stepNow]=true; renderSteps();
