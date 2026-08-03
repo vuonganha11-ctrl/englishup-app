@@ -7,6 +7,7 @@
   var SB_KEY = "sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_";
   var _sb = null;
   var _fullName = "";
+  var _hasWidget = false;   /* trang có .topbar-right → topbar.js dựng luôn user bar */
 
   /* ── Tự nạp gói tối ưu điện thoại (mobile.css + mobile-nav.js) ──
      Nhờ vậy mọi trang đã gắn topbar.js đều có ☰ + responsive mà KHÔNG
@@ -28,7 +29,9 @@
   })();
 
   /* ── Ẩn ngay link "Trang chủ" (href .../index.html) để tránh nháy khi tải ──
-     Logo sẽ đóng vai trò "về trang chủ". CSS nạp ở <head> trước khi body render. */
+     Logo sẽ đóng vai trò "về trang chủ". CSS nạp ở <head> trước khi body render.
+     + Giấu tạm thanh nav cũ (7 link hardcode) cho tới khi buildChipNav() dựng lại
+       thành 6 chip — tránh nháy 2 kiểu nav. Có hẹn giờ mở lại phòng khi JS lỗi. */
   (function injectInstantCSS() {
     try {
       var head = document.head || document.getElementsByTagName("head")[0];
@@ -36,11 +39,118 @@
         var st = document.createElement("style");
         st.id = "eu-instant-css";
         st.textContent = '.topbar nav a[href$="index.html"]{display:none!important}'
-          + '.topbar nav a[href$="accounts.html"]{display:none!important}';
+          + '.topbar nav a[href$="accounts.html"]{display:none!important}'
+          + '.topbar nav:not(.eu-nav),header nav:not(.eu-nav){visibility:hidden}';
         head.appendChild(st);
+        setTimeout(function () {   /* failsafe: JS chết vẫn thấy nav cũ */
+          var s = document.getElementById("eu-instant-css");
+          if (s) s.textContent = s.textContent.replace(
+            '.topbar nav:not(.eu-nav),header nav:not(.eu-nav){visibility:hidden}', '');
+        }, 2500);
       }
     } catch (e) {}
   })();
+
+  /* ===== THANH ĐIỀU HƯỚNG DẠNG CHIP — 6 chip dùng chung MỌI trang =====
+     5 chip chính + chip "⋯ Khác" chứa menu xổ xuống (tuỳ trang, tuỳ quyền). */
+  var EU_MAIN = [
+    { href: "video.html",     icon: "🎬", label: "Video" },
+    { href: "shorts.html",    icon: "📱", label: "Shorts" },
+    { href: "flashcard.html", icon: "🃏", label: "Flashcard" },
+    { href: "vocab.html",     icon: "📚", label: "Từ vựng" },
+    { href: "giaotrinh.html", icon: "📖", label: "Giáo trình" }
+  ];
+  var EU_MORE = [
+    { href: "game.html",      icon: "🎮", label: "Game" },
+    { href: "report.html",    icon: "📊", label: "Thống kê" },
+    { href: "posts.html",     icon: "📰", label: "Thông báo" },
+    { href: "nangcap.html",   icon: "⭐", label: "Nâng cấp gói", hideIfPremium: true },
+    { href: "tai-khoan.html", icon: "👤", label: "Trang tài khoản" },
+    { href: "accounts.html",  icon: "👥", label: "Quản lý tài khoản", admin: true },
+    { href: "admin.html",     icon: "🛠️", label: "Trang quản trị",   admin: true }
+  ];
+
+  function curPage() {
+    var p = (location.pathname || "").split("/").pop().toLowerCase();
+    return p || "index.html";
+  }
+  function headerEl() {
+    return document.querySelector(".topbar") || document.querySelector("header.top") ||
+           document.querySelector("header");
+  }
+
+  function buildChipNav() {
+    try {
+      var bar = headerEl();
+      if (!bar) return;
+      var nav = bar.querySelector("nav");
+      if (!nav || nav.classList.contains("eu-nav")) return;
+      var here = curPage();
+      var inMore = EU_MORE.some(function (m) { return m.href === here; });
+
+      var h = "";
+      for (var i = 0; i < EU_MAIN.length; i++) {
+        var it = EU_MAIN[i];
+        h += '<a class="eu-navchip' + (it.href === here ? " active" : "") + '" href="' + it.href + '">' +
+             '<span class="eu-ni">' + it.icon + "</span>" + it.label + "</a>";
+      }
+      h += '<span class="eu-morewrap">' +
+           '<button type="button" class="eu-navchip eu-morebtn' + (inMore ? " active" : "") +
+           '" onclick="__euToggleMore(event)" aria-haspopup="true" aria-expanded="false">' +
+           '<span class="eu-ni">⋯</span>Khác</button>' +
+           '<span class="eu-moremenu" id="eu-moremenu">';
+      for (var j = 0; j < EU_MORE.length; j++) {
+        var m = EU_MORE[j];
+        var cls = "eu-moreitem" + (m.href === here ? " active" : "") +
+                  (m.admin ? " eu-admin-only" : "") + (m.hideIfPremium ? " eu-plan-only" : "");
+        h += '<a class="' + cls + '" href="' + m.href + '"' +
+             (m.href === "accounts.html" ? ' id="nav-accounts"' : "") + ">" +
+             '<span class="eu-ni">' + m.icon + "</span>" + m.label + "</a>";
+      }
+      h += "</span></span>";
+
+      nav.innerHTML = h;
+      nav.classList.add("eu-nav");
+      nav.style.visibility = "visible";
+      applyNavPerms();
+    } catch (e) {}
+  }
+
+  /* Bật/tắt mục theo quyền: 2 mục admin + ẩn "Nâng cấp gói" với người đã trả phí */
+  function applyNavPerms() {
+    try {
+      var a = window.EU_ACCESS || {};
+      var menu = document.getElementById("eu-moremenu");
+      if (!menu) return;
+      if (a.role === "admin") menu.classList.add("eu-is-admin");
+      else menu.classList.remove("eu-is-admin");
+      if (a.ready && a.isPremium) menu.classList.add("eu-is-premium");
+      else menu.classList.remove("eu-is-premium");
+    } catch (e) {}
+  }
+
+  window.__euToggleMore = function (e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    var m = document.getElementById("eu-moremenu");
+    if (!m) return;
+    var open = m.classList.toggle("open");
+    var btn = m.parentNode && m.parentNode.querySelector(".eu-morebtn");
+    if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  document.addEventListener("click", function () {
+    var m = document.getElementById("eu-moremenu");
+    if (m) {
+      m.classList.remove("open");
+      var b = m.parentNode && m.parentNode.querySelector(".eu-morebtn");
+      if (b) b.setAttribute("aria-expanded", "false");
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      var m = document.getElementById("eu-moremenu");
+      if (m) m.classList.remove("open");
+    }
+  });
 
   function sb() {
     if (!_sb && window.supabase) {
@@ -70,7 +180,32 @@
       ".eu-menu-head b{display:block;font-size:13px;color:var(--text,#dde3f0)}.eu-menu-head small{font-size:11px;color:var(--muted,#64748b)}" +
       ".eu-menu a,.eu-menu .eu-logout{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;color:var(--text,#dde3f0);font-family:inherit;font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;text-decoration:none;box-sizing:border-box}" +
       ".eu-menu a:hover,.eu-menu .eu-logout:hover{background:var(--card,#151a25)}" +
-      ".eu-menu .eu-logout{color:var(--danger,#f87171)}";
+      ".eu-menu .eu-logout{color:var(--danger,#f87171)}" +
+      /* ── Nav dạng chip ── */
+      "nav.eu-nav{display:flex!important;align-items:center;gap:7px;flex-wrap:wrap;visibility:visible!important}" +
+      "nav.eu-nav .eu-navchip{display:inline-flex!important;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;" +
+        "border:1px solid var(--border,#232d42);background:var(--card,#151a25);color:var(--text,#dde3f0);" +
+        "font-size:13px;font-weight:600;font-family:inherit;line-height:1.15;text-decoration:none;white-space:nowrap;" +
+        "cursor:pointer;transition:.15s;box-sizing:border-box}" +
+      "nav.eu-nav .eu-navchip:hover{border-color:var(--accent,#4f8ef7);color:var(--accent,#4f8ef7);background:var(--card,#151a25)}" +
+      "nav.eu-nav .eu-navchip.active{background:var(--accent,#4f8ef7);border-color:var(--accent,#4f8ef7);color:#fff}" +
+      "nav.eu-nav .eu-navchip.active:hover{color:#fff}" +
+      "nav.eu-nav .eu-ni{font-size:14px;line-height:1}" +
+      "nav.eu-nav .eu-morewrap{position:relative;display:inline-flex}" +
+      "nav.eu-nav .eu-moremenu{position:absolute;top:calc(100% + 8px);left:0;min-width:216px;display:none;" +
+        "background:var(--surface,#0e1018);border:1px solid var(--border2,#2e3a55);border-radius:12px;padding:6px;" +
+        "box-shadow:0 12px 32px rgba(0,0,0,.45);z-index:600}" +
+      "nav.eu-nav .eu-moremenu.open{display:block}" +
+      "nav.eu-nav .eu-moremenu a.eu-moreitem{display:flex!important;align-items:center;gap:9px;padding:9px 10px;" +
+        "border-radius:8px;font-size:13px;font-weight:500;color:var(--text,#dde3f0);text-decoration:none;" +
+        "white-space:nowrap;background:none;border:none}" +
+      "nav.eu-nav .eu-moremenu a.eu-moreitem:hover{background:var(--card,#151a25);color:var(--text,#dde3f0)}" +
+      "nav.eu-nav .eu-moremenu a.eu-moreitem.active{color:var(--accent,#4f8ef7);font-weight:700;background:rgba(79,142,247,.12)}" +
+      "nav.eu-nav .eu-moremenu a.eu-admin-only{display:none!important}" +
+      "nav.eu-nav .eu-moremenu.eu-is-admin a.eu-admin-only{display:flex!important}" +
+      "nav.eu-nav .eu-moremenu.eu-is-premium a.eu-plan-only{display:none!important}" +
+      "@media(max-width:768px){nav.eu-nav{gap:6px}nav.eu-nav .eu-navchip{padding:6px 11px;font-size:12.5px}" +
+        "nav.eu-nav .eu-moremenu{left:auto;right:0}}";
     var st = document.createElement("style");
     st.id = "eu-topbar-css";
     st.textContent = css;
@@ -115,8 +250,11 @@
      Ẩn với học viên/giáo viên & khách; hiện lại cho Admin. */
   function gateAccountsNav(isAdmin) {
     try {
-      var links = document.querySelectorAll('.topbar nav a[href$="accounts.html"]');
+      var links = document.querySelectorAll('.topbar nav a[href$="accounts.html"], header nav a[href$="accounts.html"]');
       for (var i = 0; i < links.length; i++) {
+        /* Link nằm trong menu "⋯ Khác" đã có class .eu-admin-only lo phần ẩn/hiện
+           → đừng đặt style inline (sẽ phá layout flex của menu). */
+        if (links[i].className.indexOf("eu-moreitem") >= 0) { links[i].style.removeProperty("display"); continue; }
         if (isAdmin) links[i].style.setProperty("display", "inline-block", "important");
         else links[i].style.setProperty("display", "none", "important");
       }
@@ -124,6 +262,7 @@
   }
 
   function showLoggedOut() {
+    if (!_hasWidget) return;   /* trang tự lo phần user bar — chỉ mượn phiên để phân quyền nav */
     set("btn-login-top", function (e) { e.style.display = ""; });
     set("btn-register-top", function (e) { e.style.display = ""; });
     set("user-chip", function (e) { e.style.display = "none"; });
@@ -133,6 +272,7 @@
   }
 
   function showLoggedIn(user, prof) {
+    if (!_hasWidget) return;
     var email = (prof && prof.email) || user.email || "";
     var name = (prof && prof.full_name) ? prof.full_name : (email.split("@")[0] || "Học viên");
     _fullName = name;
@@ -187,6 +327,7 @@
   }
   function publishAccess(a) {
     window.EU_ACCESS = a;
+    applyNavPerms();
     try { document.dispatchEvent(new CustomEvent("eu-access", { detail:a })); } catch (e) {}
   }
   function setAccess(u, prof) { publishAccess(computeAccess(true, prof)); }
@@ -257,12 +398,14 @@
   }
 
   function boot() {
+    injectCSS();
     fixHeader();
     setupLessons();
+    buildChipNav();
     var host = mount();
-    if (!host) return;
-    injectCSS();
-    host.innerHTML = widgetHTML();
+    if (host) { _hasWidget = true; host.innerHTML = widgetHTML(); }
+    /* Vẫn đọc phiên kể cả trang không có .topbar-right — cần biết vai trò
+       để bật 2 mục admin trong menu "⋯ Khác". */
     loadAndRender();
   }
 
