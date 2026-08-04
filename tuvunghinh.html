@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EnglishUp · Từ vựng bằng hình</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
+<style>
+:root{
+  --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
+  --border:#232d42; --border2:#2e3a55;
+  --accent:#4f8ef7; --a2:#a78bfa; --a3:#34d399; --a4:#fb923c; --a5:#f472b6;
+  --danger:#f87171; --text:#dde3f0; --muted:#64748b;
+  --topbar-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font-family:inherit}
+
+/* ── TOPBAR ─────────────────────────────────────── */
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;
+  align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:300}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;white-space:nowrap;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px;white-space:nowrap}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+.top-nav a.active{color:var(--accent);background:rgba(79,142,247,.12)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.xp-badge{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:3px 12px 3px 3px;font-size:13px;cursor:pointer;max-width:220px}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700}
+.user-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-login{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-size:13px;
+  font-weight:600;cursor:pointer}
+
+/* ── LAYOUT ─────────────────────────────────────── */
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 90px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:16px;flex-wrap:wrap}
+.crumb a{color:var(--accent);text-decoration:none;cursor:pointer}
+.crumb a:hover{text-decoration:underline}
+.loading{text-align:center;color:var(--muted);padding:70px 0;font-size:14px}
+
+/* ── HERO ───────────────────────────────────────── */
+.hero{background:linear-gradient(135deg,rgba(79,142,247,.13),rgba(167,139,250,.08));border:1px solid var(--border2);
+  border-radius:20px;padding:26px 28px;margin-bottom:22px}
+.hero h1{font-size:26px;line-height:1.25;margin-bottom:8px;font-weight:700}
+.hero p{color:#93a2bd;font-size:14px;line-height:1.7;max-width:860px}
+.stats{display:flex;gap:26px;margin-top:16px;flex-wrap:wrap}
+.stat b{display:block;font-size:21px;color:var(--accent);font-weight:700}
+.stat span{font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+
+/* ── THANH CÔNG CỤ ──────────────────────────────── */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.search{flex:1;min-width:220px;position:relative}
+.search input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:11px 14px 11px 38px;color:var(--text);font-size:14px;outline:none}
+.search input:focus{border-color:var(--accent)}
+.search::before{content:'🔍';position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6}
+.tgl{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:9px 14px;font-size:13px;cursor:pointer;user-select:none;color:var(--muted);white-space:nowrap}
+.tgl.on{color:var(--text);border-color:var(--accent);background:rgba(79,142,247,.10)}
+.tgl .dot{width:9px;height:9px;border-radius:50%;background:var(--border2)}
+.tgl.on .dot{background:var(--a3)}
+
+/* ── NHÓM ───────────────────────────────────────── */
+.gtabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:18px;scrollbar-width:thin}
+.gtab{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:8px 15px;font-size:13px;
+  cursor:pointer;white-space:nowrap;color:var(--muted);display:flex;align-items:center;gap:7px}
+.gtab:hover{color:var(--text)}
+.gtab.active{background:rgba(79,142,247,.14);border-color:var(--accent);color:var(--accent);font-weight:600}
+
+.gsec{margin-bottom:30px}
+.gsec h2{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:9px}
+.gsec h2 small{color:var(--muted);font-weight:500;font-size:12px}
+
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.tcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;
+  display:flex;align-items:center;gap:12px;transition:.15s}
+.tcard:hover{border-color:var(--accent);background:var(--card2);transform:translateY(-2px)}
+.tcard .ic{font-size:26px;line-height:1;flex-shrink:0}
+.tcard b{display:block;font-size:14px;font-weight:600;margin-bottom:2px}
+.tcard i{display:block;font-style:normal;font-size:11.5px;color:var(--muted)}
+.tcard em{display:block;font-style:normal;font-size:11px;color:var(--accent);margin-top:3px}
+
+/* ── LƯỚI TỪ ────────────────────────────────────── */
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px}
+.wcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 10px 12px;
+  text-align:center;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.wcard:hover{border-color:var(--accent);background:var(--card2);transform:translateY(-3px);
+  box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.wcard.play{border-color:var(--a3);box-shadow:0 0 0 2px rgba(52,211,153,.25)}
+.pic{height:96px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative}
+.pic img{max-width:100%;max-height:96px;object-fit:contain}
+.pic img.photo{width:100%;height:96px;object-fit:cover;border-radius:10px}
+.pic .emo{font-size:56px;line-height:1}
+.pic .gly{font-size:44px;line-height:1;font-weight:700;color:var(--a2);letter-spacing:-1px}
+.pic .sw{width:74px;height:74px;border-radius:16px;border:1px solid rgba(255,255,255,.18)}
+.pic .ltr{width:74px;height:74px;border-radius:16px;background:linear-gradient(135deg,rgba(79,142,247,.22),rgba(167,139,250,.18));
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:var(--a2)}
+.wcard .en{font-size:14.5px;font-weight:600;line-height:1.3;word-break:break-word}
+.wcard .ipa{font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',ui-monospace,monospace}
+.wcard .vi{font-size:12.5px;color:var(--a3);margin-top:5px;line-height:1.35}
+.wcard .vi.hide{display:none}
+.spk{position:absolute;top:8px;right:8px;font-size:12px;opacity:0;transition:.15s}
+.wcard:hover .spk{opacity:.75}
+
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px}
+.foot{max-width:1240px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:11.5px;line-height:1.7}
+.foot a{color:var(--muted);text-decoration:underline}
+
+@media(max-width:640px){
+  .wrap{padding:16px 12px 80px}
+  .hero{padding:20px 18px}.hero h1{font-size:21px}
+  .wgrid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+  .pic{height:78px}.pic .emo{font-size:44px}.pic img{max-height:78px}.pic img.photo{height:78px}
+  .tgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="vocab.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav">
+    <a href="video.html">🎬 Video</a>
+    <a href="shorts.html">📱 Shorts</a>
+    <a href="flashcard.html">🃏 Flashcard</a>
+    <a href="vocab.html">📚 Từ vựng</a>
+    <a href="giaotrinh.html">📖 Giáo trình</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="xp-badge" id="xp-display" style="display:none">⚡ <span id="xp-val">0</span> XP</div>
+    <button class="btn-login" id="btn-login-top" onclick="location.href='vocab.html'">Đăng nhập</button>
+    <div class="user-chip" id="user-chip" style="display:none">
+      <div class="user-av" id="user-av">?</div><span id="user-email-display">user</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="app"><div class="loading">Đang tải từ vựng bằng hình…</div></div>
+<div class="foot">
+  Hình minh hoạ: bộ biểu tượng mở <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0)
+  và ảnh từ <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a> qua Wikipedia (giấy phép tự do).
+  Ảnh riêng của EnglishUp được ưu tiên hiển thị khi có.
+</div>
+
+<script src="tuvunghinh_data.js"></script>
+<script>
+/* ═══════════ CẤU HÌNH ═══════════ */
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const TW='https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/';
+const WIKI_CACHE_KEY='eu_vv_wiki_v1';
+
+const GROUPS = window.EU_VV || [];
+const ALL = [];                    // {…word, tslug, ten, tvi}
+const TOPIC_BY_SLUG = {};
+GROUPS.forEach(g=>g.topics.forEach(t=>{
+  t.gslug=g.slug; TOPIC_BY_SLUG[t.slug]=t;
+  t.words.forEach(w=>ALL.push(Object.assign({tslug:t.slug,ten:t.en,tvi:t.vi},w)));
+}));
+
+/* ═══════════ TRẠNG THÁI ═══════════ */
+const S={
+  view:'home', group:GROUPS[0]?GROUPS[0].slug:'', topic:null, q:'',
+  showVi: localStorage.getItem('eu_vv_vi')!=='0',
+  hoverSay: localStorage.getItem('eu_vv_hover')!=='0'
+};
+let DB_IMG={}, DB_AUDIO={};
+let WIKI = {};
+try{ WIKI = JSON.parse(localStorage.getItem(WIKI_CACHE_KEY)||'{}'); }catch(e){ WIKI={}; }
+
+/* ═══════════ TIỆN ÍCH ═══════════ */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').trim().toLowerCase();
+const noAcc=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').toLowerCase();
+
+/* emoji → tên file twemoji (bỏ FE0F trừ keycap) */
+function twCode(str){
+  /* đúng quy tắc twemoji: chỉ bỏ FE0F khi chuỗi KHÔNG chứa ZWJ (200D) */
+  const raw = str.indexOf('\u200D')<0 ? str.replace(/\uFE0F/g,'') : str;
+  return [...raw].map(c=>c.codePointAt(0).toString(16)).join('-');
+}
+const isEmojiish = s => /[\u203C-\u3299\u{1F000}-\u{1FAFF}]/u.test(s||'');
+
+/* ═══════════ PHÁT ÂM ═══════════ */
+let voiceEN=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voiceEN = vs.find(v=>/en-GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
+}
+if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+let lastSay=0, curAudio=null;
+function say(term,el){
+  const now=Date.now(); if(now-lastSay<120) return; lastSay=now;
+  if(el){ el.classList.add('play'); setTimeout(()=>el.classList.remove('play'),700); }
+  const url=DB_AUDIO[norm(term)];
+  if(url){ try{ if(curAudio)curAudio.pause(); curAudio=new Audio(url); curAudio.play().catch(()=>speak(term)); return; }catch(e){} }
+  speak(term);
+}
+function speak(t){
+  if(!window.speechSynthesis) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang='en-GB'; u.rate=.88; if(voiceEN)u.voice=voiceEN;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ═══════════ ẢNH WIKIPEDIA (gom lô, có cache) ═══════════ */
+let wikiQueue=[], wikiTimer=null, wikiInFlight=false;
+function needWiki(title){
+  if(WIKI[title]!==undefined) return;
+  if(wikiQueue.indexOf(title)<0) wikiQueue.push(title);
+  clearTimeout(wikiTimer); wikiTimer=setTimeout(flushWiki,120);
+}
+/* chỉ lưu vào localStorage những mục CÓ ảnh — tránh nhớ vĩnh viễn một lần lỗi mạng */
+function saveWiki(){
+  try{
+    const keep={}; Object.keys(WIKI).forEach(k=>{ if(WIKI[k]) keep[k]=WIKI[k]; });
+    localStorage.setItem(WIKI_CACHE_KEY,JSON.stringify(keep));
+  }catch(e){}
+}
+async function flushWiki(){
+  if(wikiInFlight||!wikiQueue.length) return;
+  wikiInFlight=true;
+  const batch=wikiQueue.splice(0,40);
+  try{
+    const url='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1'
+      +'&prop=pageimages&piprop=thumbnail&pithumbsize=400&titles='+encodeURIComponent(batch.join('|'));
+    const r=await fetch(url); const j=await r.json();
+    const map={}; // tên đã chuẩn hoá → tên gốc yêu cầu
+    batch.forEach(t=>map[t]=t);
+    (j.query&&j.query.normalized||[]).forEach(n=>{ map[n.to]=map[n.from]||n.from; });
+    (j.query&&j.query.redirects||[]).forEach(n=>{ map[n.to]=map[n.from]||n.from; });
+    const pages=(j.query&&j.query.pages)||{};
+    const got={};
+    Object.keys(pages).forEach(k=>{
+      const p=pages[k], src=map[p.title]||p.title;
+      got[src]= (p.thumbnail&&p.thumbnail.source) ? p.thumbnail.source : null;
+    });
+    batch.forEach(t=>{ WIKI[t]= got[t]!==undefined ? got[t] : null; });
+    saveWiki();
+    batch.forEach(t=>{
+      if(!WIKI[t]) return;
+      document.querySelectorAll('[data-wiki="'+CSS.escape(t)+'"]').forEach(slot=>{
+        slot.innerHTML='<img class="photo" loading="lazy" src="'+esc(WIKI[t])+'" alt="">';
+      });
+    });
+  }catch(e){ /* mất mạng → KHÔNG ghi nhớ thất bại, để lần sau thử lại */
+    batch.forEach(t=>{ delete WIKI[t]; }); }
+  wikiInFlight=false;
+  if(wikiQueue.length) flushWiki();
+}
+
+/* ═══════════ Ô HÌNH ═══════════ */
+function picHTML(w){
+  const img=DB_IMG[norm(w.en)];
+  if(img) return '<div class="pic"><img class="photo" loading="lazy" src="'+esc(img)+'" alt=""></div>';
+  if(w.color) return '<div class="pic"><div class="sw" style="background:'+esc(w.color)+'"></div></div>';
+  if(w.emoji) return '<div class="pic">'+emojiImg(w.emoji)+'</div>';
+  if(w.glyph) return '<div class="pic">'+(isEmojiish(w.glyph)?emojiImg(w.glyph):'<span class="gly">'+esc(w.glyph)+'</span>')+'</div>';
+  if(w.wiki){
+    needWiki(w.wiki);
+    const cached=WIKI[w.wiki];
+    if(cached) return '<div class="pic" data-wiki="'+esc(w.wiki)+'"><img class="photo" loading="lazy" src="'+esc(cached)+'" alt=""></div>';
+    return '<div class="pic" data-wiki="'+esc(w.wiki)+'">'+letterTile(w.en)+'</div>';
+  }
+  return '<div class="pic">'+letterTile(w.en)+'</div>';
+}
+function emojiImg(e){
+  return '<img loading="lazy" src="'+TW+twCode(e)+'.svg" alt="'+esc(e)+'" '
+    +'onerror="this.outerHTML=\'<span class=&quot;emo&quot;>'+esc(e)+'</span>\'">';
+}
+function letterTile(en){
+  const c=(String(en||'?').trim()[0]||'?').toUpperCase();
+  return '<div class="ltr">'+esc(c)+'</div>';
+}
+
+/* ═══════════ HIỂN THỊ ═══════════ */
+const app=document.getElementById('app');
+
+function toolbarHTML(){
+  return '<div class="toolbar">'
+    +'<div class="search"><input id="q" type="search" placeholder="Tìm từ tiếng Anh hoặc nghĩa tiếng Việt…" value="'+esc(S.q)+'"></div>'
+    +'<div class="tgl'+(S.showVi?' on':'')+'" onclick="toggleVi()"><span class="dot"></span>Nghĩa tiếng Việt</div>'
+    +'<div class="tgl'+(S.hoverSay?' on':'')+'" onclick="toggleHover()"><span class="dot"></span>Rê chuột để nghe</div>'
+    +'</div>';
+}
+function bindToolbar(){
+  const q=document.getElementById('q'); if(!q) return;
+  q.oninput=()=>{ S.q=q.value; clearTimeout(q._t); q._t=setTimeout(()=>{ render(true); },220); };
+}
+function toggleVi(){ S.showVi=!S.showVi; localStorage.setItem('eu_vv_vi',S.showVi?'1':'0');
+  document.querySelectorAll('.wcard .vi').forEach(e=>e.classList.toggle('hide',!S.showVi));
+  document.querySelectorAll('.tgl')[0].classList.toggle('on',S.showVi); }
+function toggleHover(){ S.hoverSay=!S.hoverSay; localStorage.setItem('eu_vv_hover',S.hoverSay?'1':'0');
+  document.querySelectorAll('.tgl')[1].classList.toggle('on',S.hoverSay); }
+
+function wordCardHTML(w,showTopic){
+  return '<div class="wcard" data-en="'+esc(w.en)+'">'
+    +'<span class="spk">🔊</span>'
+    + picHTML(w)
+    +'<div class="en">'+esc(w.en)+'</div>'
+    +(w.ipa?'<div class="ipa">'+esc(w.ipa)+'</div>':'')
+    +'<div class="vi'+(S.showVi?'':' hide')+'">'+esc(w.vi)+(showTopic&&w.tvi?' <span style="color:var(--muted)">· '+esc(w.tvi)+'</span>':'')+'</div>'
+    +'</div>';
+}
+function bindCards(){
+  document.querySelectorAll('.wcard').forEach(c=>{
+    const t=c.dataset.en;
+    c.onclick=()=>say(t,c);
+    c.onmouseenter=()=>{ if(S.hoverSay) say(t,c); };
+  });
+}
+
+function render(keepFocus){
+  const focused=document.activeElement&&document.activeElement.id==='q';
+  const pos=focused?document.activeElement.selectionStart:0;
+  let h='';
+
+  if(S.q.trim()){
+    const k=noAcc(S.q.trim());
+    const hits=ALL.filter(w=>noAcc(w.en).includes(k)||noAcc(w.vi).includes(k)).slice(0,300);
+    h+='<div class="crumb"><a onclick="goHome()">Từ vựng bằng hình</a> › Kết quả tìm “'+esc(S.q)+'”</div>';
+    h+=toolbarHTML();
+    h+= hits.length ? '<div class="wgrid">'+hits.map(w=>wordCardHTML(w,true)).join('')+'</div>'
+                    : '<div class="empty">Không tìm thấy từ nào khớp “'+esc(S.q)+'”.</div>';
+  }
+  else if(S.view==='topic' && TOPIC_BY_SLUG[S.topic]){
+    const t=TOPIC_BY_SLUG[S.topic];
+    const g=GROUPS.find(x=>x.slug===t.gslug)||{};
+    h+='<div class="crumb"><a onclick="goHome()">Từ vựng bằng hình</a> › <a onclick="goGroup(\''+t.gslug+'\')">'+esc(g.vi||'')+'</a> › '+esc(t.vi)+'</div>';
+    h+='<div class="hero"><h1>'+esc(t.icon||'')+' '+esc(t.vi)+' <span style="color:var(--muted);font-weight:500;font-size:17px">· '+esc(t.en)+'</span></h1>'
+      +'<p>Rê chuột (hoặc chạm) vào từng thẻ để nghe phát âm. Bấm vào thẻ để nghe lại.</p>'
+      +'<div class="stats"><div class="stat"><b>'+t.words.length+'</b><span>từ vựng</span></div></div></div>';
+    h+=toolbarHTML();
+    h+='<div class="wgrid">'+t.words.map(w=>wordCardHTML(w,false)).join('')+'</div>';
+  }
+  else{
+    const totalW=ALL.length, totalT=Object.keys(TOPIC_BY_SLUG).length;
+    h+='<div class="hero"><h1>🖼️ Từ vựng bằng hình</h1>'
+      +'<p>Học từ vựng theo cách tự nhiên nhất: nhìn hình — nghe phát âm — nhớ nghĩa. '
+      +'Chọn một chủ đề bên dưới, rê chuột qua từng thẻ là nghe được ngay.</p>'
+      +'<div class="stats">'
+      +'<div class="stat"><b>'+GROUPS.length+'</b><span>nhóm</span></div>'
+      +'<div class="stat"><b>'+totalT+'</b><span>chủ đề</span></div>'
+      +'<div class="stat"><b>'+totalW.toLocaleString('vi-VN')+'</b><span>từ vựng</span></div>'
+      +'</div></div>';
+    h+=toolbarHTML();
+    h+='<div class="gtabs">'
+      +'<div class="gtab'+(S.group==='*'?' active':'')+'" onclick="goGroup(\'*\')">✨ Tất cả</div>'
+      +GROUPS.map(g=>'<div class="gtab'+(S.group===g.slug?' active':'')+'" onclick="goGroup(\''+g.slug+'\')">'
+        +esc(g.icon)+' '+esc(g.vi)+'</div>').join('')+'</div>';
+    const list = S.group==='*' ? GROUPS : GROUPS.filter(g=>g.slug===S.group);
+    h+=list.map(g=>'<div class="gsec"><h2>'+esc(g.icon)+' '+esc(g.vi)+' <small>· '+esc(g.en)+'</small></h2>'
+      +'<div class="tgrid">'+g.topics.map(t=>
+        '<div class="tcard" onclick="goTopic(\''+t.slug+'\')">'
+        +'<div class="ic">'+esc(t.icon||'📘')+'</div><div>'
+        +'<b>'+esc(t.vi)+'</b><i>'+esc(t.en)+'</i><em>'+t.words.length+' từ</em></div></div>').join('')
+      +'</div></div>').join('');
+  }
+
+  app.innerHTML=h;
+  bindToolbar(); bindCards();
+  if(keepFocus&&focused){ const q=document.getElementById('q'); if(q){ q.focus(); try{q.setSelectionRange(pos,pos);}catch(e){} } }
+}
+
+/* ═══════════ ĐIỀU HƯỚNG ═══════════ */
+function goHome(){ S.view='home'; S.topic=null; S.q=''; scrollTo(0,0); render(); location.hash=''; }
+function goGroup(g){ S.view='home'; S.group=g; S.topic=null; S.q=''; render(); scrollTo(0,0); }
+function goTopic(s){ S.view='topic'; S.topic=s; S.q=''; render(); scrollTo(0,0); location.hash='#'+s; }
+window.addEventListener('hashchange',()=>{
+  const s=location.hash.replace('#','');
+  if(s&&TOPIC_BY_SLUG[s]){ if(S.topic!==s) goTopic(s); }
+  else if(!s&&S.view==='topic') goHome();
+});
+
+/* ═══════════ NẠP ẢNH/ÂM RIÊNG TỪ SUPABASE ═══════════ */
+async function loadOverrides(){
+  try{
+    const sb=supabase.createClient(SB_URL,SB_KEY);
+    const {data,error}=await sb.from('words').select('term,image_url,audio_url')
+      .or('image_url.not.is.null,audio_url.not.is.null').limit(1000);
+    if(error||!data) return;
+    data.forEach(r=>{
+      const k=norm(r.term);
+      if(r.image_url) DB_IMG[k]=r.image_url;
+      if(r.audio_url) DB_AUDIO[k]=r.audio_url;
+    });
+  }catch(e){}
+}
+
+/* ═══════════ KHỞI ĐỘNG ═══════════ */
+(async function boot(){
+  if(!GROUPS.length){ app.innerHTML='<div class="empty">Không nạp được dữ liệu (thiếu tuvunghinh_data.js).</div>'; return; }
+  S.group='*';
+  await loadOverrides();
+  const s=location.hash.replace('#','');
+  if(s&&TOPIC_BY_SLUG[s]){ S.view='topic'; S.topic=s; }
+  render();
+})();
+</script>
+</body>
+</html>

@@ -61,6 +61,7 @@
     { href: "giaotrinh.html", icon: "📖", label: "Giáo trình" }
   ];
   var EU_MORE = [
+    { href: "tuvunghinh.html", icon: "🖼️", label: "Từ vựng hình" },
     { href: "game.html",      icon: "🎮", label: "Game" },
     { href: "report.html",    icon: "📊", label: "Thống kê" },
     { href: "posts.html",     icon: "📰", label: "Thông báo" },
