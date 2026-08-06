@@ -303,6 +303,7 @@ select.input{cursor:pointer}
       <div class="nav-group-label">Nội dung</div>
       <button class="nav-btn" data-section="words" onclick="nav('words',this)"><span class="nbi">📖</span>Từ vựng<span class="nav-count" id="nav-count-words">—</span></button>
       <button class="nav-btn" data-section="extras" onclick="nav('extras',this)"><span class="nbi">🧩</span>Mở rộng từ<span class="nav-count" id="nav-count-extras">—</span></button>
+      <a class="nav-btn" href="anhtuvung.html" style="text-decoration:none"><span class="nbi">🖼️</span>Ảnh từ vựng</a>
       <button class="nav-btn" data-section="courses" onclick="nav('courses',this)"><span class="nbi">🎓</span>Khoá học<span class="nav-count" id="nav-count-courses">—</span></button>
       <button class="nav-btn" data-section="video" onclick="nav('video',this)"><span class="nbi">🎬</span>Video<span class="nav-count" id="nav-count-video">—</span></button>
       <button class="nav-btn" onclick="location.href='admin-shorts.html'"><span class="nbi">📱</span>Shorts</button>
@@ -353,6 +354,7 @@ select.input{cursor:pointer}
           <h1>📖 Từ vựng</h1>
           <button class="btn" onclick="nav('import',document.querySelector('[data-section=import]'))">📥 Import CSV</button>
           <button class="btn" onclick="openExamplesImport()" style="color:var(--a2);border-color:rgba(167,139,250,.3)">✨ Import câu mẫu</button>
+          <button class="btn" onclick="location.href='anhtuvung.html'" style="color:var(--accent3);border-color:rgba(52,211,153,.3)">🖼️ Ảnh từ vựng</button>
           <button class="btn primary" onclick="openWordModal()">＋ Thêm từ mới</button>
         </div>
         <div class="col-tabs" id="wcol-tabs"></div>
