@@ -116,6 +116,15 @@ table.hm td{font-family:var(--mono);color:#8fa3c4;cursor:pointer;border-radius:4
 table.hm td.z{color:#232d42}
 table.hm td:hover{outline:1px solid var(--accent)}
 
+
+/* ── Ô / mục ĐANG CHỌN ─────────────────────────────── */
+table.hm td.sel{background:#ef4444 !important;color:#fff;font-weight:700;
+  outline:2px solid #fca5a5;outline-offset:-2px}
+.seg.sel{outline:2px solid #ef4444;outline-offset:-2px;filter:brightness(1.25)}
+.ch.sel{border-color:#ef4444;background:rgba(239,68,68,.20)}
+.ch.sel b,.ch.sel i{color:#fca5a5}
+.tr.sel,.step.sel{outline:1px solid #ef4444;background:rgba(239,68,68,.12)}
+.sym.sel{color:#ef4444;text-decoration:underline}
 .road{display:flex;flex-direction:column;gap:7px}
 .step{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;
       background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;cursor:pointer}
@@ -277,6 +286,9 @@ function crossTab(list,kA,kB){
   }).sort((a,b)=>b.n-a.n||String(a.k).localeCompare(String(b.k)));
 }
 
+function markSel(el){document.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));
+  if(el)el.classList.add('sel');}
+
 /* ---------- ngăn kéo ---------- */
 function openWords(title,sub,list){
   $("dtitle").innerHTML=title; $("dsub").innerHTML=sub;
@@ -287,7 +299,7 @@ function openWords(title,sub,list){
     '<p style="color:var(--muted);padding:12px">Không có từ nào.</p>';
   $("drawer").classList.add("open");
 }
-$("dclose").onclick=()=>$("drawer").classList.remove("open");
+$("dclose").onclick=()=>{$("drawer").classList.remove("open");markSel(null);};
 $("dlist").onclick=e=>{const el=e.target.closest(".w");if(!el)return;
   try{const u=new SpeechSynthesisUtterance(el.dataset.t);u.lang="en-US";
       speechSynthesis.cancel();speechSynthesis.speak(u);}catch(_){}};
@@ -322,7 +334,7 @@ function bindBlock(id,rows,kA,kB,labA,labB,dispA,dispB,L){
   const byKey=new Map(rows.map(R=>[String(R.k),R]));
   $(id).onclick=e=>{
     const seg=e.target.closest(".seg,.ch");
-    if(seg){const R=byKey.get(seg.dataset.a);if(!R)return;
+    if(seg){const R=byKey.get(seg.dataset.a);if(!R)return;markSel(seg);
       const d=R.dist.find(x=>String(x[0])===seg.dataset.b);if(!d)return;
       openWords(`<span style="font-family:var(--mono);color:var(--a3)">${esc(dispA(R.k))}</span>`+
         ` <span style="color:var(--muted)">viết là</span> `+
@@ -330,7 +342,7 @@ function bindBlock(id,rows,kA,kB,labA,labB,dispA,dispB,L){
         `${labA} ${esc(dispA(R.k))} · ${labB} ${esc(dispB(d[0]))} — ${fmt(d[1].length)} từ`, d[1]);
       return;}
     const sy=e.target.closest(".sym");
-    if(sy){const R=byKey.get(sy.dataset.a);if(!R)return;
+    if(sy){const R=byKey.get(sy.dataset.a);if(!R)return;markSel(sy);
       openWords(`<span style="font-family:var(--mono);color:var(--a3)">${esc(dispA(R.k))}</span>`,
         `${labA} — ${fmt(R.n)} từ · ${R.dist.length} cách`, R.dist.flatMap(d=>d[1]));}
   };
@@ -366,10 +378,10 @@ function render(){
   $("t-a").innerHTML=trapHTML(A,U.disp,U.disp,"");
   $("t-b").innerHTML=trapHTML(B,U.disp,U.disp,"sp");
   const byA=new Map(A.map(R=>[String(R.k),R])), byB=new Map(B.map(R=>[String(R.k),R]));
-  $("t-a").onclick=e=>{const el=e.target.closest(".tr");if(!el)return;const R=byA.get(el.dataset.a);
+  $("t-a").onclick=e=>{const el=e.target.closest(".tr");if(!el)return;markSel(el);const R=byA.get(el.dataset.a);
     openWords(`<span style="font-family:var(--mono);color:var(--a3)">${esc(U.disp(R.k))}</span>`,
       `${U.ipaLab} — ${fmt(R.n)} từ · ${R.dist.length} cách viết`,R.dist.flatMap(d=>d[1]));};
-  $("t-b").onclick=e=>{const el=e.target.closest(".tr");if(!el)return;const R=byB.get(el.dataset.a);
+  $("t-b").onclick=e=>{const el=e.target.closest(".tr");if(!el)return;markSel(el);const R=byB.get(el.dataset.a);
     openWords(`<span style="font-family:var(--mono);color:var(--a4)">${esc(U.disp(R.k))}</span>`,
       `${U.spLab} — ${fmt(R.n)} từ · ${R.dist.length} cách đọc`,R.dist.flatMap(d=>d[1]));};
 
@@ -385,7 +397,7 @@ function render(){
     h+="</tr>";});
   $("hm").innerHTML=h+"</tbody>";
   $("hmleg").textContent=`Ô đậm nhất = ${mx} từ. 18 âm đầu × 26 vần phổ biến nhất trong phạm vi đang chọn.`;
-  $("hm").onclick=e=>{const td=e.target.closest("td");if(!td||td.dataset.o===undefined)return;
+  $("hm").onclick=e=>{const td=e.target.closest("td");if(!td||td.dataset.o===undefined)return;markSel(td);
     const o=td.dataset.o,r=td.dataset.r,sel=L.filter(w=>w.o===o&&w.r===r);
     openWords(`<span style="font-family:var(--mono);color:var(--a3)">${esc(show(o))} + ${esc(show(r))}</span>`,
       `${fmt(sel.length)} từ`,sel);};
@@ -405,7 +417,7 @@ function render(){
       `${R.dist.length} cách: ${esc(R.dist.slice(0,4).map(d=>(one?show(d[0]):showPair(d[0]))+" "+d[1].length).join(" · "))}</span></span>`+
       `<span class="v">${fmt(R.n)} từ<small>luỹ kế ${(100*run/T).toFixed(1)}%</small></span></div>`;}).join("");
   const roadMap=new Map(roadRows.map(R=>[String(R.k),R]));
-  $("road").onclick=e=>{const el=e.target.closest(".step");if(!el)return;const R=roadMap.get(el.dataset.a);
+  $("road").onclick=e=>{const el=e.target.closest(".step");if(!el)return;markSel(el);const R=roadMap.get(el.dataset.a);
     openWords(`<span style="font-family:var(--mono);color:var(--a3)">${esc(one?"– "+show(R.k):showPair(R.k))}</span>`,
       `${fmt(R.n)} từ · ${R.dist.length} cách viết`,R.dist.flatMap(d=>d[1]));};
 
