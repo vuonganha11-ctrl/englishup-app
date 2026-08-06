@@ -980,19 +980,34 @@ table.vtable thead tr.vt-filters th.vt-stick { background: var(--surface); z-ind
 /* Word modal header with image */
 .wm-hero {
   position: relative;
-  height: 160px;
-  background: var(--card2);
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 42vh;
+  background: var(--card2) center / cover no-repeat;
   flex-shrink: 0;
   overflow: hidden;
 }
+.wm-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  filter: blur(28px) saturate(1.25) brightness(.45);
+  transform: scale(1.18);
+}
 .wm-hero-img {
+  position: relative;
   width: 100%; height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  display: block;
+}
+@media (max-width: 640px) {
+  .wm-hero { aspect-ratio: 4 / 3; max-height: 38vh; }
 }
 .wm-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, rgba(8,9,13,.95) 0%, rgba(8,9,13,.2) 100%);
+  background: linear-gradient(0deg, rgba(8,9,13,.94) 0%, rgba(8,9,13,.62) 16%, rgba(8,9,13,.18) 34%, rgba(8,9,13,0) 52%);
 }
 .wm-hero-placeholder {
   width: 100%; height: 100%;
@@ -2518,11 +2533,14 @@ function openWord(id) {
   // Hero image
   const heroImg = document.getElementById('wm-hero-img');
   const heroPlaceholder = document.getElementById('wm-hero-placeholder');
+  const heroBox = document.getElementById('wm-hero');
   if (w.image_url) {
     heroImg.src = w.image_url;
     heroImg.style.display = 'block';
     heroPlaceholder.style.display = 'none';
+    if (heroBox) heroBox.style.backgroundImage = 'url("' + w.image_url + '")';
   } else {
+    if (heroBox) heroBox.style.backgroundImage = '';
     heroImg.style.display = 'none';
     heroPlaceholder.style.display = 'grid';
     heroPlaceholder.textContent = '🔤';
