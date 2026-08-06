@@ -115,6 +115,15 @@ table.hm thead th:first-child{left:0;z-index:4}
 table.hm td{font-family:var(--mono);color:#8fa3c4;cursor:pointer;border-radius:4px}
 table.hm td.z{color:#232d42}
 table.hm td:hover{outline:1px solid var(--accent)}
+table.hm th[data-ax]{cursor:grab;user-select:none}
+table.hm th[data-ax]:hover{color:var(--text);background:var(--card2) !important}
+table.hm th.grab{background:#ef4444 !important;color:#fff !important;cursor:grabbing}
+table.hm.dragging th[data-ax]:not(.grab){outline:1px dashed var(--border2);outline-offset:-1px}
+.hmbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:7px}
+.hmbar .btn{background:var(--card2);border:1px solid var(--border2);color:var(--text);
+  border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
+.hmbar .btn:hover{border-color:var(--accent)}
+.hmbar .st{font-size:12px;color:var(--a4);font-family:var(--mono)}
 
 
 /* ── Ô / mục ĐANG CHỌN ─────────────────────────────── */
@@ -137,7 +146,7 @@ table.hm td.sel{background:#ef4444 !important;color:#fff;font-weight:700;
 .step .v small{display:block;color:var(--muted)}
 
 #drawer{position:fixed;right:0;top:0;bottom:0;width:min(440px,95vw);background:var(--surface);
-  border-left:1px solid var(--border2);transform:translateX(102%);transition:.2s;z-index:60;
+  border-left:1px solid var(--border2);transform:translateX(102%);transition:.2s;z-index:400;
   display:flex;flex-direction:column}
 #drawer.open{transform:none}
 #dhead{padding:13px 15px;border-bottom:1px solid var(--border);display:flex;
@@ -224,8 +233,13 @@ table.hm td.sel{background:#ef4444 !important;color:#fff;font-weight:700;
   </div>
 
   <h2><span class="num">4</span> Bản đồ nhiệt: phụ âm đầu × vần 1 (IPA)</h2>
-  <p class="hint">Ô càng sáng càng nhiều từ dùng chung cặp âm đó. Bấm vào ô để xem từ.</p>
+  <p class="hint">Ô càng sáng càng nhiều từ dùng chung cặp âm đó. Bấm vào ô để xem từ.
+  <b>Muốn xếp lại bảng:</b> nắm tiêu đề hàng hoặc cột kéo thả sang vị trí mới — hoặc bấm một tiêu đề để “cầm” rồi bấm tiêu đề đích. Thứ tự tự giữ khi đổi bộ lọc.</p>
   <div class="hm-scroll"><table class="hm" id="hm"></table></div>
+  <div class="hmbar">
+    <span class="btn" id="hm-reset">↺ Xếp lại mặc định</span>
+    <span class="st" id="hm-state"></span>
+  </div>
   <div class="legend" id="hmleg"></div>
 
   <h2><span class="num">5</span> Lộ trình học nhanh nhất</h2>
@@ -271,7 +285,14 @@ const UNITS={
   pa:{lab:"Âm đầu + vần 1", ipa:w=>w.o+SEP+w.r, sp:w=>w.so+SEP+w.sr, disp:showPair,
       ipaLab:"âm đầu + vần 1 (IPA)", spLab:"âm đầu + vần 1 (chữ)"}
 };
-const S={u:"nu", lv:new Set(["A1","A2","B1","B2"]), sy:"all", q:""};
+const S={u:"nu", lv:new Set(["A1","A2","B1","B2"]), sy:"all", q:"",
+         ord:{row:null,col:null}, cur:{row:[],col:[]}};
+let hmDrag=null;
+function applyOrder(list,ord){if(!ord)return list;const set=new Set(list);
+  const out=ord.filter(k=>set.has(k));list.forEach(k=>{if(out.indexOf(k)<0)out.push(k);});return out;}
+function moveKey(ax,from,to){const arr=(ax==="col"?S.cur.col:S.cur.row).slice();
+  const i=arr.indexOf(from),j=arr.indexOf(to);if(i<0||j<0||i===j)return;
+  arr.splice(i,1);arr.splice(j,0,from);if(ax==="col")S.ord.col=arr;else S.ord.row=arr;}
 const cur=()=>W.filter(w=>S.lv.has(w.lv)&&(S.sy==="all"||(S.sy==="1"?w.sy===1:w.sy>1)));
 
 /* gom 2 tầng: khoá chính -> Map(khoá phụ -> [từ]) */
@@ -354,6 +375,39 @@ function trapHTML(rows,dispA,dispB,cls){
     `<span class="s">${R.off}<small style="color:var(--muted)">/${R.n}</small></span></div>`).join("");
 }
 
+/* ---------- kéo thả tiêu đề bảng nhiệt ---------- */
+function paintDrag(){
+  const t=$("hm"); t.classList.toggle("dragging",!!hmDrag);
+  t.querySelectorAll("th[data-ax]").forEach(th=>
+    th.classList.toggle("grab", !!hmDrag && th.dataset.ax===hmDrag.ax && th.dataset.k===hmDrag.k));
+  $("hm-state").textContent = hmDrag
+    ? `Đang cầm ${hmDrag.ax==="col"?"cột":"hàng"} “${show(hmDrag.k)}” — bấm/thả lên tiêu đề đích (Esc để bỏ)`
+    : ((S.ord.row||S.ord.col) ? "Bảng đang dùng thứ tự tuỳ chỉnh" : "");
+}
+function bindHmDrag(){
+  const t=$("hm");
+  t.querySelectorAll("th[data-ax]").forEach(th=>{
+    th.addEventListener("pointerdown",e=>{e.preventDefault();
+      hmDrag={ax:th.dataset.ax,k:th.dataset.k};paintDrag();});
+  });
+  if(!t.dataset.bound){t.dataset.bound="1";
+  t.addEventListener("pointerup",e=>{
+    if(!hmDrag)return;
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    const th=el&&el.closest?el.closest("th[data-ax]"):null;
+    if(!th||th.dataset.ax!==hmDrag.ax)return;          /* thả trượt → vẫn giữ cầm */
+    if(th.dataset.k===hmDrag.k){                        /* bấm lại chính nó → bỏ cầm */
+      if(t.dataset.armed==="1"){hmDrag=null;t.dataset.armed="0";paintDrag();}
+      else{t.dataset.armed="1";}
+      return;}
+    t.dataset.armed="0";
+    moveKey(hmDrag.ax,hmDrag.k,th.dataset.k);hmDrag=null;render();
+  });}
+  paintDrag();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&hmDrag){hmDrag=null;paintDrag();}});
+$("hm-reset").onclick=()=>{S.ord={row:null,col:null};hmDrag=null;render();};
+
 /* ---------- render ---------- */
 function render(){
   const L=cur(),T=L.length,U=UNITS[S.u];
@@ -386,16 +440,20 @@ function render(){
       `${U.spLab} — ${fmt(R.n)} từ · ${R.dist.length} cách đọc`,R.dist.flatMap(d=>d[1]));};
 
   /* heatmap IPA */
-  const oTop=[...new Map(crossTab(L,w=>w.o,w=>w.o).map(R=>[R.k,R.n]))].slice(0,18).map(x=>x[0]);
-  const rTop=[...new Map(crossTab(L,w=>w.r,w=>w.r).map(R=>[R.k,R.n]))].slice(0,26).map(x=>x[0]);
+  const oTop=applyOrder([...new Map(crossTab(L,w=>w.o,w=>w.o).map(R=>[R.k,R.n]))].slice(0,18).map(x=>x[0]),S.ord.row);
+  const rTop=applyOrder([...new Map(crossTab(L,w=>w.r,w=>w.r).map(R=>[R.k,R.n]))].slice(0,26).map(x=>x[0]),S.ord.col);
+  S.cur.row=oTop; S.cur.col=rTop;
   const grid=new Map();L.forEach(w=>{const k=w.o+SEP+w.r;grid.set(k,(grid.get(k)||0)+1);});
   let mx=1;oTop.forEach(o=>rTop.forEach(r=>{mx=Math.max(mx,grid.get(o+SEP+r)||0);}));
-  let h="<thead><tr><th>âm đầu ＼ vần</th>"+rTop.map(r=>`<th>${esc(show(r))}</th>`).join("")+"</tr></thead><tbody>";
-  oTop.forEach(o=>{h+=`<tr><th>${esc(show(o))}</th>`;
+  let h='<thead><tr><th title="Kéo tiêu đề hàng/cột để xếp lại">âm đầu ＼ vần</th>'+
+    rTop.map(r=>`<th data-ax="col" data-k="${esc(r)}" title="Kéo để đổi chỗ cột">${esc(show(r))}</th>`).join("")+
+    "</tr></thead><tbody>";
+  oTop.forEach(o=>{h+=`<tr><th data-ax="row" data-k="${esc(o)}" title="Kéo để đổi chỗ hàng">${esc(show(o))}</th>`;
     rTop.forEach(r=>{const v=grid.get(o+SEP+r)||0;const a=v?(0.13+0.87*Math.pow(v/mx,.55)):0;
       h+=`<td class="${v?"":"z"}" style="background:rgba(79,142,247,${a.toFixed(3)})" data-o="${esc(o)}" data-r="${esc(r)}">${v||"·"}</td>`;});
     h+="</tr>";});
   $("hm").innerHTML=h+"</tbody>";
+  bindHmDrag();
   $("hmleg").textContent=`Ô đậm nhất = ${mx} từ. 18 âm đầu × 26 vần phổ biến nhất trong phạm vi đang chọn.`;
   $("hm").onclick=e=>{const td=e.target.closest("td");if(!td||td.dataset.o===undefined)return;markSel(td);
     const o=td.dataset.o,r=td.dataset.r,sel=L.filter(w=>w.o===o&&w.r===r);
