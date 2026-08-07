@@ -293,6 +293,78 @@ select.inp:focus{border-color:var(--accent)}
   .q-term{font-size:28px}
   .result-stats{gap:18px}
 }
+
+/* ==================================================================
+   ▼▼▼ KHỐI TẠM — GAME NGOÀI ▼▼▼
+   Nhúng game bên thứ ba trong lúc chờ game tự dựng.
+   KHI GỠ: xoá 3 phần được đánh mốc — CSS này, <section id="extGames">
+   cùng <div id="extModal">, và <script> ở cuối file.
+   ================================================================== */
+/* biến riêng của khối (game.html dùng font Inter, không có Outfit) */
+#extGames,#extModal{--ui:'Inter',system-ui,-apple-system,sans-serif}
+.ext-wrap{max-width:1140px; margin:34px auto 0; padding-top:26px; border-top:1px solid var(--border)}
+.ext-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px}
+.ext-head h2{font-size:22px; font-weight:700; letter-spacing:-.01em}
+.ext-note{color:var(--muted); font-size:14px; margin-bottom:16px; line-height:1.6}
+
+/* --- thanh lọc --- */
+.ext-tools{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px}
+.ext-search{flex:1; min-width:190px; max-width:300px; padding:10px 14px; border-radius:10px;
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  font-family:var(--ui); font-size:14px}
+.ext-search::placeholder{color:var(--muted)}
+.ext-search:focus{outline:none; border-color:var(--accent)}
+.ext-filters{display:flex; gap:7px; flex-wrap:wrap}
+.fchip{padding:7px 13px; border-radius:99px; cursor:pointer; font-family:var(--ui);
+  font-size:13px; font-weight:500; background:var(--card); color:var(--muted);
+  border:1px solid var(--border); transition:.15s}
+.fchip:hover{color:var(--text); border-color:var(--border2)}
+.fchip.on{background:var(--card2); color:var(--text); border-color:var(--accent)}
+.fchip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.ext-count{font-family:var(--mono); font-size:12px; color:var(--muted); margin-left:auto}
+
+/* --- lưới thẻ --- */
+.ext-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(212px,1fr)); gap:14px}
+.ext-card{background:var(--card); border:1px solid var(--border); border-radius:14px;
+  overflow:hidden; cursor:pointer; transition:.16s; text-align:left;
+  font-family:inherit; color:inherit; display:flex; flex-direction:column; padding:0}
+.ext-card:hover{border-color:var(--accent); transform:translateY(-3px)}
+.ext-card:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.ext-card svg{display:block; width:100%; height:auto; border-bottom:1px solid var(--border)}
+.ec-body{padding:12px 13px 13px; display:flex; flex-direction:column; gap:6px; flex:1}
+.ec-body h3{font-size:15px; font-weight:600; line-height:1.25}
+.ec-body p{font-size:12.5px; color:var(--muted); line-height:1.5; flex:1}
+.ec-meta{display:flex; gap:5px; flex-wrap:wrap; margin-top:2px}
+.ec-chip{font-family:var(--mono); font-size:9.5px; padding:3px 7px; border-radius:99px;
+  background:var(--card2); border:1px solid var(--border2); color:var(--muted)}
+.ec-chip.lv{color:var(--a3); border-color:rgba(52,211,153,.3)}
+.ext-empty{grid-column:1/-1; padding:44px 16px; text-align:center; color:var(--muted); font-size:15px}
+.ext-credit{margin-top:20px; font-size:12px; color:var(--muted); line-height:1.6}
+.ext-credit a{color:var(--muted)}
+
+/* --- lớp phủ chứa iframe --- */
+.ext-modal{position:fixed; inset:0; z-index:300; background:rgba(6,7,11,.93);
+  backdrop-filter:blur(4px); display:none; flex-direction:column; padding:14px; gap:12px}
+.ext-modal.open{display:flex}
+.em-bar{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.em-bar .em-title{flex:1; min-width:160px; font-size:16px; font-weight:600}
+.em-btn{padding:9px 16px; border-radius:10px; cursor:pointer; font-family:var(--ui);
+  font-size:14px; font-weight:600; background:var(--card2); color:var(--text);
+  border:1px solid var(--border2); transition:.15s}
+.em-btn:hover{border-color:var(--accent); background:#232b40}
+.em-btn.close{background:var(--danger); border-color:var(--danger); color:#1a0d0d}
+.em-frame{flex:1; position:relative; border:1px solid var(--border); border-radius:14px;
+  overflow:hidden; background:var(--surface); min-height:0}
+.em-frame iframe{width:100%; height:100%; border:0; display:block}
+.em-fallback{position:absolute; inset:0; display:none; place-content:center;
+  text-align:center; gap:14px; padding:28px}
+.em-fallback.show{display:grid}
+.em-fallback p{color:var(--muted); font-size:15px; line-height:1.6; max-width:400px}
+.em-loading{position:absolute; inset:0; display:grid; place-content:center;
+  color:var(--muted); font-family:var(--mono); font-size:13px}
+.em-loading.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ▲▲▲ (CSS khối tạm hết ở đây) ▲▲▲ */
 </style>
 </head>
 <body>
@@ -403,6 +475,23 @@ select.inp:focus{border-color:var(--accent)}
       <div class="avail" id="avail">Đang tải từ vựng…</div>
       <button class="btn-start" id="btn-start" onclick="startGame()" disabled>Bắt đầu ▶</button>
     </div>
+
+<!-- ▼▼▼ KHỐI TẠM — HTML ▼▼▼ -->
+<section class="ext-wrap" id="extGames">
+  <div class="ext-head">
+    <h2>Game bổ trợ</h2>
+  </div>
+  <p class="ext-note">Điểm ở đây không tính vào tiến độ học của bạn.</p>
+
+  <div class="ext-tools">
+    <input class="ext-search" id="extSearch" type="search" placeholder="Tìm game…" aria-label="Tìm game">
+    <div class="ext-filters" id="extFilters"></div>
+    <span class="ext-count" id="extCount"></span>
+  </div>
+
+  <div class="ext-grid" id="extGrid"></div>
+  <p class="ext-credit" id="extCredit"></p>
+</section>
   </div>
 
   <!-- PLAY SCREEN -->
@@ -448,6 +537,23 @@ select.inp:focus{border-color:var(--accent)}
   </div>
 
 </div>
+
+<div class="ext-modal" id="extModal" role="dialog" aria-modal="true" aria-label="Game bổ trợ">
+  <div class="em-bar">
+    <div class="em-title" id="emTitle">—</div>
+    <button class="em-btn close" id="emClose">Đóng</button>
+  </div>
+  <div class="em-frame">
+    <div class="em-loading" id="emLoading">Đang tải game…</div>
+    <iframe id="emFrame" title="Game bổ trợ" allow="fullscreen; autoplay; microphone"
+            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <div class="em-fallback" id="emFallback">
+      <p>Game chưa tải được. Kiểm tra kết nối mạng rồi thử lại.</p>
+      <button class="em-btn" id="emRetry" style="justify-self:center">Thử lại</button>
+    </div>
+  </div>
+</div>
+<!-- ▲▲▲ (HTML khối tạm hết ở đây) ▲▲▲ -->
 
 <!-- LOGIN MODAL -->
 <div class="overlay" id="overlay-login" onclick="handleOverlayClick(event,'overlay-login')">
@@ -2128,6 +2234,260 @@ async function awardXP(amount){
     document.getElementById('xp-display').style.display='flex';
   }catch(e){ console.warn('xp',e.message); }
 }
+</script>
+
+<script>
+/* ▼▼▼ KHỐI TẠM — SCRIPT ▼▼▼ =================================================
+   Thêm game : thêm 1 dòng vào GAMES (slug lấy từ đường dẫn trên site nguồn).
+   Ẩn 1 game : đổi số cuối dòng thành 0.
+   Gỡ tất cả : xoá 3 phần đã đánh mốc trong file này.
+
+   Thumbnail : vẽ bằng SVG trong THUMB, KHÔNG dùng ảnh của site nguồn —
+               điều khoản của họ cấm tải và cấm link trực tiếp tới hình ảnh.
+   ========================================================================= */
+
+/* --- nhóm kỹ năng: nhãn + màu --- */
+const CATS = {
+  vocab:   {label:'Từ vựng',  ink:'#4f8ef7', bg1:'#12203a', bg2:'#1a2f52'},
+  grammar: {label:'Ngữ pháp', ink:'#a78bfa', bg1:'#1e1a38', bg2:'#2b2452'},
+  listen:  {label:'Nghe',     ink:'#34d399', bg1:'#0f2a24', bg2:'#153d33'},
+  speak:   {label:'Nói',      ink:'#fb923c', bg1:'#2c1c0e', bg2:'#3f2814'},
+  spell:   {label:'Chính tả', ink:'#f472b6', bg1:'#2d1526', bg2:'#411e37'},
+  season:  {label:'Theo mùa', ink:'#f87171', bg1:'#2c1618', bg2:'#3f1f22'},
+};
+
+/* --- 48 game: [slug, tên, mô tả, nhóm, trình độ, hiện] --- */
+const GAMES = [
+  ['monster-vocab','Monster Vocab','Nghe từ rồi bấm vào hình đúng.','listen','A1',1],
+  ['adjectives','Adjectives','Nhìn hình và đoán tính từ mô tả.','vocab','A1-A2',1],
+  ['monster-phrases','Monster Phrases','Nhìn hình rồi ghép thành câu hoàn chỉnh.','grammar','A2',1],
+  ['idioms','Idioms','Học và luyện các thành ngữ thông dụng.','vocab','B1',1],
+  ['countries','Countries','Luyện tên các quốc gia bằng tiếng Anh.','vocab','A1',1],
+  ['directions','Directions','Nghe và làm theo chỉ đường.','listen','A2',1],
+  ['prepositions-game','Prepositions','Kéo đồ vật vào đúng vị trí theo câu.','grammar','A1-A2',1],
+  ['past-tense-game','Past Tense','Luyện đặt câu ở thì quá khứ.','grammar','A2',1],
+  ['body-parts','Body Parts','Bấm vào hình để học các bộ phận cơ thể.','vocab','A1',1],
+  ['adverbs','Adverbs','Nhìn hình để luyện trạng từ.','grammar','A2',1],
+  ['jobs','Jobs','Đoán nghề nghiệp và luyện từ vựng nghề.','vocab','A1-A2',1],
+  ['adverbs-of-frequency','Frequency','Luyện trạng từ chỉ tần suất.','grammar','A2',1],
+  ['clothes-game','Clothes','Đọc câu rồi di chuyển quần áo cho đúng.','vocab','A1',1],
+  ['vocab-game','Vocab Game','Lật mở hình rồi bấm vào từ tương ứng.','vocab','A1-A2',1],
+  ['phrasal-verbs','Phrasal Verbs','Ghép từ để tạo cụm động từ.','grammar','B1',1],
+  ['numbers','Numbers','Nghe số rồi di chuyển nhân vật.','listen','A1',1],
+  ['present-simple','Present Simple','Luyện động từ ở thì hiện tại đơn.','grammar','A1-A2',1],
+  ['comparatives','Comparatives','Nhìn hình và đặt câu so sánh.','grammar','A2',1],
+  ['similes','Similes','Học và luyện các phép so sánh ví von.','vocab','B1',1],
+  ['food','Food','Nghe và bấm vào hình món ăn đúng.','listen','A1',1],
+  ['perfect-tense-game','Perfect Tense','Luyện đặt câu ở thì hoàn thành.','grammar','B1',1],
+  ['fast-vocab','Fast Vocab','Kéo thả từ để khớp với hình.','vocab','A1-A2',1],
+  ['questions','Questions','Bấm vào từ để tạo thành câu hỏi.','grammar','A2',1],
+  ['telling-the-time','Telling the Time','Đồng hồ tương tác để luyện xem giờ.','vocab','A1',1],
+  ['fast-phrases','Fast Phrases','Mô tả hình bằng cách đặt câu.','grammar','A2',1],
+  ['wordsearch','Word Search','Tìm từ khớp với hình, luyện chính tả.','spell','A1-A2',1],
+  ['months-game','Months','Luyện 12 tháng trong năm.','vocab','A1',1],
+  ['spelling-bee','Spelling Bee','Nhìn hình rồi đánh vần từ đó.','spell','A2',1],
+  ['reveal','Reveal','Đoán từ khi hình dần hiện ra.','vocab','A2',1],
+  ['conditional-sentences','Conditionals','Ghép câu điều kiện khớp với hình.','grammar','B1',1],
+  ['describer','Describer','Đọc mô tả rồi bấm vào hình đúng.','vocab','A2',1],
+  ['hangman','Hangman','Đoán chữ cái để tìm ra từ bị giấu.','spell','A1-A2',1],
+  ['speak-easy','Speak Easy','Luyện nói: đọc to các từ vựng.','speak','A1-A2',1],
+  ['speaking-phrases','Speaking Phrases','Luyện nói: đọc to các cụm câu.','speak','A2',1],
+  ['daily-routines','Daily Routines','Từ vựng và câu về sinh hoạt hằng ngày.','vocab','A1-A2',1],
+  ['future-tense-game','Future Tense','Luyện câu tương lai với "going to".','grammar','A2',1],
+  ['falling-english','Falling English','Di chuyển đám mây để ghép thành câu.','grammar','A2',1],
+  ['concentration','Concentration','Tìm cặp hình và từ khớp nhau.','vocab','A1',1],
+  ['weather','Weather','Nghe rồi đặt biểu tượng thời tiết đúng nước.','listen','A1-A2',1],
+  ['animal-mystery','Animal Mystery','Đặt câu hỏi để đoán ra con vật.','grammar','A2',1],
+  ['halloween','Halloween','Game tiếng Anh chủ đề Halloween.','season','A1-A2',1],
+  ['christmas','Christmas','Game tiếng Anh chủ đề Giáng sinh.','season','A1-A2',1],
+  ['days-of-the-week','Days of the Week','Luyện các thứ trong tuần.','vocab','A1',1],
+  ['family','Family','Từ vựng về các thành viên gia đình.','vocab','A1',1],
+  ['fast-english','Fast English','Nghe từ rồi bấm vào hình tương ứng.','listen','A1-A2',1],
+  ['grammar-bubbles','Grammar Bubbles','Bấm bong bóng để tạo câu đúng.','grammar','A2',1],
+  ['anagrams','Anagrams','Sắp xếp chữ cái để tạo thành từ.','spell','A1-A2',1],
+  ['fast-quiz','Fast Quiz','Câu đố nhanh luyện tiếng Anh cơ bản.','vocab','A1-A2',1],
+];
+
+/* ===========================================================
+   THUMBNAIL — vẽ tay bằng SVG, mỗi game một hình riêng.
+   Motif dùng currentColor để tự lấy màu theo nhóm kỹ năng.
+   Khung 160×100.
+   =========================================================== */
+const W = '#dde3f0';
+const C = (x,y,r,f='currentColor',o=1) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" opacity="${o}"/>`;
+const R = (x,y,w,h,rd=2,f='currentColor',o=1) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rd}" fill="${f}" opacity="${o}"/>`;
+const P = (d,s='currentColor',w=3,f='none') => `<path d="${d}" fill="${f}" stroke="${s}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const T = (x,y,sz,t,f='currentColor',wt=700) => `<text x="${x}" y="${y}" font-size="${sz}" font-weight="${wt}" fill="${f}" text-anchor="middle" font-family="Outfit,sans-serif">${t}</text>`;
+
+const THUMB = {
+  'monster-vocab':      C(80,52,26)+C(71,46,5,W)+C(89,46,5,W)+P('M67 62 q13 10 26 0',W,3),
+  'adjectives':         T(76,64,36,'Aa')+P('M118 30 l3 8 8 1-6 6 2 8-7-4-7 4 2-8-6-6 8-1z','currentColor',2,'currentColor'),
+  'monster-phrases':    C(52,54,19)+C(46,49,4,W)+C(58,49,4,W)+R(80,30,54,32,7)+P('M88 62 l0 11 11-11','currentColor',2,'currentColor')+P('M92 40 h30 M92 50 h20',W,3),
+  'idioms':             T(50,66,48,'&#8220;')+T(110,66,48,'&#8221;')+R(58,48,44,4,2,W,.5),
+  'countries':          P('M54 50 a26 26 0 1 0 52 0 a26 26 0 1 0 -52 0')+P('M80 24 q-15 26 0 52 q15 -26 0 -52')+P('M57 40 h46 M57 60 h46','currentColor',2),
+  'directions':         C(80,50,27,'currentColor',.16)+P('M80 26 l13 36 -13 -9 -13 9z','currentColor',2,'currentColor')+C(80,50,3.5,W),
+  'prepositions-game':  R(54,56,52,26,3)+R(60,50,40,6,2,W,.55)+C(80,32,12)+P('M80 44 v6',W,2.5),
+  'past-tense-game':    P('M80 50 m-24 0 a24 24 0 1 1 8 18')+P('M80 50 l0 -15 M80 50 l11 7')+P('M60 62 l-4 8 8 1','currentColor',3),
+  'body-parts':         C(80,26,10)+P('M80 37 v25 M60 46 h40 M80 62 l-13 20 M80 62 l13 20'),
+  'adverbs':            T(72,64,34,'-ly')+P('M110 38 h22 M106 52 h26 M110 66 h22','currentColor',3),
+  'jobs':               R(48,42,64,38,5)+R(68,32,24,10,3)+R(48,57,64,4,0,W,.4)+R(74,54,12,10,2,W,.75),
+  'adverbs-of-frequency':R(46,64,15,18,2,'currentColor',.3)+R(66,52,15,30,2,'currentColor',.55)+R(86,40,15,42,2,'currentColor',.8)+R(106,28,15,54,2,W,.85),
+  'clothes-game':       P('M54 34 l16 -7 20 0 16 7 -9 15 -7 -3 0 34 -20 0 0 -34 -7 3z','currentColor',3,'currentColor'),
+  'vocab-game':         R(40,28,52,42,4,'currentColor',.28)+R(66,44,52,42,4)+R(76,56,32,4,2,W,.75)+R(76,66,20,4,2,W,.4),
+  'phrasal-verbs':      R(30,40,52,21,10)+R(78,40,52,21,10,'currentColor',.38)+T(56,56,15,'get',W)+T(104,56,15,'up',W),
+  'numbers':            T(80,66,42,'123'),
+  'present-simple':     C(80,42,16)+P('M80 18 v-7 M80 73 v-7 M56 42 h-7 M104 42 h7 M62 24 l-5 -5 M98 60 l5 5')+T(80,92,17,'now',W,600),
+  'comparatives':       R(44,52,20,30,3,'currentColor',.4)+R(96,32,20,50,3)+T(80,64,26,'&gt;',W),
+  'similes':            T(80,40,21,'as … as')+P('M48 56 h64 M48 68 h64','currentColor',3),
+  'food':               P('M56 50 a24 24 0 0 0 48 0')+P('M62 24 v18 M68 24 v18 M65 42 v12')+P('M98 24 q9 7 0 19 v11','currentColor',3)+R(52,72,56,5,2,W,.5),
+  'perfect-tense-game': T(80,42,20,'have')+T(80,72,20,'+ ed',W)+R(54,50,52,3,2,'currentColor',.45),
+  'fast-vocab':         P('M72 18 l-16 34 12 0 -8 30 22 -36 -12 0z','currentColor',2,'currentColor')+R(96,42,34,15,7,'currentColor',.4)+R(96,62,26,15,7,'currentColor',.25),
+  'questions':          T(80,74,60,'?'),
+  'telling-the-time':   P('M80 50 m-27 0 a27 27 0 1 0 54 0 a27 27 0 1 0 -54 0')+P('M80 50 v-16 M80 50 l13 8')+C(80,50,3.5,W)+P('M80 26 v5 M104 50 h-5 M80 74 v-5 M56 50 h5','currentColor',2),
+  'fast-phrases':       R(34,28,88,40,7,'currentColor',.8)+P('M50 68 l0 13 13 -13','currentColor',2,'currentColor')+P('M82 34 l-11 19 9 0 -7 15 16 -22 -9 0z',W,1.5,W),
+  'wordsearch':         [0,1,2,3].map(r=>[0,1,2,3].map(c=>C(52+c*19,30+r*17,3.2,'currentColor',.4)).join('')).join('')+P('M52 30 l57 51','currentColor',4),
+  'months-game':        P('M42 34 a6 6 0 0 1 6 -6 h64 a6 6 0 0 1 6 6 v48 a6 6 0 0 1 -6 6 h-64 a6 6 0 0 1 -6 -6z')+R(42,28,76,13,3,'currentColor',.85)+P('M42 54 h76 M42 70 h76 M67 41 v47 M92 41 v47','currentColor',2)+C(105,62,5,W),
+  'spelling-bee':       C(58,40,13,W,.3)+C(102,40,13,W,.3)+R(62,40,36,36,15)+P('M62 52 h36 M62 63 h36',W,3)+P('M72 30 l-4 -8 M88 30 l4 -8','currentColor',3),
+  'reveal':             P('M38 50 q42 -30 84 0 q-42 30 -84 0','currentColor',3)+C(80,50,14)+C(80,50,5.5,W),
+  'conditional-sentences':T(60,62,32,'IF')+P('M90 50 h28 M110 41 l9 9 -9 9','currentColor',4),
+  'describer':          R(36,30,50,40,4,'currentColor',.35)+P('M84 52 a20 20 0 1 0 40 0 a20 20 0 1 0 -40 0')+P('M118 66 l10 12')+R(44,52,32,4,2,W,.5),
+  'hangman':            P('M42 84 h32 M54 84 v-60 h34 M88 24 v13')+C(88,46,9)+P('M88 55 v16 M76 62 h24 M88 71 l-8 12 M88 71 l8 12','currentColor',3),
+  'speak-easy':         R(70,18,20,36,10)+P('M56 46 a24 24 0 0 0 48 0')+P('M80 70 v11 M66 81 h28','currentColor',4),
+  'speaking-phrases':   R(52,20,16,28,8)+P('M42 42 a18 18 0 0 0 36 0')+P('M60 60 v10 M48 70 h24','currentColor',3.5)+R(94,30,36,26,6,'currentColor',.4)+P('M100 56 l0 9 9 -9','currentColor',2,'currentColor')+P('M102 40 h20',W,3),
+  'future-tense-game':  P('M36 50 h62 M88 38 l12 12 -12 12','currentColor',5)+T(124,60,24,'&#8594;',W),
+  'falling-english':    P('M44 34 a13 13 0 0 1 26 0 a10 10 0 0 1 0 20 h-26 a10 10 0 0 1 0 -20','currentColor',2,'currentColor')+P('M94 28 a11 11 0 0 1 22 0 a9 9 0 0 1 0 18 h-22 a9 9 0 0 1 0 -18','currentColor',2,'currentColor')+P('M54 64 v11 M74 60 v15 M98 56 v13 M116 62 v9',W,3),
+  'daily-routines':     P('M80 24 a26 26 0 1 1 -18 8','currentColor',5)+P('M72 16 l9 8 -9 9','currentColor',5)+C(80,50,8,W,.55),
+  'concentration':      R(34,28,48,46,5,'currentColor',.32)+R(78,32,48,46,5)+P('M90 52 h24 M90 64 h15',W,3)+C(58,51,10,W,.45),
+  'weather':            C(62,38,15)+P('M62 15 v6 M62 55 v6 M39 38 h6 M79 38 h6','currentColor',3)+P('M72 62 a15 15 0 0 1 30 0 a12 12 0 0 1 0 22 h-30 a12 12 0 0 1 0 -22',W,2,W),
+  'animal-mystery':     C(60,42,7.5)+C(78,35,7.5)+C(96,42,7.5)+P('M58 60 a17 13 0 0 0 38 0 a19 15 0 0 0 -38 0','currentColor',2,'currentColor')+T(128,52,30,'?',W),
+  'halloween':          P('M76 26 q5 -9 12 -6','currentColor',3)+C(80,56,27)+P('M67 50 l11 7 -11 7z M93 50 l-11 7 11 7z','#08090d',1,'#08090d')+P('M65 70 q15 11 30 0','#08090d',3.5),
+  'christmas':          P('M80 18 l17 23 -34 0z','currentColor',2,'currentColor')+P('M80 34 l23 27 -46 0z','currentColor',2,'currentColor')+P('M80 52 l29 30 -58 0z','currentColor',2,'currentColor')+R(74,82,12,9,1,W,.55)+C(80,14,4.5,W),
+  'days-of-the-week':   [0,1,2,3,4,5,6].map(i=>C(32+i*16,44,i===4?10:6,'currentColor',i===4?1:.35)).join('')+R(56,68,48,5,2,W,.55),
+  'family':             C(50,38,9)+P('M50 48 v18 M38 54 h24 M50 66 l-8 15 M50 66 l8 15','currentColor',3)+C(82,32,11)+P('M82 44 v22 M68 51 h28 M82 66 l-10 16 M82 66 l10 16','currentColor',3)+C(114,46,7)+P('M114 54 v13 M105 59 h18 M114 67 l-6 13 M114 67 l6 13','currentColor',3),
+  'fast-english':       P('M50 38 q-10 12 0 24','currentColor',3)+P('M62 30 q-17 20 0 40','currentColor',3)+P('M74 21 q-23 29 0 58','currentColor',3)+R(90,42,34,13,6,W,.55)+R(90,60,24,13,6,W,.3),
+  'grammar-bubbles':    C(54,44,18,'currentColor',.85)+C(88,60,15,'currentColor',.55)+C(114,34,11,'currentColor',.35)+P('M69 51 l6 4 M100 52 l6 -8',W,2.5),
+  'anagrams':           '<g transform="rotate(-12 56 52)">'+R(40,36,32,32,5)+T(56,60,22,'C',W)+'</g><g transform="rotate(9 88 48)">'+R(72,32,32,32,5,'currentColor',.6)+T(88,56,22,'A',W)+'</g><g transform="rotate(-5 120 56)">'+R(104,40,32,32,5,'currentColor',.35)+T(120,64,22,'T',W)+'</g>',
+  'fast-quiz':          P('M42 50 l13 13 25 -30','currentColor',6)+P('M92 36 h32 M92 50 h32 M92 64 h20',W,3.5),
+};
+
+const CREDITS = [{name:'Games to Learn English', by:'Owen Dwyer'}];
+const BASE = 'https://www.gamestolearnenglish.com/';
+
+(function(){
+  const wrap    = document.getElementById('extGames');
+  const grid    = document.getElementById('extGrid');
+  const modal   = document.getElementById('extModal');
+  const frame   = document.getElementById('emFrame');
+  const loading = document.getElementById('emLoading');
+  const fallback= document.getElementById('emFallback');
+  const search  = document.getElementById('extSearch');
+
+  const list = GAMES.filter(g => g[5]).map(([slug,title,desc,cat,level]) => ({
+    slug, title, desc, cat, level,
+    /* bản embed.html của site nguồn trước, trang thường làm dự phòng */
+    urls:[BASE + slug + '/embed.html', BASE + slug + '/']
+  }));
+  if(!list.length){ wrap.style.display = 'none'; return; }
+
+  let active = 'all', term = '';
+  const used = [...new Set(list.map(g => g.cat))];
+  document.getElementById('extFilters').innerHTML =
+    [['all','Tất cả'], ...used.map(k => [k, CATS[k].label])]
+      .map(([k,l]) => `<button class="fchip${k==='all'?' on':''}" data-cat="${k}">${l}</button>`).join('');
+
+  function thumb(g){
+    const c = CATS[g.cat];
+    return `<svg viewBox="0 0 160 100" style="color:${c.ink}" aria-hidden="true">
+      <defs><linearGradient id="bg-${g.slug}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${c.bg1}"/><stop offset="1" stop-color="${c.bg2}"/>
+      </linearGradient></defs>
+      <rect width="160" height="100" fill="url(#bg-${g.slug})"/>
+      ${THUMB[g.slug] || T(80,62,30, g.title.slice(0,2).toUpperCase())}
+    </svg>`;
+  }
+
+  function render(){
+    const shown = list.filter(g =>
+      (active === 'all' || g.cat === active) &&
+      (!term || (g.title + ' ' + g.desc).toLowerCase().includes(term))
+    );
+    document.getElementById('extCount').textContent = `${shown.length}/${list.length} game`;
+    grid.innerHTML = shown.length ? shown.map(g => `
+      <button class="ext-card" data-slug="${g.slug}">
+        ${thumb(g)}
+        <div class="ec-body">
+          <h3>${g.title}</h3>
+          <p>${g.desc}</p>
+          <div class="ec-meta">
+            <span class="ec-chip lv">${g.level}</span>
+            <span class="ec-chip">${CATS[g.cat].label}</span>
+          </div>
+        </div>
+      </button>`).join('')
+      : '<div class="ext-empty">Không có game nào khớp. Thử từ khoá khác.</div>';
+  }
+
+  document.getElementById('extFilters').addEventListener('click', e => {
+    const b = e.target.closest('.fchip'); if(!b) return;
+    active = b.dataset.cat;
+    document.querySelectorAll('.fchip').forEach(x => x.classList.toggle('on', x === b));
+    render();
+  });
+  search.addEventListener('input', () => { term = search.value.trim().toLowerCase(); render(); });
+
+  /* ghi nguồn dạng chữ, không đặt liên kết — học viên không rời khỏi EnglishUp */
+  document.getElementById('extCredit').textContent =
+    'Game được phát triển bởi ' + CREDITS.map(c => `${c.name} (${c.by})`).join(', ') + '.';
+
+  /* ---------- mở game ---------- */
+  let timer = null, cur = null, tryIdx = 0;
+
+  function open(g){
+    cur = g; tryIdx = 0;
+    document.getElementById('emTitle').textContent = g.title;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    load();
+  }
+  function load(){
+    fallback.classList.remove('show');
+    loading.classList.remove('hide');
+    frame.style.visibility = 'hidden';
+    frame.src = cur.urls[tryIdx];            // chỉ tải khi mở, không tải sẵn
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if(loading.classList.contains('hide')) return;
+      if(tryIdx < cur.urls.length - 1){ tryIdx++; load(); return; }
+      loading.classList.add('hide');
+      fallback.classList.add('show');
+    }, 6000);
+  }
+  frame.addEventListener('load', () => {
+    if(frame.src === 'about:blank') return;
+    clearTimeout(timer);
+    loading.classList.add('hide');
+    frame.style.visibility = 'visible';
+  });
+  function close(){
+    clearTimeout(timer);
+    modal.classList.remove('open');
+    frame.src = 'about:blank';               // dừng âm thanh, giải phóng bộ nhớ
+    document.body.style.overflow = '';
+  }
+  grid.addEventListener('click', e => {
+    const card = e.target.closest('.ext-card'); if(!card) return;
+    const g = list.find(x => x.slug === card.dataset.slug);
+    if(g) open(g);
+  });
+  document.getElementById('emClose').addEventListener('click', close);
+  document.getElementById('emRetry').addEventListener('click', () => { tryIdx = 0; load(); });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && modal.classList.contains('open')) close();
+  });
+
+  render();
+})();
+/* ▲▲▲ HẾT KHỐI TẠM ▲▲▲ */
 </script>
 </body>
 </html>
