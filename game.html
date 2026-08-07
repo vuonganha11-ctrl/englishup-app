@@ -2004,7 +2004,8 @@ function spDifficulty(w){
   return (SP_CEFR[w.level]||3)*6 + letters;
 }
 // So khớp "lỏng": bỏ dấu cách/nháy/gạch → gõ oclock cũng chấp nhận cho o'clock
-function spNorm(s){ return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]+/g,''); }
+function spNorm(s){ if(window.euUnTelex) s=euUnTelex(s);   /* gôd -> good khi học viên quên tắt bộ gõ */
+  return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]+/g,''); }
 function spLives(){ return '❤️'.repeat(Math.max(0,sp.lives))+'🖤'.repeat(Math.max(0,3-sp.lives)); }
 
 function startSpelling(){
@@ -2062,6 +2063,7 @@ function spRenderStep(){
   </div>`;
   spRenderSlots();
   const inp=document.getElementById('sp-input');
+  if(window.euGuardInput) euGuardInput(inp);   /* vá bộ gõ tiếng Việt */
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(sp.answered) spNext(); else spCheck(); } });
   setTimeout(()=>{ try{inp.focus();}catch(e){} },60);
   spStartTimer();
@@ -2488,6 +2490,89 @@ const BASE = 'https://www.gamestolearnenglish.com/';
   render();
 })();
 /* ▲▲▲ HẾT KHỐI TẠM ▲▲▲ */
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   VÁ BỘ GÕ TIẾNG VIỆT CHO CÁC Ô GÕ TIẾNG ANH
+   ---------------------------------------------------------------------------
+   Unikey/EVKey kiểu Telex gộp 2 chữ giống nhau thành chữ có dấu:
+       oo→ô   dd→đ   aa→â   ee→ê   aw→ă   ow→ơ   uw→ư
+   và biến s f r x j sau nguyên âm thành dấu thanh. Học viên gõ "good" ra "gôd",
+   "see" ra "sê", "add" ra "ađ" → chấm sai oan.
+   Khắc phục: nghe sự kiện input, DỊCH NGƯỢC ngay từng phím một. Vì sửa ngay
+   sau mỗi ký tự nên bộ gõ luôn thao tác trên chuỗi đã đúng → gõ tới đâu đúng
+   tới đó. Đồng thời hiện băng nhắc người dùng tắt bộ gõ cho chắc.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  if (window.euUnTelex) return;
+  var TONE = {0x0301:'s', 0x0300:'f', 0x0309:'r', 0x0303:'x', 0x0323:'j'};
+
+  function unTelex(str){
+    if (str == null) return str;
+    str = String(str);
+    if (!/[^\x00-\x7F]/.test(str)) return str;          // thuần ASCII thì khỏi đụng
+    return str.split(/(\s+)/).map(function(tok){
+      if (!tok || /^\s+$/.test(tok)) return tok;
+      var out = '', tone = '', d = tok.normalize('NFD');
+      for (var i = 0; i < d.length; i++){
+        var ch = d[i], c = d.charCodeAt(i);
+        if (TONE[c] !== undefined){ tone = TONE[c]; continue; }   // dấu thanh → trả về cuối từ
+        if (c === 0x0302){ out += out.slice(-1); continue; }      // â ê ô ← aa ee oo
+        if (c === 0x0306 || c === 0x031B){ out += 'w'; continue; }// ă ơ ư ← aw ow uw
+        if (ch === 'đ'){ out += 'dd'; continue; }
+        if (ch === 'Đ'){ out += 'Dd'; continue; }
+        out += ch;
+      }
+      return out + tone;
+    }).join('');
+  }
+
+  function warn(){
+    if (document.getElementById('eu-ime-bar')) return;
+    var d = document.createElement('div');
+    d.id = 'eu-ime-bar';
+    d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;'
+      + 'background:#33131a;border-top:1px solid rgba(248,113,113,.55);color:#ffc9c9;'
+      + 'padding:13px 16px;font:400 13.5px/1.6 Inter,system-ui,sans-serif;'
+      + 'display:flex;gap:12px;align-items:flex-start;box-shadow:0 -6px 24px rgba(0,0,0,.5)';
+    d.innerHTML =
+      '<span style="font-size:20px;line-height:1.2">⌨️</span>'
+      + '<div style="flex:1"><b style="color:#fff">Bộ gõ tiếng Việt đang bật — nên tắt khi luyện gõ tiếng Anh.</b><br>'
+      + 'Kiểu gõ Telex ghép hai chữ giống nhau thành chữ có dấu '
+      + '(<b>oo → ô</b>, <b>dd → đ</b>, <b>aa → â</b>, <b>ee → ê</b>) nên '
+      + '<b>good</b> ra <b>gôd</b>. Trang này đang tự dịch ngược giúp bạn, '
+      + 'nhưng tắt hẳn vẫn chắc hơn: bấm <b>Ctrl+Shift</b> hoặc bấm biểu tượng '
+      + '<b>V</b> dưới khay hệ thống cho nó về <b>E</b>.</div>'
+      + '<button style="background:none;border:none;color:#ffc9c9;font-size:19px;cursor:pointer;'
+      + 'line-height:1;padding:0 4px" title="Đóng">✕</button>';
+    d.lastChild.onclick = function(){ d.remove(); };
+    document.body.appendChild(d);
+  }
+
+  function guard(el){
+    if (!el || el._euTelexGuard) return;
+    el._euTelexGuard = true;
+    el.addEventListener('input', function(){
+      var v = el.value;
+      if (!/[^\x00-\x7F]/.test(v)) return;
+      var fixed = unTelex(v);
+      if (fixed !== v){
+        el.value = fixed;
+        try { el.setSelectionRange(fixed.length, fixed.length); } catch(e){}
+      }
+      warn();
+    });
+  }
+
+  window.euUnTelex   = unTelex;
+  window.euImeWarn   = warn;
+  window.euGuardInput = guard;
+
+  /* bọc sẵn các ô đã có trong trang */
+  ['ls-input','sp-input','dict-input'].forEach(function(id){
+    guard(document.getElementById(id));
+  });
+})();
 </script>
 </body>
 </html>
