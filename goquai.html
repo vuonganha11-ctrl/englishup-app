@@ -2049,7 +2049,9 @@ async function progPush(questIds){
    vẽ giữ nguyên bề dày nhờ `vector-effect:non-scaling-stroke`.
    Máy hẹp (<760px) đổi sang danh sách dọc — CSS ép `position:static`.
    ═══════════════════════════════════════════════════════════════════════════ */
-const MAP_PTS=[[72,585],[205,498],[338,562],[472,442],[602,498],[726,356],[848,404],[938,236]];
+/* toạ độ 8 mốc trong viewBox 1000×640 — trải kín chiều cao (y 55…580) để đường
+   leo tháp không dồn xuống nửa dưới; chừa ≥50 đơn vị mép trên cho nửa nút 29px */
+const MAP_PTS=[[72,580],[205,449],[338,545],[472,365],[602,449],[726,236],[848,308],[938,55]];
 let MAPSEL=0;
 function bezierSegs(p){
   const n=p.length, segs=[];
