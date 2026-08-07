@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="hw-guard.js?v=20260807"></script>
 <style>
 /* ═══════════════════════════════════════════════════════════════════
    GÕ DIỆT QUÁI — bản demo standalone (chưa nối Supabase)
@@ -344,16 +343,25 @@ select.inp:focus{border-color:var(--accent)}
   background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
                    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
   background-size:52px 52px}
-.map-svg{position:absolute;inset:0;width:100%;height:100%}
+/* Đường đi + mốc tầng nằm trong một vùng THỤT VÀO so với khung, chừa chỗ cho
+   nhãn tên tầng (rộng ~148px, treo 100px dưới mốc) — không chừa thì nhãn tầng 1
+   thò xuống đáy khung và nhãn tầng 8 thò ra mép phải.
+   ⚠️ SVG là phần tử thay thế: đặt 4 cạnh inset + width:auto KHÔNG kéo giãn nó
+   (auto = kích thước nội tại) → phải ghi width/height tường minh bằng calc. */
+.map-svg{position:absolute;left:80px;right:80px;top:18px;bottom:98px;
+  width:calc(100% - 160px);height:calc(100% - 116px)}
 .mp-bg{fill:none;stroke:#26314a;stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .mp-fg{fill:none;stroke:#34d399;stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;
   transition:stroke-dasharray .8s ease}
-.map-nodes{position:absolute;inset:0}
-.mnode{position:absolute;width:58px;height:58px;background:none;border:none;padding:0;cursor:pointer;z-index:2}
+.map-nodes{position:absolute;inset:18px 80px 98px 80px}
+/* translate(-50%,-50%) là bắt buộc: left/top là TÂM mốc trên đường đi,
+   thiếu nó thì cả 8 nút lệch xuống-phải đúng nửa nút so với đường cong */
+.mnode{position:absolute;width:58px;height:58px;background:none;border:none;padding:0;cursor:pointer;
+  z-index:2;transform:translate(-50%,-50%)}
 .mn-dot{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;font-size:25px;
   background:var(--card);border:2px solid var(--border2);transition:.18s;box-shadow:0 6px 18px rgba(0,0,0,.55)}
 .mnode:hover .mn-dot{transform:scale(1.12)}
-.mn-lab{position:absolute;top:66px;left:50%;transform:translateX(-50%);width:158px;text-align:center;
+.mn-lab{position:absolute;top:64px;left:50%;transform:translateX(-50%);width:148px;text-align:center;
   pointer-events:none}
 .mn-lab b{display:block;font-size:12.5px;font-weight:700;color:#e6ecf8;line-height:1.35;
   text-shadow:0 2px 8px #05070c,0 0 4px #05070c}
@@ -401,7 +409,7 @@ select.inp:focus{border-color:var(--accent)}
   .map{height:auto;min-height:0;margin-bottom:22px;padding:4px 0;background:none;border:none}
   .map::after{display:none}
   .map-svg{display:none}
-  .map-nodes{position:static;display:flex;flex-direction:column;gap:16px;
+  .map-nodes{position:static;inset:auto;display:flex;flex-direction:column;gap:16px;
     border-left:2px dashed var(--border2);padding-left:22px;margin-left:26px}
   .mnode{position:static!important;left:auto!important;top:auto!important;width:100%;height:auto;
     display:flex;align-items:center;gap:14px;text-align:left}
