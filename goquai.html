@@ -348,7 +348,10 @@ select.inp:focus{border-color:var(--accent)}
 .mp-fg{fill:none;stroke:#34d399;stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;
   transition:stroke-dasharray .8s ease}
 .map-nodes{position:absolute;inset:0}
-.mnode{position:absolute;width:58px;height:58px;background:none;border:none;padding:0;cursor:pointer;z-index:2}
+/* translate(-50%,-50%) là bắt buộc: left/top là TÂM mốc trên đường đi,
+   thiếu nó thì cả 8 nút lệch xuống-phải đúng nửa nút so với đường cong */
+.mnode{position:absolute;width:58px;height:58px;background:none;border:none;padding:0;cursor:pointer;
+  z-index:2;transform:translate(-50%,-50%)}
 .mn-dot{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;font-size:25px;
   background:var(--card);border:2px solid var(--border2);transition:.18s;box-shadow:0 6px 18px rgba(0,0,0,.55)}
 .mnode:hover .mn-dot{transform:scale(1.12)}
