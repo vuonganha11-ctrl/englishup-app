@@ -61,7 +61,7 @@
         "margin-bottom:8px;display:flex;gap:11px;align-items:center}" +
       "#eu-hw-lock .li .e{font-size:19px;flex:0 0 auto}" +
       "#eu-hw-lock .li .t{font-weight:600;font-size:14px;flex:1;min-width:0}" +
-      "#eu-hw-lock .li .d{font-size:11.5px;color:#64748b;margin-top:2px;font-weight:400}" +
+      "#eu-hw-lock .li .d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;font-weight:400;line-height:1.45}" +
       "#eu-hw-lock .li .s{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;" +
         "background:rgba(251,146,60,.16);color:#fb923c}" +
       "#eu-hw-lock .li .s.w{background:rgba(167,139,250,.18);color:#a78bfa}" +
