@@ -61,14 +61,18 @@
     { href: "giaotrinh.html", icon: "📖", label: "Giáo trình" }
   ];
   var EU_MORE = [
+    { href: "bangxephang.html", icon: "🏆", label: "Bảng xếp hạng" },
+    { href: "gioithieu.html",  icon: "🤝", label: "Giới thiệu bạn bè" },
     { href: "tuvunghinh.html", icon: "🖼️", label: "Từ vựng hình" },
     { href: "thongke-am.html", icon: "🔤", label: "Bản đồ ngữ âm" },
     { href: "game.html",      icon: "🎮", label: "Game" },
+    { href: "goquai.html",    icon: "⚔️", label: "Gõ diệt quái" },
     { href: "report.html",    icon: "📊", label: "Thống kê" },
     { href: "posts.html",     icon: "📰", label: "Thông báo" },
     { href: "nangcap.html",   icon: "⭐", label: "Nâng cấp gói", hideIfPremium: true },
     { href: "tai-khoan.html", icon: "👤", label: "Trang tài khoản" },
     { href: "accounts.html",  icon: "👥", label: "Quản lý tài khoản", admin: true },
+    { href: "admin-hoahong.html", icon: "💰", label: "Hoa hồng & cộng đồng", admin: true },
     { href: "admin.html",     icon: "🛠️", label: "Trang quản trị",   admin: true }
   ];
 
@@ -335,12 +339,32 @@
   function setAccess(u, prof) { publishAccess(computeAccess(true, prof)); }
   function clearAccess() { publishAccess(computeAccess(false, {})); }
 
+  /* ===== Mã giới thiệu còn treo =====
+     register.html lưu mã vào localStorage phòng khi lúc đăng ký chưa có phiên
+     (bật xác nhận email). Lần đăng nhập kế tiếp sẽ gắn nốt, rồi xoá mã đi.
+     Bỏ qua im lặng nếu lỗi — không được để chuyện này chặn việc dựng header. */
+  function tryAttachRef(c) {
+    var code;
+    try { code = window.localStorage.getItem("eu_ref"); } catch (e) { return; }
+    if (!code) return;
+    try {
+      c.rpc("attach_referral", { p_code: code }).then(function (res) {
+        var d = res && res.data;
+        // gắn xong HOẶC chắc chắn không bao giờ gắn được → dọn localStorage
+        if (!d || d.ok || d.reason !== "chua_dang_nhap") {
+          try { window.localStorage.removeItem("eu_ref"); } catch (e) {}
+        }
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function loadAndRender() {
     var c = sb();
     if (!c) return;
     c.auth.getSession().then(function (r) {
       var u = r.data && r.data.session && r.data.session.user;
       if (!u) { clearAccess(); showLoggedOut(); return; }
+      tryAttachRef(c);
       c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
         .then(function (res) { setAccess(u, res.data || {}); showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
         .catch(function () { setAccess(u, {}); showLoggedIn(u, {}); gateAccountsNav(false); });
@@ -348,6 +372,7 @@
     c.auth.onAuthStateChange(function (_e, sess) {
       var u = sess && sess.user;
       if (!u) { clearAccess(); showLoggedOut(); return; }
+      tryAttachRef(c);
       c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
         .then(function (res) { setAccess(u, res.data || {}); showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
         .catch(function () { setAccess(u, {}); showLoggedIn(u, {}); gateAccountsNav(false); });
