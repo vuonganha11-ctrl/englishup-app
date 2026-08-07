@@ -324,6 +324,90 @@ select.inp:focus{border-color:var(--accent)}
 .myrank{margin-top:14px;font-size:13px;color:var(--a2);font-weight:700}
 @media(max-width:700px){ .lb .hidem{display:none} .key{width:34px;height:38px;font-size:11px}
   .key.wide{width:56px} .key.wider{width:72px} .key.space{width:170px} }
+
+/* ══════════ BẢN ĐỒ HÀNH TRÌNH ══════════ */
+.mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.mstat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.mstat .mv{font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;line-height:1.2}
+.mstat .ml{font-size:11.5px;color:var(--muted);margin-top:2px}
+.mstat.g .mv{color:var(--a3)} .mstat.p .mv{color:var(--a2)} .mstat.o .mv{color:var(--a4)}
+.mprog{height:7px;border-radius:20px;background:var(--card2);overflow:hidden;margin-top:9px}
+.mprog i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),var(--a3));transition:width .5s}
+
+.map{position:relative;height:min(62vw,520px);min-height:330px;margin-bottom:78px;
+  border-radius:var(--radius-lg);border:1px solid var(--border);
+  background:radial-gradient(120% 90% at 85% 8%,rgba(167,139,250,.16),transparent 60%),
+             radial-gradient(100% 80% at 10% 95%,rgba(79,142,247,.13),transparent 62%),
+             linear-gradient(160deg,#0d1220,#080a10)}
+.map::after{content:'';position:absolute;inset:0;border-radius:var(--radius-lg);pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:52px 52px}
+.map-svg{position:absolute;inset:0;width:100%;height:100%}
+.mp-bg{fill:none;stroke:#26314a;stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.mp-fg{fill:none;stroke:#34d399;stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;
+  transition:stroke-dasharray .8s ease}
+.map-nodes{position:absolute;inset:0}
+.mnode{position:absolute;width:58px;height:58px;background:none;border:none;padding:0;cursor:pointer;z-index:2}
+.mn-dot{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;font-size:25px;
+  background:var(--card);border:2px solid var(--border2);transition:.18s;box-shadow:0 6px 18px rgba(0,0,0,.55)}
+.mnode:hover .mn-dot{transform:scale(1.12)}
+.mn-lab{position:absolute;top:66px;left:50%;transform:translateX(-50%);width:158px;text-align:center;
+  pointer-events:none}
+.mn-lab b{display:block;font-size:12.5px;font-weight:700;color:#e6ecf8;line-height:1.35;
+  text-shadow:0 2px 8px #05070c,0 0 4px #05070c}
+.mn-lab i{display:block;font-family:var(--mono);font-size:10.5px;font-style:normal;color:var(--muted);
+  margin-top:2px;text-shadow:0 2px 8px #05070c}
+.mnode.locked .mn-dot{filter:grayscale(1);opacity:.42;border-style:dashed}
+.mnode.locked .mn-lab b{color:#5b667d}
+.mnode.done .mn-dot{border-color:var(--a3);background:rgba(52,211,153,.14)}
+.mnode.done .mn-lab i{color:var(--a3)}
+.mnode.now .mn-dot{border-color:var(--a4);background:rgba(251,146,60,.16);animation:mpulse 1.9s infinite}
+.mnode.now .mn-lab i{color:var(--a4)}
+.mnode.sel .mn-dot{box-shadow:0 0 0 4px rgba(79,142,247,.32),0 6px 18px rgba(0,0,0,.55)}
+@keyframes mpulse{0%,100%{box-shadow:0 0 0 0 rgba(251,146,60,.42)}70%{box-shadow:0 0 0 13px rgba(251,146,60,0)}}
+.mn-flag{position:absolute;top:-6px;right:-8px;font-size:14px;line-height:1}
+
+.qlist{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.q{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--border);
+  border-radius:11px;padding:12px 14px}
+.q .qi{font-size:20px;line-height:1.25;flex-shrink:0;width:26px;text-align:center}
+.q .qn{font-size:13.5px;font-weight:700;color:#fff}
+.q .qd{font-size:12.5px;color:#93a0b6;margin-top:2px;line-height:1.5}
+.q .qx{margin-left:auto;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--a4);
+  white-space:nowrap;flex-shrink:0}
+.q.on{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.07)}
+.q.on .qn{color:var(--a3)} .q.on .qx{color:var(--a3)}
+.q.main{border-left:3px solid var(--a4)}
+.q.new{border-color:var(--a3);box-shadow:0 0 0 3px rgba(52,211,153,.14)}
+
+.mons{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.mon-chip{display:flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;font-size:12px;color:#b9c4d6;font-weight:600}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px}
+.bdg{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;
+  display:flex;gap:11px;align-items:flex-start}
+.bdg .bi{font-size:26px;line-height:1;filter:grayscale(1);opacity:.35}
+.bdg .bn{font-size:13.5px;font-weight:700;color:#6b7688}
+.bdg .bd{font-size:11.5px;color:#5b667d;margin-top:2px;line-height:1.45}
+.bdg.on{border-color:var(--a2);background:rgba(167,139,250,.08)}
+.bdg.on .bi{filter:none;opacity:1} .bdg.on .bn{color:#fff} .bdg.on .bd{color:#93a0b6}
+.locknote{font-size:12.5px;color:#fbc99a;background:rgba(251,146,60,.09);
+  border:1px solid rgba(251,146,60,.3);border-radius:10px;padding:11px 14px;margin-top:14px}
+.locknote b{color:#fff}
+
+@media(max-width:760px){
+  .map{height:auto;min-height:0;margin-bottom:22px;padding:4px 0;background:none;border:none}
+  .map::after{display:none}
+  .map-svg{display:none}
+  .map-nodes{position:static;display:flex;flex-direction:column;gap:16px;
+    border-left:2px dashed var(--border2);padding-left:22px;margin-left:26px}
+  .mnode{position:static!important;left:auto!important;top:auto!important;width:100%;height:auto;
+    display:flex;align-items:center;gap:14px;text-align:left}
+  .mn-dot{position:relative;inset:auto;width:48px;height:48px;flex-shrink:0;font-size:22px;margin-left:-46px;order:1}
+  .mn-lab{position:static;transform:none;width:auto;text-align:left;order:2;flex:1}
+  .mn-flag{position:static;margin-left:0;order:3;font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -405,6 +489,7 @@ select.inp:focus{border-color:var(--accent)}
       <div class="note" id="poolInfo" style="margin:0"></div>
       <button class="btn btn-ghost" id="btnTutor" style="margin-left:auto">⌨️ Hướng dẫn đặt tay</button>
       <button class="btn btn-ghost" id="btnBoard">🏆 Bảng xếp hạng</button>
+      <button class="btn btn-ghost" id="btnMap">🗺️ Bản đồ hành trình</button>
       <button class="btn btn-main" id="btnStart">⚔️ Vào tháp</button>
     </div>
   </section>
@@ -485,6 +570,42 @@ select.inp:focus{border-color:var(--accent)}
     <div class="start-bar"><button class="btn btn-main" id="btnBoardBack" style="margin-left:auto">Quay lại</button></div>
   </section>
 
+  <!-- ══════════════ BẢN ĐỒ HÀNH TRÌNH ══════════════ -->
+  <section id="scrMap" class="screen">
+    <div class="hero-box">
+      <div class="ico">🗺️</div>
+      <div>
+        <h1>Bản đồ hành trình</h1>
+        <p>Tháp Ngôn Từ có tám tầng. Dọn sạch một tầng là mở được tầng kế tiếp — và mở luôn quyền
+           vào thẳng tầng đó lần sau, khỏi phải đánh lại từ đầu. Mỗi tầng có <b>3 nhiệm vụ chinh phục</b>:
+           một nhiệm vụ chính để mở đường, hai nhiệm vụ phụ để lấy danh hiệu và XP.</p>
+      </div>
+    </div>
+
+    <div class="mstats" id="mapStats"></div>
+
+    <div class="map" id="mapWrap">
+      <svg class="map-svg" id="mapSvg" viewBox="0 0 1000 640" preserveAspectRatio="none">
+        <path class="mp-bg" id="mpBg" d=""></path>
+        <path class="mp-fg" id="mpFg" d=""></path>
+      </svg>
+      <div class="map-nodes" id="mapNodes"></div>
+    </div>
+
+    <div class="panel" id="mapDetail"></div>
+
+    <div class="sect" style="margin-top:22px">
+      <div class="sect-label">Danh hiệu</div>
+      <div class="badges" id="mapBadges"></div>
+    </div>
+
+    <div class="start-bar">
+      <button class="btn btn-ghost" id="btnMapBack">Quay lại</button>
+      <div class="note" id="mapNote" style="margin:0"></div>
+      <button class="btn btn-main" id="btnMapPlay" style="margin-left:auto">⚔️ Vào tầng 1</button>
+    </div>
+  </section>
+
   <!-- ══════════════ MÀN HÌNH 2 · CỐT TRUYỆN ══════════════ -->
   <section id="scrStory" class="screen">
     <div class="story">
@@ -543,10 +664,15 @@ select.inp:focus{border-color:var(--accent)}
 
   <!-- ══════════════ MÀN HÌNH 4 · HẾT TẦNG ══════════════ -->
   <section id="scrClear" class="screen">
-    <div class="panel">
+    <div class="panel" id="clHead">
       <h2 id="clTitle">Đã dọn sạch tầng 1</h2>
       <div class="sub" id="clSub"></div>
       <div class="stats" id="clStats"></div>
+    </div>
+    <div class="panel" id="clQuestPanel">
+      <h2>Nhiệm vụ chinh phục</h2>
+      <div class="sub" id="clQuestSub"></div>
+      <div class="qlist" id="clQuests"></div>
     </div>
     <div class="panel" id="upPanel">
       <h2>Chọn nâng cấp</h2>
@@ -555,12 +681,15 @@ select.inp:focus{border-color:var(--accent)}
       <div class="picks" id="upPicks"></div>
       <div class="owned" id="upOwned"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="clWordPanel">
       <h2>Từ bạn vừa hạ</h2>
       <div class="sub">Từ viền đỏ là từ bạn từng gõ sai — nên xem lại.</div>
       <div class="words" id="clWords"></div>
     </div>
-    <div class="start-bar"><button class="btn btn-main" id="btnNext" style="margin-left:auto">Lên tầng tiếp ▶</button></div>
+    <div class="start-bar">
+      <button class="btn btn-ghost" id="btnClMap">🗺️ Bản đồ</button>
+      <button class="btn btn-main" id="btnNext" style="margin-left:auto">Lên tầng tiếp ▶</button>
+    </div>
   </section>
 
   <!-- ══════════════ MÀN HÌNH 5 · KẾT THÚC ══════════════ -->
@@ -570,6 +699,11 @@ select.inp:focus{border-color:var(--accent)}
       <div class="sub" id="ovSub"></div>
       <div class="stats" id="ovStats"></div>
     </div>
+    <div class="panel" id="ovQuestPanel">
+      <h2>Nhiệm vụ chinh phục</h2>
+      <div class="sub" id="ovQuestSub"></div>
+      <div class="qlist" id="ovQuests"></div>
+    </div>
     <div class="panel">
       <h2>Tổng kết từ vựng</h2>
       <div class="sub">Bấm 🔊 để nghe lại phát âm.</div>
@@ -578,6 +712,7 @@ select.inp:focus{border-color:var(--accent)}
     <div class="start-bar">
       <button class="btn btn-ghost" id="btnAgain">↻ Chơi lại</button>
       <div class="note" id="saveNote" style="margin:0"></div>
+      <button class="btn btn-ghost" id="btnOvMap">🗺️ Bản đồ</button>
       <button class="btn btn-ghost" id="btnOvBoard" style="margin-left:auto">🏆 Bảng xếp hạng</button>
       <button class="btn btn-main" id="btnMenu">Về màn chuẩn bị</button>
     </div>
@@ -949,6 +1084,71 @@ const STAGES = [
    text:'Chúa tể Hư Vô ngồi trên ngai, quanh nó là tất cả những từ nó đã cướp. Trận cuối cùng.'}
 ];
 
+/* tên gọi từng loại quái — dùng trên bản đồ */
+const TYPE_NAME = {slime:'Slime Chữ', bat:'Dơi Âm', armor:'Quái Giáp', ghost:'Bóng Ma',
+                   bomber:'Quái Nổ', boss:'Trùm tầng'};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2b · NHIỆM VỤ CHINH PHỤC
+   ---------------------------------------------------------------------------
+   Mỗi tầng 3 nhiệm vụ, mã `s<số tầng><a|b|c>`:
+     · a = nhiệm vụ chính (dọn sạch tầng) → mở khoá tầng kế tiếp
+     · b, c = nhiệm vụ phụ, chỉ chấm khi đã dọn sạch tầng
+   `ok(s)` nhận thống kê CỦA RIÊNG TẦNG vừa đánh (không phải cả ván):
+     s.ok/s.err ký tự đúng-sai · s.wpm · s.acc · s.kills · s.hits (số lần bị quái
+     chạm) · s.skills (số chiêu đã dùng) · s.maxCombo · s.byType · s.hitBy
+   ⚠️ Mã nhiệm vụ được ràng buộc ở tầng DB (regex ^s[1-8][a-c]$) — đổi mã ở đây
+   thì phải sửa cả migration_goquai_map.sql.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const QUESTS = [
+ /* tầng 1 */[
+  {id:'s1a', ico:'🏰', name:'Mở Cổng Đá',        xp:20, main:1, desc:'Dọn sạch tầng 1 và hạ trùm cổng.'},
+  {id:'s1b', ico:'🩹', name:'Không trầy da',     xp:30, desc:'Qua tầng mà không con quái nào chạm được tới bạn.', ok:s=>s.hits===0},
+  {id:'s1c', ico:'🔥', name:'Chuỗi đầu tay',     xp:25, desc:'Đạt combo 8 trong tầng này.', ok:s=>s.maxCombo>=8}],
+ /* tầng 2 */[
+  {id:'s2a', ico:'🕯️', name:'Qua Hành Lang Nến', xp:25, main:1, desc:'Dọn sạch tầng 2.'},
+  {id:'s2b', ico:'🦇', name:'Nhanh hơn cánh dơi',xp:30, desc:'Hạ 6 con Dơi Âm trong tầng này.', ok:s=>(s.byType.bat||0)>=6},
+  {id:'s2c', ico:'🎯', name:'Ngọn nến không tắt',xp:35, desc:'Giữ độ chính xác từ 90% trở lên cả tầng.', ok:s=>s.acc>=90}],
+ /* tầng 3 */[
+  {id:'s3a', ico:'⛓️', name:'Phá Hầm Xích',      xp:30, main:1, desc:'Dọn sạch tầng 3.'},
+  {id:'s3b', ico:'🗿', name:'Đập tan lớp giáp',  xp:35, desc:'Hạ 4 con Quái Giáp (mỗi con 2 từ liên tiếp).', ok:s=>(s.byType.armor||0)>=4},
+  {id:'s3c', ico:'⚡', name:'Chuỗi mười lăm',    xp:35, desc:'Đạt combo 15 trong tầng này.', ok:s=>s.maxCombo>=15}],
+ /* tầng 4 */[
+  {id:'s4a', ico:'🌫️', name:'Xuyên Sương Mù',    xp:35, main:1, desc:'Dọn sạch tầng 4.'},
+  {id:'s4b', ico:'👻', name:'Bắt Bóng Ma',       xp:40, desc:'Hạ 5 con Bóng Ma (loại mang từ dài nhất).', ok:s=>(s.byType.ghost||0)>=5},
+  {id:'s4c', ico:'🧘', name:'Không cần phép',    xp:45, desc:'Qua cả tầng mà không dùng chiêu nào (phím 1–4).', ok:s=>s.skills===0}],
+ /* tầng 5 */[
+  {id:'s5a', ico:'🔥', name:'Vượt Lò Lửa',       xp:40, main:1, desc:'Dọn sạch tầng 5.'},
+  {id:'s5b', ico:'🧯', name:'Gỡ hết ngòi nổ',    xp:45, desc:'Không để một con Quái Nổ nào chạm tới bạn.', ok:s=>!(s.hitBy.bomber>0)},
+  {id:'s5c', ico:'⌨️', name:'Ba mươi từ mỗi phút',xp:40, desc:'Đạt tốc độ từ 30 WPM trở lên trong tầng.', ok:s=>s.wpm>=30}],
+ /* tầng 6 */[
+  {id:'s6a', ico:'❄️', name:'Chinh phục Đỉnh Băng',xp:45, main:1, desc:'Dọn sạch tầng 6.'},
+  {id:'s6b', ico:'🎯', name:'Tay không run',     xp:50, desc:'Giữ độ chính xác từ 95% trở lên cả tầng.', ok:s=>s.acc>=95},
+  {id:'s6c', ico:'⚡', name:'Chuỗi hai lăm',     xp:50, desc:'Đạt combo 25 trong tầng này.', ok:s=>s.maxCombo>=25}],
+ /* tầng 7 */[
+  {id:'s7a', ico:'🌑', name:'Băng qua Phòng Vô Ngôn',xp:50, main:1, desc:'Dọn sạch tầng 7.'},
+  {id:'s7b', ico:'🩹', name:'Bóng tối không chạm tới',xp:55, desc:'Qua tầng mà không con quái nào chạm được tới bạn.', ok:s=>s.hits===0},
+  {id:'s7c', ico:'⌨️', name:'Bốn mươi từ mỗi phút',xp:55, desc:'Đạt tốc độ từ 40 WPM trở lên trong tầng.', ok:s=>s.wpm>=40}],
+ /* tầng 8 */[
+  {id:'s8a', ico:'👑', name:'Hạ Chúa tể Hư Vô',  xp:80, main:1, desc:'Dọn sạch Ngai Hư Vô — trận cuối cùng.'},
+  {id:'s8b', ico:'🛡️', name:'Trận cuối hoàn hảo',xp:70, desc:'Hạ Chúa tể mà không mất một giọt máu nào.', ok:s=>s.hits===0},
+  {id:'s8c', ico:'🏆', name:'Bậc thầy bàn phím', xp:70, desc:'Đạt từ 45 WPM và chính xác từ 95% trong trận cuối.', ok:s=>s.wpm>=45&&s.acc>=95}]
+];
+const QUEST_BY_ID = {}; QUESTS.forEach(l=>l.forEach(q=>QUEST_BY_ID[q.id]=q));
+const QUEST_TOTAL = QUESTS.reduce((n,l)=>n+l.length,0);
+
+/* danh hiệu — suy ra từ danh sách nhiệm vụ đã xong, không lưu riêng */
+const BADGES = [
+  {ico:'🗝️', name:'Người Mở Cổng',       desc:'Dọn sạch tầng 1.',                              ok:q=>q.has('s1a')},
+  {ico:'🗿', name:'Kẻ Phá Giáp',          desc:'Xong cả 3 nhiệm vụ của Hầm Xích.',              ok:q=>['s3a','s3b','s3c'].every(x=>q.has(x))},
+  {ico:'🧘', name:'Kẻ Đi Trong Sương',    desc:'Qua tầng Sương Mù không dùng một chiêu nào.',   ok:q=>q.has('s4c')},
+  {ico:'🧯', name:'Tay Gỡ Ngòi Nổ',       desc:'Không để Quái Nổ nào chạm tới ở Lò Lửa.',       ok:q=>q.has('s5b')},
+  {ico:'🎯', name:'Tay Chuẩn',            desc:'Đạt cả 3 mốc chính xác (tầng 2 · 6 · 8).',      ok:q=>['s2c','s6b','s8c'].every(x=>q.has(x))},
+  {ico:'🏃', name:'Ngón Tay Chớp',        desc:'Đạt cả 3 mốc tốc độ (tầng 5 · 7 · 8).',         ok:q=>['s5c','s7c','s8c'].every(x=>q.has(x))},
+  {ico:'👑', name:'Kẻ Hạ Hư Vô',          desc:'Hạ Chúa tể Hư Vô ở tầng 8.',                    ok:q=>q.has('s8a')},
+  {ico:'⭐', name:'Bậc Thầy Ngôn Từ',     desc:'Hoàn thành cả 24 nhiệm vụ chinh phục.',         ok:q=>q.size>=QUEST_TOTAL}
+];
+
 /* nâng cấp */
 const UPGRADES = [
   {id:'hp',    ico:'🛡️', name:'Giáp trụ',   max:4, desc:'+25 máu tối đa và hồi lại đúng phần thêm.'},
@@ -980,6 +1180,9 @@ const WEAPONS = [
    3 · TRẠNG THÁI
    ═══════════════════════════════════════════════════════════════════════════ */
 const CFG = {source:'srs', levels:['A1','A2'], diff:'norm', topic:''};
+
+/* tiến độ chinh phục — best = số tầng ĐÃ dọn sạch (0…8) */
+const PROG = {best:0, quests:new Set(), synced:false, note:''};
 const G = {
   playing:false, paused:false, stage:0,
   hp:100, maxHp:100, mp:40, maxMp:100,
@@ -989,6 +1192,10 @@ const G = {
   locked:null, typed:'',
   spawned:0, bossOut:false, freezeUntil:0,
   queue:[], qi:0, bossQueue:[], bqi:0,
+  startStage:0,         // tầng bắt đầu ván này (chọn trên bản đồ)
+  pendingStart:null,    // tầng sẽ vào sau màn "hành trang xuất phát"
+  ss:null,              // thống kê RIÊNG của tầng đang đánh — dùng chấm nhiệm vụ
+  lastQuests:null,      // kết quả chấm nhiệm vụ của tầng vừa xong
   stats:{ok:0, err:0, kills:0, t0:0},
   session:{words:[]},   // toàn bộ từ đã hạ trong ván
   stageWords:[],        // từ đã hạ trong tầng hiện tại
@@ -1052,16 +1259,34 @@ function buildSetup(){
 /* ═══════════════════════════════════════════════════════════════════════════
    6 · BẮT ĐẦU VÁN / TẦNG
    ═══════════════════════════════════════════════════════════════════════════ */
-function newGame(){
+/* from = tầng bắt đầu (0-based). Vào từ tầng giữa chừng thì được bù
+   `from` lượt chọn nâng cấp + cấp nhân vật tương ứng, kẻo yếu hơn người
+   đánh liền mạch từ tầng 1. */
+function newGame(from){
+  from = Math.max(0, Math.min(STAGES.length-1, from|0));
   const d = DIFFS.find(x=>x.id===CFG.diff);
   Object.assign(G,{
-    stage:0, hp:d.hp, maxHp:d.hp, mp:40, maxMp:100, xp:0, level:1, picks:0,
+    stage:from, startStage:from, pendingStart:null, lastQuests:null,
+    hp:d.hp, maxHp:d.hp, mp:40, maxMp:100, xp:0, level:1+from, picks:from,
     score:0, combo:0, maxCombo:0, upg:{}, monsters:[], bullets:[], parts:[],
     locked:null, typed:'', spawned:0, bossOut:false, freezeUntil:0,
     stats:{ok:0,err:0,kills:0,t0:performance.now()}, session:{words:[]}, stageWords:[]
   });
   buildQueue();
-  startStage(0);
+  if(from>0) outfitScreen(from); else startStage(0);
+}
+/* màn "hành trang xuất phát" — dùng lại đúng khung màn hết tầng */
+function outfitScreen(from){
+  G.pendingStart = from;
+  $('#clTitle').textContent = `Hành trang xuất phát — Tầng ${from+1} · ${STAGES[from].name}`;
+  $('#clSub').textContent = `Bạn đã chinh phục ${from} tầng trước đó nên được nhận trước `
+    + `${from} lượt nâng cấp và bắt đầu ở cấp ${1+from}.`;
+  $('#clStats').innerHTML='';
+  $('#clQuestPanel').style.display='none';
+  $('#clWordPanel').style.display='none';
+  $('#btnNext').textContent = `Vào tầng ${from+1} ▶`;
+  renderUpgrades();
+  show('#scrClear');
 }
 function buildQueue(){
   G.queue = shuffle(loadPool().slice()); G.qi = 0;
@@ -1084,6 +1309,8 @@ function pickBossWord(){
 
 function startStage(i){
   G.stage=i; G.stageWords=[]; G.spawned=0; G.bossOut=false;
+  /* thống kê riêng của tầng — nền để chấm nhiệm vụ chinh phục */
+  G.ss={ok:0, err:0, kills:0, hits:0, skills:0, maxCombo:0, byType:{}, hitBy:{}, t0:0};
   G.monsters.forEach(m=>m.el&&m.el.remove()); G.monsters=[];
   G.locked=null; G.typed='';
   const s=STAGES[i];
@@ -1096,6 +1323,7 @@ function enterPlay(){
   measure();
   buildSkillBar(); syncHUD();
   G.playing=true; G.paused=false; G.lastSpawn=0; G.nextGap=.8;
+  if(G.ss && !G.ss.t0) G.ss.t0=performance.now();
   $('#pauseBox').classList.remove('on');
   lastT=performance.now();
   if(raf) cancelAnimationFrame(raf);
@@ -1315,7 +1543,7 @@ function typeChar(ch){
   const want=(term[m.typed.length]||'').toLowerCase();
   if(low===want){
     m.typed += term[m.typed.length];
-    G.stats.ok++;
+    G.stats.ok++; if(G.ss) G.ss.ok++;
     gainMana(1.5*(1+0.25*(G.upg.mana||0)));
     fireBullet(m);
     renderWord(m);
@@ -1327,7 +1555,7 @@ function typeChar(ch){
   } else onMiss(m);
 }
 function onMiss(m){
-  G.stats.err++;
+  G.stats.err++; if(G.ss) G.ss.err++;
   if(m){
     m.misses++;
     if(m.misses > (G.upg.forgive||0)) breakCombo();
@@ -1372,6 +1600,8 @@ function killMonster(m, byPlayer){
 
   if(byPlayer){
     G.combo++; G.maxCombo=Math.max(G.maxCombo,G.combo); G.stats.kills++;
+    if(G.ss){ G.ss.kills++; G.ss.maxCombo=Math.max(G.ss.maxCombo,G.combo);
+              G.ss.byType[m.type]=(G.ss.byType[m.type]||0)+1; }
     const mult = 1 + Math.min(G.combo,20)*0.08;
     const w=m.words[m.words.length-1];
     G.score += Math.round(10*w.term.length*mult);
@@ -1390,6 +1620,7 @@ function hitHero(m){
   if(!m.alive) return;
   m.alive=false; m.el.remove();
   G.hp -= m.T.dmg;
+  if(G.ss){ G.ss.hits++; G.ss.hitBy[m.type]=(G.ss.hitBy[m.type]||0)+1; }
   breakCombo();
   if(G.locked===m) G.locked=null;
   $('#flash').classList.remove('on'); void $('#flash').offsetWidth; $('#flash').classList.add('on');
@@ -1458,7 +1689,7 @@ function useSkill(s){
     G.monsters.filter(m=>m.alive).forEach(m=>{ if(m.type==='boss') bossHit(m,2); else killMonster(m,true); });
     G.shake=.8;
   }
-  G.mp-=s.cost; syncHUD();
+  G.mp-=s.cost; if(G.ss) G.ss.skills++; syncHUD();
 }
 function bossHit(b,n){
   b.wi=Math.min(b.words.length, b.wi+n); b.typed='';
@@ -1543,15 +1774,61 @@ window.addEventListener('blur', ()=>{ if(G.playing&&!G.paused) togglePause(); })
    ═══════════════════════════════════════════════════════════════════════════ */
 function stageClear(){
   G.playing=false;
+  awardStageQuests();                       // chấm nhiệm vụ TRƯỚC khi rẽ nhánh thắng
   if(G.stage>=STAGES.length-1){ gameOver(true); return; }
   const st=STAGES[G.stage];
   $('#clTitle').textContent=`Đã dọn sạch tầng ${G.stage+1} — ${st.name}`;
   $('#clSub').textContent=`Bạn hạ ${G.stageWords.length} từ ở tầng này.`;
   $('#clStats').innerHTML = statCards();
   $('#clWords').innerHTML = G.stageWords.map(wc).join('') || '<div class="note">Chưa có từ nào.</div>';
+  $('#clQuestPanel').style.display='';
+  $('#clWordPanel').style.display='';
+  $('#btnNext').textContent='Lên tầng tiếp ▶';
+  renderQuestResult('#clQuests', '#clQuestSub');
   G.picks += 1;
   renderUpgrades();
   show('#scrClear');
+}
+
+/* ── chấm nhiệm vụ của tầng vừa dọn sạch ── */
+function stageStats(){
+  const ss=G.ss||{ok:0,err:0,kills:0,hits:0,skills:0,maxCombo:0,byType:{},hitBy:{},t0:0};
+  const mins=Math.max(((performance.now()-(ss.t0||performance.now()))/60000), .01);
+  return Object.assign({}, ss, {
+    wpm: (ss.ok/5)/mins,
+    acc: ss.ok/Math.max(1, ss.ok+ss.err)*100
+  });
+}
+function awardStageQuests(){
+  const s=stageStats(), list=QUESTS[G.stage]||[];
+  const done=list.filter(q=>{ try{ return q.main ? true : !!q.ok(s); }catch(e){ return false; } });
+  const fresh=done.filter(q=>!PROG.quests.has(q.id));
+  done.forEach(q=>PROG.quests.add(q.id));
+  PROG.best=Math.max(PROG.best, G.stage+1);
+  G.lastQuests={stage:G.stage, done:done.map(q=>q.id), fresh:fresh.map(q=>q.id), total:list.length};
+  progSaveLocal();
+  progPush(done.map(q=>q.id));              // đồng bộ Supabase + cộng XP nhiệm vụ mới
+}
+function questRow(q, state){
+  /* state: 'new' vừa xong lần đầu · 'on' đã xong (trước đó) · '' chưa xong */
+  const ico = state ? '✅' : q.ico;
+  return `<div class="q${q.main?' main':''}${state?' on':''}${state==='new'?' new':''}">
+    <div class="qi">${ico}</div>
+    <div><div class="qn">${esc(q.name)}${state==='new'?' <span style="color:#fbbf24">· vừa hoàn thành!</span>':''}</div>
+      <div class="qd">${esc(q.desc)}</div></div>
+    <div class="qx">+${q.xp} XP</div></div>`;
+}
+function renderQuestResult(listSel, subSel){
+  const L=G.lastQuests;
+  const box=$(listSel), sub=$(subSel);
+  if(!L){ box.innerHTML='<div class="note">Chưa chấm được nhiệm vụ nào.</div>'; sub.textContent=''; return; }
+  const list=QUESTS[L.stage]||[];
+  const doneSet=new Set(L.done), freshSet=new Set(L.fresh);
+  box.innerHTML = list.map(q=>questRow(q, freshSet.has(q.id)?'new':(doneSet.has(q.id)?'on':''))).join('');
+  const xp=L.fresh.reduce((n,id)=>n+(QUEST_BY_ID[id]?QUEST_BY_ID[id].xp:0),0);
+  sub.innerHTML = `Tầng ${L.stage+1} · xong <b>${L.done.length}/${L.total}</b> nhiệm vụ`
+    + (L.fresh.length ? ` — <b>${L.fresh.length} nhiệm vụ mới, +${xp} XP</b>` : ' — không có nhiệm vụ nào mới.')
+    + (PROG.note ? ` · ${esc(PROG.note)}` : '');
 }
 function statCards(){
   const mins=(performance.now()-G.stats.t0)/60000;
@@ -1609,6 +1886,17 @@ function gameOver(win){
   $('#ovStats').innerHTML = statCards();
   const sorted=G.session.words.slice().sort((a,b)=>(b.miss?1:0)-(a.miss?1:0));
   $('#ovWords').innerHTML = sorted.map(wc).join('') || '<div class="note">Chưa hạ được từ nào.</div>';
+  if(win && G.lastQuests){
+    $('#ovQuestPanel').style.display='';
+    renderQuestResult('#ovQuests', '#ovQuestSub');
+  }else{
+    /* ngã xuống giữa tầng: tầng đó không được tính, nhắc lại việc còn dở */
+    $('#ovQuestPanel').style.display='';
+    const list=QUESTS[G.stage]||[];
+    $('#ovQuestSub').innerHTML = `Tầng ${G.stage+1} chưa dọn sạch nên <b>chưa nhiệm vụ nào được tính</b>. `
+      + `Ba nhiệm vụ đang chờ bạn ở tầng này:`;
+    $('#ovQuests').innerHTML = list.map(q=>questRow(q, PROG.quests.has(q.id)?'on':'')).join('');
+  }
   show('#scrOver');
   saveRun(win);
 }
@@ -1629,15 +1917,22 @@ async function saveRun(win){
   if(!sb || !ME){ note.innerHTML='Chưa đăng nhập nên <b>điểm không được lưu</b>.'; return; }
   note.textContent='Đang lưu kết quả…';
   const s=runStats();
-  try{
-    const {error}=await sb.from('typing_runs').insert({
+  const row={
       user_id: ME.id, display_name: MYNAME || (ME.email||'').split('@')[0],
       score: G.score, stage_reached: G.stage+1, won: !!win, hero_level: G.level,
       wpm: Math.min(s.wpm,400), accuracy: s.acc, max_combo: G.maxCombo,
       kills: G.stats.kills, words_learned: G.session.words.length,
       missed_words: G.session.words.filter(w=>w.miss).map(w=>w.term).slice(0,80),
-      difficulty: CFG.diff, word_source: CFG.source, duration_sec: Math.min(s.sec,36000)
-    });
+      difficulty: CFG.diff, word_source: CFG.source, duration_sec: Math.min(s.sec,36000),
+      start_stage: G.startStage+1
+  };
+  try{
+    let {error}=await sb.from('typing_runs').insert(row);
+    /* chưa chạy migration_goquai_map.sql thì cột start_stage chưa có — lưu lại kiểu cũ */
+    if(error && /start_stage/i.test(error.message||'')){
+      const r2={...row}; delete r2.start_stage;
+      ({error}=await sb.from('typing_runs').insert(r2));
+    }
     if(error) throw error;
     const xp = Math.round(G.score/12) + (win?60:0);
     await awardXP(xp);
@@ -1656,6 +1951,202 @@ async function awardXP(n){
     await sb.from('user_profiles').update({xp:(data?.xp||0)+n}).eq('id',ME.id);
   }catch(e){ console.warn('xp',e.message); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   15b-bis · TIẾN ĐỘ CHINH PHỤC (bản đồ + nhiệm vụ)
+   ---------------------------------------------------------------------------
+   Nguồn thật là bảng `goquai_progress` trên Supabase; máy chỉ giữ một bản sao
+   trong localStorage để người chưa đăng nhập vẫn có bản đồ dùng được và để
+   không mất tiến độ khi mạng đứt. Hợp nhất luôn theo kiểu HỢP (union) — không
+   bao giờ xoá nhiệm vụ đã có, `best` lấy giá trị lớn hơn.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PROG_BASE='eu_goquai_prog';
+/* mỗi tài khoản một ngăn riêng trên cùng máy — máy dùng chung (lớp học) thì
+   tiến độ người này không lẫn sang người kia */
+function progKey(){ return PROG_BASE + '_' + (ME ? ME.id : 'guest'); }
+function progSaveLocal(){
+  try{ localStorage.setItem(progKey(), JSON.stringify({best:PROG.best, quests:[...PROG.quests]})); }catch(e){}
+}
+function progLoadLocal(key){
+  try{
+    const j=JSON.parse(localStorage.getItem(key||progKey())||'{}');
+    PROG.best=Math.max(PROG.best, Math.min(8, j.best|0));
+    (j.quests||[]).forEach(q=>{ if(QUEST_BY_ID[q]) PROG.quests.add(q); });
+  }catch(e){}
+}
+function progReset(){ PROG.best=0; PROG.quests.clear(); PROG.synced=false; PROG.note=''; }
+/* gọi ngay sau khi đăng nhập xong: gộp bản sao của tài khoản + phần chơi khách
+   trên máy này + bản trên Supabase, rồi đẩy hợp nhất lên máy chủ một lần */
+async function progInitForUser(){
+  progReset();
+  progLoadLocal();
+  const gk=PROG_BASE+'_guest';
+  const hadGuest = !!localStorage.getItem(gk);
+  if(hadGuest){ progLoadLocal(gk); try{ localStorage.removeItem(gk); }catch(e){} }
+  progSaveLocal();
+  await progLoadRemote();
+  if(PROG.quests.size) await progPush([...PROG.quests]);
+}
+function progApply(row){
+  if(!row) return;
+  PROG.best=Math.max(PROG.best, Math.min(8, row.best_stage|0));
+  (row.quests||[]).forEach(q=>{ if(QUEST_BY_ID[q]) PROG.quests.add(q); });
+  progSaveLocal();
+}
+async function progLoadRemote(){
+  if(!sb||!ME){ PROG.synced=false; PROG.note=''; return; }
+  try{
+    const {data,error}=await sb.from('goquai_progress')
+      .select('best_stage,quests').eq('user_id',ME.id).maybeSingle();
+    if(error) throw error;
+    progApply(data);
+    PROG.synced=true; PROG.note='';
+  }catch(e){
+    PROG.synced=false;
+    PROG.note = /relation|does not exist|schema/i.test(e.message||'')
+      ? 'chưa chạy migration_goquai_map.sql nên tiến độ mới chỉ lưu trên máy này'
+      : 'chưa đồng bộ được tiến độ lên máy chủ';
+    console.warn('progLoad', e.message);
+  }
+}
+/* đẩy tiến độ lên Supabase; máy chủ trả về danh sách nhiệm vụ MỚI để cộng XP
+   (cộng theo kết quả máy chủ nên chơi lại nhiệm vụ cũ không ăn XP lần hai) */
+async function progPush(questIds){
+  if(!sb||!ME) return;                      // chưa đăng nhập: đã có bản sao localStorage
+  try{
+    const {data,error}=await sb.rpc('goquai_progress_merge',
+      {p_best_stage:PROG.best, p_quests:questIds||[]});
+    if(error) throw error;
+    const r=Array.isArray(data)?data[0]:data;
+    progApply(r); PROG.synced=true; PROG.note='';
+    const fresh=(r&&r.new_quests)||[];
+    const xp=fresh.reduce((n,id)=>n+(QUEST_BY_ID[id]?QUEST_BY_ID[id].xp:0),0);
+    if(xp>0) await awardXP(xp);
+  }catch(e){
+    PROG.synced=false;
+    PROG.note = /function|does not exist|schema/i.test(e.message||'')
+      ? 'chưa chạy migration_goquai_map.sql nên tiến độ mới chỉ lưu trên máy này'
+      : 'chưa đồng bộ được tiến độ lên máy chủ';
+    console.warn('progPush', e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   15b-ter · MÀN BẢN ĐỒ HÀNH TRÌNH
+   ---------------------------------------------------------------------------
+   Đường đi vẽ bằng SVG: 8 điểm mốc nối bằng đường cong Catmull–Rom đổi sang
+   Bézier. Nút tầng là thẻ HTML đặt theo % toạ độ điểm mốc nên co giãn theo
+   khung; `preserveAspectRatio="none"` cho đường cong kéo theo khung, còn nét
+   vẽ giữ nguyên bề dày nhờ `vector-effect:non-scaling-stroke`.
+   Máy hẹp (<760px) đổi sang danh sách dọc — CSS ép `position:static`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const MAP_PTS=[[72,585],[205,498],[338,562],[472,442],[602,498],[726,356],[848,404],[938,236]];
+let MAPSEL=0;
+function bezierSegs(p){
+  const n=p.length, segs=[];
+  for(let i=0;i<n-1;i++){
+    const p0=p[i-1]||p[0], p1=p[i], p2=p[i+1], p3=p[i+2]||p[n-1];
+    const c1=[p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6];
+    const c2=[p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6];
+    segs.push(`M ${p1[0]} ${p1[1]} C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${p2[0]} ${p2[1]}`);
+  }
+  return segs;
+}
+function drawMapPath(){
+  const segs=bezierSegs(MAP_PTS);
+  const full = segs[0] + segs.slice(1).map(s=>s.replace(/^M [^C]+/,'')).join(' ');
+  const bg=$('#mpBg'), fg=$('#mpFg');
+  bg.setAttribute('d', full); fg.setAttribute('d', full);
+  /* đo độ dài từng khúc để tô đúng phần đã đi qua */
+  const tmp=document.createElementNS('http://www.w3.org/2000/svg','path');
+  $('#mapSvg').appendChild(tmp);
+  const lens=segs.map(d=>{ tmp.setAttribute('d',d); return tmp.getTotalLength(); });
+  tmp.remove();
+  const total=lens.reduce((a,b)=>a+b,0);
+  const doneLen=lens.slice(0, Math.max(0,Math.min(lens.length, PROG.best))).reduce((a,b)=>a+b,0);
+  fg.setAttribute('stroke-dasharray', `${doneLen} ${Math.max(total-doneLen,0)+10}`);
+}
+function stageQuestCount(i){
+  return (QUESTS[i]||[]).filter(q=>PROG.quests.has(q.id)).length;
+}
+function buildMapNodes(){
+  $('#mapNodes').innerHTML = STAGES.map((s,i)=>{
+    const cleared = i < PROG.best;
+    const open    = i <= PROG.best;
+    const now     = i === PROG.best && PROG.best < STAGES.length;
+    const cls = ['mnode', cleared?'done':(open?'now':'locked'), i===MAPSEL?'sel':''].join(' ');
+    const nq = stageQuestCount(i), tq=(QUESTS[i]||[]).length;
+    const flag = cleared?'✅' : (open?'⚔️':'🔒');
+    return `<button class="${cls}" data-st="${i}"
+      style="left:${MAP_PTS[i][0]/10}%;top:${(MAP_PTS[i][1]/640*100).toFixed(2)}%">
+      <span class="mn-dot">${open?s.ico:'🔒'}</span>
+      <span class="mn-flag">${flag}</span>
+      <span class="mn-lab"><b>Tầng ${i+1} · ${esc(s.name)}</b><i>${open?`${nq}/${tq} nhiệm vụ`:'chưa mở khoá'}</i></span>
+    </button>`;
+  }).join('');
+}
+function renderMapStats(){
+  const q=PROG.quests.size, b=BADGES.filter(x=>x.ok(PROG.quests)).length;
+  $('#mapStats').innerHTML = `
+    <div class="mstat g"><div class="mv">${PROG.best}/8</div><div class="ml">Tầng đã chinh phục</div>
+      <div class="mprog"><i style="width:${PROG.best/8*100}%"></i></div></div>
+    <div class="mstat p"><div class="mv">${q}/${QUEST_TOTAL}</div><div class="ml">Nhiệm vụ hoàn thành</div>
+      <div class="mprog"><i style="width:${q/QUEST_TOTAL*100}%"></i></div></div>
+    <div class="mstat o"><div class="mv">${b}/${BADGES.length}</div><div class="ml">Danh hiệu</div>
+      <div class="mprog"><i style="width:${b/BADGES.length*100}%"></i></div></div>
+    <div class="mstat"><div class="mv">${PROG.best>=8?'👑':'⚔️'}</div>
+      <div class="ml">${PROG.best>=8?'Tháp đã được giải phóng':'Đang tiến lên tầng '+(PROG.best+1)}</div></div>`;
+}
+function renderMapBadges(){
+  $('#mapBadges').innerHTML = BADGES.map(b=>{
+    const on=b.ok(PROG.quests);
+    return `<div class="bdg${on?' on':''}"><div class="bi">${b.ico}</div>
+      <div><div class="bn">${esc(b.name)}</div><div class="bd">${esc(b.desc)}</div></div></div>`;
+  }).join('');
+}
+function renderMapDetail(){
+  const i=MAPSEL, s=STAGES[i], list=QUESTS[i]||[];
+  const cleared=i<PROG.best, open=i<=PROG.best;
+  const types=[...new Set(s.types)];
+  const nq=stageQuestCount(i);
+  $('#mapDetail').innerHTML = `
+    <h2>${s.ico} Tầng ${i+1} · ${esc(s.name)}
+      <span style="font-size:13px;font-weight:600;color:${cleared?'var(--a3)':(open?'var(--a4)':'var(--muted)')}">
+        — ${cleared?'đã chinh phục':(open?'đang mở':'còn khoá')}</span></h2>
+    <div class="sub" style="margin-top:8px">${esc(s.text)}</div>
+    <div class="mons">
+      <span class="mon-chip">👾 ${s.count} quái thường</span>
+      ${types.map(t=>`<span class="mon-chip">${TYPES[t].ico} ${TYPE_NAME[t]}</span>`).join('')}
+      <span class="mon-chip">🐉 Trùm tầng ${i+1}</span>
+      <span class="mon-chip">🔤 Từ dài ${[[3,5],[3,6],[4,7],[4,9],[5,10],[5,12],[6,14],[6,20]][i].join('–')} chữ</span>
+    </div>
+    <div style="margin-top:20px" class="sect-label">Nhiệm vụ chinh phục — ${nq}/${list.length}</div>
+    <div class="qlist">${list.map(q=>questRow(q, PROG.quests.has(q.id)?'on':'')).join('')}</div>
+    ${open?'':`<div class="locknote">🔒 Tầng này còn khoá. Hãy <b>dọn sạch tầng ${PROG.best+1}</b> để mở đường lên đây.</div>`}
+    ${open&&!cleared&&i>0?`<div class="locknote">⚔️ Vào thẳng tầng ${i+1} thì bạn được nhận trước <b>${i} lượt nâng cấp</b> và bắt đầu ở <b>cấp ${i+1}</b>. Điểm của ván sẽ thấp hơn khi đánh liền mạch từ tầng 1 — bảng xếp hạng vẫn tính theo điểm.</div>`:''}`;
+  const btn=$('#btnMapPlay');
+  btn.disabled=!open;
+  btn.style.opacity=open?'':'.45';
+  btn.textContent = open ? `⚔️ Vào tầng ${i+1}` : '🔒 Chưa mở khoá';
+  $('#mapNote').innerHTML = PROG.note ? esc('⚠️ '+PROG.note)
+    : (ME ? 'Tiến độ được lưu vào tài khoản của bạn.' : 'Chưa đăng nhập — tiến độ chỉ lưu trên máy này.');
+}
+function renderMap(){
+  buildMapNodes(); renderMapStats(); renderMapBadges(); renderMapDetail();
+  requestAnimationFrame(drawMapPath);
+}
+async function openMap(){
+  MAPSEL = Math.min(PROG.best, STAGES.length-1);
+  show('#scrMap');
+  renderMap();
+  await progLoadRemote();
+  MAPSEL = Math.min(Math.max(MAPSEL, 0), STAGES.length-1);
+  renderMap();
+}
+document.addEventListener('click', e=>{
+  const b=e.target.closest('#mapNodes [data-st]'); if(!b) return;
+  MAPSEL=+b.dataset.st; buildMapNodes(); renderMapDetail();
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    15c · ĐĂNG NHẬP
@@ -1686,6 +2177,8 @@ async function setUser(u){
   $('#uChip').style.display='flex';
   $('#uName').textContent=MYNAME;
   $('#uAv').textContent=MYNAME.split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase()||'?';
+  await progInitForUser();
+  if($('#scrMap').classList.contains('on')) renderMap();
 }
 async function doLogin(){
   const em=$('#lgEmail').value.trim(), pw=$('#lgPw').value;
@@ -1888,8 +2381,16 @@ $('#drillTabs').onclick=e=>{ const b=e.target.closest('[data-drill]'); if(!b)ret
 /* ═══════════════════════════════════════════════════════════════════════════
    16 · NÚT BẤM
    ═══════════════════════════════════════════════════════════════════════════ */
-$('#btnStart').onclick = async ()=>{ await ensurePool(); newGame(); };
+$('#btnStart').onclick = async ()=>{ await ensurePool(); newGame(0); };
 $('#btnGo').onclick    = ()=>enterPlay();
+$('#btnMap').onclick   = ()=>openMap();
+$('#btnMapBack').onclick = ()=>show('#scrSetup');
+$('#btnClMap').onclick   = ()=>openMap();
+$('#btnOvMap').onclick   = ()=>openMap();
+$('#btnMapPlay').onclick = async ()=>{
+  if(MAPSEL>PROG.best) return;
+  await ensurePool(); newGame(MAPSEL);
+};
 $('#btnTutor').onclick = ()=>{ show('#scrTutor'); buildKeyboard(); newDrill(); };
 $('#btnTutorBack').onclick = ()=>show('#scrSetup');
 $('#btnDrillNew').onclick  = ()=>newDrill();
@@ -1903,19 +2404,24 @@ $('#loginBox').onclick = e=>{ if(e.target.id==='loginBox') $('#loginBox').classL
 $('#uChip').onclick = async ()=>{
   if(!sb||!confirm('Đăng xuất khỏi EnglishUp?')) return;
   await sb.auth.signOut(); ME=null; MYNAME='';
+  progReset(); progLoadLocal();
   $('#btnLogin').style.display=''; $('#uChip').style.display='none';
   await ensurePool(); buildSetup();
 };
-$('#btnNext').onclick  = ()=>startStage(G.stage+1);
+$('#btnNext').onclick  = ()=>{
+  if(G.pendingStart!=null){ const s=G.pendingStart; G.pendingStart=null; startStage(s); return; }
+  startStage(G.stage+1);
+};
 $('#btnPause').onclick = ()=>togglePause();
 $('#btnResume').onclick= ()=>togglePause();
 $('#btnQuit').onclick  = ()=>{ G.playing=false; G.paused=false; $('#pauseBox').classList.remove('on'); gameOver(false); };
-$('#btnAgain').onclick = ()=>newGame();
+$('#btnAgain').onclick = ()=>newGame(G.startStage);
 $('#btnMenu').onclick  = ()=>{ show('#scrSetup'); buildSetup(); };
 $('#arena').onclick    = ()=>{ const g=$('#ghost'); g.style.left='50%'; g.focus(); };
 $('#ghost').oninput    = e=>{ const v=e.target.value; e.target.value='';
   for(const ch of v) typeChar(ch); };
 
+progLoadLocal();
 buildSetup();
 initAuth();
 </script>
