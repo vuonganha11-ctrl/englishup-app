@@ -25,6 +25,12 @@
         s.id = "eu-mobile-nav-js"; s.src = "mobile-nav.js?v=20260723b";
         head.appendChild(s);
       }
+      /* Bộ khoá "Bài tập về nhà" — chỉ tác động lên tài khoản admin đã bật */
+      if (head && !document.getElementById("eu-hw-guard-js")) {
+        var hg = document.createElement("script");
+        hg.id = "eu-hw-guard-js"; hg.src = "hw-guard.js?v=20260807";
+        head.appendChild(hg);
+      }
     } catch (e) {}
   })();
 
@@ -61,6 +67,7 @@
     { href: "giaotrinh.html", icon: "📖", label: "Giáo trình" }
   ];
   var EU_MORE = [
+    { href: "baitap.html",    icon: "📝", label: "Bài tập về nhà" },
     { href: "bangxephang.html", icon: "🏆", label: "Bảng xếp hạng" },
     { href: "gioithieu.html",  icon: "🤝", label: "Giới thiệu bạn bè" },
     { href: "tuvunghinh.html", icon: "🖼️", label: "Từ vựng hình" },
@@ -73,6 +80,7 @@
     { href: "tai-khoan.html", icon: "👤", label: "Trang tài khoản" },
     { href: "accounts.html",  icon: "👥", label: "Quản lý tài khoản", admin: true },
     { href: "admin-hoahong.html", icon: "💰", label: "Hoa hồng & cộng đồng", admin: true },
+    { href: "admin-baitap.html", icon: "🎓", label: "Quản trị bài tập", admin: true },
     { href: "admin.html",     icon: "🛠️", label: "Trang quản trị",   admin: true }
   ];
 
