@@ -2136,11 +2136,14 @@ function renderMap(){
   requestAnimationFrame(drawMapPath);
 }
 async function openMap(){
-  MAPSEL = Math.min(PROG.best, STAGES.length-1);
+  const before = Math.min(PROG.best, STAGES.length-1);
+  MAPSEL = before;
   show('#scrMap');
   renderMap();
   await progLoadRemote();
-  MAPSEL = Math.min(Math.max(MAPSEL, 0), STAGES.length-1);
+  /* máy chủ có tiến độ mới hơn (máy khác) → nhảy tới tầng đang mở, trừ khi
+     người chơi đã kịp bấm chọn một tầng khác trong lúc chờ */
+  if(MAPSEL===before) MAPSEL = Math.min(PROG.best, STAGES.length-1);
   renderMap();
 }
 document.addEventListener('click', e=>{
