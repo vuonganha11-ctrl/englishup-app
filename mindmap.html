@@ -129,8 +129,11 @@ body {
   border-bottom: 1px solid var(--border); font-size: 12.5px;
 }
 .statbar .sb-main { display: flex; align-items: center; gap: 9px; }
-.sb-track { width: 190px; height: 7px; border-radius: 99px; background: var(--card2); overflow: hidden; }
-.sb-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#34d399,#4f8ef7); width: 0; transition: width .5s; }
+.sb-track { width: 190px; height: 7px; border-radius: 99px; background: var(--card2);
+  overflow: hidden; position: relative; }
+.sb-fill, .sb-soft { position: absolute; left: 0; top: 0; height: 100%; border-radius: 99px; width: 0; transition: width .5s; }
+.sb-soft { background: rgba(52,211,153,.28); }
+.sb-fill { background: linear-gradient(90deg,#34d399,#4f8ef7); }
 .legend { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; color: var(--muted); }
 .lg { display: flex; align-items: center; gap: 5px; }
 .lg i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
@@ -199,8 +202,11 @@ body {
 .box.leafnode .caret { visibility: hidden; }
 
 /* mini progress trong node */
-.mini { width: 78px; height: 5px; border-radius: 99px; background: var(--card2); overflow: hidden; flex-shrink: 0; }
-.mini i { display: block; height: 100%; border-radius: 99px; background: var(--a3); }
+.mini { width: 78px; height: 5px; border-radius: 99px; background: var(--card2);
+  overflow: hidden; flex-shrink: 0; position: relative; }
+.mini u, .mini i { position: absolute; left: 0; top: 0; height: 100%; border-radius: 99px; display: block; }
+.mini u { background: rgba(52,211,153,.30); }   /* đã có thẻ, đang ôn */
+.mini i { background: var(--a3); }              /* đã thuộc */
 .pct { font-family: var(--mono); font-size: 10.5px; color: var(--muted); flex-shrink: 0; min-width: 30px; text-align: right; }
 
 /* cấp gốc */
@@ -409,7 +415,7 @@ body {
 <div class="statbar">
   <div class="sb-main">
     <b id="st-lab">Tiến độ</b>
-    <div class="sb-track"><div class="sb-fill" id="st-fill"></div></div>
+    <div class="sb-track"><div class="sb-soft" id="st-soft"></div><div class="sb-fill" id="st-fill"></div></div>
     <span id="st-txt" style="font-family:var(--mono);color:var(--muted)">—</span>
   </div>
   <div class="legend" id="legend"></div>
@@ -726,12 +732,15 @@ function doSearch(v){
 function clearSearch(){ document.getElementById('q').value = ''; doSearch(''); }
 
 /* ═══════════ VẼ ═══════════ */
-function bar(learned, n){
+function bar(learned, n, touched){
   const p = n ? Math.round(learned / n * 100) : 0;
-  return '<div class="mini" title="' + learned + '/' + n + ' từ đã thuộc"><i style="width:' + p + '%"></i></div>' +
+  const q = n ? Math.round((touched || 0) / n * 100) : 0;
+  return '<div class="mini" title="' + learned + '/' + n + ' từ đã thuộc · ' +
+           (touched || 0) + '/' + n + ' từ đang ôn">' +
+           '<u style="width:' + q + '%"></u><i style="width:' + p + '%"></i></div>' +
          '<span class="pct">' + p + '%</span>';
 }
-function boxHTML(cls, key, code, title, sub, learned, n, color, leaf){
+function boxHTML(cls, key, code, title, sub, learned, n, color, leaf, touched){
   const open = openSet.has(key);
   const hit  = hitNodes.has(key);
   const dim  = query && !hit;
@@ -741,7 +750,7 @@ function boxHTML(cls, key, code, title, sub, learned, n, color, leaf){
            (code ? '<span class="code">' + esc(code) + '</span>' : '') +
            '<span class="tw"><span class="tt">' + esc(title) + '</span>' +
            '<span class="sub">' + sub + '</span></span>' +
-           bar(learned, n) +
+           bar(learned, n, touched) +
          '</div>';
 }
 
@@ -760,7 +769,7 @@ function render(){
         TREE.reduce((a,P) => a + P.kids.length, 0) + ' nhánh · ' +
         TREE.reduce((a,P) => a + P.kids.reduce((b,B) => b + B.kids.length, 0), 0) + ' chủ đề · ' +
         total.toLocaleString('vi') + ' từ</span></span>' +
-      bar(learned, total) +
+      bar(learned, total, touched) +
     '</div>';
 
   if (rootOpen) {
@@ -770,7 +779,7 @@ function render(){
       if (!ps.n) return;
       h += '<div class="node">' +
         boxHTML('lv1', P.key, P.code, P.name,
-          P.kids.length + ' nhánh · ' + ps.n + ' từ', ps.learned, ps.n, P.color) ;
+          P.kids.length + ' nhánh · ' + ps.n + ' từ', ps.learned, ps.n, P.color, false, ps.touched) ;
       if (openSet.has(P.key)) {
         h += '<div class="kids">';
         P.kids.forEach(B => {
@@ -778,14 +787,14 @@ function render(){
           if (!bs.n) return;
           h += '<div class="node">' +
             boxHTML('lv2', B.key, B.code, B.name,
-              B.kids.length + ' chủ đề · ' + bs.n + ' từ', bs.learned, bs.n, B.color);
+              B.kids.length + ' chủ đề · ' + bs.n + ' từ', bs.learned, bs.n, B.color, false, bs.touched);
           if (openSet.has(B.key)) {
             h += '<div class="kids">';
             B.kids.forEach(T => {
               const ts = topicStat(T);
               if (!ts.n) return;
               h += '<div class="node">' +
-                boxHTML('lv3', T.key, T.code, T.name, ts.n + ' từ', ts.learned, ts.n, T.color);
+                boxHTML('lv3', T.key, T.code, T.name, ts.n + ' từ', ts.learned, ts.n, T.color, false, ts.touched);
               if (openSet.has(T.key)) {
                 h += '<div class="kids"><div class="node"><div class="wpanel">' +
                   ts.words.map(chipHTML).join('') + '</div></div></div>';
@@ -806,12 +815,15 @@ function render(){
   host.innerHTML = h;
 
   // dải tiến độ tổng
-  const pct = total ? Math.round(learned / total * 100) : 0;
+  const pct  = total ? Math.round(learned / total * 100) : 0;
+  const pctT = total ? Math.round(touched / total * 100) : 0;
   document.getElementById('st-fill').style.width = pct + '%';
+  document.getElementById('st-soft').style.width = pctT + '%';
   document.getElementById('st-txt').textContent =
     currentUser
-      ? learned.toLocaleString('vi') + '/' + total.toLocaleString('vi') + ' từ đã thuộc · ' +
-        touched.toLocaleString('vi') + ' từ đã có thẻ (' + pct + '%)'
+      ? '🟩 ' + learned.toLocaleString('vi') + ' đã thuộc (' + pct + '%) · ' +
+        '🟢 ' + touched.toLocaleString('vi') + ' đang ôn (' + pctT + '%) · tổng ' +
+        total.toLocaleString('vi') + ' từ'
       : total.toLocaleString('vi') + ' từ · đăng nhập để thấy tiến độ của mình';
   document.getElementById('st-lab').textContent = currentUser ? 'Tiến độ của bạn' : 'Kho từ vựng';
   document.getElementById('tbnote').textContent =
