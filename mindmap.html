@@ -2190,19 +2190,36 @@ function vtQuickFilter(key, value){
   }, 60);
 }
 
-/* Bấm vào từ: phát âm NGAY rồi mở popup; dữ liệu mở rộng nạp xong thì vẽ lại. */
+/* Bản đồ chỉ tải 13 cột nhẹ cho 2.990 từ (cột `examples` jsonb một mình đã ~6MB).
+   Khi bấm vào từ mới lấy TRỌN dòng đó — thêm examples/image_url/onset/suffix/…
+   để popup hiện đủ như vocab.html. Một dòng nên rất nhanh, và có nhớ lại. */
+const _fullDone = new Set();
+async function ensureFullWord(w){
+  if (!w || _fullDone.has(w.id)) return false;
+  _fullDone.add(w.id);
+  try {
+    const { data, error } = await sb.from('words').select('*').eq('id', w.id).single();
+    if (error) throw error;
+    if (data) Object.assign(w, data);
+    return true;
+  } catch(e){ console.warn('ensureFullWord:', e.message); return false; }
+}
+
+/* Bấm vào từ: phát âm NGAY rồi mở popup; dữ liệu nạp xong thì vẽ lại. */
 async function openWordFull(id){
   const w = ALL.find(x => x.id == id);
   if (!w) return;
-  openWord(id);          // mở tức thì, không bắt người dùng chờ mạng
-  // Kho Oxford mới có 75/2.990 từ kèm ảnh. Trên bản đồ người học mở popup liên
-  // tục, để nguyên khung ảnh 16:9 rỗng là mất gần nửa màn hình → thu lại.
-  const hb = document.getElementById('wm-hero');
-  if (hb) hb.classList.toggle('noimg', !w.image_url);
+  const paint = () => {
+    openWord(id);
+    // Kho Oxford mới có 75/2.990 từ kèm ảnh. Trên bản đồ người học mở popup liên
+    // tục, để nguyên khung ảnh 16:9 rỗng là mất gần nửa màn hình → thu lại.
+    const hb = document.getElementById('wm-hero');
+    if (hb) hb.classList.toggle('noimg', !w.image_url);
+  };
+  paint();               // mở tức thì, không bắt người dùng chờ mạng
   playWordAudio();       // ưu tiên audio_url, không có thì giọng máy en-US
-  if (await ensureExtras(w.term)) {
-    if (openedWord && openedWord.id == id) openWord(id);   // vẽ lại các khối mở rộng
-  }
+  const [full, extra] = await Promise.all([ensureFullWord(w), ensureExtras(w.term)]);
+  if ((full || extra) && openedWord && openedWord.id == id) paint();
 }
 
 /* ═══════════ VẼ ═══════════ */
