@@ -70,6 +70,7 @@
     { href: "baitap.html",    icon: "📝", label: "Bài tập về nhà" },
     { href: "bangxephang.html", icon: "🏆", label: "Bảng xếp hạng" },
     { href: "gioithieu.html",  icon: "🤝", label: "Giới thiệu bạn bè" },
+    { href: "mindmap.html",    icon: "🗺️", label: "Bản đồ từ vựng" },
     { href: "tuvunghinh.html", icon: "🖼️", label: "Từ vựng hình" },
     { href: "thongke-am.html", icon: "🔤", label: "Bản đồ ngữ âm" },
     { href: "game.html",      icon: "🎮", label: "Game" },
