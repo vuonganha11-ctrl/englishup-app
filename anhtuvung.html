@@ -81,6 +81,20 @@ td.n{text-align:right;font-family:'JetBrains Mono',ui-monospace,monospace}
 </style>
 </head>
 <body>
+<!-- ══ THANH ĐĂNG NHẬP (thêm 2026-08-10) ══
+     Từ khi siết RLS, bảng `words` chỉ cho admin ghi. Trang này trước đây ghi
+     bằng khoá công khai nên nay phải đăng nhập mới lưu được ảnh. -->
+<div id="eu-auth" style="position:sticky;top:0;z-index:900;display:flex;gap:8px;align-items:center;
+     flex-wrap:wrap;padding:10px 14px;background:#1b2233;border-bottom:1px solid #2c3550;font-size:13px">
+  <b style="color:#e8ecf6">🔐 Đăng nhập admin</b>
+  <input id="eu-em" type="email" placeholder="email admin" autocomplete="username"
+         style="padding:6px 10px;border-radius:7px;border:1px solid #2c3550;background:#121828;color:#e8ecf6;min-width:200px">
+  <input id="eu-pw" type="password" placeholder="mật khẩu" autocomplete="current-password"
+         style="padding:6px 10px;border-radius:7px;border:1px solid #2c3550;background:#121828;color:#e8ecf6;min-width:150px">
+  <button id="eu-btn" onclick="euLogin()"
+          style="padding:6px 14px;border-radius:7px;border:0;background:#4f8ef7;color:#fff;cursor:pointer">Đăng nhập</button>
+  <span id="eu-msg" style="color:#f8a;margin-left:4px">Chưa đăng nhập — xem được, nhưng chưa ghi được ảnh vào kho.</span>
+</div>
 <div class="wrap">
   <div class="backbar"><a href="admin.html">← Về Admin</a><a href="vocab.html">📚 Từ vựng</a><a href="tuvunghinh.html">🖼️ Từ vựng bằng hình</a></div>
   <h1>Ảnh từ vựng · <span style="color:var(--a2)">đồng bộ</span> &amp; <span style="color:var(--accent)">chọn ảnh</span></h1>
@@ -194,7 +208,41 @@ const TW='https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/';
 const WIKI_THUMB=400;
 const LS_PICK='eu_img_picks_v1';
 
-const SB_H={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'};
+let SB_TOKEN = SB_KEY;   // sau khi đăng nhập sẽ thành access_token của phiên
+const SB_H={apikey:SB_KEY, get Authorization(){ return 'Bearer '+SB_TOKEN; }, 'Content-Type':'application/json'};
+
+/* Đăng nhập bằng REST auth — không cần nạp thư viện supabase-js */
+async function euLogin(){
+  const em=(document.getElementById('eu-em').value||'').trim();
+  const pw=document.getElementById('eu-pw').value||'';
+  const msg=document.getElementById('eu-msg'), btn=document.getElementById('eu-btn');
+  if(!em||!pw){ msg.style.color='#f8a'; msg.textContent='Chưa nhập email hoặc mật khẩu.'; return; }
+  btn.disabled=true; btn.textContent='Đang vào…';
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST', headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email:em,password:pw})});
+    const j=await r.json();
+    if(!r.ok||!j.access_token) throw new Error(j.error_description||j.msg||j.message||('lỗi '+r.status));
+    SB_TOKEN=j.access_token;
+    const pr=await fetch(SB_URL+'/rest/v1/user_profiles?select=role&id=eq.'+j.user.id,
+      {headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_TOKEN}});
+    const pj=await pr.json();
+    const role=(pj&&pj[0]&&pj[0].role)||'(không rõ)';
+    if(role!=='admin'){
+      msg.style.color='#f8a';
+      msg.textContent='Đã vào bằng '+em+' nhưng quyền là “'+role+'”, không ghi được ảnh vào kho.';
+    }else{
+      msg.style.color='#6ee7a8';
+      msg.textContent='✅ '+em+' · quyền admin — ghi ảnh được.';
+      document.getElementById('eu-em').disabled=true;
+      document.getElementById('eu-pw').disabled=true;
+    }
+    document.getElementById('eu-pw').value='';
+  }catch(e){
+    msg.style.color='#f8a'; msg.textContent='Không đăng nhập được: '+(e.message||e);
+  }finally{ btn.disabled=false; btn.textContent='Đăng nhập'; }
+}
 async function sbGet(path){
   const r=await fetch(SB_URL+'/rest/v1/'+path,{headers:SB_H});
   if(!r.ok) throw new Error('Supabase '+r.status+': '+(await r.text()).slice(0,160));
@@ -202,7 +250,10 @@ async function sbGet(path){
 }
 async function sbPatch(path,body){
   const r=await fetch(SB_URL+'/rest/v1/'+path,{method:'PATCH',headers:Object.assign({Prefer:'return=minimal'},SB_H),body:JSON.stringify(body)});
-  if(!r.ok) return (await r.text()).slice(0,160);
+  if(!r.ok){ const t=(await r.text()).slice(0,160);
+    if(r.status===401||r.status===403||/row-level security|42501/i.test(t))
+      return 'Chưa đăng nhập admin (hoặc phiên đã hết hạn) — dùng ô đăng nhập ở đầu trang.';
+    return t; }
   return null;
 }
 const $=id=>document.getElementById(id);
@@ -613,7 +664,7 @@ async function uploadToBucket(file,wordId){
   const path='tuvung/'+String(wordId)+'-'+Date.now().toString(36)+'.'+ext;
   const r=await fetch(SB_URL+'/storage/v1/object/'+SB_BUCKET+'/'+encodeURI(path),{
     method:'POST',
-    headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':type,'x-upsert':'true'},
+    headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_TOKEN,'Content-Type':type,'x-upsert':'true'},
     body:f});
   if(!r.ok){
     const t=(await r.text()).slice(0,220);
