@@ -269,6 +269,21 @@ select.input{cursor:pointer}
   </div>
 </div>
 
+<!-- MÀN CHẶN: không phải admin -->
+<div id="noaccess-screen" style="display:none;align-items:center;justify-content:center;min-height:100vh">
+  <div class="login-box" style="text-align:center">
+    <div style="font-size:44px;line-height:1;margin-bottom:10px">⛔</div>
+    <div class="login-logo" style="justify-content:center">Không có quyền truy cập</div>
+    <div class="login-sub" style="margin-bottom:18px">Trang quản trị chỉ dành cho tài khoản Admin.</div>
+    <div class="login-info" id="noaccess-detail" style="text-align:left"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:6px">
+      <a href="vocab.html" style="text-decoration:none"><button class="btn">← Về trang học</button></a>
+      <button class="btn" onclick="location.reload()">↻ Thử lại</button>
+      <button class="btn" onclick="doLogout()">Đăng xuất</button>
+    </div>
+  </div>
+</div>
+
 <!-- SQL SETUP MODAL -->
 <div class="modal-overlay" id="modal-setup">
   <div class="modal" style="max-width:720px">
@@ -1023,7 +1038,11 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
 
   showLoginForm();
-  const afterLogin=()=>{ showApp(); if(!_wColLoaded){_wColLoaded=true; loadWCollections();} };
+  const afterLogin=async()=>{
+    const chk=await euCheckAdmin();
+    if(!chk.ok){ showNoAccess(chk); return; }
+    showApp(); if(!_wColLoaded){_wColLoaded=true; loadWCollections();}
+  };
   _sb.auth.getSession().then(({data})=>{ if(data.session){ _user=data.session.user; afterLogin(); } });
   _sb.auth.onAuthStateChange((_ev,session)=>{ if(session){_user=session.user;afterLogin();}else{_user=null;showLoginScreen();} });
 });
@@ -1057,6 +1076,32 @@ function saveConfig(){
   toast('✅ Config đã lưu! Đăng nhập nhé.','success');
 }
 
+/* ══ CHỐT QUYỀN — chỉ role='admin' mới vào được trang này ══════════════
+   CỐ TÍNH fail-CLOSED: hỏi không ra quyền thì CHẶN, không cho vào.
+   (Khác với hw_gate() của Bài tập về nhà — cái đó fail-open là đúng,
+    còn đây là trang quản trị nên thà khóa nhầm admin còn hơn lọt học viên.) */
+async function euCheckAdmin(){
+  try{
+    if(!_user||!_user.id) return {ok:false,reason:'nouser'};
+    const {data,error}=await _sb.from('user_profiles').select('role').eq('id',_user.id).maybeSingle();
+    if(error)  return {ok:false,reason:'err',msg:error.message||''};
+    if(!data)  return {ok:false,reason:'noprofile'};
+    return {ok:data.role==='admin',reason:'role',role:data.role||'(trống)'};
+  }catch(e){ return {ok:false,reason:'err',msg:(e&&e.message)||''}; }
+}
+function showNoAccess(info){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='none';
+  const sc=document.getElementById('noaccess-screen'); if(sc) sc.style.display='flex';
+  const d=document.getElementById('noaccess-detail'); if(!d) return;
+  if(info.reason==='err')
+    d.textContent='Không kiểm tra được quyền (lỗi mạng hoặc CSDL): '+(info.msg||'')+' — bấm “Thử lại”.';
+  else if(info.reason==='noprofile')
+    d.textContent='Tài khoản này chưa có hồ sơ trong hệ thống nên không xác định được quyền.';
+  else
+    d.textContent='Tài khoản '+((_user&&_user.email)||'')+' đang ở quyền “'+(info.role||'')+'”, không phải quản trị viên.';
+}
+
 // ── AUTH ──
 async function doLogin(){
   const email=document.getElementById('login-email').value.trim();
@@ -1075,7 +1120,7 @@ async function doLogin(){
 }
 async function doLogout(){ await _sb.auth.signOut(); showLoginScreen(); }
 function showErr(m){const el=document.getElementById('login-err');el.textContent=m;el.style.display='block';}
-function showLoginScreen(){document.getElementById('login-screen').style.display='flex';document.getElementById('app-shell').style.display='none';}
+function showLoginScreen(){document.getElementById('login-screen').style.display='flex';document.getElementById('app-shell').style.display='none';var _na=document.getElementById('noaccess-screen'); if(_na) _na.style.display='none';}
 function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-shell').style.display='flex';
