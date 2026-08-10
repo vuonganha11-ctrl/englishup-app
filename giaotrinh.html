@@ -303,6 +303,7 @@ input:focus{border-color:var(--accent)}
 const SB_URL = 'https://fyglubimflzsetcovgqx.supabase.co';
 const SB_KEY = 'sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 let sb = null, currentUser = null;
+let IS_ADMIN = false;   // chỉ admin mới được tạo giáo trình (RLS cũng chặn ở DB)
 
 // ══════════════ STATE ══════════════
 let CURRICULA = [];
@@ -363,8 +364,8 @@ async function fetchIn(table, cols, col, vals){
       el('user-chip').style.display='flex';
       el('user-email-display').textContent = currentUser.email || 'user';
       el('user-av').textContent = (currentUser.email||'?').charAt(0).toUpperCase();
-      const {data:p} = await sb.from('user_profiles').select('xp').eq('id',currentUser.id).maybeSingle();
-      if(p){ el('xp-val').textContent=p.xp||0; el('xp-display').style.display='flex'; }
+      const {data:p} = await sb.from('user_profiles').select('xp,role').eq('id',currentUser.id).maybeSingle();
+      if(p){ el('xp-val').textContent=p.xp||0; el('xp-display').style.display='flex'; IS_ADMIN = (p.role==='admin'); }
     }
     CURRICULA = await fetchAll(()=>sb.from('curricula').select('*'),'ord');
     CURRICULA.sort((a,b)=>(a.ord||0)-(b.ord||0));
@@ -439,9 +440,11 @@ function viewHome(){
       '</div>';
   }).join('');
 
-  cards += '<div class="ccard add" onclick="openAdd()"><div class="emo">➕</div>'+
-           '<b style="font-size:14px">Thêm giáo trình</b>'+
-           '<div style="font-size:12.5px;margin-top:5px;max-width:210px;line-height:1.6">Tạo một giáo trình mới rồi nạp nhóm &amp; chủ đề sau</div></div>';
+  if(IS_ADMIN){
+    cards += '<div class="ccard add" onclick="openAdd()"><div class="emo">➕</div>'+
+             '<b style="font-size:14px">Thêm giáo trình</b>'+
+             '<div style="font-size:12.5px;margin-top:5px;max-width:210px;line-height:1.6">Tạo một giáo trình mới rồi nạp nhóm &amp; chủ đề sau</div></div>';
+  }
 
   el('app').innerHTML =
     '<div class="hero"><h1>Giáo trình EnglishUp</h1>'+
@@ -887,7 +890,7 @@ async function awardXP(amount){
 }
 
 // ══════════════ THÊM GIÁO TRÌNH ══════════════
-function openAdd(){ el('ov-add').classList.add('show'); }
+function openAdd(){ if(!IS_ADMIN){ alert('Chỉ quản trị viên mới tạo được giáo trình.'); return; } el('ov-add').classList.add('show'); }
 function closeAdd(){ el('ov-add').classList.remove('show'); }
 async function saveCurriculum(){
   const code=(el('f-code').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
