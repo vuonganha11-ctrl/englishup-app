@@ -120,6 +120,7 @@ body {
 .lv-chip[data-lv="A2"].on { background:#4f8ef7; border-color:#4f8ef7 }
 .lv-chip[data-lv="B1"].on { background:#a78bfa; border-color:#a78bfa }
 .lv-chip[data-lv="B2"].on { background:#fb923c; border-color:#fb923c; color:#2a1405 }
+.lv-chip[data-lv="C1"].on { background:#f472b6; border-color:#f472b6; color:#2a0512 }
 .tb-note { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
 
 /* ── DẢI TIẾN ĐỘ TỔNG ── */
@@ -234,6 +235,14 @@ body {
 .box.dim { opacity: .35; }
 
 /* ── BẢNG TỪ (lá) — xếp dọc 1 cột, sơ đồ dọc thì chiều cao là rẻ ── */
+.wgrp + .wgrp { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border2); }
+.wgh { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700;
+       letter-spacing: .3px; color: var(--muted); margin: 0 2px 5px; text-transform: uppercase; }
+.wgh i { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; font-style: normal; }
+.wgh b { margin-left: auto; font-weight: 600; opacity: .8; }
+.wgh.g3 i { background: #4f8ef7; }
+.wgh.g5 i { background: #f472b6; }
+.wchip.plus { border-left: 2px solid #f472b6; }
 .wpanel {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 8px; margin: 0 7px;
@@ -905,6 +914,7 @@ body {
     <button class="lv-chip on" data-lv="A2">A2</button>
     <button class="lv-chip on" data-lv="B1">B1</button>
     <button class="lv-chip on" data-lv="B2">B2</button>
+    <button class="lv-chip on" data-lv="C1">C1</button>
   </div>
   <div class="tb-sep"></div>
   <button class="tb-btn" id="btn-unlearned" onclick="toggleUnlearned()">🌱 Chỉ từ chưa thuộc</button>
@@ -1103,10 +1113,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   bindUI();
   await checkAuth();
   try {
-    document.getElementById('load-txt').textContent = 'Đang tải 3.000 từ Oxford…';
+    document.getElementById('load-txt').textContent = 'Đang tải kho từ Oxford 5000…';
     ALL = await fetchAll(() => sb.from('words').select(
       'id,term,phonetic,definition_vi,part_of_speech,level,topic,' +
-      'part_code,part_name,branch_code,branch_name,topic_code,audio_url'));
+      'part_code,part_name,branch_code,branch_name,topic_code,word_set,audio_url'));
   } catch(e) {
     document.getElementById('loading').innerHTML =
       '<div style="text-align:center"><div style="font-size:40px">⚠️</div>' +
@@ -1258,6 +1268,9 @@ function buildTree(){
   });
 }
 
+/* ═══════════ KHỐI: Oxford 3000 vs Oxford +2000 ═══════════ */
+const isPlus = w => (w.word_set || '') === 'OX5000';
+
 /* ═══════════ LỌC ═══════════ */
 function wordPass(w){
   if (!LV_ON.has(w.level || '')) return false;
@@ -1267,19 +1280,19 @@ function wordPass(w){
 /* Trả về {n, learned, touched, words} cho 1 chủ đề sau khi lọc */
 function topicStat(T){
   const ws = T.words.filter(wordPass);
-  let learned = 0, touched = 0;
-  ws.forEach(w => { if (isLearned(w.id)) learned++; if (isTouched(w.id)) touched++; });
-  return { n: ws.length, learned, touched, words: ws };
+  let learned = 0, touched = 0, n5 = 0;
+  ws.forEach(w => { if (isLearned(w.id)) learned++; if (isTouched(w.id)) touched++; if (isPlus(w)) n5++; });
+  return { n: ws.length, n5, n3: ws.length - n5, learned, touched, words: ws };
 }
 function branchStat(B){
-  let n = 0, learned = 0, touched = 0;
-  B.kids.forEach(T => { const s = topicStat(T); n += s.n; learned += s.learned; touched += s.touched; });
-  return { n, learned, touched };
+  let n = 0, n5 = 0, learned = 0, touched = 0;
+  B.kids.forEach(T => { const s = topicStat(T); n += s.n; n5 += s.n5; learned += s.learned; touched += s.touched; });
+  return { n, n5, n3: n - n5, learned, touched };
 }
 function partStat(P){
-  let n = 0, learned = 0, touched = 0;
-  P.kids.forEach(B => { const s = branchStat(B); n += s.n; learned += s.learned; touched += s.touched; });
-  return { n, learned, touched };
+  let n = 0, n5 = 0, learned = 0, touched = 0;
+  P.kids.forEach(B => { const s = branchStat(B); n += s.n; n5 += s.n5; learned += s.learned; touched += s.touched; });
+  return { n, n5, n3: n - n5, learned, touched };
 }
 
 /* ═══════════ TÌM KIẾM ═══════════ */
@@ -2247,19 +2260,23 @@ function boxHTML(cls, key, code, title, sub, learned, n, color, leaf, touched){
 
 function render(){
   const host = document.getElementById('stage');
-  let total = 0, learned = 0, touched = 0;
-  TREE.forEach(P => { const s = partStat(P); total += s.n; learned += s.learned; touched += s.touched; });
+  let total = 0, learned = 0, touched = 0, total5 = 0;
+  TREE.forEach(P => { const s = partStat(P); total += s.n; total5 += s.n5; learned += s.learned; touched += s.touched; });
+  const total3 = total - total5;
 
   const rootKey = 'ROOT';
   const rootOpen = !openSet.has('ROOT_CLOSED');
   let h = '<div class="node">' +
     '<div class="box lv0' + (rootOpen ? ' open' : '') + '" data-key="' + rootKey + '" style="--pc:#4f8ef7">' +
       '<div class="bh"><span></span><span class="caret">▶</span></div>' +
-      '<div class="tt">🗺️ Oxford 3000</div>' +
+      '<div class="tt">🗺️ Oxford 5000</div>' +
       '<div class="sub">' + TREE.length + ' phần · ' +
         TREE.reduce((a,P) => a + P.kids.length, 0) + ' nhánh · ' +
         TREE.reduce((a,P) => a + P.kids.reduce((b,B) => b + B.kids.length, 0), 0) + ' chủ đề · ' +
         total.toLocaleString('vi') + ' từ</div>' +
+      '<div class="sub" style="margin-top:2px">' +
+        '<span style="color:#4f8ef7">● Oxford 3000: ' + total3.toLocaleString('vi') + '</span> · ' +
+        '<span style="color:#f472b6">● +2000: ' + total5.toLocaleString('vi') + '</span></div>' +
       '<div class="bf">' + bar(learned, total, touched) + '</div>' +
     '</div>';
 
@@ -2285,10 +2302,12 @@ function render(){
               const ts = topicStat(T);
               if (!ts.n) return;
               h += '<div class="node">' +
-                boxHTML('lv3', T.key, T.code, T.name, ts.n + ' từ', ts.learned, ts.n, T.color, false, ts.touched);
+                boxHTML('lv3', T.key, T.code, T.name,
+                  ts.n + ' từ' + (ts.n5 ? ' · <span style="color:#f472b6">+' + ts.n5 + '</span>' : ''),
+                  ts.learned, ts.n, T.color, false, ts.touched);
               if (openSet.has(T.key)) {
                 h += '<div class="kids"><div class="node"><div class="wpanel">' +
-                  ts.words.map(chipHTML).join('') + '</div></div></div>';
+                  wgroupHTML(ts.words) + '</div></div></div>';
               }
               h += '</div>';
             });
@@ -2321,11 +2340,23 @@ function render(){
   refreshUpbar();
 }
 
+/* Ô lá tách 2 khối: Oxford 3000 ở trên, Oxford +2000 ở dưới.
+   Chỉ hiện tiêu đề nhóm khi chủ đề có cả hai khối — chủ đề chỉ có một khối
+   thì để trơn như cũ, đỡ rối. */
+function wgroupHTML(ws){
+  const a = ws.filter(w => !isPlus(w)), b = ws.filter(isPlus);
+  if (!a.length || !b.length) return ws.map(chipHTML).join('');
+  return '<div class="wgrp"><div class="wgh g3"><i></i>Oxford 3000<b>' + a.length + '</b></div>' +
+           a.map(chipHTML).join('') + '</div>' +
+         '<div class="wgrp"><div class="wgh g5"><i></i>Oxford +2000<b>' + b.length + '</b></div>' +
+           b.map(chipHTML).join('') + '</div>';
+}
+
 function chipHTML(w){
   const s = srsInfo(w.id);
   const lock = wordLocked(w);
   const col = s ? s.col : 'var(--border2)';
-  return '<div class="wchip' + (lock ? ' locked' : '') + (hitWords.has(w.id) ? ' hit' : '') +
+  return '<div class="wchip' + (lock ? ' locked' : '') + (isPlus(w) ? ' plus' : '') + (hitWords.has(w.id) ? ' hit' : '') +
     '" data-wid="' + w.id + '" style="--wc:' + col + '" title="' +
     esc(w.term + ' — ' + (w.definition_vi || '') + (s ? ' · ' + s.lab : '')) + '">' +
     '<span class="wt">' + (lock ? '🔒 ' : '') + esc(w.term) + '</span>' +
