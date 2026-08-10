@@ -331,8 +331,13 @@ function rowHtml(u){
   const name=u.full_name||(u.email||'').split('@')[0];
   const plan=u.plan||'free';
   let planInfo='';
-  if(plan==='plus'){ const exp=u.plan_expires_at?new Date(u.plan_expires_at):null; if(exp){ const expired=exp.getTime()<Date.now(); planInfo=` · ${expired?'⛔ hết hạn ':'⏳ '}${fmtDate(u.plan_expires_at)}`; } }
-  else if(plan==='pro'){ planInfo=' · ∞ vĩnh viễn'; }
+  if(plan==='free'){ planInfo=' · ⛔ đã khóa'; }
+  else if(!u.plan_expires_at){ planInfo=' · ∞ vĩnh viễn'; }
+  else {
+    const exp=new Date(u.plan_expires_at);
+    const expired=exp.getTime()<Date.now();
+    planInfo=` · ${expired?'⛔ hết hạn ':'⏳ '}${fmtDate(u.plan_expires_at)}`;
+  }
   return `<tr>
     <td><div class="s-name">${esc(name)}</div><div class="s-email">${esc(u.email||'')}</div></td>
     <td>
@@ -345,9 +350,12 @@ function rowHtml(u){
     <td><span class="badge ${locked?'b-locked':'b-active'}">${locked?'Đã khóa':'Hoạt động'}</span></td>
     <td>
       <select class="role-sel" onchange="changePlan('${u.id}',this.value)">
-        <option value="free" ${plan==='free'?'selected':''}>Free</option>
-        <option value="plus" ${plan==='plus'?'selected':''}>Plus (1 năm)</option>
-        <option value="pro" ${plan==='pro'?'selected':''}>Pro (vĩnh viễn)</option>
+        <option value="free" ${plan==='free'?'selected':''}>⛔ Khóa (hết hạn)</option>
+        <option value="trial" ${plan==='trial'?'selected':''}>Dùng thử 24 giờ</option>
+        <option value="plus" ${plan==='plus'?'selected':''}>Plus — 1 năm</option>
+        <option value="pro" ${plan==='pro'?'selected':''}>Pro — 2 năm</option>
+        <option value="vip" ${plan==='vip'?'selected':''}>VIP — vĩnh viễn</option>
+        <option value="pro_vinhvien">Pro vĩnh viễn (khách mua trước 10/08/2026)</option>
       </select>
       <div class="s-email" style="margin-top:3px">${u.phone?('📱 '+esc(u.phone)):'<span class="muted">chưa có SĐT</span>'}${planInfo}</div>
     </td>
@@ -375,16 +383,30 @@ async function changeRole(id,role){
   u.role=role; renderStats(); renderTable(); toast('Đã đổi vai trò ✓');
 }
 
-// ── ĐỔI GÓI (Free / Plus 1 năm / Pro vĩnh viễn) ──
-async function changePlan(id,plan){
+// ── ĐỔI GÓI ──
+//  trial = 24 giờ · plus = 1 năm · pro = 2 năm · vip = vĩnh viễn
+//  free  = khóa hẳn (chỉ vào được trang chủ + nâng cấp)
+//  QUY ƯỚC: plan_expires_at để TRỐNG nghĩa là VĨNH VIỄN.
+//  "pro_vinhvien" dành riêng cho khách đã mua Pro trọn đời trước 10/08/2026.
+const EU_PLAN_LABEL = { free:'⛔ Khóa', trial:'Dùng thử 24 giờ', plus:'Plus (1 năm)',
+                        pro:'Pro (2 năm)', vip:'VIP (vĩnh viễn)' };
+async function changePlan(id,chon){
   const u=_users.find(x=>x.id===id); if(!u)return;
   const prev={plan:u.plan,exp:u.plan_expires_at};
-  let exp=null;
-  if(plan==='plus'){ const d=new Date(); d.setFullYear(d.getFullYear()+1); exp=d.toISOString(); }
+  let plan=chon, exp=null;
+  if(chon==='pro_vinhvien'){ plan='pro'; exp=null; }
+  else if(chon==='trial'){ exp=new Date(Date.now()+24*3600*1000).toISOString(); }
+  else if(chon==='plus'){ const d=new Date(); d.setFullYear(d.getFullYear()+1); exp=d.toISOString(); }
+  else if(chon==='pro'){ const d=new Date(); d.setFullYear(d.getFullYear()+2); exp=d.toISOString(); }
+  // vip & free: exp = null
+
+  if(chon==='free' && !confirm('Đặt gói "Khóa" sẽ chặn học viên này khỏi TOÀN BỘ trang học (chỉ còn trang chủ và trang nâng cấp). Tiếp tục?')){
+    renderTable(); return;
+  }
   const { error }=await sb.from('user_profiles').update({plan, plan_expires_at:exp}).eq('id',id);
   if(error){ toast('Lỗi: '+error.message); u.plan=prev.plan; u.plan_expires_at=prev.exp; renderTable(); return; }
   u.plan=plan; u.plan_expires_at=exp;
-  const label = plan==='plus'?'Plus (1 năm)':(plan==='pro'?'Pro (vĩnh viễn)':'Free');
+  const label = (chon==='pro_vinhvien') ? 'Pro (vĩnh viễn — khách cũ)' : (EU_PLAN_LABEL[plan]||plan);
   renderTable(); toast('Đã đặt gói: '+label+' ✓');
 }
 

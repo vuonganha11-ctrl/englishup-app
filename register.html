@@ -74,7 +74,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <!-- FORM -->
     <div id="form-view">
       <h1>Tạo tài khoản</h1>
-      <div class="sub">Đăng ký để bắt đầu học cùng EnglishUp.</div>
+      <div class="sub">Đăng ký là mở khóa <b style="color:var(--a3)">toàn bộ</b> nền tảng trong <b style="color:var(--a3)">24 giờ</b> — không cần thẻ ngân hàng.</div>
 
       <div class="field">
         <label>Họ và tên</label>
@@ -110,6 +110,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <h2 id="s-title">Đăng ký thành công!</h2>
       <p id="s-desc">—</p>
       <a href="vocab.html"><button class="btn btn-primary">Vào học ngay</button></a>
+      <a href="nangcap.html" style="display:block;margin-top:12px;font-size:13px;color:var(--muted);text-decoration:none">Xem bảng giá các gói →</a>
     </div>
   </div>
 </div>
@@ -155,7 +156,7 @@ async function doRegister(){
     document.getElementById('success-view').style.display='block';
     if(data.session){
       document.getElementById('s-title').textContent='Chào mừng bạn! 🎉';
-      document.getElementById('s-desc').textContent=`Tài khoản ${roleLabel} đã sẵn sàng. Bạn đã được đăng nhập.`;
+      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 24 giờ dùng thử toàn bộ nền tảng.</b> Hết 24 giờ, chọn một gói ở trang Nâng cấp để học tiếp.`;
     } else {
       document.getElementById('s-title').textContent='Kiểm tra email của bạn 📧';
       document.getElementById('s-desc').textContent=`Đã gửi liên kết xác nhận tới ${email}. Xác nhận xong là có thể đăng nhập (vai trò: ${roleLabel}).`;

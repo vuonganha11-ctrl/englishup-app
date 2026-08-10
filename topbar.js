@@ -31,6 +31,12 @@
         hg.id = "eu-hw-guard-js"; hg.src = "hw-guard.js?v=20260807";
         head.appendChild(hg);
       }
+      /* Bộ khoá theo GÓI: hết 24h dùng thử / hết hạn gói → chặn toàn trang */
+      if (head && !document.getElementById("eu-guard-js")) {
+        var eg = document.createElement("script");
+        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260810";
+        head.appendChild(eg);
+      }
     } catch (e) {}
   })();
 
@@ -139,7 +145,10 @@
       if (!menu) return;
       if (a.role === "admin") menu.classList.add("eu-is-admin");
       else menu.classList.remove("eu-is-admin");
-      if (a.ready && a.isPremium) menu.classList.add("eu-is-premium");
+      /* Người đang DÙNG THỬ vẫn phải thấy "Nâng cấp gói" — chỉ ẩn với
+         khách đã trả tiền (plus/pro/vip) và giáo viên/admin. */
+      var daTraTien = a.ready && a.isPremium && a.plan !== "trial";
+      if (daTraTien) menu.classList.add("eu-is-premium");
       else menu.classList.remove("eu-is-premium");
     } catch (e) {}
   }
@@ -336,9 +345,15 @@
     var plan = prof.plan || (loggedIn ? "free" : null);
     var exp = prof.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : null;
     var isStaff = role === "teacher" || role === "admin";
-    var planActive = plan === "pro" || (plan === "plus" && (exp === null || exp > Date.now()));
+    /* Gói còn quyền: trial (24h) · plus (1 năm) · pro (2 năm) · vip (vĩnh viễn).
+       QUY ƯỚC: plan_expires_at trống = VĨNH VIỄN — nhờ vậy khách mua Pro
+       "vĩnh viễn" trước 2026-08-10 vẫn giữ nguyên quyền. */
+    var paidPlans = ["trial", "plus", "pro", "vip"];
+    var planActive = paidPlans.indexOf(plan) !== -1 && (exp === null || exp > Date.now());
     var isPremium = isStaff || planActive;
-    return { ready:true, loggedIn:!!loggedIn, role:role, status:prof.status || null, plan:plan, planExpiresAt:prof.plan_expires_at || null, isStaff:isStaff, isPremium:isPremium };
+    var isTrial = plan === "trial" && planActive;
+    var trialLeftMs = (exp === null) ? null : (exp - Date.now());
+    return { ready:true, loggedIn:!!loggedIn, role:role, status:prof.status || null, plan:plan, planExpiresAt:prof.plan_expires_at || null, isStaff:isStaff, isPremium:isPremium, isTrial:isTrial, trialLeftMs:trialLeftMs };
   }
   function publishAccess(a) {
     window.EU_ACCESS = a;

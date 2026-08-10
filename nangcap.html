@@ -33,6 +33,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .current b{color:var(--a3)}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:820px){.grid{grid-template-columns:1fr}}
+.tag.vip{background:linear-gradient(90deg,#7c5cf7,#c04ff7)}
 .plan{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 20px;display:flex;flex-direction:column;position:relative}
 .plan.hot{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .plan .tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px;white-space:nowrap}
@@ -92,29 +93,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   <div class="current" id="current">Đang tải thông tin tài khoản…</div>
 
   <div class="grid">
-    <div class="plan" id="plan-free">
-      <h3>Free</h3>
-      <div class="price">0đ</div>
-      <div class="note">Dùng thử miễn phí</div>
-      <ul>
-        <li><span class="ck">✓</span>Xem trước một phần mỗi mục học</li>
-        <li class="off"><span class="ck">✕</span>Mở khóa toàn bộ Từ vựng</li>
-        <li class="off"><span class="ck">✕</span>Mở khóa Flashcard, Game</li>
-        <li class="off"><span class="ck">✕</span>Mở khóa toàn bộ Video</li>
-      </ul>
-      <div class="cta cur" id="cta-free">Gói hiện tại</div>
-    </div>
-
     <div class="plan hot" id="plan-plus">
       <div class="tag">Phổ biến</div>
       <h3>Plus</h3>
-      <div class="price">199.000đ<small> /tháng</small></div>
-      <div class="note">Thu theo năm — 2.388.000đ/năm</div>
+      <div class="price">2.388.000đ</div>
+      <div class="note">199.000đ/tháng — thu theo năm</div>
       <ul>
-        <li><span class="ck">✓</span>Mở khóa <b>toàn bộ</b> tính năng trong 1 năm</li>
-        <li><span class="ck">✓</span>Toàn bộ Từ vựng theo chủ đề</li>
-        <li><span class="ck">✓</span>Flashcard &amp; Game không giới hạn</li>
-        <li><span class="ck">✓</span>Toàn bộ Video (đủ 5 tab học)</li>
+        <li><span class="ck">✓</span>Mở khóa <b>toàn bộ</b> nền tảng trong <b>1 năm</b></li>
+        <li><span class="ck">✓</span>Toàn bộ kho từ vựng &amp; giáo trình</li>
+        <li><span class="ck">✓</span>Flashcard, Game, Gõ diệt quái không giới hạn</li>
+        <li><span class="ck">✓</span>Toàn bộ Video &amp; Shorts (đủ 5 tab học)</li>
       </ul>
       <div class="cta pick">Chọn gói Plus</div>
     </div>
@@ -123,14 +111,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="tag gold">Đáng giá nhất</div>
       <h3>Pro</h3>
       <div class="price">3.790.000đ</div>
+      <div class="note">Một lần — dùng trong <b>2 năm</b></div>
+      <ul>
+        <li><span class="ck">✓</span>Mở khóa <b>toàn bộ</b> nền tảng trong <b>2 năm</b></li>
+        <li><span class="ck">✓</span>Rẻ hơn mua Plus hai năm liền</li>
+        <li><span class="ck">✓</span>Mọi tính năng mới ra trong 2 năm</li>
+        <li><span class="ck">✓</span>Không lo gia hạn hằng năm</li>
+      </ul>
+      <div class="cta gold">Chọn gói Pro</div>
+    </div>
+
+    <div class="plan" id="plan-vip">
+      <div class="tag vip">Trọn đời</div>
+      <h3>VIP</h3>
+      <div class="price">5.678.999đ</div>
       <div class="note">Một lần — dùng <b>vĩnh viễn</b></div>
       <ul>
-        <li><span class="ck">✓</span>Mở khóa <b>toàn bộ</b> tính năng trọn đời</li>
-        <li><span class="ck">✓</span>Không lo gia hạn hằng năm</li>
+        <li><span class="ck">✓</span>Mở khóa <b>toàn bộ</b> nền tảng <b>trọn đời</b></li>
+        <li><span class="ck">✓</span>Không bao giờ phải gia hạn</li>
         <li><span class="ck">✓</span>Mọi tính năng mới trong tương lai</li>
         <li><span class="ck">✓</span>Tiết kiệm nhất về lâu dài</li>
       </ul>
-      <div class="cta gold">Chọn gói Pro</div>
+      <div class="cta gold">Chọn gói VIP</div>
     </div>
   </div>
 
@@ -144,7 +146,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="pay-row"><div class="k">Nội dung chuyển khoản</div><div class="copywrap"><div class="v hl" id="pay-note">Số điện thoại đăng ký</div><button class="copy" id="pay-note-copy" onclick="copyNote(this)">Sao chép</button></div></div>
     </div>
     <div class="steps">
-      <div class="step"><span class="n">1</span><span>Chuyển khoản số tiền của gói bạn chọn (Plus 2.388.000đ / Pro 3.790.000đ), ghi <b>nội dung = số điện thoại đăng ký</b> của bạn.</span></div>
+      <div class="step"><span class="n">1</span><span>Chuyển khoản số tiền của gói bạn chọn (Plus 2.388.000đ · Pro 3.790.000đ · VIP 5.678.999đ), ghi <b>nội dung = số điện thoại đăng ký</b> của bạn.</span></div>
       <div class="step"><span class="n">2</span><span>Quản trị viên kiểm tra và <b>kích hoạt gói</b> cho tài khoản của bạn (thường trong thời gian ngắn).</span></div>
       <div class="step"><span class="n">3</span><span>Đăng xuất rồi <b>đăng nhập lại</b> (hoặc tải lại trang) là dùng được ngay.</span></div>
     </div>
@@ -165,7 +167,10 @@ function copyVal(v,btn){ try{ navigator.clipboard.writeText(v); const t=btn.text
 function copyNote(btn){ const v=(document.getElementById('pay-note').textContent||'').trim(); copyVal(v,btn); }
 
 function fmtDate(s){ if(!s)return ''; const d=new Date(s); if(isNaN(d))return ''; return d.toLocaleDateString('vi-VN'); }
-function planLabel(p){ return p==='pro'?'Pro (vĩnh viễn)':(p==='plus'?'Plus (1 năm)':'Free'); }
+function planLabel(p){ return p==='vip'?'VIP (vĩnh viễn)':(p==='pro'?'Pro (2 năm)':(p==='plus'?'Plus (1 năm)':(p==='trial'?'Dùng thử 24 giờ':'Đã hết hạn'))); }
+function conLai(exp){ const ms=new Date(exp).getTime()-Date.now(); if(ms<=0) return 'đã hết hạn';
+  const h=Math.floor(ms/3600000); if(h>=48) return 'còn '+Math.floor(h/24)+' ngày';
+  const m=Math.floor((ms%3600000)/60000); return h>=1?('còn '+h+' giờ '+m+' phút'):('còn '+m+' phút'); }
 
 async function loadMe(){
   const cur=document.getElementById('current');
@@ -178,19 +183,23 @@ async function loadMe(){
     const role=(prof&&prof.role)||'student';
     const phone=(prof&&prof.phone)||'';
     if(phone){ const pn=document.getElementById('pay-note'); pn.textContent=phone; }
-    ['free','plus','pro'].forEach(p=>{ const el=document.getElementById('cta-'+p); });
     document.querySelectorAll('.plan').forEach(el=>el.classList.remove('is-current'));
+    const exp=prof&&prof.plan_expires_at;
+    const conHan = !exp || new Date(exp).getTime()>Date.now();
     if(role==='teacher'||role==='admin'){
       cur.innerHTML='Bạn đang là <b>'+(role==='admin'?'Quản trị viên':'Giáo viên')+'</b> — đã có <b>toàn quyền</b>, không cần nâng cấp.';
-    } else if(plan==='pro'){
-      cur.innerHTML='Gói hiện tại: <b>Pro (vĩnh viễn)</b> — bạn đã mở khóa toàn bộ. Cảm ơn bạn! 🎉';
-    } else if(plan==='plus'){
-      const exp=prof.plan_expires_at; const expired=exp && new Date(exp).getTime()<Date.now();
-      cur.innerHTML = expired
-        ? 'Gói <b>Plus</b> của bạn đã <b style="color:var(--danger)">hết hạn</b>'+(exp?(' ('+fmtDate(exp)+')'):'')+'. Gia hạn để tiếp tục.'
-        : 'Gói hiện tại: <b>Plus</b> — còn hạn đến <b>'+fmtDate(exp)+'</b>.';
+    } else if(plan==='vip' || (plan==='pro' && !exp)){
+      cur.innerHTML='Gói hiện tại: <b>'+(plan==='vip'?'VIP':'Pro')+' (vĩnh viễn)</b> — bạn đã mở khóa toàn bộ, trọn đời. Cảm ơn bạn! 🎉';
+    } else if(plan==='trial'){
+      cur.innerHTML = conHan
+        ? '⏳ Bạn đang <b>dùng thử miễn phí</b>, '+conLai(exp)+'. Hết thời gian này tài khoản sẽ bị khóa — hãy chọn một gói bên dưới.'
+        : 'Bản <b>dùng thử 24 giờ</b> đã <b style="color:var(--danger)">kết thúc</b>. Chọn một gói bên dưới để học tiếp.';
+    } else if(plan==='plus' || plan==='pro'){
+      cur.innerHTML = conHan
+        ? 'Gói hiện tại: <b>'+planLabel(plan)+'</b> — còn hạn đến <b>'+fmtDate(exp)+'</b>.'
+        : 'Gói <b>'+planLabel(plan)+'</b> của bạn đã <b style="color:var(--danger)">hết hạn</b>'+(exp?(' ngày '+fmtDate(exp)):'')+'. Gia hạn để học tiếp.';
     } else {
-      cur.innerHTML='Gói hiện tại: <b>Free</b>. Nâng cấp để mở khóa toàn bộ tính năng.';
+      cur.innerHTML='Tài khoản của bạn <b style="color:var(--danger)">đã hết quyền học</b>. Chọn một gói bên dưới để mở khóa toàn bộ.';
     }
     if(phone){ document.getElementById('foot').innerHTML='Số điện thoại đăng ký của bạn: <b>'+phone+'</b> — dùng đúng số này làm nội dung chuyển khoản.'; }
   }catch(e){

@@ -39,6 +39,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .hero h1 span{color:var(--accent)}.hero h1 span em{font-style:normal;color:var(--a2)}
 .hero p{font-size:16px;color:rgba(221,227,240,.72);margin:14px auto 26px;max-width:560px}
 .hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-note{margin:18px auto 0;max-width:520px;font-size:13.5px;color:rgba(221,227,240,.55);line-height:1.6;position:relative;z-index:1}
+.pricing{margin:34px 0}
+.pricing .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:820px){.pricing .pgrid{grid-template-columns:1fr}}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 18px;text-align:center;position:relative}
+.pcard.hot{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.pcard h3{font-size:17px;margin:0 0 6px}
+.pcard .pprice{font-size:23px;font-weight:800;letter-spacing:-.5px}
+.pcard .pnote{font-size:13px;color:rgba(221,227,240,.6);margin-top:6px}
+.pcard .ptag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;
+background:var(--accent);color:#fff;border-radius:20px;padding:3px 11px;white-space:nowrap}
+.pcard .ptag.gold{background:linear-gradient(90deg,#7c5cf7,#c04ff7)}
 .btn-cta{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
 .btn-cta.primary{background:var(--accent);color:#fff}.btn-cta.primary:hover{opacity:.9}
 .btn-cta.ghost{background:var(--card);color:var(--text);border:1px solid var(--border)}.btn-cta.ghost:hover{border-color:var(--border2)}
@@ -160,12 +172,40 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 <main class="app">
   <!-- HERO -->
   <section class="hero">
-    <div class="badge">✦ Nền tảng học tiếng Anh</div>
+    <div class="badge">✦ Mở toàn bộ 24 giờ, không cần thẻ</div>
     <h1>Học tiếng Anh <span>thông<em> minh</em></span> hơn mỗi ngày</h1>
     <p>Học như đứa trẻ sơ sinh — nghe hiểu nội dung dễ tiếp thu, nói theo video để bật phản xạ nói, và ghi nhớ từ vựng bền vững bằng Flashcard SRS. Tiến bộ đều mỗi ngày.</p>
     <div class="hero-actions">
-      <a href="register.html" class="btn-cta primary">🚀 Đăng ký miễn phí</a>
-      <a href="video.html" class="btn-cta ghost">🎬 Bắt đầu học</a>
+      <a href="register.html" class="btn-cta primary">🚀 Dùng thử miễn phí 24 giờ</a>
+      <a href="nangcap.html" class="btn-cta ghost">⭐ Xem bảng giá</a>
+    </div>
+    <div class="hero-note">Đăng ký là mở khóa <b>toàn bộ</b> nền tảng trong 24 giờ. Hết thời gian dùng thử, chọn một gói để học tiếp.</div>
+  </section>
+
+  <!-- BẢNG GIÁ -->
+  <section class="pricing">
+    <div class="sect-label">Sau 24 giờ dùng thử, chọn gói phù hợp</div>
+    <div class="pgrid">
+      <div class="pcard hot">
+        <div class="ptag">Phổ biến</div>
+        <h3>Plus</h3>
+        <div class="pprice">2.388.000đ</div>
+        <div class="pnote">199.000đ/tháng — thu theo năm<br>Mở toàn bộ trong <b>1 năm</b></div>
+      </div>
+      <div class="pcard">
+        <h3>Pro</h3>
+        <div class="pprice">3.790.000đ</div>
+        <div class="pnote">Trả một lần<br>Mở toàn bộ trong <b>2 năm</b></div>
+      </div>
+      <div class="pcard">
+        <div class="ptag gold">Trọn đời</div>
+        <h3>VIP</h3>
+        <div class="pprice">5.678.999đ</div>
+        <div class="pnote">Trả một lần<br>Mở toàn bộ <b>vĩnh viễn</b></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="nangcap.html" class="btn-cta ghost">Xem chi tiết &amp; cách thanh toán →</a>
     </div>
   </section>
 
