@@ -819,6 +819,55 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
         <div class="wm-paragraph-label">Câu gợi ý theo thang Bloom</div>
         <div id="wm-examples-table-wrap"></div>
       </div>
+
+      <!-- ── Bộ câu hỏi 5W1H (qa_5w1h) ─────────────── -->
+      <style>
+        #wm-qa-section .qa-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+        #wm-qa-section .qa-count { font-size:12px; color:var(--muted,#8b93a7); }
+        #wm-qa-section .qa-toggle-all {
+          margin-left:auto; font-size:12px; padding:4px 10px; border-radius:999px; cursor:pointer;
+          border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.05); color:inherit;
+        }
+        #wm-qa-section .qa-toggle-all:hover { background:rgba(255,255,255,.12); }
+        #wm-qa-section .qa-item {
+          border:1px solid rgba(255,255,255,.10); border-radius:12px;
+          background:rgba(255,255,255,.03); padding:10px 12px; margin-bottom:8px;
+        }
+        #wm-qa-section .qa-q { display:flex; align-items:flex-start; gap:8px; cursor:pointer; }
+        #wm-qa-section .qa-no {
+          flex:none; min-width:24px; height:24px; padding:0 6px; border-radius:8px;
+          display:inline-flex; align-items:center; justify-content:center;
+          font-size:12px; font-weight:700; background:rgba(255,255,255,.10);
+        }
+        #wm-qa-section .qa-qtext { flex:1; font-weight:600; line-height:1.45; }
+        #wm-qa-section .qa-bloom {
+          flex:none; font-size:11px; padding:2px 8px; border-radius:999px; white-space:nowrap;
+          border:1px solid currentColor; opacity:.85;
+        }
+        #wm-qa-section .qa-bloom.b-nho  { color:#6ee7b7; }
+        #wm-qa-section .qa-bloom.b-hieu { color:#7dd3fc; }
+        #wm-qa-section .qa-bloom.b-vd   { color:#fcd34d; }
+        #wm-qa-section .qa-bloom.b-pt   { color:#f0abfc; }
+        #wm-qa-section .qa-caret { flex:none; opacity:.5; transition:transform .15s; }
+        #wm-qa-section .qa-item.open .qa-caret { transform:rotate(90deg); }
+        #wm-qa-section .qa-a { display:none; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,.12); }
+        #wm-qa-section .qa-item.open .qa-a { display:block; }
+        #wm-qa-section .qa-a-en { line-height:1.6; }
+        #wm-qa-section .qa-a-vi { margin-top:4px; font-size:13px; opacity:.75; font-style:italic; }
+        #wm-qa-section .qa-skip { font-size:12px; opacity:.6; font-style:italic; margin:2px 0 10px; }
+        #wm-qa-section .qa-rel { margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,.10); }
+        #wm-qa-section .qa-rel-g { font-size:13px; line-height:1.7; }
+        #wm-qa-section .qa-rel-g b { opacity:.8; font-weight:600; }
+        #wm-qa-section .qa-rel-w { color:var(--accent,#7dd3fc); font-weight:600; }
+      </style>
+      <div class="wm-section" id="wm-qa-section" style="display:none">
+        <div class="qa-head">
+          <div class="wm-paragraph-label" style="margin:0">❓ Bộ câu hỏi 5W1H</div>
+          <span class="qa-count" id="wm-qa-count"></span>
+          <button class="qa-toggle-all" id="wm-qa-toggle" onclick="qaToggleAll()">Mở hết</button>
+        </div>
+        <div id="wm-qa-list"></div>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -1079,7 +1128,7 @@ async function loadDue(){
     const words = await euFetchIn('words',
       'id,term,phonetic,definition_vi,definition_en,part_of_speech,level,topic,collection,image_url,audio_url,'+
       'example_sentence,examples,part_name,branch_name,topic_code,group_code,'+
-      'onset,rime1,syl2,syl3,syl4p,syllables,stress,suffix,root_word',
+      'onset,rime1,syl2,syl3,syl4p,syllables,stress,suffix,root_word,qa_5w1h',
       'id', ids);
     const wmap = {}; (words||[]).forEach(w=>wmap[w.id]=w);
 
@@ -1459,6 +1508,10 @@ function openWord(w) {
 
 
   // Examples (thang Bloom) — phải chạy trước renderUsage vì có buildExGloss
+  try { renderQA5W1H(w); } catch(err){
+    console.error('renderQA5W1H:', err);
+    const _q = document.getElementById('wm-qa-section'); if (_q) _q.style.display = 'none';
+  }
   try { renderWordExamples(w); } catch(err){
     console.error('renderWordExamples:', err);
     const _s = document.getElementById('wm-examples-section'); if (_s) _s.style.display = 'none';
@@ -1539,6 +1592,87 @@ function bloomCard(r, w, lvlLab){
       ${opps ? `<div class="ex-oppos">↔ ${opps}</div>` : ''}
       ${bloomAudioBars(r.sentence || '')}
     </div>`;
+}
+
+/* ── Bộ câu hỏi 5W1H ────────────────────────────────────────────────
+   Dữ liệu: words.qa_5w1h (jsonb) = { qa:[{no,bloom,q,a,a_vi}], skip_4b, related }
+   Câu trả lời ẩn sẵn, bấm câu hỏi để mở — dùng cho học viên tự trả lời trước. */
+var QA_BLOOM_CLS = { 'Nhớ':'b-nho', 'Hiểu':'b-hieu', 'Vận dụng':'b-vd', 'Phân tích':'b-pt' };
+
+function qaToggleItem(el){
+  if (el && el.parentNode) el.parentNode.classList.toggle('open');
+}
+
+function qaToggleAll(){
+  var list = document.getElementById('wm-qa-list');
+  var btn  = document.getElementById('wm-qa-toggle');
+  if (!list || !btn) return;
+  var items = list.querySelectorAll('.qa-item');
+  var open  = btn.getAttribute('data-open') === '1';
+  for (var i = 0; i < items.length; i++){
+    if (open) items[i].classList.remove('open'); else items[i].classList.add('open');
+  }
+  btn.setAttribute('data-open', open ? '0' : '1');
+  btn.textContent = open ? 'Mở hết' : 'Đóng hết';
+}
+
+function renderQA5W1H(w){
+  var sec  = document.getElementById('wm-qa-section');
+  var list = document.getElementById('wm-qa-list');
+  var cnt  = document.getElementById('wm-qa-count');
+  var btn  = document.getElementById('wm-qa-toggle');
+  if (!sec || !list) return;
+
+  var d = w && w.qa_5w1h;
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e){ d = null; } }
+  var qa = d && d.qa;
+  if (!qa || !qa.length) { sec.style.display = 'none'; return; }
+
+  var term = (w && w.term) || '';
+  var html = '';
+  for (var i = 0; i < qa.length; i++){
+    var r = qa[i] || {};
+    var bl  = r.bloom || '';
+    var cls = QA_BLOOM_CLS[bl] || '';
+    html +=
+      '<div class="qa-item">' +
+        '<div class="qa-q" onclick="qaToggleItem(this)">' +
+          '<span class="qa-no">' + esc(String(r.no == null ? (i+1) : r.no)) + '</span>' +
+          '<span class="qa-qtext">' + esc(r.q || '') + '</span>' +
+          (bl ? '<span class="qa-bloom ' + cls + '">' + esc(bl) + '</span>' : '') +
+          '<span class="qa-caret">›</span>' +
+        '</div>' +
+        '<div class="qa-a">' +
+          '<div class="qa-a-en">' + clickableSentence(r.a || '', term) + '</div>' +
+          (r.a_vi ? '<div class="qa-a-vi">↳ ' + esc(r.a_vi) + '</div>' : '') +
+          bloomAudioBars(r.a || '') +
+        '</div>' +
+      '</div>';
+  }
+
+  if (d.skip_4b) html += '<div class="qa-skip">(Câu trái ngược: bỏ qua — ' + esc(d.skip_4b) + '.)</div>';
+
+  var rel = d.related;
+  if (rel && typeof rel === 'object'){
+    var groups = '';
+    for (var g in rel){
+      if (!Object.prototype.hasOwnProperty.call(rel, g)) continue;
+      var arr = rel[g];
+      if (!arr || !arr.length) continue;
+      var ws = [];
+      for (var j = 0; j < arr.length; j++){
+        var it = arr[j] || {};
+        ws.push('<span class="qa-rel-w">' + esc(it.w || '') + '</span> (' + esc(it.vi || '') + ')');
+      }
+      groups += '<div class="qa-rel-g"><b>' + esc(g) + ':</b> ' + ws.join(' · ') + '</div>';
+    }
+    if (groups) html += '<div class="qa-rel"><b style="font-size:13px">Từ vựng liên quan</b>' + groups + '</div>';
+  }
+
+  list.innerHTML = html;
+  if (cnt) cnt.textContent = qa.length + ' câu';
+  if (btn) { btn.setAttribute('data-open','0'); btn.textContent = 'Mở hết'; }
+  sec.style.display = 'block';
 }
 
 function renderWordExamples(w) {
