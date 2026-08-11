@@ -1059,14 +1059,8 @@ body.fsmap .zoombar button.zb-fs { border-color: var(--accent); color: var(--acc
           font-size:12px; font-weight:700; background:rgba(255,255,255,.10);
         }
         #wm-qa-section .qa-qtext { flex:1; font-weight:600; line-height:1.45; }
-        #wm-qa-section .qa-bloom {
-          flex:none; font-size:11px; padding:2px 8px; border-radius:999px; white-space:nowrap;
-          border:1px solid currentColor; opacity:.85;
-        }
-        #wm-qa-section .qa-bloom.b-nho  { color:#6ee7b7; }
-        #wm-qa-section .qa-bloom.b-hieu { color:#7dd3fc; }
-        #wm-qa-section .qa-bloom.b-vd   { color:#fcd34d; }
-        #wm-qa-section .qa-bloom.b-pt   { color:#f0abfc; }
+        #wm-qa-section .qa-audio { margin-top:8px; }
+        #wm-qa-section .qa-audio .ex-spd-btn { font-size:13px; padding:5px 14px; }
         #wm-qa-section .qa-caret { flex:none; opacity:.5; transition:transform .15s; }
         #wm-qa-section .qa-item.open .qa-caret { transform:rotate(90deg); }
         #wm-qa-section .qa-a { display:none; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,.12); }
@@ -1678,7 +1672,16 @@ function bloomCard(r, w, lvlLab){
 /* ── Bộ câu hỏi 5W1H ────────────────────────────────────────────────
    Dữ liệu: words.qa_5w1h (jsonb) = { qa:[{no,bloom,q,a,a_vi}], skip_4b, related }
    Câu trả lời ẩn sẵn, bấm câu hỏi để mở — dùng cho học viên tự trả lời trước. */
-var QA_BLOOM_CLS = { 'Nhớ':'b-nho', 'Hiểu':'b-hieu', 'Vận dụng':'b-vd', 'Phân tích':'b-pt' };
+/* Đọc CẢ câu hỏi lẫn câu trả lời — 1 giọng, 1 tốc độ. Dùng lại exSpeak() sẵn có. */
+function qaAudioBar(q, a){
+  var t = ((q || '') + ' ' + (a || '')).trim()
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<div class="ex-audio-section qa-audio">' +
+           '<div class="ex-audio-bar" data-sentence="' + t + '" data-gender="male">' +
+             '<button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">🔊 Nghe câu hỏi &amp; trả lời</button>' +
+           '</div>' +
+         '</div>';
+}
 
 function qaToggleItem(el){
   if (el && el.parentNode) el.parentNode.classList.toggle('open');
@@ -1713,20 +1716,17 @@ function renderQA5W1H(w){
   var html = '';
   for (var i = 0; i < qa.length; i++){
     var r = qa[i] || {};
-    var bl  = r.bloom || '';
-    var cls = QA_BLOOM_CLS[bl] || '';
     html +=
       '<div class="qa-item">' +
         '<div class="qa-q" onclick="qaToggleItem(this)">' +
           '<span class="qa-no">' + esc(String(r.no == null ? (i+1) : r.no)) + '</span>' +
           '<span class="qa-qtext">' + esc(r.q || '') + '</span>' +
-          (bl ? '<span class="qa-bloom ' + cls + '">' + esc(bl) + '</span>' : '') +
           '<span class="qa-caret">›</span>' +
         '</div>' +
         '<div class="qa-a">' +
           '<div class="qa-a-en">' + clickableSentence(r.a || '', term) + '</div>' +
           (r.a_vi ? '<div class="qa-a-vi">↳ ' + esc(r.a_vi) + '</div>' : '') +
-          bloomAudioBars(r.a || '') +
+          qaAudioBar(r.q, r.a) +
         '</div>' +
       '</div>';
   }
