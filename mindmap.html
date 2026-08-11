@@ -848,6 +848,20 @@ body {
 }
 .zoombar button:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ── CHẾ ĐỘ TOÀN MÀN HÌNH BẢN ĐỒ ──
+   Ẩn thanh nav + thanh tiến độ, chỉ chừa thanh công cụ (thu nhỏ lại) để
+   khung bản đồ ăn trọn chiều cao màn hình. Có Fullscreen API thì ẩn luôn
+   thanh địa chỉ của trình duyệt; máy không hỗ trợ (iOS Safari) vẫn được
+   phần ẩn thanh ở trên. */
+body.fsmap .topbar,
+body.fsmap .upbar,
+body.fsmap .statbar { display: none !important; }
+body.fsmap .toolbar { padding: 7px 12px; gap: 7px; }
+body.fsmap #viewport { padding: 14px 34px 110px 14px; }
+body.fsmap #loading  { top: 0; }
+.zoombar button.zb-fs { font-size: 16px; }
+body.fsmap .zoombar button.zb-fs { border-color: var(--accent); color: var(--accent); }
+
 @media (max-width: 720px) {
   .search-wrap input { width: 170px; }
   .tb-note, .legend { display: none; }
@@ -923,6 +937,7 @@ body {
   <button class="tb-btn" onclick="collapseAll()">⤡ Thu gọn</button>
   <button class="tb-btn" onclick="goRoot()">⌖ Về gốc</button>
   <button class="tb-btn" onclick="zoomFit()">⤢ Vừa màn hình</button>
+  <button class="tb-btn" id="btn-fs" onclick="toggleFullMap()" title="Ẩn thanh trên + phóng khung bản đồ ra cả màn hình (phím F · Esc để thoát)">⛶ Toàn màn hình</button>
   <span class="tb-note" id="tbnote"></span>
 </div>
 
@@ -941,6 +956,7 @@ body {
   <button onclick="zoomBy(1.15)" title="Phóng to">＋</button>
   <button onclick="zoomBy(1/1.15)" title="Thu nhỏ">－</button>
   <button onclick="zoomReset()" title="Về 100%">⌂</button>
+  <button class="zb-fs" id="zb-fs" onclick="toggleFullMap()" title="Toàn màn hình (F)">⛶</button>
 </div>
 
 <!-- ══════ POPUP CHI TIẾT TỪ (giống hệt vocab.html) ══════ -->
@@ -1149,7 +1165,13 @@ function bindUI(){
     render();
   });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeWord(); }
+    if (e.key === 'Escape') {
+      // Đang mở popup từ thì Esc chỉ đóng popup; không thì mới thoát toàn màn hình.
+      // (Có Fullscreen API thì trình duyệt tự thoát rồi, fullscreenchange lo phần nút.)
+      const wordOpen = document.getElementById('overlay-word').classList.contains('open');
+      closeWord();
+      if (!wordOpen && isFsMode() && !document.fullscreenElement) setFullMap(false);
+    }
     if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); }
   });
   // kéo để di chuyển bản đồ
@@ -2460,6 +2482,49 @@ function toggleUnlearned(){
 function applyZoom(){ document.getElementById('stage').style.transform = 'scale(' + zoom + ')'; paintNote(); }
 function zoomBy(f){ zoom = Math.min(1.6, Math.max(0.02, zoom * f)); applyZoom(); paintNote(); }
 function zoomReset(){ zoom = 1; applyZoom(); }
+
+/* ── TOÀN MÀN HÌNH BẢN ĐỒ ───────────────────────────────────────────────
+   Hai lớp, dùng chung một nút:
+   1. class .fsmap trên <body> → ẩn topbar/upbar/statbar (luôn chạy được)
+   2. Fullscreen API → ẩn nốt khung trình duyệt (không có thì bỏ qua)
+   Phải zoomFit() LẠI sau khi đổi vì chiều cao khung vừa thay đổi. */
+function isFsMode(){ return document.body.classList.contains('fsmap'); }
+
+function setFullMap(on){
+  document.body.classList.toggle('fsmap', on);
+  const b = document.getElementById('btn-fs');
+  if (b){
+    b.classList.toggle('on', on);
+    b.textContent = on ? '⛶ Thoát toàn màn hình' : '⛶ Toàn màn hình';
+  }
+  const z = document.getElementById('zb-fs');
+  if (z) z.title = on ? 'Thoát toàn màn hình (Esc)' : 'Toàn màn hình (F)';
+
+  try {
+    if (on && !document.fullscreenElement && document.documentElement.requestFullscreen)
+      document.documentElement.requestFullscreen().catch(e => console.warn('[mindmap] requestFullscreen:', e));
+    if (!on && document.fullscreenElement && document.exitFullscreen)
+      document.exitFullscreen().catch(e => console.warn('[mindmap] exitFullscreen:', e));
+  } catch (e) { console.warn('[mindmap] fullscreen API:', e); }
+
+  // chờ trình duyệt vẽ lại chiều cao mới rồi mới đo — gọi ngay là ra số cũ
+  setTimeout(() => { try { zoomFit(); } catch (e) { console.warn('[mindmap] zoomFit:', e); } }, 140);
+}
+function toggleFullMap(){ setFullMap(!isFsMode()); }
+
+/* Người dùng thoát bằng Esc/F11 của trình duyệt → trả nút về đúng trạng thái */
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && isFsMode()) setFullMap(false);
+});
+
+/* Phím F: bật/tắt nhanh — bỏ qua khi đang gõ trong ô tìm kiếm hoặc đang mở popup từ */
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (document.getElementById('overlay-word').classList.contains('open')) return;
+  if (e.code === 'KeyF') { e.preventDefault(); toggleFullMap(); }
+});
 
 /* Dòng chữ nhỏ bên phải thanh công cụ */
 function paintNote(){
