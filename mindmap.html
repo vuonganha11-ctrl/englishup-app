@@ -1059,7 +1059,7 @@ body.fsmap .zoombar button.zb-fs { border-color: var(--accent); color: var(--acc
           font-size:12px; font-weight:700; background:rgba(255,255,255,.10);
         }
         #wm-qa-section .qa-qtext { flex:1; font-weight:600; line-height:1.45; }
-        #wm-qa-section .qa-audio { margin-top:8px; }
+        #wm-qa-section .qa-audio { margin-top:8px; gap:8px; }
         #wm-qa-section .qa-audio .ex-spd-btn { font-size:13px; padding:5px 14px; }
         #wm-qa-section .qa-caret { flex:none; opacity:.5; transition:transform .15s; }
         #wm-qa-section .qa-item.open .qa-caret { transform:rotate(90deg); }
@@ -1672,13 +1672,19 @@ function bloomCard(r, w, lvlLab){
 /* ── Bộ câu hỏi 5W1H ────────────────────────────────────────────────
    Dữ liệu: words.qa_5w1h (jsonb) = { qa:[{no,bloom,q,a,a_vi}], skip_4b, related }
    Câu trả lời ẩn sẵn, bấm câu hỏi để mở — dùng cho học viên tự trả lời trước. */
-/* Đọc CẢ câu hỏi lẫn câu trả lời — 1 giọng, 1 tốc độ. Dùng lại exSpeak() sẵn có. */
-function qaAudioBar(q, a){
-  var t = ((q || '') + ' ' + (a || '')).trim()
+/* 2 nút nghe riêng, tốc độ 1×: câu hỏi giọng NỮ · câu trả lời giọng NAM.
+   Dùng lại exSpeak() sẵn có (đọc data-sentence, data-rate, data-gender của .ex-audio-bar). */
+function qaEsc(s){
+  return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function qaAudioBar(q, a){
   return '<div class="ex-audio-section qa-audio">' +
-           '<div class="ex-audio-bar" data-sentence="' + t + '" data-gender="male">' +
-             '<button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">🔊 Nghe câu hỏi &amp; trả lời</button>' +
+           '<div class="ex-audio-bar" data-sentence="' + qaEsc(q) + '" data-gender="female">' +
+             '<button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">👩 Câu hỏi</button>' +
+           '</div>' +
+           '<div class="ex-audio-bar" data-sentence="' + qaEsc(a) + '" data-gender="male">' +
+             '<button class="ex-spd-btn active" data-rate="1" onclick="exSpeak(this)">👨 Trả lời</button>' +
            '</div>' +
          '</div>';
 }
