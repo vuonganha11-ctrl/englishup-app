@@ -2764,7 +2764,9 @@ init();
           font-size:12px; font-weight:700; background:rgba(255,255,255,.10);
         }
         #wm-qa-section .qa-qtext { flex:1; font-weight:600; line-height:1.45; }
-        #wm-qa-section .qa-audio { margin-top:8px; gap:8px; }
+        /* .ex-audio-section gốc là flex-direction:column (2 giọng xếp dọc) → ép về hàng ngang */
+        #wm-qa-section .qa-audio { margin-top:8px; flex-direction:row; flex-wrap:wrap; gap:8px; }
+        #wm-qa-section .qa-audio .ex-audio-bar { flex:none; }
         #wm-qa-section .qa-audio .ex-spd-btn { font-size:13px; padding:5px 14px; }
         #wm-qa-section .qa-caret { flex:none; opacity:.5; transition:transform .15s; }
         #wm-qa-section .qa-item.open .qa-caret { transform:rotate(90deg); }
