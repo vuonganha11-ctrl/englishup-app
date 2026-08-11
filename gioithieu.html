@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Giới thiệu bạn bè</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px}
+.top-nav a:hover{color:var(--text);background:var(--card)}
+
+.page{max-width:1040px;margin:0 auto;padding:26px 18px 80px}
+h1{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.lead{font-size:14px;color:var(--muted);margin:5px 0 22px;max-width:640px}
+
+.sec{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:18px}
+.sec h2{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec h2 .tag{font-size:11px;font-weight:600;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:999px;padding:2px 9px}
+
+/* ---- Mã giới thiệu ---- */
+.codebox{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.code{font-family:var(--mono);font-weight:700;font-size:30px;letter-spacing:5px;color:var(--a3);
+      background:var(--card2);border:1px dashed var(--a3);border-radius:12px;padding:14px 22px;user-select:all}
+.linkrow{display:flex;gap:8px;flex:1;min-width:280px}
+.linkrow input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;
+      padding:11px 12px;color:var(--text);font-family:var(--mono);font-size:12.5px}
+.btn{font-family:inherit;font-weight:600;border:1px solid transparent;border-radius:8px;cursor:pointer;font-size:13.5px;padding:10px 15px;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3b7de8}
+.btn-ghost{background:var(--card2);color:var(--text);border-color:var(--border2)}.btn-ghost:hover{border-color:var(--accent)}
+.btn-ok{background:var(--a3);color:#04140d}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---- Thẻ số ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.stat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.stat .lbl{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat .val{font-size:22px;font-weight:800;margin-top:4px;font-family:var(--mono)}
+.stat .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.c-green{color:var(--a3)}.c-orange{color:var(--a4)}.c-blue{color:var(--accent)}.c-purple{color:var(--a2)}.c-pink{color:var(--a5)}.c-mute{color:var(--muted)}
+
+/* ---- Cách hoạt động ---- */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.step{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:15px}
+.step .n{width:26px;height:26px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:9px}
+.step .t{font-weight:700;font-size:13.5px;margin-bottom:3px}
+.step .d{font-size:12.5px;color:var(--muted)}
+
+/* ---- Bảng ---- */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:9px 10px;border-bottom:1px solid var(--border)}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.num{font-family:var(--mono);text-align:right;white-space:nowrap}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid}
+.p-green{color:var(--a3);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.10)}
+.p-orange{color:var(--a4);border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.10)}
+.p-blue{color:var(--accent);border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.10)}
+.p-mute{color:var(--muted);border-color:var(--border2);background:var(--card2)}
+.p-red{color:var(--danger);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.10)}
+.p-paid{color:var(--a2);border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.10)}
+.tblwrap{overflow-x:auto}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 10px}
+
+/* ---- Form rút tiền ---- */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.field input,.field textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:13.5px}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6}
+.msg{font-size:13px;margin-top:10px;min-height:18px}
+.msg.err{color:var(--danger)}.msg.ok{color:var(--a3)}
+
+.banner{border-radius:12px;padding:13px 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:18px}
+.banner.warn{background:rgba(251,146,60,.09);border:1px solid rgba(251,146,60,.35);color:#fed7aa}
+.banner.info{background:rgba(79,142,247,.09);border:1px solid rgba(79,142,247,.35);color:#bfdbfe}
+.hidden{display:none!important}
+.skel{color:var(--muted);font-size:13px;padding:14px 0}
+@media(max-width:600px){ .code{font-size:23px;letter-spacing:3px;padding:12px 16px} h1{font-size:20px} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="report.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav"></nav>
+</header>
+
+<div class="page">
+  <h1>🤝 Giới thiệu bạn bè</h1>
+  <div class="lead">Chia sẻ mã của bạn — bạn bè học tiến bộ, bạn nhận hoa hồng. Học cùng nhau bao giờ cũng đi xa hơn học một mình.</div>
+
+  <div id="need-login" class="banner warn hidden">
+    <span>🔒</span><div>Bạn cần <a href="vocab.html" style="color:var(--a4);font-weight:600">đăng nhập</a> để xem mã giới thiệu của mình.</div>
+  </div>
+
+  <div id="main" class="hidden">
+
+    <!-- ===== MÃ GIỚI THIỆU ===== -->
+    <div class="sec">
+      <h2>🎟️ Mã giới thiệu của bạn</h2>
+      <div class="codebox">
+        <div class="code" id="my-code">·······</div>
+        <div class="linkrow">
+          <input id="my-link" readonly value="">
+          <button class="btn btn-ghost" id="btn-copy" onclick="copyLink()">📋 Sao chép</button>
+          <button class="btn btn-ghost" id="btn-share" onclick="shareLink()">📤 Chia sẻ</button>
+        </div>
+      </div>
+      <div class="note">Người mới đăng ký qua liên kết này sẽ tự động được ghi nhận là tuyến dưới của bạn. Mã chỉ gắn được <b>một lần</b> và trong <b>30 ngày đầu</b> kể từ khi họ tạo tài khoản.</div>
+    </div>
+
+    <!-- ===== VÍ ===== -->
+    <div class="sec">
+      <h2>💰 Ví hoa hồng</h2>
+      <div class="stats" id="wallet">
+        <div class="skel">Đang tải…</div>
+      </div>
+      <div class="note" id="wallet-note"></div>
+    </div>
+
+    <!-- ===== CÁCH HOẠT ĐỘNG ===== -->
+    <div class="sec">
+      <h2>📐 Cách tính hoa hồng <span class="tag" id="model-tag">—</span></h2>
+      <div class="steps" id="how"></div>
+      <div class="note" id="how-note"></div>
+    </div>
+
+    <!-- ===== TUYẾN DƯỚI ===== -->
+    <div class="sec">
+      <h2>👥 Tuyến dưới của bạn</h2>
+      <div class="tblwrap">
+        <table id="tbl-down">
+          <thead><tr>
+            <th>Tầng</th><th>Học viên</th><th>Email</th><th>Tham gia</th><th>Đã đóng học phí</th><th class="num">Bạn nhận được</th>
+          </tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Đang tải…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== SỔ HOA HỒNG ===== -->
+    <div class="sec">
+      <h2>🧾 Sổ hoa hồng</h2>
+      <div class="tblwrap">
+        <table id="tbl-com">
+          <thead><tr>
+            <th>Ngày</th><th>Từ học viên</th><th>Tầng</th><th class="num">Tỉ lệ</th><th class="num">Số tiền</th><th>Trạng thái</th>
+          </tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Đang tải…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== RÚT TIỀN ===== -->
+    <div class="sec">
+      <h2>🏦 Rút hoa hồng</h2>
+      <div id="payout-open">
+        <div class="grid2">
+          <div class="field"><label>Ngân hàng</label><input id="p-bank" placeholder="VD: MB Bank / Vietcombank"></div>
+          <div class="field"><label>Số tài khoản</label><input id="p-acc" placeholder="Số tài khoản nhận tiền"></div>
+          <div class="field"><label>Chủ tài khoản</label><input id="p-holder" placeholder="Tên in trên thẻ / sổ"></div>
+          <div class="field"><label>Ghi chú (tuỳ chọn)</label><input id="p-note" placeholder="—"></div>
+        </div>
+        <div style="margin-top:14px"><button class="btn btn-primary" id="btn-payout" onclick="doPayout()">Gửi yêu cầu rút tiền</button></div>
+        <div class="msg" id="p-msg"></div>
+        <div class="note" id="p-rule"></div>
+      </div>
+      <div class="tblwrap" style="margin-top:16px">
+        <table id="tbl-po">
+          <thead><tr>
+            <th>Ngày gửi</th><th class="num">Tổng</th><th class="num">Thuế TNCN</th><th class="num">Thực nhận</th><th>Trạng thái</th><th>Ghi chú của admin</th>
+          </tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Chưa có lệnh rút nào.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
+
+let ME=null, SETTINGS=null, DOWN=[], WALLET=null;
+
+const vnd = n => (Number(n)||0).toLocaleString('vi-VN') + '₫';
+const dmy = s => { if(!s) return '—'; const d=new Date(s);
+  return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------------- khởi động ---------------- */
+(async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ document.getElementById('need-login').classList.remove('hidden'); return; }
+  ME = session.user;
+  document.getElementById('main').classList.remove('hidden');
+
+  try{
+    const [{data:st}, {data:code}] = await Promise.all([
+      sb.from('referral_settings').select('*').eq('id',1).maybeSingle(),
+      sb.rpc('my_referral_code')
+    ]);
+    SETTINGS = st || { tier1_pct:20, tier2_pct:5, cash_tier2_enabled:true, hold_days:7, min_payout:200000,
+                       withhold_tax:true, tax_threshold:2000000, tax_pct:10, reward_tier2_points:0 };
+    showCode(code);
+    renderHow();
+  }catch(e){ console.error(e); }
+
+  await Promise.all([ loadWallet(), loadDownline(), loadPayouts() ]);
+  await loadCommissions();
+})();
+
+/* ---------------- mã + link ---------------- */
+function showCode(code){
+  if(!code){ document.getElementById('my-code').textContent='—'; return; }
+  document.getElementById('my-code').textContent = code;
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '') + 'register.html';
+  document.getElementById('my-link').value = base + '?ref=' + code;
+}
+async function copyLink(){
+  const el=document.getElementById('my-link');
+  try{ await navigator.clipboard.writeText(el.value); }
+  catch(_){ el.select(); document.execCommand('copy'); }
+  const b=document.getElementById('btn-copy');
+  b.textContent='✅ Đã chép'; b.classList.add('btn-ok');
+  setTimeout(()=>{ b.textContent='📋 Sao chép'; b.classList.remove('btn-ok'); },1600);
+}
+async function shareLink(){
+  const url=document.getElementById('my-link').value;
+  const text='Mình đang học tiếng Anh trên EnglishUp, vào học cùng mình nhé!';
+  if(navigator.share){ try{ await navigator.share({title:'EnglishUp', text, url}); return; }catch(_){} }
+  copyLink();
+}
+
+/* ---------------- ví ---------------- */
+async function loadWallet(){
+  const { data, error } = await sb.rpc('my_wallet');
+  if(error || !data || !data.ok){ document.getElementById('wallet').innerHTML='<div class="skel">Không tải được ví.</div>'; return; }
+  WALLET = data;
+  document.getElementById('wallet').innerHTML = [
+    card('Rút được ngay', vnd(data.available), 'c-green',  'đã qua thời gian đối soát'),
+    card('Đang treo',     vnd(data.holding),   'c-orange', (SETTINGS.hold_days||7)+' ngày kể từ khi phát sinh'),
+    card('Chờ chi trả',   vnd(data.locked),    'c-blue',   'đang nằm trong lệnh rút'),
+    card('Đã nhận',       vnd(data.paid),      'c-purple', 'tổng cộng từ trước tới nay'),
+    card('Tuyến 1',       data.f1 + ' người',  'c-pink',   data.f1_paid + ' người đã đóng học phí'),
+    card('Tuyến 2',       data.f2 + ' người',  'c-mute',   'do tuyến 1 của bạn giới thiệu')
+  ].join('');
+  const pts = Number(data.points)||0;
+  document.getElementById('wallet-note').innerHTML = pts>0
+    ? '🪙 Bạn còn <b>'+pts.toLocaleString('vi-VN')+' xu</b> thưởng cộng đồng (đổi gia hạn gói, mở khoá nội dung).'
+    : '';
+}
+function card(lbl,val,cls,sub){
+  return '<div class="stat"><div class="lbl">'+esc(lbl)+'</div><div class="val '+cls+'">'+esc(val)+
+         '</div><div class="sub">'+esc(sub)+'</div></div>';
+}
+
+/* ---------------- cách tính ---------------- */
+function renderHow(){
+  const s=SETTINGS, two = s.cash_tier2_enabled && Number(s.tier2_pct)>0;
+  document.getElementById('model-tag').textContent = two ? '2 tầng' : '1 tầng';
+  const steps=[
+    ['Chia sẻ mã','Gửi liên kết giới thiệu cho bạn bè, đồng nghiệp, hội nhóm học tiếng Anh.'],
+    ['Bạn bè đăng ký','Họ đăng ký qua liên kết của bạn và được ghi nhận là <b>tuyến 1</b>.'],
+    ['Họ đóng học phí','Bạn nhận <b class="c-green">'+s.tier1_pct+'%</b> giá trị đơn hàng của họ.'],
+  ];
+  if(two) steps.push(['Tuyến 1 giới thiệu tiếp','Người mà tuyến 1 của bạn giới thiệu là <b>tuyến 2</b>. Họ đóng tiền, bạn nhận thêm <b class="c-orange">'+s.tier2_pct+'%</b>.']);
+  else if(Number(s.reward_tier2_points)>0) steps.push(['Tuyến 1 giới thiệu tiếp','Bạn được thưởng <b class="c-orange">'+Number(s.reward_tier2_points).toLocaleString('vi-VN')+' xu</b> (không phải tiền mặt) khi tuyến 2 đóng học phí.']);
+  steps.push(['Rút tiền','Sau <b>'+s.hold_days+' ngày</b> đối soát, hoa hồng chuyển sang "rút được". Tối thiểu <b>'+vnd(s.min_payout)+'</b>/lần.']);
+
+  document.getElementById('how').innerHTML = steps.map((st,i)=>
+    '<div class="step"><div class="n">'+(i+1)+'</div><div class="t">'+st[0]+'</div><div class="d">'+st[1]+'</div></div>'
+  ).join('');
+
+  let note='Hoa hồng chỉ phát sinh khi khoản thanh toán được quản trị viên <b>xác nhận đã nhận tiền</b>. Nếu học viên được hoàn tiền, hoa hồng tương ứng sẽ bị huỷ.';
+  if(s.withhold_tax) note += ' Với mỗi lần chi trả từ <b>'+vnd(s.tax_threshold)+'</b> trở lên, EnglishUp khấu trừ <b>'+s.tax_pct+'% thuế TNCN</b> theo quy định.';
+  document.getElementById('how-note').innerHTML = note;
+  document.getElementById('p-rule').innerHTML =
+    'Mỗi lệnh rút gộp <b>toàn bộ</b> hoa hồng đang rút được. Tối thiểu <b>'+vnd(s.min_payout)+'</b>. '+
+    'Mỗi lần chỉ có một lệnh đang chờ xử lý.';
+}
+
+/* ---------------- tuyến dưới ---------------- */
+async function loadDownline(){
+  const tb=document.querySelector('#tbl-down tbody');
+  const { data, error } = await sb.rpc('my_downline');
+  if(error){ tb.innerHTML='<tr><td colspan="6" class="empty">Không tải được danh sách.</td></tr>'; return; }
+  DOWN = data||[];
+  if(!DOWN.length){ tb.innerHTML='<tr><td colspan="6" class="empty">Chưa có ai. Hãy chia sẻ mã của bạn ở trên nhé 🚀</td></tr>'; return; }
+  tb.innerHTML = DOWN.map(r =>
+    '<tr>'+
+      '<td><span class="pill '+(r.tier===1?'p-blue':'p-mute')+'">Tầng '+r.tier+'</span></td>'+
+      '<td>'+esc(r.member_name)+'</td>'+
+      '<td style="color:var(--muted);font-family:var(--mono);font-size:12px">'+esc(r.masked)+'</td>'+
+      '<td style="color:var(--muted)">'+dmy(r.joined_at)+'</td>'+
+      '<td>'+(r.has_paid?'<span class="pill p-green">Đã đóng</span>':'<span class="pill p-mute">Chưa</span>')+'</td>'+
+      '<td class="num '+(r.my_earned>0?'c-green':'c-mute')+'">'+vnd(r.my_earned)+'</td>'+
+    '</tr>').join('');
+}
+
+/* ---------------- sổ hoa hồng ---------------- */
+async function loadCommissions(){
+  const tb=document.querySelector('#tbl-com tbody');
+  const { data, error } = await sb.from('commissions')
+    .select('created_at,source_user_id,tier,rate,amount,status,available_at,payout_id')
+    .order('created_at',{ascending:false}).limit(300);
+  if(error){ tb.innerHTML='<tr><td colspan="6" class="empty">Không tải được sổ hoa hồng.</td></tr>'; return; }
+  if(!data || !data.length){ tb.innerHTML='<tr><td colspan="6" class="empty">Chưa phát sinh hoa hồng nào.</td></tr>'; return; }
+
+  // ánh xạ id → tên (RLS không cho đọc hồ sơ người khác, nên lấy tên từ my_downline)
+  const nameOf={}; DOWN.forEach(d=>{ if(d.member_id) nameOf[d.member_id]=d.member_name; });
+  tb.innerHTML = data.map(c=>{
+    const now=Date.now();
+    let pill;
+    if(c.status==='paid')            pill='<span class="pill p-paid">Đã nhận</span>';
+    else if(c.status==='cancelled')  pill='<span class="pill p-red">Đã huỷ</span>';
+    else if(c.payout_id)             pill='<span class="pill p-blue">Chờ chi trả</span>';
+    else if(new Date(c.available_at).getTime()>now) pill='<span class="pill p-orange">Treo đến '+dmy(c.available_at)+'</span>';
+    else                             pill='<span class="pill p-green">Rút được</span>';
+    return '<tr>'+
+      '<td style="color:var(--muted)">'+dmy(c.created_at)+'</td>'+
+      '<td>'+esc(nameOf[c.source_user_id] || shortId(c.source_user_id))+'</td>'+
+      '<td><span class="pill '+(c.tier===1?'p-blue':'p-mute')+'">Tầng '+c.tier+'</span></td>'+
+      '<td class="num">'+Number(c.rate)+'%</td>'+
+      '<td class="num" style="font-weight:700">'+vnd(c.amount)+'</td>'+
+      '<td>'+pill+'</td>'+
+    '</tr>';
+  }).join('');
+}
+function shortId(id){ return id ? ('Học viên #'+String(id).slice(0,6).toUpperCase()) : '—'; }
+
+/* ---------------- rút tiền ---------------- */
+async function loadPayouts(){
+  const tb=document.querySelector('#tbl-po tbody');
+  const { data, error } = await sb.from('payout_requests')
+    .select('created_at,amount,tax_amount,net_amount,status,admin_note')
+    .order('created_at',{ascending:false}).limit(50);
+  if(error || !data || !data.length){ return; }
+  const map={requested:['p-orange','Chờ duyệt'],approved:['p-blue','Đã duyệt'],
+             paid:['p-green','Đã chi trả'],rejected:['p-red','Từ chối'],cancelled:['p-mute','Đã huỷ']};
+  tb.innerHTML = data.map(p=>{
+    const m=map[p.status]||['p-mute',p.status];
+    return '<tr><td style="color:var(--muted)">'+dmy(p.created_at)+'</td>'+
+      '<td class="num">'+vnd(p.amount)+'</td>'+
+      '<td class="num c-mute">'+(p.tax_amount>0?('−'+vnd(p.tax_amount)):'—')+'</td>'+
+      '<td class="num" style="font-weight:700">'+vnd(p.net_amount)+'</td>'+
+      '<td><span class="pill '+m[0]+'">'+m[1]+'</span></td>'+
+      '<td style="color:var(--muted);font-size:12.5px">'+esc(p.admin_note||'—')+'</td></tr>';
+  }).join('');
+}
+
+async function doPayout(){
+  const msg=document.getElementById('p-msg'); const btn=document.getElementById('btn-payout');
+  const bank=document.getElementById('p-bank').value.trim();
+  const acc =document.getElementById('p-acc').value.trim();
+  const hold=document.getElementById('p-holder').value.trim();
+  const note=document.getElementById('p-note').value.trim();
+  msg.className='msg'; msg.textContent='';
+  if(!bank||!acc||!hold){ msg.className='msg err'; msg.textContent='Vui lòng nhập đủ ngân hàng, số tài khoản và chủ tài khoản.'; return; }
+
+  btn.disabled=true; btn.textContent='Đang gửi…';
+  const { data, error } = await sb.rpc('request_payout',
+    { p_bank_name:bank, p_bank_account:acc, p_bank_holder:hold, p_note:note||null });
+  btn.disabled=false; btn.textContent='Gửi yêu cầu rút tiền';
+
+  if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
+  if(!data || !data.ok){
+    const r={ chua_dang_nhap:'Bạn cần đăng nhập lại.',
+              thieu_thong_tin_ngan_hang:'Thiếu thông tin ngân hàng.',
+              dang_co_lenh_cho_xu_ly:'Bạn đang có một lệnh rút chờ xử lý. Vui lòng đợi admin xử lý xong.',
+              chua_du_toi_thieu:'Hoa hồng rút được ('+vnd(data&&data.available)+') chưa đạt mức tối thiểu '+vnd(data&&data.min_payout)+'.' }[data&&data.reason];
+    msg.className='msg err'; msg.textContent = r || 'Không gửi được yêu cầu.'; return;
+  }
+  msg.className='msg ok';
+  msg.textContent='✅ Đã gửi yêu cầu rút '+vnd(data.amount)+
+    (data.tax>0 ? ' (khấu trừ thuế '+vnd(data.tax)+', thực nhận '+vnd(data.net)+')' : '')+
+    '. Admin sẽ xử lý trong vài ngày làm việc.';
+  await Promise.all([ loadWallet(), loadPayouts() ]);
+  await loadCommissions();
+}
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

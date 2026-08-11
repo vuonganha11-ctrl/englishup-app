@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Quản trị hoa hồng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+.top-nav a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px}
+
+.page{max-width:1200px;margin:0 auto;padding:24px 18px 80px}
+h1{font-size:23px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.lead{font-size:13.5px;color:var(--muted);margin-bottom:18px}
+
+.banner{border-radius:12px;padding:13px 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:18px;line-height:1.6}
+.banner.warn{background:rgba(251,146,60,.09);border:1px solid rgba(251,146,60,.35);color:#fed7aa}
+.banner.err{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.4);color:#fecaca}
+
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;width:fit-content;max-width:100%;overflow-x:auto}
+.tab{font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);background:none;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--text)} .tab.on{background:var(--accent);color:#fff}
+.pane{display:none} .pane.on{display:block}
+
+.sec{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:19px;margin-bottom:16px}
+.sec h2{font-size:14.5px;font-weight:700;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:16px}
+.stat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+.stat .lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.stat .val{font-size:19px;font-weight:800;margin-top:3px;font-family:var(--mono)}
+.c-green{color:var(--a3)}.c-orange{color:var(--a4)}.c-blue{color:var(--accent)}.c-purple{color:var(--a2)}.c-red{color:var(--danger)}.c-mute{color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.field label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:13.5px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.field .hint{font-size:11px;color:var(--muted);margin-top:4px}
+.btn{font-family:inherit;font-weight:600;border:1px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;padding:9px 14px;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3b7de8}
+.btn-ghost{background:var(--card2);color:var(--text);border-color:var(--border2)}.btn-ghost:hover{border-color:var(--accent)}
+.btn-ok{background:var(--a3);color:#04140d}
+.btn-danger{background:rgba(248,113,113,.14);color:var(--danger);border-color:rgba(248,113,113,.4)}
+.btn-sm{font-size:12px;padding:6px 10px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:9px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.num{font-family:var(--mono);text-align:right;white-space:nowrap}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid;white-space:nowrap}
+.p-green{color:var(--a3);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.10)}
+.p-orange{color:var(--a4);border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.10)}
+.p-blue{color:var(--accent);border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.10)}
+.p-purple{color:var(--a2);border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.10)}
+.p-mute{color:var(--muted);border-color:var(--border2);background:var(--card2)}
+.p-red{color:var(--danger);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.10)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 10px}
+.msg{font-size:13px;margin-top:10px;min-height:18px}
+.msg.err{color:var(--danger)}.msg.ok{color:var(--a3)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end;margin-bottom:13px}
+.hidden{display:none!important}
+.mono{font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="report.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav"></nav>
+</header>
+
+<div class="page">
+  <h1>🛠️ Quản trị hoa hồng &amp; cộng đồng</h1>
+  <div class="lead">Ghi nhận học phí đã nhận → hệ thống tự sinh hoa hồng → duyệt lệnh chi trả.</div>
+
+  <div id="deny" class="banner err hidden"><span>⛔</span><div>Trang này chỉ dành cho quản trị viên.</div></div>
+
+  <div id="app" class="hidden">
+    <div id="legal" class="banner warn hidden"><span>⚠️</span><div>
+      <b>Đang bật hoa hồng tiền mặt tầng 2.</b> Theo Nghị định 137/2026/NĐ-CP (hiệu lực 01/7/2026), kinh doanh
+      theo phương thức đa cấp chỉ được thực hiện với <b>hàng hoá</b> — khoá học là dịch vụ nên mô hình trả tiền
+      từ tầng 2 trở lên bị cấm. Sang tab <b>Cấu hình</b> để chuyển về mô hình 1 cấp bất cứ lúc nào.
+    </div></div>
+
+    <div class="tabs">
+      <button class="tab on" data-t="pay"  onclick="tab(this)">💵 Ghi nhận học phí</button>
+      <button class="tab"    data-t="com"  onclick="tab(this)">🧾 Sổ hoa hồng</button>
+      <button class="tab"    data-t="po"   onclick="tab(this)">🏦 Lệnh rút tiền</button>
+      <button class="tab"    data-t="tree" onclick="tab(this)">🌳 Cây giới thiệu</button>
+      <button class="tab"    data-t="cfg"  onclick="tab(this)">⚙️ Cấu hình</button>
+    </div>
+
+    <!-- ============ GHI NHẬN HỌC PHÍ ============ -->
+    <div class="pane on" id="pane-pay">
+      <div class="sec">
+        <h2>Ghi nhận một khoản học phí đã nhận</h2>
+        <div class="grid">
+          <div class="field" style="grid-column:span 2">
+            <label>Học viên</label>
+            <input id="f-search" list="dl-users" placeholder="Gõ tên / email / SĐT rồi chọn…" oninput="pickUser()">
+            <datalist id="dl-users"></datalist>
+            <div class="hint" id="f-who">Chưa chọn học viên.</div>
+          </div>
+          <div class="field"><label>Gói</label>
+            <select id="f-plan" onchange="autoAmount()">
+              <option value="plus">Plus — 1 năm</option>
+              <option value="pro">Pro — vĩnh viễn</option>
+              <option value="other">Khác</option>
+            </select>
+          </div>
+          <div class="field"><label>Số tiền thực nhận (VND)</label>
+            <input id="f-amount" type="number" min="1" step="1000" value="2388000">
+            <div class="hint" id="f-amount-txt">2.388.000₫</div>
+          </div>
+          <div class="field"><label>Nội dung CK / mã giao dịch</label><input id="f-note" placeholder="VD: 0987654321 NAP GOI PLUS"></div>
+          <div class="field"><label>Ngày nhận</label><input id="f-date" type="date"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-pay" onclick="addPayment()">Ghi nhận &amp; sinh hoa hồng</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('f-search').value='';pickUser()">Xoá form</button>
+        </div>
+        <div class="msg" id="pay-msg"></div>
+        <div class="hint" style="margin-top:8px;color:var(--muted);font-size:12px">
+          Việc này <b>không</b> tự nâng gói cho học viên — vẫn vào <a href="accounts.html" style="color:var(--accent)">Quản lý tài khoản</a> để đổi gói như trước.
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>Học phí đã ghi nhận gần đây</h2>
+        <div class="tblwrap"><table id="tbl-pay">
+          <thead><tr><th>Ngày</th><th>Học viên</th><th>Gói</th><th class="num">Số tiền</th><th>Nội dung</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Đang tải…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ============ SỔ HOA HỒNG ============ -->
+    <div class="pane" id="pane-com">
+      <div class="stats" id="com-stats"></div>
+      <div class="sec">
+        <div class="toolbar">
+          <div class="field" style="min-width:180px"><label>Lọc trạng thái</label>
+            <select id="com-filter" onchange="loadCommissions()">
+              <option value="">Tất cả</option>
+              <option value="pending">Chưa chi</option>
+              <option value="paid">Đã chi</option>
+              <option value="cancelled">Đã huỷ</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost" onclick="loadCommissions()">🔄 Làm mới</button>
+        </div>
+        <div class="tblwrap"><table id="tbl-com">
+          <thead><tr><th>Ngày</th><th>Người nhận</th><th>Từ học viên</th><th>Tầng</th><th class="num">Tỉ lệ</th><th class="num">Số tiền</th><th>Rút được từ</th><th>Trạng thái</th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty">Đang tải…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ============ LỆNH RÚT ============ -->
+    <div class="pane" id="pane-po">
+      <div class="sec">
+        <h2>Lệnh rút tiền</h2>
+        <div class="tblwrap"><table id="tbl-po">
+          <thead><tr><th>Ngày</th><th>Người rút</th><th class="num">Tổng</th><th class="num">Thuế</th><th class="num">Thực trả</th><th>Ngân hàng</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty">Đang tải…</td></tr></tbody>
+        </table></div>
+        <div class="msg" id="po-msg"></div>
+      </div>
+    </div>
+
+    <!-- ============ CÂY GIỚI THIỆU ============ -->
+    <div class="pane" id="pane-tree">
+      <div class="sec">
+        <div class="toolbar">
+          <div class="field" style="min-width:240px"><label>Tìm theo tên / email</label>
+            <input id="tree-q" placeholder="Để trống = xem tất cả" oninput="renderTree()">
+          </div>
+          <button class="btn btn-ghost" onclick="loadTree()">🔄 Làm mới</button>
+        </div>
+        <div class="tblwrap"><table id="tbl-tree">
+          <thead><tr><th>Ngày gắn</th><th>Học viên mới</th><th>Tuyến 1 (F1)</th><th>Tuyến 2 (F2)</th><th>Mã dùng</th></tr></thead>
+          <tbody><tr><td colspan="5" class="empty">Đang tải…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ============ CẤU HÌNH ============ -->
+    <div class="pane" id="pane-cfg">
+      <div class="sec">
+        <h2>Tỉ lệ &amp; quy tắc</h2>
+        <div class="grid">
+          <div class="field"><label>Hoa hồng tầng 1 (%)</label><input id="c-t1" type="number" step="0.5" min="0" max="100"></div>
+          <div class="field"><label>Hoa hồng tầng 2 (%)</label><input id="c-t2" type="number" step="0.5" min="0" max="100"></div>
+          <div class="field"><label>Bật tiền mặt tầng 2</label>
+            <select id="c-cash"><option value="true">Bật (⚠️ mô hình đa cấp)</option><option value="false">Tắt — chỉ 1 cấp (hợp pháp)</option></select>
+          </div>
+          <div class="field"><label>Xu thưởng tầng 2 (khi tắt tiền mặt)</label><input id="c-pts" type="number" step="1000" min="0"></div>
+          <div class="field"><label>Số ngày treo hoa hồng</label><input id="c-hold" type="number" min="0" max="180"></div>
+          <div class="field"><label>Rút tối thiểu (VND)</label><input id="c-min" type="number" step="10000" min="0"></div>
+          <div class="field"><label>Khấu trừ thuế TNCN</label>
+            <select id="c-tax"><option value="true">Có</option><option value="false">Không</option></select>
+          </div>
+          <div class="field"><label>Ngưỡng khấu trừ (VND/lần)</label><input id="c-taxth" type="number" step="100000" min="0"></div>
+          <div class="field"><label>Thuế suất (%)</label><input id="c-taxpct" type="number" step="0.5" min="0" max="100"></div>
+        </div>
+        <div style="margin-top:15px;display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveCfg()">Lưu cấu hình</button>
+          <button class="btn btn-ghost" onclick="toLegal()">🛡️ Chuyển về mô hình 1 cấp</button>
+        </div>
+        <div class="msg" id="cfg-msg"></div>
+      </div>
+
+      <div class="banner warn"><span>📌</span><div>
+        <b>Nghĩa vụ thuế.</b> Hoa hồng trả cho cá nhân không có hợp đồng lao động là thu nhập chịu thuế.
+        Từ 2 triệu đồng/lần chi trả, bên chi trả phải khấu trừ 10% thuế TNCN và cấp chứng từ khấu trừ.
+        Nên yêu cầu người nhận cung cấp mã số thuế / CCCD trước khi chi.
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
+
+let USERS=[], UMAP={}, CFG=null, TREE=[], PICKED=null;
+const PRICE={ plus:2388000, pro:3790000, other:0 };
+
+const vnd = n => (Number(n)||0).toLocaleString('vi-VN')+'₫';
+const dmy = s => { if(!s) return '—'; const d=new Date(s);
+  return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'2-digit'}); };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nameOf = id => { const u=UMAP[id]; return u ? (u.full_name || u.email || '—') : ('#'+String(id||'').slice(0,6)); };
+
+function tab(btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('pane-'+btn.dataset.t).classList.add('on');
+  if(btn.dataset.t==='com')  loadCommissions();
+  if(btn.dataset.t==='po')   loadPayouts();
+  if(btn.dataset.t==='tree') loadTree();
+}
+
+(async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ document.getElementById('deny').classList.remove('hidden'); return; }
+  const { data: me } = await sb.from('user_profiles').select('role').eq('id',session.user.id).maybeSingle();
+  if(!me || me.role!=='admin'){ document.getElementById('deny').classList.remove('hidden'); return; }
+  document.getElementById('app').classList.remove('hidden');
+
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-amount').addEventListener('input', ()=>{
+    document.getElementById('f-amount-txt').textContent = vnd(document.getElementById('f-amount').value);
+  });
+
+  await loadUsers();
+  await loadCfg();
+  await loadPayments();
+})();
+
+async function loadUsers(){
+  // PostgREST cắt im lặng ở 1.000 dòng → phải lấy theo lô
+  USERS=[];
+  for(let from=0; from<20000; from+=1000){
+    const { data, error } = await sb.from('user_profiles')
+      .select('id,email,full_name,phone,plan').order('id').range(from, from+999);
+    if(error || !data || !data.length) break;
+    USERS = USERS.concat(data);
+    if(data.length < 1000) break;
+  }
+  UMAP={};
+  USERS.forEach(u=>{ UMAP[u.id]=u; });
+  document.getElementById('dl-users').innerHTML = USERS.map(u=>
+    '<option value="'+esc((u.full_name||'')+' · '+(u.email||'')+(u.phone?(' · '+u.phone):''))+'">').join('');
+}
+function pickUser(){
+  const v=document.getElementById('f-search').value.trim().toLowerCase();
+  PICKED = USERS.find(u => ((u.full_name||'')+' · '+(u.email||'')+(u.phone?(' · '+u.phone):'')).toLowerCase()===v)
+        || USERS.find(u => (u.email||'').toLowerCase()===v)
+        || null;
+  document.getElementById('f-who').innerHTML = PICKED
+    ? '✅ '+esc(PICKED.full_name||'—')+' — <span class="mono">'+esc(PICKED.email||'')+'</span> · gói hiện tại: <b>'+esc(PICKED.plan||'free')+'</b>'
+    : 'Chưa chọn học viên.';
+}
+function autoAmount(){
+  const p=document.getElementById('f-plan').value;
+  if(PRICE[p]){ document.getElementById('f-amount').value=PRICE[p];
+    document.getElementById('f-amount-txt').textContent=vnd(PRICE[p]); }
+}
+
+/* -------- ghi nhận thanh toán -------- */
+async function addPayment(){
+  const msg=document.getElementById('pay-msg'); const btn=document.getElementById('btn-pay');
+  msg.className='msg'; msg.textContent='';
+  if(!PICKED){ msg.className='msg err'; msg.textContent='Hãy chọn học viên từ danh sách gợi ý.'; return; }
+  const amount=parseInt(document.getElementById('f-amount').value,10);
+  if(!(amount>0)){ msg.className='msg err'; msg.textContent='Số tiền không hợp lệ.'; return; }
+  const d=document.getElementById('f-date').value;
+
+  btn.disabled=true; btn.textContent='Đang ghi…';
+  const row={ user_id:PICKED.id, plan:document.getElementById('f-plan').value, amount:amount,
+              ref_note:document.getElementById('f-note').value.trim()||null,
+              status:'confirmed', confirmed_at:new Date().toISOString() };
+  if(d) row.created_at = new Date(d+'T12:00:00').toISOString();
+  const { error } = await sb.from('payments').insert(row);
+  btn.disabled=false; btn.textContent='Ghi nhận & sinh hoa hồng';
+  if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
+  msg.className='msg ok'; msg.textContent='✅ Đã ghi nhận '+vnd(amount)+' cho '+(PICKED.full_name||PICKED.email)+'. Hoa hồng (nếu có) đã được sinh tự động.';
+  await loadPayments();
+}
+
+async function loadPayments(){
+  const tb=document.querySelector('#tbl-pay tbody');
+  const { data, error } = await sb.from('payments')
+    .select('id,user_id,plan,amount,ref_note,status,created_at')
+    .order('created_at',{ascending:false}).limit(200);
+  if(error||!data||!data.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Chưa có khoản nào.</td></tr>'; return; }
+  const map={confirmed:['p-green','Đã xác nhận'],pending:['p-orange','Chờ'],refunded:['p-red','Đã hoàn tiền']};
+  tb.innerHTML=data.map(p=>{
+    const m=map[p.status]||['p-mute',p.status];
+    return '<tr><td class="c-mute">'+dmy(p.created_at)+'</td>'+
+      '<td>'+esc(nameOf(p.user_id))+'</td>'+
+      '<td><span class="pill p-blue">'+esc(p.plan)+'</span></td>'+
+      '<td class="num" style="font-weight:700">'+vnd(p.amount)+'</td>'+
+      '<td class="c-mute" style="font-size:12px">'+esc(p.ref_note||'—')+'</td>'+
+      '<td><span class="pill '+m[0]+'">'+m[1]+'</span></td>'+
+      '<td>'+(p.status==='confirmed'
+        ? '<button class="btn btn-danger btn-sm" onclick="refund('+p.id+')">Hoàn tiền</button>' : '')+'</td></tr>';
+  }).join('');
+}
+async function refund(id){
+  if(!confirm('Đánh dấu khoản này là ĐÃ HOÀN TIỀN?\n\nToàn bộ hoa hồng chưa chi phát sinh từ khoản này sẽ bị huỷ.')) return;
+  const { error } = await sb.from('payments').update({status:'refunded'}).eq('id',id);
+  if(error){ alert('Lỗi: '+error.message); return; }
+  await loadPayments();
+}
+
+/* -------- sổ hoa hồng -------- */
+async function loadCommissions(){
+  const tb=document.querySelector('#tbl-com tbody');
+  let q=sb.from('commissions').select('*').order('created_at',{ascending:false}).limit(500);
+  const f=document.getElementById('com-filter').value;
+  if(f) q=q.eq('status',f);
+  const { data, error } = await q;
+  if(error){ tb.innerHTML='<tr><td colspan="8" class="empty">Lỗi: '+esc(error.message)+'</td></tr>'; return; }
+
+  const all=data||[]; const now=Date.now();
+  let sPend=0,sAvail=0,sPaid=0,sCancel=0;
+  all.forEach(c=>{
+    if(c.status==='paid') sPaid+=c.amount;
+    else if(c.status==='cancelled') sCancel+=c.amount;
+    else { sPend+=c.amount; if(new Date(c.available_at).getTime()<=now && !c.payout_id) sAvail+=c.amount; }
+  });
+  document.getElementById('com-stats').innerHTML=
+    st('Chưa chi',vnd(sPend),'c-orange')+st('Trong đó rút được',vnd(sAvail),'c-green')+
+    st('Đã chi',vnd(sPaid),'c-purple')+st('Đã huỷ',vnd(sCancel),'c-red')+
+    st('Số dòng',all.length,'c-blue');
+
+  if(!all.length){ tb.innerHTML='<tr><td colspan="8" class="empty">Chưa có hoa hồng nào.</td></tr>'; return; }
+  const map={pending:['p-orange','Chưa chi'],paid:['p-purple','Đã chi'],cancelled:['p-red','Đã huỷ']};
+  tb.innerHTML=all.map(c=>{
+    const m=map[c.status]||['p-mute',c.status];
+    return '<tr><td class="c-mute">'+dmy(c.created_at)+'</td>'+
+      '<td style="font-weight:600">'+esc(nameOf(c.beneficiary_id))+'</td>'+
+      '<td>'+esc(nameOf(c.source_user_id))+'</td>'+
+      '<td><span class="pill '+(c.tier===1?'p-blue':'p-mute')+'">Tầng '+c.tier+'</span></td>'+
+      '<td class="num">'+Number(c.rate)+'%</td>'+
+      '<td class="num" style="font-weight:700">'+vnd(c.amount)+'</td>'+
+      '<td class="c-mute">'+dmy(c.available_at)+'</td>'+
+      '<td><span class="pill '+m[0]+'">'+m[1]+'</span>'+(c.payout_id?' <span class="pill p-blue">Lệnh #'+c.payout_id+'</span>':'')+'</td></tr>';
+  }).join('');
+}
+function st(l,v,c){ return '<div class="stat"><div class="lbl">'+esc(l)+'</div><div class="val '+c+'">'+esc(v)+'</div></div>'; }
+
+/* -------- lệnh rút -------- */
+async function loadPayouts(){
+  const tb=document.querySelector('#tbl-po tbody');
+  const { data, error } = await sb.from('payout_requests').select('*').order('created_at',{ascending:false}).limit(200);
+  if(error){ tb.innerHTML='<tr><td colspan="8" class="empty">Lỗi: '+esc(error.message)+'</td></tr>'; return; }
+  if(!data||!data.length){ tb.innerHTML='<tr><td colspan="8" class="empty">Chưa có lệnh rút nào.</td></tr>'; return; }
+  const map={requested:['p-orange','Chờ duyệt'],approved:['p-blue','Đã duyệt'],paid:['p-green','Đã chi'],
+             rejected:['p-red','Từ chối'],cancelled:['p-mute','Đã huỷ']};
+  tb.innerHTML=data.map(p=>{
+    const m=map[p.status]||['p-mute',p.status];
+    const act = (p.status==='requested'||p.status==='approved')
+      ? '<button class="btn btn-ok btn-sm" onclick="settle('+p.id+',\'paid\')">Đã chuyển khoản</button> '+
+        '<button class="btn btn-danger btn-sm" onclick="settle('+p.id+',\'rejected\')">Từ chối</button>'
+      : '<span class="c-mute" style="font-size:12px">'+esc(p.admin_note||'—')+'</span>';
+    return '<tr><td class="c-mute">'+dmy(p.created_at)+'</td>'+
+      '<td style="font-weight:600">'+esc(nameOf(p.user_id))+'</td>'+
+      '<td class="num">'+vnd(p.amount)+'</td>'+
+      '<td class="num c-mute">'+(p.tax_amount>0?('−'+vnd(p.tax_amount)):'—')+'</td>'+
+      '<td class="num" style="font-weight:700">'+vnd(p.net_amount)+'</td>'+
+      '<td style="font-size:12px"><b>'+esc(p.bank_name||'')+'</b><br><span class="mono">'+esc(p.bank_account||'')+'</span><br>'+esc(p.bank_holder||'')+'</td>'+
+      '<td><span class="pill '+m[0]+'">'+m[1]+'</span></td>'+
+      '<td>'+act+'</td></tr>';
+  }).join('');
+}
+async function settle(id,action){
+  const q = action==='paid'
+    ? 'Xác nhận ĐÃ CHUYỂN KHOẢN cho lệnh #'+id+'?\n\nToàn bộ hoa hồng trong lệnh sẽ chuyển sang "đã chi".'
+    : 'TỪ CHỐI lệnh #'+id+'?\n\nHoa hồng sẽ được trả lại ví của học viên.';
+  if(!confirm(q)) return;
+  const note = prompt('Ghi chú cho học viên (tuỳ chọn):','') || null;
+  const { data, error } = await sb.rpc('settle_payout',{ p_payout_id:id, p_action:action, p_admin_note:note });
+  const msg=document.getElementById('po-msg');
+  if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
+  if(!data||!data.ok){ msg.className='msg err'; msg.textContent='Không xử lý được: '+(data&&data.reason); return; }
+  msg.className='msg ok'; msg.textContent='✅ Đã xử lý lệnh #'+id+'.';
+  await loadPayouts();
+}
+
+/* -------- cây giới thiệu -------- */
+async function loadTree(){
+  const { data, error } = await sb.from('referrals').select('*').order('created_at',{ascending:false}).limit(2000);
+  if(error){ document.querySelector('#tbl-tree tbody').innerHTML='<tr><td colspan="5" class="empty">Lỗi: '+esc(error.message)+'</td></tr>'; return; }
+  TREE=data||[]; renderTree();
+}
+function renderTree(){
+  const tb=document.querySelector('#tbl-tree tbody');
+  const q=(document.getElementById('tree-q').value||'').trim().toLowerCase();
+  const rows = q ? TREE.filter(r =>
+      [nameOf(r.referee_id),nameOf(r.referrer_id),nameOf(r.upline2_id)].join(' ').toLowerCase().includes(q)) : TREE;
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Không có dòng nào.</td></tr>'; return; }
+  tb.innerHTML=rows.map(r=>
+    '<tr><td class="c-mute">'+dmy(r.created_at)+'</td>'+
+    '<td style="font-weight:600">'+esc(nameOf(r.referee_id))+'</td>'+
+    '<td>'+esc(nameOf(r.referrer_id))+'</td>'+
+    '<td class="c-mute">'+(r.upline2_id?esc(nameOf(r.upline2_id)):'—')+'</td>'+
+    '<td class="mono" style="font-size:12px">'+esc(r.code_used||'—')+'</td></tr>').join('');
+}
+
+/* -------- cấu hình -------- */
+async function loadCfg(){
+  const { data } = await sb.from('referral_settings').select('*').eq('id',1).maybeSingle();
+  CFG=data||{};
+  document.getElementById('c-t1').value    = CFG.tier1_pct ?? 20;
+  document.getElementById('c-t2').value    = CFG.tier2_pct ?? 5;
+  document.getElementById('c-cash').value  = String(!!CFG.cash_tier2_enabled);
+  document.getElementById('c-pts').value   = CFG.reward_tier2_points ?? 0;
+  document.getElementById('c-hold').value  = CFG.hold_days ?? 7;
+  document.getElementById('c-min').value   = CFG.min_payout ?? 200000;
+  document.getElementById('c-tax').value   = String(!!CFG.withhold_tax);
+  document.getElementById('c-taxth').value = CFG.tax_threshold ?? 2000000;
+  document.getElementById('c-taxpct').value= CFG.tax_pct ?? 10;
+  document.getElementById('legal').classList.toggle('hidden',
+    !(CFG.cash_tier2_enabled && Number(CFG.tier2_pct)>0));
+}
+async function saveCfg(){
+  const msg=document.getElementById('cfg-msg'); msg.className='msg'; msg.textContent='';
+  const row={
+    tier1_pct:parseFloat(document.getElementById('c-t1').value)||0,
+    tier2_pct:parseFloat(document.getElementById('c-t2').value)||0,
+    cash_tier2_enabled:document.getElementById('c-cash').value==='true',
+    reward_tier2_points:parseInt(document.getElementById('c-pts').value,10)||0,
+    hold_days:parseInt(document.getElementById('c-hold').value,10)||0,
+    min_payout:parseInt(document.getElementById('c-min').value,10)||0,
+    withhold_tax:document.getElementById('c-tax').value==='true',
+    tax_threshold:parseInt(document.getElementById('c-taxth').value,10)||0,
+    tax_pct:parseFloat(document.getElementById('c-taxpct').value)||0,
+    updated_at:new Date().toISOString()
+  };
+  const { error } = await sb.from('referral_settings').update(row).eq('id',1);
+  if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
+  msg.className='msg ok'; msg.textContent='✅ Đã lưu. Cấu hình áp dụng cho các khoản học phí ghi nhận từ bây giờ.';
+  await loadCfg();
+}
+function toLegal(){
+  if(!confirm('Chuyển về mô hình AFFILIATE 1 CẤP?\n\n• Tắt hoa hồng tiền mặt tầng 2\n• Thay bằng 50.000 xu thưởng\n\nHoa hồng tầng 2 đã phát sinh trước đó vẫn giữ nguyên.')) return;
+  document.getElementById('c-cash').value='false';
+  if(!parseInt(document.getElementById('c-pts').value,10)) document.getElementById('c-pts').value=50000;
+  saveCfg();
+}
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

@@ -54,6 +54,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .success-box h2{font-size:18px;font-weight:700;margin-bottom:6px}
 .success-box p{font-size:13px;color:var(--muted);margin-bottom:18px}
 .hidden{display:none!important}
+.refbox{display:flex;align-items:center;gap:10px;background:rgba(52,211,153,.08);
+  border:1px solid rgba(52,211,153,.35);border-radius:10px;padding:11px 13px;margin-bottom:16px;font-size:12.5px}
+.refbox .ico{font-size:19px}
+.refbox b{color:var(--a3);font-family:var(--mono);letter-spacing:1px}
+.refbox .x{margin-left:auto;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 3px}
+.refbox .x:hover{color:var(--danger)}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -75,6 +82,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <div id="form-view">
       <h1>Tạo tài khoản</h1>
       <div class="sub">Đăng ký là mở khóa <b style="color:var(--a3)">toàn bộ</b> nền tảng trong <b style="color:var(--a3)">24 giờ</b> — không cần thẻ ngân hàng.</div>
+
+      <div class="refbox hidden" id="refbox">
+        <span class="ico">🤝</span>
+        <span>Bạn được giới thiệu bởi mã <b id="ref-code">—</b></span>
+        <span class="x" title="Bỏ mã giới thiệu" onclick="clearRef()">✕</span>
+      </div>
 
       <div class="field">
         <label>Họ và tên</label>
@@ -121,6 +134,24 @@ const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
 function setMsg(t,type){ const m=document.getElementById('msg'); m.textContent=t||''; m.className='msg'+(type?' '+type:''); }
 
+/* ---------- Mã giới thiệu (?ref=XXXX) ---------- */
+let REF_CODE = null;
+(function initRef(){
+  const q = new URLSearchParams(location.search).get('ref');
+  let stored = null;
+  try{ stored = localStorage.getItem('eu_ref'); }catch(_){}
+  REF_CODE = (q || stored || '').trim().toUpperCase() || null;
+  if(!REF_CODE) return;
+  try{ localStorage.setItem('eu_ref', REF_CODE); }catch(_){}
+  document.getElementById('ref-code').textContent = REF_CODE;
+  document.getElementById('refbox').classList.remove('hidden');
+})();
+function clearRef(){
+  REF_CODE = null;
+  try{ localStorage.removeItem('eu_ref'); }catch(_){}
+  document.getElementById('refbox').classList.add('hidden');
+}
+
 async function doRegister(){
   const name=document.getElementById('r-name').value.trim();
   const email=document.getElementById('r-email').value.trim();
@@ -139,7 +170,7 @@ async function doRegister(){
   try{
     const { data, error } = await sb.auth.signUp({
       email, password:pw,
-      options:{ data:{ role:'student', full_name:name, phone } }
+      options:{ data:{ role:'student', full_name:name, phone, ref_code:REF_CODE||null } }
     });
     if(error) throw error;
 
@@ -151,12 +182,28 @@ async function doRegister(){
       }
     }
 
+    // Gắn mã giới thiệu (cần có phiên đăng nhập). Nếu chưa có phiên,
+    // mã vẫn nằm trong localStorage và topbar.js sẽ gắn ở lần đăng nhập đầu.
+    let refMsg = '';
+    if(REF_CODE && data && data.session){
+      try{
+        const { data: r } = await sb.rpc('attach_referral', { p_code: REF_CODE });
+        if(r && r.ok){
+          refMsg = ' Bạn đã được ghi nhận là người được ' + (r.referrer_name||'bạn của mình') + ' giới thiệu.';
+          try{ localStorage.removeItem('eu_ref'); }catch(_){}
+        } else if(r && r.reason === 'ma_khong_ton_tai'){
+          refMsg = ' (Mã giới thiệu không tồn tại nên đã bỏ qua.)';
+          try{ localStorage.removeItem('eu_ref'); }catch(_){}
+        }
+      }catch(_){}
+    }
+
     const roleLabel = 'Học viên';
     document.getElementById('form-view').classList.add('hidden');
     document.getElementById('success-view').style.display='block';
     if(data.session){
       document.getElementById('s-title').textContent='Chào mừng bạn! 🎉';
-      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 24 giờ dùng thử toàn bộ nền tảng.</b> Hết 24 giờ, chọn một gói ở trang Nâng cấp để học tiếp.`;
+      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 24 giờ dùng thử toàn bộ nền tảng.</b> Hết 24 giờ, chọn một gói ở trang Nâng cấp để học tiếp.` + refMsg;
     } else {
       document.getElementById('s-title').textContent='Kiểm tra email của bạn 📧';
       document.getElementById('s-desc').textContent=`Đã gửi liên kết xác nhận tới ${email}. Xác nhận xong là có thể đăng nhập (vai trò: ${roleLabel}).`;

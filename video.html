@@ -595,6 +595,8 @@ body.eu-embed .now-playing .np-note{display:none}
 .vc-seek{flex:1;accent-color:var(--accent);cursor:pointer;height:4px}
 .vc-time{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:92px;text-align:right}
 .player-box iframe{width:100%;height:100%;border:0;display:block}
+.player-box video{width:100%;height:100%;display:block;background:#000;object-fit:contain}
+#player{width:100%;height:100%}
 .vmeta{margin-top:14px}
 .vmeta h1{font-size:20px;margin:0 0 6px}
 .vmeta .by{color:var(--muted);font-size:13px;display:flex;gap:10px;align-items:center}
@@ -872,6 +874,7 @@ let DURATION = 464;
 let LEVEL = "";
 let TOPIC = "";
 let CLIP_START=null, CLIP_END=null, CLIP_ACTIVE=false;
+let SOURCE_TYPE="youtube", HLS_URL="", POSTER_URL="";   /* r2 = tu host HLS */
 let SEGMENTS = [{"start":6.0,"text":"I don't think you have to have any kind of formal training at all to be a songwriter.","end":11.7},{"start":11.7,"text":"Again, I work with people, brilliant people with huge hits all the time that don't play an instrument.","end":17.5},{"start":17.5,"text":"So don't let that dissuade you. Hey, you! Yes, you.","end":20.7},{"start":20.7,"text":"Is there music inside of you?","end":22.6},{"start":22.6,"text":"We've recruited working musicians from throughout the industry to help you hear it, hold it, and share it with this wild and wonderful world.","end":30.2},{"start":30.2,"text":"I think growing up, I assumed, like many people, that the artists that I loved and listened to wrote all of their own music.","end":37.9},{"start":37.9,"text":"I didn't realize that there were other people behind the scenes, and that it really takes a village to write a song.","end":44.9},{"start":44.9,"text":"Some artists write everything themselves, but most of the artists that you hear are a collaboration.","end":50.0},{"start":50.0,"text":"The first artist that I was aware of that wrote songs for themselves and also wrote songs for other people, was Carole King.","end":57.3},{"start":57.3,"text":"And then I heard that she had had a whole career before she was an artist of writing songs for other people.","end":64.3},{"start":64.3,"text":"That was kind of like a light bulb went off for me where I was like, that can be a job?","end":71.0},{"start":71.0,"text":"That's something that you can actually do?","end":73.2},{"start":73.2,"text":"When it comes to making a song, and people realizing their favorite artist did not write that song, that's sometimes the job of a songwriter, is to make sure that it feels like it came from your favorite artist.","end":85.6},{"start":85.6,"text":"And that is songwriting at its best.","end":87.9},{"start":87.9,"text":"It's to make sure that it's authentic.","end":90.1},{"start":90.1,"text":"There's two different ways of going.","end":92.0},{"start":92.0,"text":"Whether you're pitching a song, meaning you're selling it, just randomly and doing that, or whether you're getting in and taking a really collaborative effort together.","end":100.3},{"start":100.3,"text":"So there are two ways that in pop music that songs, let's call it getting placed.","end":105.4},{"start":105.4,"text":"The first way is you are in a room with an artist.","end":109.2},{"start":109.2,"text":"It's a producer or two, or a songwriter or two, and an artist, only one.","end":114.0},{"start":114.0,"text":"And you're making that piece of music with the artist and you are collaborating with them.","end":119.1},{"start":119.1,"text":"You are basically helping, bringing their vision to life.","end":122.0},{"start":122.0,"text":"Sometimes artists come in and they know exactly what they want to say and they don't need any help.","end":128.0},{"start":128.0,"text":"And you're kind of like artwork or you're just supportive.","end":131.2},{"start":131.2,"text":"And sometimes they come in and they don't know what to say and you are helping them figure that out.","end":137.6},{"start":137.6,"text":"So that's the first way.","end":139.2},{"start":139.2,"text":"The second way is what's called a pitch song, where you and a group of other writers and producers, just a group of musicians get together and you write a song.","end":149.0},{"start":149.0,"text":"And then that song then gets pitched to an artist or multiple artists to see if it is something that they would like to sing themselves and hopefully release.","end":158.3},{"start":158.3,"text":"When you go in to do a pitch song, which is a song that you write without the artist in the room, you take the brand of the artist into consideration, you take the genre into consideration.","end":170.1},{"start":170.1,"text":"Oftentimes, the label will send you a brief, and that is sort of details of themes that the artist wants to explore.","end":177.1},{"start":177.1,"text":"Placing a pitch song, it's kind of like going in your closet, regardless of your shape, size, and style and pulling out a suit, and then you hand it to this artist and you go, I hope this fits you perfectly.","end":190.1},{"start":190.1,"text":"Start to think about the key of the song.","end":193.0},{"start":193.0,"text":"You start to think about the vocal range of this artist.","end":196.5},{"start":196.5,"text":"Are they the type of artist that singing all the runs, and are they the vocalists of our time, or is it giving a different kind of vocal style?","end":205.8},{"start":205.8,"text":"If I do a little bit of research on an artist and I see that they're going through a breakup or they came from a certain kind of a background, I try to find things that I have in common with the artists so that I can write from an authentic place for me.","end":223.0},{"start":223.0,"text":"Let's just say they're in the room, we'll pick that adventure.","end":226.5},{"start":226.5,"text":"The next question becomes, how's your day?","end":228.7},{"start":228.7,"text":"Starts off with another conversation: where are we right now in this moment?","end":232.8},{"start":232.8,"text":"For me, I like to get an idea of what is your idea of success as an artist?","end":238.6},{"start":238.6,"text":"Because a hit song is very, very different based off of the artist, right?","end":243.0},{"start":243.0,"text":"A Billboard Hot 100 hit song or a Grammy nomination.","end":246.2},{"start":246.2,"text":"Two different forms of success, both very successful.","end":248.8},{"start":248.8,"text":"So let's say the artist is more concerned with popularity and having the hottest record on the Billboard Hot 100, because that's all that that means, if he goes to number 1, this is the most popular song in the world.","end":261.8},{"start":261.8,"text":"I say, okay, well, I know it needs to be catchy, I know it needs to be relatable, and I know that it needs to be straight to the point.","end":271.4},{"start":271.4,"text":"That also gives me a lot of reference on whether we're going to have a bridge on this song or not.","end":278.1},{"start":278.1,"text":"It also gives me some perspective as to how relatable it needs to be.","end":282.5},{"start":282.5,"text":"You're more likely to connect to typical kind of pop chords that we kind of hear over and over and over again.","end":289.6},{"start":289.6,"text":"We've listened to the same chords for however many years.","end":292.7},{"start":292.7,"text":"However, how you put them together is what makes something feel familiar enough to resonate with people, but not familiar enough that you're in a lawsuit.","end":301.0},{"start":301.0,"text":"Versus the person who is wanting to make an artistic statement.","end":304.5},{"start":304.5,"text":"And they might go a little bit weird, like some of our jazz artists or our punk artists.","end":310.3},{"start":310.3,"text":"There's very different intentions as an artist, right?","end":312.8},{"start":312.8,"text":"And I think that it's very important for songwriters specifically to have all of these things going through their mind because that's how we make it work.","end":321.4},{"start":321.4,"text":"Most of the times I start off with the melody.","end":324.6},{"start":324.6,"text":"However, there's some times where I come in and I'm like, this is the lyric.","end":329.4},{"start":329.4,"text":"And that might have started because of a conversation.","end":332.2},{"start":332.2,"text":"So each one is different.","end":333.8},{"start":333.8,"text":"But for me, melody is king and then lyrics come later.","end":337.3},{"start":337.3,"text":"A lot of my early songwriting experiences in the industry were in rooms where someone would play a track.","end":343.4},{"start":343.4,"text":"And then, the writers in the room will all go into the booth and freestyle a bunch of melodies, and then you build the song from there.","end":352.0},{"start":352.0,"text":"But the last five years now I've been living in Nashville, where the songwriting process is the exact opposite, where you come in with a title and a concept for the song, and then you build the song more from a lyrical and conceptual perspective.","end":366.3},{"start":366.3,"text":"And then almost try to retrofit some of those lyrics to melodies that might be able to house them, because the lyric is most important here in Nashville.","end":375.3},{"start":375.3,"text":"If you want to get into songwriting, I think it's important to listen to a lot of music and to study the structure and think about rhyme scheme and dynamics between the different parts, and just notice what the songs that you like are doing.","end":389.6},{"start":389.6,"text":"And leave your ego at the door.","end":391.8},{"start":391.8,"text":"Do what's best for the art.","end":393.7},{"start":393.7,"text":"Nobody's going to know who wrote what in the room.","end":396.9},{"start":396.9,"text":"Nobody's going to know who came up with this and who came up with that. Nobody cares.","end":402.3},{"start":402.3,"text":"The point is, if somebody in the room has a better idea than you, great!","end":407.1},{"start":407.1,"text":"You get to be a part of that and you get to learn from that.","end":411.9},{"start":411.9,"text":"So, I think the most important thing is to learn how to collaborate, know your strengths, know your weaknesses, and try to find people that can sort of fill in the gap for you.","end":422.7},{"start":422.7,"text":"So if you're not super strong on melody, find somebody who's strong on melody.","end":427.2},{"start":427.2,"text":"And the two of you together can make something great.","end":430.4},{"start":430.4,"text":"My advice for anybody that wants a career as a songwriter or a producer would be to work very, very, very hard at it.","end":438.0},{"start":438.0,"text":"Just keep on working.","end":439.3},{"start":439.3,"text":"Just keep on going, keep on writing songs.","end":441.8},{"start":441.8,"text":"When you write that song that you think is your best song, I promise you, you've got better; just keep on doing it.","end":449.2},{"start":449.2,"text":"It is a sport and it's a muscle and it needs to be exercised, and keep on going, and you will end up in a place musically that you probably didn't even know existed.","end":460.0}];
 
 let VOCAB = [
@@ -1020,6 +1023,88 @@ window.onYouTubeIframeAPIReady=function(){
   });
 };
 function loadYT(){const t=document.createElement("script");t.src="https://www.youtube.com/iframe_api";document.head.appendChild(t);}
+
+/* ============ HLS PLAYER (video tu host tren Cloudflare R2) ============ */
+const HLSJS_SRC=["https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js",
+                 "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.20/hls.min.js"];
+function euNapHlsJs(){
+  return new Promise(function(ok,fail){
+    if(window.Hls) return ok();
+    var i=0;
+    (function thu(){
+      if(i>=HLSJS_SRC.length) return fail(new Error("khong tai duoc hls.js"));
+      var s=document.createElement("script");
+      s.src=HLSJS_SRC[i++];
+      s.onload=function(){ window.Hls?ok():thu(); };
+      s.onerror=thu;
+      document.head.appendChild(s);
+    })();
+  });
+}
+function euBaoLoiPlayer(msg){
+  try{
+    var box=document.querySelector(".player-box"); if(!box) return;
+    var d=document.getElementById("eu-hls-loi");
+    if(!d){ d=document.createElement("div"); d.id="eu-hls-loi";
+      d.style.cssText="position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:#e8edf7;background:rgba(0,0,0,.72);font-size:14px;line-height:1.5";
+      box.appendChild(d); }
+    d.textContent=msg;
+  }catch(e){}
+}
+/* Vo boc cho the <video> mang dung bo ham cua YT.Player, nho vay TOAN BO code
+   dieu khien san co (seekPlay, guard doan clip, thanh vctrl, doi toc do...) chay nguyen ven. */
+function euShimPlayer(vid,huy){
+  player={
+    seekTo:function(t){ try{ vid.currentTime=Math.max(0,t||0); }catch(e){} },
+    playVideo:function(){ var p=vid.play(); if(p&&p.catch) p.catch(function(){}); },
+    pauseVideo:function(){ try{ vid.pause(); }catch(e){} },
+    getCurrentTime:function(){ return vid.currentTime||0; },
+    getDuration:function(){ return vid.duration||0; },
+    getPlayerState:function(){ return (!vid.paused && !vid.ended) ? 1 : 2; },
+    setPlaybackRate:function(r){ try{ vid.playbackRate=r; }catch(e){} },
+    getPlaybackRate:function(){ return vid.playbackRate||1; },
+    isMuted:function(){ return !!vid.muted; },
+    mute:function(){ vid.muted=true; },
+    unMute:function(){ vid.muted=false; },
+    destroy:function(){ try{ huy&&huy(); }catch(e){} }
+  };
+}
+function loadHLS(){
+  var box=document.getElementById("player");
+  if(!box||!HLS_URL){ return loadYT(); }
+  var vid=document.createElement("video");
+  vid.id="eu-hls";
+  vid.setAttribute("playsinline","");
+  vid.setAttribute("webkit-playsinline","");
+  vid.preload="metadata";
+  if(POSTER_URL) vid.poster=POSTER_URL;
+  box.innerHTML=""; box.appendChild(vid);
+  vid.addEventListener("loadedmetadata",function(){ playerReady=true; });
+
+  /* Safari / iOS phat HLS san, khong can thu vien */
+  if(vid.canPlayType("application/vnd.apple.mpegurl")){
+    euShimPlayer(vid,null);
+    vid.addEventListener("error",function(){ euBaoLoiPlayer("Khong tai duoc video. Kiem tra duong dan hls_url."); });
+    vid.src=HLS_URL;
+    return;
+  }
+  euNapHlsJs().then(function(){
+    var hls=new Hls({maxBufferLength:30,startLevel:-1,capLevelToPlayerSize:false});
+    euShimPlayer(vid,function(){ hls.destroy(); });
+    hls.on(Hls.Events.MANIFEST_PARSED,function(){ playerReady=true; });
+    hls.on(Hls.Events.ERROR,function(_e,d){
+      if(!d||!d.fatal) return;
+      if(d.type===Hls.ErrorTypes.NETWORK_ERROR){ hls.startLoad(); }
+      else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){ hls.recoverMediaError(); }
+      else { hls.destroy(); euBaoLoiPlayer("Loi phat video. Kiem tra CORS cua bucket R2."); }
+    });
+    hls.loadSource(HLS_URL);
+    hls.attachMedia(vid);
+  }).catch(function(){
+    euBaoLoiPlayer("Khong tai duoc thu vien phat video (hls.js).");
+  });
+}
+
 
 function seekPlay(start,end,{loop=false,rate=curRate}={}){
   if(playerReady){
@@ -2158,6 +2243,9 @@ const SB_KEY = localStorage.getItem('sb_key') || "sb_publishable_3h3EQvxWr0kba8T
 
 function applyLesson(v){
   if(v.youtube_id) VIDEO_ID=v.youtube_id;
+  if(v.source_type) SOURCE_TYPE=v.source_type;
+  if(v.hls_url) HLS_URL=v.hls_url;
+  if(v.poster_url) POSTER_URL=v.poster_url;
   if(Array.isArray(v.segments)) SEGMENTS=v.segments;   // mảng rỗng cũng phải nhận: video chưa có phụ đề, đừng giữ phụ đề mẫu
   if(Array.isArray(v.vocab)) VOCAB=v.vocab;
   if(Array.isArray(v.quiz)) QUIZ=v.quiz;
@@ -2168,7 +2256,7 @@ function applyLesson(v){
     var __txt={cc:"🅭 Creative Commons",embed:"▶ Nhúng từ nguồn",original:"✍ Phụ đề do EnglishUp biên soạn"}[__L]||"";
     if(__txt){ var __b=document.getElementById("v-license");
       if(!__b){__b=document.createElement("div");__b.id="v-license";__b.style.cssText="font-size:12px;color:#78716c;margin-top:4px";var __t=document.getElementById("v-title");if(__t&&__t.parentNode)__t.parentNode.appendChild(__b);}
-      __b.innerHTML=__txt+(__L!=="original"?" · <a href=\""+__src+"\" target=\"_blank\" rel=\"noopener\" style=\"color:#c2410c\">nguon: "+CHANNEL+"</a>":"");
+      __b.innerHTML=__txt+((__L!=="original"&&SOURCE_TYPE!=="r2")?" · <a href=\""+__src+"\" target=\"_blank\" rel=\"noopener\" style=\"color:#c2410c\">nguon: "+CHANNEL+"</a>":"");
     } } }catch(e){}
   if(v.noi_dung!=null) NOIDUNG=v.noi_dung;
   if(v.duration) DURATION=v.duration;
@@ -2196,7 +2284,7 @@ function boot(){
   $("#ls-total").textContent=SEGMENTS.length;
   spIdx=0; lsIdx=0;
   renderSpeak(); renderListen();
-  loadYT();
+  if(SOURCE_TYPE==="r2" && HLS_URL) loadHLS(); else loadYT();
 }
 /* ============ LIBRARY (danh sách khi không có ?id=) ============ */
 function ytThumb(yid){ return yid?`https://i.ytimg.com/vi/${yid}/hqdefault.jpg`:""; }
@@ -2233,7 +2321,7 @@ function renderLibrary(rows){
     const a=document.createElement("a");
     a.className="lib-card"; a.href="video.html?id="+v.id;
     const dur=(v.duration&&v.duration>0)?`<span class="dur">${fmt(v.duration)}</span>`:"";
-    const thumb=ytThumb(v.youtube_id);
+    const thumb=(v.source_type==="r2")?(v.poster_url||""):ytThumb(v.youtube_id);
     const chan=v.channel?`<b>${v.channel}</b>`:"";
     a.innerHTML=`<div class="lib-thumb">${thumb?`<img src="${thumb}" alt="" loading="lazy">`:""}<div class="play">▶</div>${dur}</div>
       <div class="lib-body"><div class="t">${v.title||("Video #"+v.id)}</div><div class="c">${chan}</div></div>`;
@@ -2266,7 +2354,7 @@ async function init(){
     try{
       const sb=supabase.createClient(SB_URL,SB_KEY);
       const {data,error}=await sb.from("video_lessons")
-        .select("id,title,channel,youtube_id,duration,topic,level,noi_dung").order("id",{ascending:false});
+        .select("id,title,channel,youtube_id,duration,topic,level,noi_dung,source_type,poster_url").order("id",{ascending:false});
       if(error) throw error;
       LIB_ROWS=data||[]; LIB_FILTER={level:"",topic:"",noidung:""};
       buildLibFilters(LIB_ROWS);
