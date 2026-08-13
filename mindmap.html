@@ -215,6 +215,12 @@ body {
 .mini i { background: var(--a3); }              /* đã thuộc */
 .pct { font-family: var(--mono); font-size: 10px; color: var(--muted); flex-shrink: 0; min-width: 28px; text-align: right; }
 
+/* nhãn "đã sở hữu" — số từ ĐÃ CÓ THẺ Flashcard (srs_cards), gồm cả đang ôn lẫn đã thuộc.
+   Dùng đúng màu xanh của thanh tiến độ: .mini u (lớp mờ) mang đúng nghĩa "đã có thẻ, đang ôn",
+   nên nhãn này lấy cùng màu, chỉ đậm hơn để đọc được ở cỡ chữ 10.5px. */
+.own      { color: rgba(52,211,153,.9); font-weight: 600; white-space: nowrap; }
+.own.zero { color: var(--muted); font-weight: 400; }
+
 /* cấp gốc */
 .box.lv0 {
   width: 232px;
@@ -2410,6 +2416,17 @@ function bar(learned, n, touched){
            '<u style="width:' + q + '%"></u><i style="width:' + p + '%"></i></div>' +
          '<span class="pct">' + p + '%</span>';
 }
+/* Nhãn "đã sở hữu" gắn vào cuối dòng phụ của mọi hộp.
+   touched = số từ có bản ghi trong srs_cards (isTouched) — đã tính sẵn ở cả 4 tầng,
+   nên không tốn thêm truy vấn nào.
+   ⚠️ Khách chưa đăng nhập thì _srsMap rỗng → touched = 0 ở khắp nơi; hiện "🃏 0" đầy màn
+   hình là rác, nên trả về chuỗi rỗng. */
+function ownTag(touched, n){
+  if (!currentUser) return '';
+  const t = touched || 0;
+  return ' · <span class="own' + (t ? '' : ' zero') + '" title="Đã thêm ' + t + '/' + (n || 0) +
+         ' từ vào Flashcard">\uD83C\uDCCF ' + t.toLocaleString('vi') + '</span>';
+}
 function boxHTML(cls, key, code, title, sub, learned, n, color, leaf, touched){
   const open = openSet.has(key);
   const hit  = hitNodes.has(key);
@@ -2439,7 +2456,7 @@ function render(){
       '<div class="sub">' + TREE.length + ' phần · ' +
         TREE.reduce((a,P) => a + P.kids.length, 0) + ' nhánh · ' +
         TREE.reduce((a,P) => a + P.kids.reduce((b,B) => b + B.kids.length, 0), 0) + ' chủ đề · ' +
-        total.toLocaleString('vi') + ' từ</div>' +
+        total.toLocaleString('vi') + ' từ' + ownTag(touched, total) + '</div>' +
       '<div class="sub" style="margin-top:2px">' +
         '<span style="color:#4f8ef7">● Oxford 3000: ' + total3.toLocaleString('vi') + '</span> · ' +
         '<span style="color:#f472b6">● +2000: ' + total5.toLocaleString('vi') + '</span></div>' +
@@ -2453,7 +2470,8 @@ function render(){
       if (!ps.n) return;
       h += '<div class="node">' +
         boxHTML('lv1', P.key, P.code, P.name,
-          P.kids.length + ' nhánh · ' + ps.n + ' từ', ps.learned, ps.n, P.color, false, ps.touched) ;
+          P.kids.length + ' nhánh · ' + ps.n + ' từ' + ownTag(ps.touched, ps.n),
+          ps.learned, ps.n, P.color, false, ps.touched) ;
       if (openSet.has(P.key)) {
         h += '<div class="kids">';
         P.kids.forEach(B => {
@@ -2461,7 +2479,8 @@ function render(){
           if (!bs.n) return;
           h += '<div class="node">' +
             boxHTML('lv2', B.key, B.code, B.name,
-              B.kids.length + ' chủ đề · ' + bs.n + ' từ', bs.learned, bs.n, B.color, false, bs.touched);
+              B.kids.length + ' chủ đề · ' + bs.n + ' từ' + ownTag(bs.touched, bs.n),
+              bs.learned, bs.n, B.color, false, bs.touched);
           if (openSet.has(B.key)) {
             h += '<div class="kids">';
             B.kids.forEach(T => {
@@ -2469,7 +2488,8 @@ function render(){
               if (!ts.n) return;
               h += '<div class="node">' +
                 boxHTML('lv3', T.key, T.code, T.name,
-                  ts.n + ' từ' + (ts.n5 ? ' · <span style="color:#f472b6">+' + ts.n5 + '</span>' : ''),
+                  ts.n + ' từ' + (ts.n5 ? ' · <span style="color:#f472b6">+' + ts.n5 + '</span>' : '')
+                    + ownTag(ts.touched, ts.n),
                   ts.learned, ts.n, T.color, false, ts.touched);
               if (openSet.has(T.key)) {
                 h += '<div class="kids"><div class="node"><div class="wpanel">' +
