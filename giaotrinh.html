@@ -100,6 +100,8 @@ input:focus{border-color:var(--accent)}
 .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .chip.a1.on{background:var(--a3);border-color:var(--a3);color:#052e20}
 .chip.b1.on{background:var(--a2);border-color:var(--a2);color:#1d1233}
+.chip.b2.on{background:var(--a5);border-color:var(--a5);color:#3b0a24}
+.chip.c1.on{background:var(--a4);border-color:var(--a4);color:#3a1a02}
 .cnt{font-size:12.5px;color:var(--muted);margin-left:auto}
 
 /* ── NHÓM & CHỦ ĐỀ ──────────────────────────────── */
@@ -121,6 +123,7 @@ input:focus{border-color:var(--accent)}
 .lv.A2{background:rgba(79,142,247,.16);color:var(--accent)}
 .lv.B1{background:rgba(167,139,250,.18);color:var(--a2)}
 .lv.B2{background:rgba(244,114,182,.18);color:var(--a5)}
+.lv.C1{background:rgba(251,146,60,.18);color:var(--a4)}
 .t h3{font-size:15px;font-weight:600;margin-top:9px}
 .t .vi{font-size:13.5px;color:var(--a2);margin-top:2px}
 .t .ob{font-size:12.6px;color:var(--muted);line-height:1.6;margin-top:8px}
@@ -529,6 +532,8 @@ function renderCurriculum(){
      '<span class="chip a1'+(fLevel==='A1'?' on':'')+'" onclick="setLv(\'A1\')">A1</span>'+
      '<span class="chip'+(fLevel==='A2'?' on':'')+'" onclick="setLv(\'A2\')">A2</span>'+
      '<span class="chip b1'+(fLevel==='B1'?' on':'')+'" onclick="setLv(\'B1\')">B1</span>'+
+     '<span class="chip b2'+(fLevel==='B2'?' on':'')+'" onclick="setLv(\'B2\')">B2</span>'+
+     '<span class="chip c1'+(fLevel==='C1'?' on':'')+'" onclick="setLv(\'C1\')">C1</span>'+
      '<span class="chip'+(fOnlyReady?' on':'')+'" onclick="fOnlyReady=!fOnlyReady;renderCurriculum()">✅ Đã có từ</span>'+
      '<span class="cnt" id="cnt"></span>'+
    '</div><div id="units"></div>';
