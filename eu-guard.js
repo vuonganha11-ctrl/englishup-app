@@ -9,8 +9,10 @@
      - hết hạn, hoặc plan='free' -> KHOÁ, chỉ vào được các trang trong
                                     EU_OPEN_PAGES (trang chủ, nâng cấp,
                                     tài khoản, đăng ký)
-     - CHƯA đăng nhập           -> KHÔNG khoá (để form đăng nhập của
-                                    từng trang còn dùng được)
+     - CHƯA đăng nhập           -> KHOÁ (2026-08-14). Chỉ vào được
+                                    EU_ANON_PAGES: trang chủ, đăng ký,
+                                    tài khoản (= nơi có form đăng nhập),
+                                    bảng giá, quyền riêng tư.
      - Chưa biết trạng thái     -> KHÔNG khoá (fail-open, tránh nháy
                                     màn hình và tránh khoá nhầm khi
                                     mạng chập chờn)
@@ -25,13 +27,28 @@
     "",                 // truy cập gốc englishup.xyz/
     "index.html",
     "nangcap.html",
-    "tai-khoan.html",
+    "tai-khoan.html",   // ĐỒNG THỜI LÀ TRANG ĐĂNG NHẬP (có gate + form)
     "register.html",
+    "quyen-rieng-tu.html"
+  ];
+
+  /* Trang khách CHƯA đăng nhập được xem.
+     ⚠️ Phải luôn có "tai-khoan.html" — form đăng nhập nằm trong đó,
+     khoá trang này là không ai đăng nhập được nữa.
+     ⚠️ Phải luôn có "quyen-rieng-tu.html" — register.html bắt buộc
+     link tới đây trước khi tick ô đồng ý (Nghị định 13/2023). */
+  var EU_ANON_PAGES = [
+    "",
+    "index.html",
+    "register.html",
+    "tai-khoan.html",
+    "nangcap.html",
     "quyen-rieng-tu.html"
   ];
 
   var here = (location.pathname.split("/").pop() || "").toLowerCase();
   var isOpenPage = EU_OPEN_PAGES.indexOf(here) !== -1;
+  var isAnonPage = EU_ANON_PAGES.indexOf(here) !== -1;
   /* Trang quản trị tự có guard riêng, và staff thì luôn mở */
   var isAdminPage = here.indexOf("admin") === 0;
 
@@ -108,6 +125,10 @@
   function showLock(a) {
     if (document.getElementById("eu-lock-wrap")) return;
     injectCss();
+
+    /* Khách chưa đăng nhập: mời đăng nhập / đăng ký, KHÔNG doạ hết hạn. */
+    if (!a || !a.loggedIn) { showAnonLock(); return; }
+
     var wasTrial = (a && a.plan === "trial");
     var tieu_de = wasTrial
       ? "Bản dùng thử 7 ngày đã kết thúc"
@@ -142,6 +163,32 @@
       document.querySelectorAll("iframe").forEach(function (f) {
         try { f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*"); } catch (e) {}
       });
+    } catch (e) {}
+  }
+
+  /* ---------- màn khoá cho khách CHƯA ĐĂNG NHẬP ---------- */
+  function showAnonLock() {
+    var w = document.createElement("div");
+    w.id = "eu-lock-wrap";
+    w.innerHTML =
+      '<div id="eu-lock-card">' +
+        '<div style="font-size:54px;line-height:1">🔑</div>' +
+        "<h2>Đăng nhập để bắt đầu học</h2>" +
+        "<p>Phần này dành cho học viên EnglishUp. Chưa có tài khoản? " +
+        "Đăng ký là mở khoá <b>toàn bộ</b> nền tảng trong <b>7 ngày</b>, không cần thẻ ngân hàng.</p>" +
+        '<div id="eu-lock-plans">' +
+          "<div><b>Học từ vựng</b><span>Gần 5.000 từ Oxford, có ảnh &amp; câu mẫu</span></div>" +
+          "<div><b>Học qua video</b><span>Phụ đề, nói theo, chép chính tả</span></div>" +
+          "<div><b>Trò chơi &amp; flashcard</b><span>Ôn tập ngắt quãng, nhớ lâu</span></div>" +
+        "</div>" +
+        '<a class="eu-lock-btn" href="register.html">🚀 Dùng thử miễn phí 7 ngày</a>' +
+        '<a class="eu-lock-alt" href="tai-khoan.html">Đã có tài khoản? Đăng nhập →</a>' +
+        '<a class="eu-lock-alt" href="nangcap.html">Xem bảng giá</a>' +
+      "</div>";
+    document.body.appendChild(w);
+    document.body.classList.add("eu-locked");
+    try {
+      document.querySelectorAll("audio,video").forEach(function (m) { try { m.pause(); } catch (e) {} });
     } catch (e) {}
   }
 
@@ -193,6 +240,13 @@
     var a = window.EU_ACCESS;
     var st = accessOf(a);
     if (st === null) return;                 // chưa biết -> chưa làm gì
+
+    /* Khách chưa đăng nhập: khoá mọi trang ngoài EU_ANON_PAGES.
+       (Trang quản trị có guard fail-CLOSED riêng nên bỏ qua ở đây.) */
+    if (st === "anon") {
+      if (!isAnonPage && !isAdminPage) { hideTrialBar(); showLock(a); }
+      return;
+    }
 
     if (st === "locked" && !isOpenPage && !isAdminPage) {
       hideTrialBar();

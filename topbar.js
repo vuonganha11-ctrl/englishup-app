@@ -335,7 +335,12 @@
   }
 
   window.__euLogin = function () {
-    if (typeof window.openLogin === "function") { try { window.openLogin(); return; } catch (e) {} }
+    /* Trang đang bị eu-guard phủ màn khoá thì form đăng nhập bên dưới vô dụng
+       → đi thẳng tới tai-khoan.html (trang có form đăng nhập, luôn mở). */
+    var daKhoa = !!document.getElementById("eu-lock-wrap");
+    if (!daKhoa && typeof window.openLogin === "function") {
+      try { window.openLogin(); return; } catch (e) {}
+    }
     location.href = "tai-khoan.html";
   };
   window.__euToggleMenu = function (e) {
