@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Mindmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260814"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.topbar .spacer{flex:1}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+
+.page{max-width:1000px;margin:0 auto;padding:30px 18px 90px}
+.hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:26px}
+.hero .hico{font-size:40px;line-height:1;flex-shrink:0}
+h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
+.lead{font-size:14.5px;color:var(--muted);margin-top:5px;max-width:680px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.tile{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px;text-decoration:none;color:var(--text);transition:.16s;position:relative;overflow:hidden}
+.tile::after{content:"";position:absolute;inset:0;border-radius:var(--radius-lg);pointer-events:none;
+  background:linear-gradient(135deg,var(--tint,rgba(79,142,247,.10)),transparent 62%);opacity:0;transition:.16s}
+.tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tile:hover::after{opacity:1}
+.tile .ico{font-size:34px;line-height:1}
+.tile .tt{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.tile .ds{font-size:13.5px;color:var(--muted);line-height:1.6;flex:1}
+.tile .go{font-size:13px;font-weight:700;color:var(--accent);display:inline-flex;align-items:center;gap:6px}
+.tile .tag{position:absolute;top:14px;right:14px;font-size:10.5px;font-weight:700;letter-spacing:.3px;
+  padding:3px 9px;border-radius:999px;background:rgba(79,142,247,.14);border:1px solid rgba(79,142,247,.4);color:var(--accent)}
+
+.note{margin-top:26px;font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  border-left:3px solid var(--a2);border-radius:12px;padding:14px 16px;line-height:1.7}
+.note b{color:var(--text)}
+@media(max-width:560px){
+  .page{padding:20px 14px 70px}
+  h1{font-size:21px}
+  .hero .hico{font-size:32px}
+  .grid{grid-template-columns:1fr;gap:13px}
+  .tile{padding:17px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav"></nav>
+  <div class="spacer"></div>
+  <div class="topbar-right"></div>
+</header>
+
+<div class="page">
+  <div class="hero">
+    <div class="hico">🗺️</div>
+    <div>
+      <h1>Mindmap</h1>
+      <div class="lead">Nhìn toàn cảnh kho từ thay vì học rời rạc. Hai tấm bản đồ dưới đây cho bạn thấy <b>từ nằm ở đâu trong hệ thống</b> — theo chủ đề nghĩa, và theo cách đọc.</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <a class="tile" href="mindmap.html" style="--tint:rgba(52,211,153,.12)">
+      <div class="ico">🌳</div>
+      <div class="tt">Bản đồ từ vựng</div>
+      <div class="ds">Sơ đồ cây từ trên xuống: phần → nhánh → chủ đề → từ. Thấy ngay mình đã thuộc bao nhiêu và còn hổng mảng nào.</div>
+      <div class="go">Mở bản đồ từ vựng <span aria-hidden="true">&rarr;</span></div>
+    </a>
+    <a class="tile" href="thongke-am.html" style="--tint:rgba(167,139,250,.12)">
+      <div class="ico">🔤</div>
+      <div class="tt">Bản đồ ngữ âm</div>
+      <div class="ds">Gom từ theo âm và vần. Học theo cụm âm giống nhau giúp bạn đọc đúng cả nhóm từ thay vì nhớ lẻ từng chữ.</div>
+      <div class="go">Mở bản đồ ngữ âm <span aria-hidden="true">&rarr;</span></div>
+    </a>
+  </div>
+
+  <div class="note"><b>Mẹo:</b> bấm vào bất kỳ ô từ nào cũng nghe được phát âm ngay, và mở ra popup chi tiết đầy đủ (nghĩa, câu mẫu, ảnh, bộ câu hỏi 5W1H) — y hệt popup ở trang Từ vựng.</div>
+</div>
+
+<script src="mobile-nav.js"></script>
+</body>
+</html>

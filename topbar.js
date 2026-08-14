@@ -64,32 +64,42 @@
   })();
 
   /* ===== THANH ĐIỀU HƯỚNG DẠNG CHIP — 6 chip dùng chung MỌI trang =====
-     5 chip chính + chip "⋯ Khác" chứa menu xổ xuống (tuỳ trang, tuỳ quyền). */
+     5 chip chính + chip "⋯ Khác" chứa menu xổ xuống (tuỳ trang, tuỳ quyền).
+     2026-08-14: rút về 6 nút theo LUỒNG HỌC (Đầu vào → Giáo trình → Mindmap →
+     Luyện tập → Thống kê → Khác). Ba trang gom (dauvao/bando/luyentap) chỉ là
+     màn chọn — trang tính năng cũ vẫn chạy nguyên, chỉ không còn nằm trong nav.
+     `match` = danh sách trang con; đang ở trang con thì chip cha sáng. */
   var EU_MAIN = [
-    { href: "video.html",     icon: "🎬", label: "Video" },
-    { href: "shorts.html",    icon: "📱", label: "Shorts" },
-    { href: "flashcard.html", icon: "🃏", label: "Flashcard" },
-    { href: "vocab.html",     icon: "📚", label: "Từ vựng" },
-    { href: "giaotrinh.html", icon: "📖", label: "Giáo trình" }
+    { href: "dauvao.html",    icon: "📥", label: "Đầu vào",
+      match: ["video.html", "shorts.html"] },
+    { href: "giaotrinh.html", icon: "📖", label: "Giáo trình" },
+    { href: "bando.html",     icon: "🗺️", label: "Mindmap",
+      match: ["mindmap.html", "thongke-am.html"] },
+    { href: "luyentap.html",  icon: "🏋️", label: "Luyện tập",
+      match: ["flashcard.html", "vocab.html", "game.html", "goquai.html", "tuvunghinh.html"] },
+    { href: "report.html",    icon: "📊", label: "Thống kê" }
   ];
   var EU_MORE = [
     { href: "baitap.html",    icon: "📝", label: "Bài tập về nhà" },
     { href: "bangxephang.html", icon: "🏆", label: "Bảng xếp hạng" },
     { href: "gioithieu.html",  icon: "🤝", label: "Giới thiệu bạn bè" },
-    { href: "mindmap.html",    icon: "🗺️", label: "Bản đồ từ vựng" },
-    { href: "tuvunghinh.html", icon: "🖼️", label: "Từ vựng hình" },
-    { href: "thongke-am.html", icon: "🔤", label: "Bản đồ ngữ âm" },
-    { href: "game.html",      icon: "🎮", label: "Game" },
-    { href: "goquai.html",    icon: "⚔️", label: "Gõ diệt quái" },
-    { href: "report.html",    icon: "📊", label: "Thống kê" },
     { href: "posts.html",     icon: "📰", label: "Thông báo" },
     { href: "nangcap.html",   icon: "⭐", label: "Nâng cấp gói", hideIfPremium: true },
     { href: "tai-khoan.html", icon: "👤", label: "Trang tài khoản" },
     { href: "accounts.html",  icon: "👥", label: "Quản lý tài khoản", admin: true },
     { href: "admin-hoahong.html", icon: "💰", label: "Hoa hồng & cộng đồng", admin: true },
     { href: "admin-baitap.html", icon: "🎓", label: "Quản trị bài tập", admin: true },
+    { href: "admin-shorts.html", icon: "📱", label: "Quản trị Shorts", admin: true },
     { href: "admin.html",     icon: "🛠️", label: "Trang quản trị",   admin: true }
   ];
+
+  /* Trang con của một chip chính → dùng để bật .active cho chip cha. */
+  function chipMatches(it, here) {
+    if (it.href === here) return true;
+    if (!it.match) return false;
+    for (var k = 0; k < it.match.length; k++) if (it.match[k] === here) return true;
+    return false;
+  }
 
   function curPage() {
     var p = (location.pathname || "").split("/").pop().toLowerCase();
@@ -112,7 +122,8 @@
       var h = "";
       for (var i = 0; i < EU_MAIN.length; i++) {
         var it = EU_MAIN[i];
-        h += '<a class="eu-navchip' + (it.href === here ? " active" : "") + '" href="' + it.href + '">' +
+        if (chipMatches(it, here)) inMore = false;   /* đang ở trang con → chip cha sáng, "Khác" tắt */
+        h += '<a class="eu-navchip' + (chipMatches(it, here) ? " active" : "") + '" href="' + it.href + '">' +
              '<span class="eu-ni">' + it.icon + "</span>" + it.label + "</a>";
       }
       h += '<span class="eu-morewrap">' +

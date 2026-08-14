@@ -30,6 +30,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .tag{font-size:11px;font-weight:700;color:var(--a4);background:rgba(251,146,60,.12);
      border:1px solid rgba(251,146,60,.3);border-radius:20px;padding:3px 10px}
 .head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.head nav.eu-nav{margin-left:8px}
+@media(max-width:900px){.head nav.eu-nav{order:10;flex-basis:100%;margin-left:0}}
 
 /* ── màn hình ── */
 .screen{display:none} .screen.on{display:block}
@@ -422,9 +424,10 @@ select.inp:focus{border-color:var(--accent)}
 <body>
 <div class="wrap">
 
-  <div class="head">
+  <div class="head topbar">
     <a class="logo" href="index.html" style="text-decoration:none">English<span>Up</span></a>
-    <a class="tag" href="game.html" style="text-decoration:none" title="Về trang Game">GÕ DIỆT QUÁI</a>
+    <a class="tag" href="luyentap.html" style="text-decoration:none" title="Về trang Luyện tập">GÕ DIỆT QUÁI</a>
+    <nav class="top-nav"></nav>
     <div class="head-right">
       <button class="btn btn-main" id="btnLogin" style="padding:7px 16px;font-size:13px">Đăng nhập</button>
       <div class="uchip" id="uChip" style="display:none" title="Bấm để đăng xuất">
