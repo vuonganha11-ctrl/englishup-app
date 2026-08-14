@@ -31,11 +31,18 @@
         hg.id = "eu-hw-guard-js"; hg.src = "hw-guard.js?v=20260807";
         head.appendChild(hg);
       }
-      /* Bộ khoá theo GÓI: hết 24h dùng thử / hết hạn gói → chặn toàn trang */
+      /* Bộ khoá theo GÓI: hết 7 ngày dùng thử / hết hạn gói → chặn toàn trang */
       if (head && !document.getElementById("eu-guard-js")) {
         var eg = document.createElement("script");
-        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260810";
+        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260814";
         head.appendChild(eg);
+      }
+      /* Bộ ghi hành vi 7 ngày đầu (để chốt sale). Tự tắt với người quá 7 ngày,
+         với giáo viên/admin, và khi chưa đăng nhập. Không lấy vị trí/IP/thiết bị. */
+      if (head && !document.getElementById("eu-track-js")) {
+        var tk = document.createElement("script");
+        tk.id = "eu-track-js"; tk.src = "eu-track.js?v=20260814";
+        head.appendChild(tk);
       }
     } catch (e) {}
   })();
@@ -86,6 +93,7 @@
     { href: "posts.html",     icon: "📰", label: "Thông báo" },
     { href: "nangcap.html",   icon: "⭐", label: "Nâng cấp gói", hideIfPremium: true },
     { href: "tai-khoan.html", icon: "👤", label: "Trang tài khoản" },
+    { href: "quyen-rieng-tu.html", icon: "🔐", label: "Quyền riêng tư" },
     { href: "accounts.html",  icon: "👥", label: "Quản lý tài khoản", admin: true },
     { href: "admin-hoahong.html", icon: "💰", label: "Hoa hồng & cộng đồng", admin: true },
     { href: "admin-baitap.html", icon: "🎓", label: "Quản trị bài tập", admin: true },
@@ -356,7 +364,7 @@
     var plan = prof.plan || (loggedIn ? "free" : null);
     var exp = prof.plan_expires_at ? new Date(prof.plan_expires_at).getTime() : null;
     var isStaff = role === "teacher" || role === "admin";
-    /* Gói còn quyền: trial (24h) · plus (1 năm) · pro (2 năm) · vip (vĩnh viễn).
+    /* Gói còn quyền: trial (7 ngày) · plus (1 năm) · pro (2 năm) · vip (vĩnh viễn).
        QUY ƯỚC: plan_expires_at trống = VĨNH VIỄN — nhờ vậy khách mua Pro
        "vĩnh viễn" trước 2026-08-10 vẫn giữ nguyên quyền. */
     var paidPlans = ["trial", "plus", "pro", "vip"];

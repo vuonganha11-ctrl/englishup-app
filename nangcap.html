@@ -167,7 +167,7 @@ function copyVal(v,btn){ try{ navigator.clipboard.writeText(v); const t=btn.text
 function copyNote(btn){ const v=(document.getElementById('pay-note').textContent||'').trim(); copyVal(v,btn); }
 
 function fmtDate(s){ if(!s)return ''; const d=new Date(s); if(isNaN(d))return ''; return d.toLocaleDateString('vi-VN'); }
-function planLabel(p){ return p==='vip'?'VIP (vĩnh viễn)':(p==='pro'?'Pro (2 năm)':(p==='plus'?'Plus (1 năm)':(p==='trial'?'Dùng thử 24 giờ':'Đã hết hạn'))); }
+function planLabel(p){ return p==='vip'?'VIP (vĩnh viễn)':(p==='pro'?'Pro (2 năm)':(p==='plus'?'Plus (1 năm)':(p==='trial'?'Dùng thử 7 ngày':'Đã hết hạn'))); }
 function conLai(exp){ const ms=new Date(exp).getTime()-Date.now(); if(ms<=0) return 'đã hết hạn';
   const h=Math.floor(ms/3600000); if(h>=48) return 'còn '+Math.floor(h/24)+' ngày';
   const m=Math.floor((ms%3600000)/60000); return h>=1?('còn '+h+' giờ '+m+' phút'):('còn '+m+' phút'); }
@@ -193,7 +193,7 @@ async function loadMe(){
     } else if(plan==='trial'){
       cur.innerHTML = conHan
         ? '⏳ Bạn đang <b>dùng thử miễn phí</b>, '+conLai(exp)+'. Hết thời gian này tài khoản sẽ bị khóa — hãy chọn một gói bên dưới.'
-        : 'Bản <b>dùng thử 24 giờ</b> đã <b style="color:var(--danger)">kết thúc</b>. Chọn một gói bên dưới để học tiếp.';
+        : 'Bản <b>dùng thử 7 ngày</b> đã <b style="color:var(--danger)">kết thúc</b>. Chọn một gói bên dưới để học tiếp.';
     } else if(plan==='plus' || plan==='pro'){
       cur.innerHTML = conHan
         ? 'Gói hiện tại: <b>'+planLabel(plan)+'</b> — còn hạn đến <b>'+fmtDate(exp)+'</b>.'

@@ -326,6 +326,7 @@ select.input{cursor:pointer}
       <button class="nav-btn" data-section="import" onclick="nav('import',this)"><span class="nbi">📥</span>Import CSV</button>
       <div class="nav-group-label">Người dùng</div>
       <button class="nav-btn" data-section="users" onclick="nav('users',this)"><span class="nbi">👥</span>Học viên<span class="nav-count" id="nav-count-users">—</span></button>
+      <button class="nav-btn" data-section="trial" onclick="nav('trial',this)"><span class="nbi">🎯</span>Khách dùng thử<span class="nav-count" id="nav-count-trial">—</span></button>
       <div class="nav-group-label">Quản lý</div>
       <a class="nav-btn" href="accounts.html" style="text-decoration:none"><span class="nbi">👤</span>Tài khoản &amp; phân quyền</a>
       <a class="nav-btn" href="report.html" style="text-decoration:none"><span class="nbi">📊</span>Thống kê học tập</a>
@@ -556,6 +557,33 @@ select.input{cursor:pointer}
           </div>
           <div id="users-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
         </div>
+      </div>
+
+      <!-- ══════════ KHÁCH DÙNG THỬ (chốt sale) ══════════ -->
+      <div class="section-page" id="sec-trial">
+        <div class="page-header">
+          <h1>🎯 Khách dùng thử</h1>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="input" id="tr-days" style="width:auto" onchange="loadTrial()">
+              <option value="7">7 ngày gần đây</option>
+              <option value="14">14 ngày gần đây</option>
+              <option value="30">30 ngày gần đây</option>
+            </select>
+            <button class="btn" onclick="loadTrial()">🔄 Làm mới</button>
+          </div>
+        </div>
+        <div id="tr-stats" class="stats-row" style="margin-bottom:14px"></div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <span class="table-toolbar-title" id="tr-count-label">Đang tải…</span>
+            <div class="search-wrap"><input class="search-input" id="tr-search" placeholder="Tìm tên / email / SĐT…" oninput="renderTrial()"></div>
+          </div>
+          <div id="tr-table-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin:10px 2px">
+          🔥 <b>Gọi ngay</b> = học nhiều + đã ngó bảng giá. ❄️ <b>Nguội</b> = đăng ký rồi bỏ đó.
+          Số liệu chỉ ghi trong <b>7 ngày đầu</b> kể từ lúc đăng ký; không thu thập vị trí, IP hay thiết bị.
+        </p>
       </div>
 
     </div>
@@ -1138,7 +1166,7 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers,extras:loadExtras})[section]?.();
+  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers,extras:loadExtras,trial:loadTrial})[section]?.();
 }
 
 // ── DASHBOARD ──
@@ -1819,6 +1847,100 @@ function filterUsers(q){renderUsers(_users.filter(u=>(u.display_name||u.email||'
 function renderUsers(list){
   if(!list.length){document.getElementById('users-table-body').innerHTML='<div class="empty-state"><div class="es-icon">👥</div><p>Chưa có học viên nào</p></div>';return;}
   document.getElementById('users-table-body').innerHTML=`<table><thead><tr><th>Tên</th><th>Email</th><th>Level</th><th>XP</th><th>Streak</th><th>Tổng từ</th></tr></thead><tbody>${list.map(u=>`<tr><td><strong>${u.display_name||'—'}</strong></td><td style="color:var(--muted);font-size:12px">${u.email||'—'}</td><td><span class="badge badge-blue">${u.level||'A1'}</span></td><td style="font-family:var(--mono)">${u.xp||0}</td><td style="font-family:var(--mono)">${u.streak||0} 🔥</td><td style="font-family:var(--mono)">${u.total_words||0}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// KHÁCH DÙNG THỬ — dữ liệu gộp sẵn ở server bằng RPC eu_trial_report
+// (1 dòng / 1 khách nên KHÔNG dính bẫy PostgREST cắt 1.000 dòng)
+// ══════════════════════════════════════════════════════════
+let _trial=[];
+
+function trHeat(r){
+  const phut   = Math.min(r.mins||0,120)/120*40;      // học càng lâu càng nóng
+  const ngay   = Math.min(r.days_active||0,7)/7*20;   // quay lại nhiều ngày
+  const gia    = Math.min((r.price_views||0)*8,24);   // ngó bảng giá
+  const bam    = r.cta_last ? 16 : 0;                 // đã bấm vào một gói
+  return Math.round(phut+ngay+gia+bam);
+}
+function trHeatBadge(n){
+  if(n>=60) return '<span class="badge" style="background:#7f1d1d;color:#fecaca">🔥 Gọi ngay</span>';
+  if(n>=30) return '<span class="badge" style="background:#78350f;color:#fde68a">🙂 Ấm</span>';
+  return '<span class="badge" style="background:#1e293b;color:#94a3b8">❄️ Nguội</span>';
+}
+function trConLai(exp){
+  if(!exp) return '<span style="color:var(--accent3)">vĩnh viễn</span>';
+  const ms=new Date(exp).getTime()-Date.now();
+  if(ms<=0) return '<span style="color:var(--danger)">đã hết hạn</span>';
+  const d=Math.floor(ms/86400000), h=Math.floor(ms%86400000/3600000);
+  return '<span style="color:var(--accent)">còn '+(d?d+' ngày ':'')+h+' giờ</span>';
+}
+function trKhiNao(t){
+  if(!t) return '—';
+  const ms=Date.now()-new Date(t).getTime();
+  if(ms<3600000) return Math.max(1,Math.floor(ms/60000))+' phút trước';
+  if(ms<86400000) return Math.floor(ms/3600000)+' giờ trước';
+  return Math.floor(ms/86400000)+' ngày trước';
+}
+
+async function loadTrial(){
+  const days=+(document.getElementById('tr-days')?.value||7);
+  const body=document.getElementById('tr-table-body');
+  body.innerHTML='<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
+  const {data,error}=await _sb.rpc('eu_trial_report',{p_days:days});
+  if(error){
+    console.error('eu_trial_report:',error);
+    body.innerHTML='<div class="empty-state"><div class="es-icon">⚠️</div><p>Không tải được: '+(error.message||'lỗi')+'</p>'
+      +'<p style="font-size:12px;color:var(--muted)">Đã chạy <code>migration_theodoi_7ngay.sql</code> chưa?</p></div>';
+    document.getElementById('tr-count-label').textContent='Lỗi';
+    return;
+  }
+  _trial=(data||[]).map(r=>({...r,heat:trHeat(r)})).sort((a,b)=>b.heat-a.heat);
+  const el=document.getElementById('nav-count-trial'); if(el) el.textContent=_trial.length;
+
+  const nong=_trial.filter(r=>r.heat>=60).length;
+  const amL =_trial.filter(r=>r.heat>=30&&r.heat<60).length;
+  const xemGia=_trial.filter(r=>r.saw_price).length;
+  const phutTB=_trial.length?Math.round(_trial.reduce((s,r)=>s+(r.mins||0),0)/_trial.length):0;
+  document.getElementById('tr-stats').innerHTML=
+     `<div class="stat-card"><div class="st-val" style="color:#f87171">🔥 ${nong}</div><div class="st-lbl">Nên gọi ngay</div></div>`
+    +`<div class="stat-card"><div class="st-val" style="color:#fbbf24">🙂 ${amL}</div><div class="st-lbl">Ấm, nuôi tiếp</div></div>`
+    +`<div class="stat-card"><div class="st-val" style="color:var(--accent)">💰 ${xemGia}/${_trial.length}</div><div class="st-lbl">Đã xem bảng giá</div></div>`
+    +`<div class="stat-card"><div class="st-val" style="color:var(--accent3)">⏱ ${phutTB}′</div><div class="st-lbl">Phút học TB / khách</div></div>`;
+  renderTrial();
+}
+
+function renderTrial(){
+  const q=(document.getElementById('tr-search')?.value||'').toLowerCase().trim();
+  const list=q?_trial.filter(r=>((r.full_name||'')+' '+(r.email||'')+' '+(r.phone||'')).toLowerCase().includes(q)):_trial;
+  document.getElementById('tr-count-label').textContent=list.length+' khách dùng thử';
+  const body=document.getElementById('tr-table-body');
+  if(!list.length){
+    body.innerHTML='<div class="empty-state"><div class="es-icon">🎯</div><p>Chưa có khách dùng thử nào trong khoảng này</p></div>';
+    return;
+  }
+  body.innerHTML=`<table><thead><tr>
+      <th>Độ nóng</th><th>Học viên</th><th>Dùng thử</th><th>Phút học</th>
+      <th>Ngày vào</th><th>Từ đã ôn</th><th>Video</th><th>Xem giá</th>
+      <th>Bấm gói</th><th>Trang mê nhất</th><th>Lần cuối</th>
+    </tr></thead><tbody>${list.map(r=>`<tr>
+      <td>${trHeatBadge(r.heat)}<div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${r.heat}</div></td>
+      <td><strong>${r.full_name||'—'}</strong>${r.is_minor?' <span class="badge" style="background:#78350f;color:#fde68a">&lt;16 tuổi</span>':''}
+          <div style="color:var(--muted);font-size:11.5px">${r.email||''}</div>
+          ${r.is_minor
+            ? `<div style="font-family:var(--mono);font-size:12px;color:var(--a4)">📞 ${r.guardian_phone||'—'}</div>
+               <div style="font-size:11px;color:var(--a4)">👨‍👩‍👧 gọi ${r.guardian_name||'người giám hộ'}, KHÔNG gọi trực tiếp người học</div>`
+            : (r.phone?`<div style="font-family:var(--mono);font-size:12px;color:var(--accent)">📞 ${r.phone}</div>`:'')}</td>
+      <td style="font-size:12px">${trConLai(r.expires_at)}
+          <div style="color:var(--muted);font-size:11px">ĐK ${new Date(r.signed_up).toLocaleDateString('vi-VN')}</div></td>
+      <td style="font-family:var(--mono)">${r.mins||0}′</td>
+      <td style="font-family:var(--mono)">${r.days_active||0}</td>
+      <td style="font-family:var(--mono)">${r.words_learned||0}</td>
+      <td style="font-family:var(--mono)">${r.videos_watched||0}</td>
+      <td>${r.saw_price?`<span class="badge badge-green">${r.price_views}×</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:11.5px;max-width:150px">${r.cta_last?`<span title="${(r.cta_last||'').replace(/"/g,'&quot;')}">${(r.cta_last||'').slice(0,40)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${r.top_page||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${trKhiNao(r.last_seen)}${(r.lock_hits>0)?`<div style="font-size:11px;color:#f87171">🔒 quay lại ${r.lock_hits}× sau khi hết hạn</div>`:''}</td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 // ── FILE UPLOAD (Supabase Storage) ──

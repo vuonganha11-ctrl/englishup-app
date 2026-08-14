@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Chính sách quyền riêng tư</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.wrap{flex:1;width:100%;max-width:820px;margin:0 auto;padding:34px 20px 70px}
+h1{font-size:27px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+.lede{color:var(--muted);font-size:14px;margin-bottom:8px}
+.stamp{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:26px}
+h2{font-size:18px;font-weight:700;margin:30px 0 10px;letter-spacing:-.2px;color:#fff}
+h2 .n{color:var(--accent);font-family:var(--mono);font-size:15px;margin-right:8px}
+h3{font-size:14.5px;font-weight:700;margin:18px 0 6px;color:var(--a2)}
+p{font-size:14.5px;margin-bottom:11px}
+ul{margin:0 0 12px 20px}
+li{font-size:14.5px;margin-bottom:6px}
+b{color:#fff}
+a{color:var(--accent)}
+.box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin:16px 0}
+.box.good{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.06)}
+.box.warn{border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.06)}
+.box h3{margin-top:0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+th,td{border:1px solid var(--border);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:var(--card2);font-weight:600;color:#fff;font-size:12.5px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--card2);padding:1px 6px;border-radius:5px;color:var(--a3)}
+.foot{border-top:1px solid var(--border);padding:20px;text-align:center;font-size:13px;color:var(--muted)}
+.foot a{text-decoration:none;font-weight:600}
+.toc{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:8px}
+.toc a{display:block;font-size:13.5px;text-decoration:none;padding:3px 0}
+.toc a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+</header>
+
+<div class="wrap">
+  <h1>Chính sách quyền riêng tư</h1>
+  <p class="lede">Trang này nói thẳng: EnglishUp giữ những gì của bạn, dùng để làm gì, và bạn lấy lại hoặc xoá đi bằng cách nào.</p>
+  <p class="stamp">Phiên bản 1.0 · Có hiệu lực từ 14/08/2026</p>
+
+  <div class="toc">
+    <a href="#ai">1. Ai giữ dữ liệu của bạn</a>
+    <a href="#gi">2. Chúng tôi giữ những gì</a>
+    <a href="#lamgi">3. Giữ để làm gì</a>
+    <a href="#khong">4. Chúng tôi KHÔNG làm gì</a>
+    <a href="#ben3">5. Ai khác nhìn thấy dữ liệu</a>
+    <a href="#baolau">6. Giữ trong bao lâu</a>
+    <a href="#quyen">7. Quyền của bạn — và cách dùng</a>
+    <a href="#treem">8. Người học dưới 16 tuổi</a>
+    <a href="#baomat">9. Chúng tôi bảo vệ thế nào</a>
+    <a href="#doi">10. Khi chính sách thay đổi</a>
+  </div>
+
+  <h2 id="ai"><span class="n">1</span>Ai giữ dữ liệu của bạn</h2>
+  <p>EnglishUp là nền tảng học tiếng Anh tại <a href="https://englishup.xyz">englishup.xyz</a>, do một cá nhân xây dựng và tự vận hành. Người vận hành cũng chính là người chịu trách nhiệm về dữ liệu của bạn.</p>
+  <p><b>Liên hệ mọi việc liên quan đến dữ liệu cá nhân:</b> <a href="mailto:vuonganha11@gmail.com">vuonganha11@gmail.com</a></p>
+  <p>Chính sách này được viết theo tinh thần Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân.</p>
+
+  <h2 id="gi"><span class="n">2</span>Chúng tôi giữ những gì</h2>
+
+  <h3>a) Thông tin bạn tự điền</h3>
+  <table>
+    <tr><th>Dữ liệu</th><th>Vì sao cần</th></tr>
+    <tr><td>Họ và tên</td><td>Xưng hô, hiển thị trong lớp và bảng xếp hạng</td></tr>
+    <tr><td>Email</td><td>Đăng nhập, khôi phục mật khẩu</td></tr>
+    <tr><td>Số điện thoại</td><td>Liên hệ khi cần hỗ trợ hoặc tư vấn gói học</td></tr>
+    <tr><td>Mật khẩu</td><td>Được mã hoá một chiều — kể cả người vận hành cũng không đọc được</td></tr>
+  </table>
+
+  <h3>b) Quá trình học của bạn</h3>
+  <p>Đây là phần lõi của một nền tảng học: không lưu thì không có tiến độ, không có ôn tập ngắt quãng, không có báo cáo.</p>
+  <ul>
+    <li>Từ vựng bạn đã học, đã thuộc, đến hạn ôn lại</li>
+    <li>Video đã xem, điểm bài kiểm tra, số câu đã luyện nói theo</li>
+    <li>Bài tập đã nộp và điểm số</li>
+    <li>Điểm trò chơi, XP, chuỗi ngày học liên tiếp</li>
+    <li>Gói cước đang dùng và hạn sử dụng</li>
+  </ul>
+
+  <h3>c) Cách bạn dùng trang — chỉ trong 7 ngày đầu</h3>
+  <div class="box warn">
+    <h3>⏱ Ghi trong 7 ngày, rồi tự dừng</h3>
+    <p style="margin-bottom:8px">Trong <b>7 ngày đầu kể từ lúc bạn đăng ký</b>, hệ thống ghi lại cách bạn dùng thử để người vận hành biết nên hỗ trợ bạn ở đâu và có nên gọi tư vấn cho bạn không. Cụ thể chỉ có bốn thứ:</p>
+    <ul style="margin-bottom:8px">
+      <li>Bạn mở <b>trang nào</b> (ví dụ: từ vựng, video, bảng giá)</li>
+      <li>Bạn ở đó <b>bao nhiêu giây</b> — chỉ tính lúc bạn thật sự đang thao tác</li>
+      <li>Bạn <b>bấm chuột / gõ phím bao nhiêu lần</b> (chỉ đếm số lần, <b>không ghi bạn gõ chữ gì</b>)</li>
+      <li>Bạn có <b>bấm vào gói học nào</b> trên trang bảng giá không</li>
+    </ul>
+    <p style="margin-bottom:0">Hết ngày thứ 7, việc ghi này <b>tự động ngừng hẳn</b> — không phải do ai bấm tắt, mà do máy chủ từ chối nhận thêm.</p>
+  </div>
+
+  <h3>d) Dữ liệu kỹ thuật khi đăng nhập</h3>
+  <p>Nhà cung cấp hạ tầng (Supabase) tự động ghi nhật ký các lần đăng nhập, đăng xuất, đổi mật khẩu — kèm địa chỉ IP và loại trình duyệt. Đây là cơ chế bảo mật tiêu chuẩn để phát hiện truy cập bất thường, không phải để theo dõi bạn.</p>
+
+  <h2 id="lamgi"><span class="n">3</span>Giữ để làm gì</h2>
+  <ul>
+    <li><b>Cho bạn học được</b> — nhớ tiến độ, nhắc ôn đúng lúc, hiện đúng bài tiếp theo</li>
+    <li><b>Cho bạn xem lại</b> — biểu đồ, thống kê, chuỗi ngày học của chính bạn</li>
+    <li><b>Cho việc hỗ trợ</b> — biết bạn đang mắc ở đâu để tư vấn đúng gói, đúng lộ trình</li>
+    <li><b>Cho việc vận hành</b> — xác thực đăng nhập, chống lạm dụng, sửa lỗi</li>
+  </ul>
+
+  <h2 id="khong"><span class="n">4</span>Chúng tôi KHÔNG làm gì</h2>
+  <div class="box good">
+    <ul style="margin-bottom:0">
+      <li><b>Không lấy vị trí của bạn.</b> Trang không bao giờ hỏi quyền truy cập vị trí, và không suy đoán vị trí từ IP.</li>
+      <li><b>Không đọc nội dung bạn gõ.</b> Ô luyện gõ, ô chép chính tả, ô làm bài — chỉ đếm số lần gõ, không lưu ký tự.</li>
+      <li><b>Không bán, không cho thuê, không trao đổi</b> dữ liệu của bạn với bất kỳ ai.</li>
+      <li><b>Không đặt quảng cáo</b> và không gắn mã theo dõi quảng cáo của bên thứ ba.</li>
+      <li><b>Không dùng dữ liệu học của bạn</b> để huấn luyện mô hình AI nào.</li>
+      <li><b>Không đọc được mật khẩu của bạn.</b></li>
+    </ul>
+  </div>
+
+  <h2 id="ben3"><span class="n">5</span>Ai khác nhìn thấy dữ liệu</h2>
+  <p>Chỉ ba nhóm, và mỗi nhóm chỉ thấy đúng phần cần thiết:</p>
+  <table>
+    <tr><th>Bên</th><th>Vai trò</th><th>Thấy gì</th></tr>
+    <tr><td>Người vận hành EnglishUp</td><td>Quản trị</td><td>Hồ sơ, tiến độ học, thông tin dùng thử 7 ngày</td></tr>
+    <tr><td>Supabase</td><td>Lưu trữ dữ liệu &amp; xác thực</td><td>Toàn bộ dữ liệu (đã mã hoá khi truyền và khi lưu)</td></tr>
+    <tr><td>GitHub Pages</td><td>Máy chủ giao diện</td><td>Chỉ phục vụ trang web — <b>không</b> chạm vào dữ liệu học</td></tr>
+  </table>
+  <p>Một số bài học nhúng video YouTube. Khi bạn xem, YouTube có thể tự đặt cookie theo chính sách riêng của họ — phần này nằm ngoài tầm kiểm soát của EnglishUp.</p>
+  <p>Ngoài ra, chúng tôi chỉ cung cấp dữ liệu khi có <b>yêu cầu hợp pháp bằng văn bản</b> của cơ quan nhà nước có thẩm quyền.</p>
+
+  <h2 id="baolau"><span class="n">6</span>Giữ trong bao lâu</h2>
+  <table>
+    <tr><th>Loại dữ liệu</th><th>Thời gian giữ</th></tr>
+    <tr><td>Hồ sơ &amp; tiến độ học</td><td>Đến khi bạn yêu cầu xoá tài khoản</td></tr>
+    <tr><td>Nhật ký dùng thử 7 ngày</td><td><b>Tối đa 60 ngày</b>, sau đó tự động xoá</td></tr>
+    <tr><td>Nhật ký đăng nhập</td><td>Theo thời hạn mặc định của Supabase</td></tr>
+    <tr><td>Hoá đơn / lịch sử thanh toán</td><td>Giữ theo thời hạn kế toán bắt buộc, kể cả sau khi xoá tài khoản</td></tr>
+  </table>
+
+  <h2 id="quyen"><span class="n">7</span>Quyền của bạn — và cách dùng</h2>
+  <p>Bạn có quyền, bất cứ lúc nào, không cần giải thích lý do:</p>
+  <ul>
+    <li><b>Xem</b> — yêu cầu bản sao toàn bộ dữ liệu chúng tôi đang giữ về bạn</li>
+    <li><b>Sửa</b> — chỉnh tên, email, số điện thoại ngay tại trang <a href="tai-khoan.html">Tài khoản</a></li>
+    <li><b>Xoá</b> — yêu cầu xoá tài khoản và toàn bộ dữ liệu học</li>
+    <li><b>Rút lại đồng ý</b> — đặc biệt với phần ghi nhận cách dùng ở mục 2c</li>
+    <li><b>Phản đối</b> việc xử lý dữ liệu, hoặc yêu cầu tạm ngừng xử lý</li>
+    <li><b>Khiếu nại</b> tới cơ quan nhà nước có thẩm quyền nếu bạn cho rằng quyền của mình bị xâm phạm</li>
+  </ul>
+  <div class="box">
+    <h3>Cách yêu cầu</h3>
+    <p style="margin-bottom:0">Gửi email tới <a href="mailto:vuonganha11@gmail.com">vuonganha11@gmail.com</a> từ chính địa chỉ email bạn đã đăng ký, ghi rõ bạn muốn <b>xem</b>, <b>xoá</b>, hay <b>rút lại đồng ý</b>. Chúng tôi xử lý trong vòng <b>72 giờ</b>.</p>
+  </div>
+  <p>Rút lại đồng ý phần ghi nhận cách dùng <b>không</b> ảnh hưởng gì tới việc học của bạn: tiến độ, flashcard, bài tập vẫn giữ nguyên và trang vẫn chạy đầy đủ.</p>
+
+  <h2 id="treem"><span class="n">8</span>Người học dưới 16 tuổi</h2>
+  <div class="box warn">
+    <p>Nếu người học <b>chưa đủ 16 tuổi</b>, việc đăng ký phải do <b>cha, mẹ hoặc người giám hộ</b> thực hiện, hoặc phải có sự đồng ý của họ. Khi đăng ký, biểu mẫu sẽ hỏi thẳng điều này và yêu cầu điền tên cùng số điện thoại của người giám hộ.</p>
+    <p style="margin-bottom:0">Cha mẹ hoặc người giám hộ có toàn quyền yêu cầu xem, sửa hoặc xoá dữ liệu của con mình — gửi email tới địa chỉ ở mục 7. Nếu chúng tôi phát hiện một tài khoản dưới 16 tuổi được lập mà không có sự đồng ý của người giám hộ, tài khoản đó sẽ bị khoá và dữ liệu bị xoá.</p>
+  </div>
+
+  <h2 id="baomat"><span class="n">9</span>Chúng tôi bảo vệ thế nào</h2>
+  <ul>
+    <li>Mọi kết nối đều qua <b>HTTPS</b>; dữ liệu được mã hoá khi truyền và khi lưu</li>
+    <li>Mật khẩu được <b>băm một chiều</b>, không ai đọc lại được</li>
+    <li>Cơ sở dữ liệu bật <b>bảo mật theo dòng</b> — mỗi tài khoản chỉ đọc được dữ liệu của chính mình</li>
+    <li>Đáp án bài tập và các dữ liệu nhạy cảm chỉ nằm ở máy chủ, trình duyệt không lấy được</li>
+    <li>Nếu xảy ra sự cố lộ dữ liệu, chúng tôi sẽ thông báo cho người bị ảnh hưởng <b>trong vòng 72 giờ</b> kể từ khi phát hiện</li>
+  </ul>
+  <p>Không hệ thống nào an toàn tuyệt đối. Bạn hãy dùng mật khẩu riêng cho EnglishUp và không chia sẻ tài khoản.</p>
+
+  <h2 id="doi"><span class="n">10</span>Khi chính sách thay đổi</h2>
+  <p>Nếu có thay đổi làm ảnh hưởng đến quyền của bạn, chúng tôi sẽ thông báo qua email và ngay trên trang này ít nhất <b>7 ngày trước</b> khi thay đổi có hiệu lực. Số phiên bản và ngày hiệu lực luôn nằm ở đầu trang.</p>
+
+  <p style="margin-top:26px;color:var(--muted);font-size:13px">
+    Có gì chưa rõ, cứ hỏi thẳng: <a href="mailto:vuonganha11@gmail.com">vuonganha11@gmail.com</a>. Chúng tôi trả lời bằng tiếng Việt, không dùng chữ nghĩa đánh đố.
+  </p>
+</div>
+
+<footer class="foot">
+  © <span id="yr"></span> EnglishUp · <a href="index.html">Trang chủ</a> · <a href="nangcap.html">Bảng giá</a>
+</footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

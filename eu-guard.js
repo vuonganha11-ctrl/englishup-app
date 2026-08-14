@@ -26,7 +26,8 @@
     "index.html",
     "nangcap.html",
     "tai-khoan.html",
-    "register.html"
+    "register.html",
+    "quyen-rieng-tu.html"
   ];
 
   var here = (location.pathname.split("/").pop() || "").toLowerCase();
@@ -56,7 +57,10 @@
     if (ms == null || ms <= 0) return "đã hết hạn";
     var h = Math.floor(ms / 3600000);
     var m = Math.floor((ms % 3600000) / 60000);
-    if (h >= 48) return Math.floor(h / 24) + " ngày";
+    if (h >= 48) {
+      var d = Math.floor(h / 24), hr = h % 24;
+      return hr ? (d + " ngày " + hr + " giờ") : (d + " ngày");
+    }
     if (h >= 1) return h + " giờ " + m + " phút";
     return m + " phút";
   }
@@ -106,7 +110,7 @@
     injectCss();
     var wasTrial = (a && a.plan === "trial");
     var tieu_de = wasTrial
-      ? "Bản dùng thử 24 giờ đã kết thúc"
+      ? "Bản dùng thử 7 ngày đã kết thúc"
       : "Gói học của bạn đã hết hạn";
     var mo_ta = wasTrial
       ? "Cảm ơn bạn đã trải nghiệm EnglishUp. Để học tiếp toàn bộ từ vựng, video, giáo trình, flashcard và các trò chơi, bạn hãy chọn một gói bên dưới."

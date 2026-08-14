@@ -61,6 +61,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .refbox .x{margin-left:auto;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 3px}
 .refbox .x:hover{color:var(--danger)}
 .hidden{display:none!important}
+/* ── Đồng ý & độ tuổi (NĐ 13/2023) ── */
+.age-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.age-opt{cursor:pointer;border:1px solid var(--border);background:var(--card2);border-radius:var(--radius);
+  padding:10px 8px;text-align:center;transition:.15s;font-size:12.5px;font-weight:600;line-height:1.35}
+.age-opt:hover{border-color:var(--border2)}
+.age-opt.active{border-color:var(--accent);background:rgba(79,142,247,.10);color:#fff}
+.age-opt small{display:block;font-weight:400;font-size:10.5px;color:var(--muted);margin-top:3px}
+.guard-box{border:1px solid rgba(251,146,60,.35);background:rgba(251,146,60,.06);
+  border-radius:var(--radius);padding:13px 14px;margin-bottom:14px}
+.guard-box .gh{font-size:12px;font-weight:700;color:var(--a4);margin-bottom:9px}
+.consent{display:flex;gap:9px;align-items:flex-start;margin:14px 0 6px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.consent input[type=checkbox]{width:16px;height:16px;margin-top:2px;flex:0 0 auto;accent-color:var(--accent);cursor:pointer}
+.consent label{cursor:pointer}
+.consent a{color:var(--accent);font-weight:600}
+.privnote{font-size:11.5px;color:var(--muted);background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;margin:10px 0 4px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -81,7 +97,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <!-- FORM -->
     <div id="form-view">
       <h1>Tạo tài khoản</h1>
-      <div class="sub">Đăng ký là mở khóa <b style="color:var(--a3)">toàn bộ</b> nền tảng trong <b style="color:var(--a3)">24 giờ</b> — không cần thẻ ngân hàng.</div>
+      <div class="sub">Đăng ký là mở khóa <b style="color:var(--a3)">toàn bộ</b> nền tảng trong <b style="color:var(--a3)">7 ngày</b> — không cần thẻ ngân hàng.</div>
 
       <div class="refbox hidden" id="refbox">
         <span class="ico">🤝</span>
@@ -111,10 +127,46 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
                onkeydown="if(event.key==='Enter')doRegister()">
       </div>
 
+      <div class="field" style="margin-bottom:9px">
+        <label>Người học bao nhiêu tuổi?</label>
+        <div class="age-pick">
+          <div class="age-opt" id="age-16" onclick="pickAge(true)">Từ 16 tuổi trở lên<small>Tôi tự đăng ký</small></div>
+          <div class="age-opt" id="age-u16" onclick="pickAge(false)">Chưa đủ 16 tuổi<small>Cần cha mẹ đồng ý</small></div>
+        </div>
+      </div>
+
+      <div class="guard-box hidden" id="guard-box">
+        <div class="gh">👨‍👩‍👧 Thông tin cha mẹ / người giám hộ</div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Họ tên người giám hộ</label>
+          <input type="text" id="r-guard-name" placeholder="Nguyễn Văn B">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Số điện thoại người giám hộ</label>
+          <input type="tel" id="r-guard-phone" placeholder="09xxxxxxxx">
+        </div>
+      </div>
+
+      <div class="privnote">
+        📋 Trong <b style="color:var(--text)">7 ngày dùng thử</b>, hệ thống ghi lại bạn mở trang nào và ở đó bao lâu,
+        để chúng tôi biết nên hỗ trợ bạn ở đâu. <b style="color:var(--text)">Không lấy vị trí, không lấy thiết bị,
+        không ghi nội dung bạn gõ.</b> Hết ngày thứ 7 là tự dừng, và bạn rút lại đồng ý được bất cứ lúc nào.
+      </div>
+
+      <div class="consent">
+        <input type="checkbox" id="r-consent">
+        <label for="r-consent">Tôi đã đọc và đồng ý với
+          <a href="quyen-rieng-tu.html" target="_blank" rel="noopener">Chính sách quyền riêng tư</a>,
+          <span id="consent-guard-txt" class="hidden">và tôi là cha mẹ / người giám hộ của người học nói trên, đồng ý cho con tôi sử dụng EnglishUp,</span>
+          bao gồm việc ghi nhận cách sử dụng trong 7 ngày đầu.</label>
+      </div>
+
       <div class="msg" id="msg"></div>
       <button class="btn btn-primary" id="btn-register" onclick="doRegister()">Đăng ký</button>
 
-      <div class="foot">Đã có tài khoản? <a href="vocab.html">Đăng nhập</a></div>
+      <div class="foot">Đã có tài khoản? <a href="vocab.html">Đăng nhập</a>
+        <div style="margin-top:8px;font-size:11.5px"><a href="quyen-rieng-tu.html" style="color:var(--muted);font-weight:400">Chính sách quyền riêng tư</a></div>
+      </div>
     </div>
 
     <!-- SUCCESS -->
@@ -152,6 +204,17 @@ function clearRef(){
   document.getElementById('refbox').classList.add('hidden');
 }
 
+/* ---------- Độ tuổi & đồng ý (NĐ 13/2023) ---------- */
+let IS_MINOR = null;   /* null = chưa chọn */
+function pickAge(from16){
+  IS_MINOR = !from16;
+  document.getElementById('age-16').classList.toggle('active', from16);
+  document.getElementById('age-u16').classList.toggle('active', !from16);
+  document.getElementById('guard-box').classList.toggle('hidden', from16);
+  document.getElementById('consent-guard-txt').classList.toggle('hidden', from16);
+  setMsg('');
+}
+
 async function doRegister(){
   const name=document.getElementById('r-name').value.trim();
   const email=document.getElementById('r-email').value.trim();
@@ -165,6 +228,18 @@ async function doRegister(){
   if(pw.length<6){ setMsg('Mật khẩu tối thiểu 6 ký tự.','err'); return; }
   if(pw!==pw2){ setMsg('Mật khẩu nhập lại không khớp.','err'); return; }
 
+  /* Độ tuổi + đồng ý — bắt buộc theo Nghị định 13/2023 */
+  if(IS_MINOR===null){ setMsg('Vui lòng chọn độ tuổi của người học.','err'); return; }
+  const gName=(document.getElementById('r-guard-name').value||'').trim();
+  const gPhone=(document.getElementById('r-guard-phone').value||'').trim();
+  if(IS_MINOR){
+    if(!gName){ setMsg('Người học dưới 16 tuổi — vui lòng nhập họ tên người giám hộ.','err'); return; }
+    if(!/^[0-9+().\s-]{8,15}$/.test(gPhone)){ setMsg('Vui lòng nhập số điện thoại người giám hộ hợp lệ.','err'); return; }
+  }
+  if(!document.getElementById('r-consent').checked){
+    setMsg('Vui lòng đọc và đồng ý với Chính sách quyền riêng tư trước khi đăng ký.','err'); return;
+  }
+
   const btn=document.getElementById('btn-register');
   btn.disabled=true; btn.textContent='Đang tạo tài khoản…'; setMsg('');
   try{
@@ -175,8 +250,17 @@ async function doRegister(){
     if(error) throw error;
 
     if(data && data.user){
+      /* Lưu SĐT + dấu vết đồng ý. Ghi cùng một lượt để không phải chờ 2 lần. */
+      const _profile = {
+        phone,
+        consent_privacy_at: new Date().toISOString(),
+        consent_version: '1.0',
+        is_minor: IS_MINOR,
+        guardian_name:  IS_MINOR ? gName  : null,
+        guardian_phone: IS_MINOR ? gPhone : null
+      };
       for(let i=0;i<4;i++){
-        const { data:_up } = await sb.from('user_profiles').update({ phone }).eq('id', data.user.id).select('id');
+        const { data:_up } = await sb.from('user_profiles').update(_profile).eq('id', data.user.id).select('id');
         if(_up && _up.length) break;
         await new Promise(r=>setTimeout(r,400));
       }
@@ -203,7 +287,7 @@ async function doRegister(){
     document.getElementById('success-view').style.display='block';
     if(data.session){
       document.getElementById('s-title').textContent='Chào mừng bạn! 🎉';
-      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 24 giờ dùng thử toàn bộ nền tảng.</b> Hết 24 giờ, chọn một gói ở trang Nâng cấp để học tiếp.` + refMsg;
+      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 7 ngày dùng thử toàn bộ nền tảng.</b> Hết 7 ngày, chọn một gói ở trang Nâng cấp để học tiếp.` + refMsg;
     } else {
       document.getElementById('s-title').textContent='Kiểm tra email của bạn 📧';
       document.getElementById('s-desc').textContent=`Đã gửi liên kết xác nhận tới ${email}. Xác nhận xong là có thể đăng nhập (vai trò: ${roleLabel}).`;
