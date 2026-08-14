@@ -34,7 +34,7 @@
       /* Bộ khoá theo GÓI: hết 7 ngày dùng thử / hết hạn gói → chặn toàn trang */
       if (head && !document.getElementById("eu-guard-js")) {
         var eg = document.createElement("script");
-        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260814";
+        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260814b";
         head.appendChild(eg);
       }
       /* Bộ ghi hành vi 7 ngày đầu (để chốt sale). Tự tắt với người quá 7 ngày,
