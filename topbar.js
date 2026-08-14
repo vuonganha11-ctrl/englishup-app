@@ -34,7 +34,7 @@
       /* Bộ khoá theo GÓI: hết 7 ngày dùng thử / hết hạn gói → chặn toàn trang */
       if (head && !document.getElementById("eu-guard-js")) {
         var eg = document.createElement("script");
-        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260814b";
+        eg.id = "eu-guard-js"; eg.src = "eu-guard.js?v=20260814c";
         head.appendChild(eg);
       }
       /* Bộ ghi hành vi 7 ngày đầu (để chốt sale). Tự tắt với người quá 7 ngày,
@@ -93,6 +93,7 @@
     { href: "posts.html",     icon: "📰", label: "Thông báo" },
     { href: "nangcap.html",   icon: "⭐", label: "Nâng cấp gói", hideIfPremium: true },
     { href: "tai-khoan.html", icon: "👤", label: "Trang tài khoản" },
+    { href: "danhgia.html",   icon: "⭐", label: "Đánh giá của học viên" },
     { href: "quyen-rieng-tu.html", icon: "🔐", label: "Quyền riêng tư" },
     { href: "accounts.html",  icon: "👥", label: "Quản lý tài khoản", admin: true },
     { href: "admin-hoahong.html", icon: "💰", label: "Hoa hồng & cộng đồng", admin: true },

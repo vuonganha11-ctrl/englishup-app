@@ -29,7 +29,8 @@
     "nangcap.html",
     "tai-khoan.html",   // ĐỒNG THỜI LÀ TRANG ĐĂNG NHẬP (có gate + form)
     "register.html",
-    "quyen-rieng-tu.html"
+    "quyen-rieng-tu.html",
+    "danhgia.html"
   ];
 
   /* Trang khách CHƯA đăng nhập được xem.
@@ -43,7 +44,8 @@
     "register.html",
     "tai-khoan.html",
     "nangcap.html",
-    "quyen-rieng-tu.html"
+    "quyen-rieng-tu.html",
+    "danhgia.html"
   ];
 
   var here = (location.pathname.split("/").pop() || "").toLowerCase();
@@ -207,8 +209,12 @@
     if (!bar) {
       bar = document.createElement("div");
       bar.id = "eu-trial-bar";
+      /* Sắp hết hạn dùng thử = lúc học viên đã dùng đủ lâu để có ý kiến thật
+         → mời viết đánh giá. Chỉ mời người ĐANG dùng thử, không mời khách đã trả tiền. */
+      var moiDanhGia = isTrial && ms < 3 * 24 * 3600000;
       bar.innerHTML =
         '<span id="eu-tb-text"></span>' +
+        (moiDanhGia ? '<a href="danhgia.html" style="background:#1b2133;color:#a5b4fc">✍️ Viết đánh giá</a>' : '') +
         '<a href="nangcap.html">Nâng cấp ngay</a>' +
         '<button type="button" title="Ẩn" id="eu-tb-x">×</button>';
       document.body.appendChild(bar);

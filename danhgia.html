@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Học viên nói gì</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --star:#fbbf24;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.wrap{flex:1;width:100%;max-width:1000px;margin:0 auto;padding:30px 18px 70px}
+h1{font-size:27px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+.lede{color:var(--muted);font-size:14.5px;margin-bottom:24px;max-width:640px}
+
+/* ── Tổng quan ── */
+.tongquan{display:grid;grid-template-columns:190px 1fr;gap:22px;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;margin-bottom:14px}
+.diem{text-align:center;border-right:1px solid var(--border);padding-right:20px}
+.diem .so{font-size:44px;font-weight:700;line-height:1.1;color:#fff}
+.diem .sao{color:var(--star);font-size:18px;letter-spacing:2px;margin:4px 0 6px}
+.diem .dem{font-size:12.5px;color:var(--muted)}
+.thanh{display:flex;flex-direction:column;gap:7px;justify-content:center}
+.thanh .row{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.thanh .lbl{width:34px;text-align:right;font-family:var(--mono)}
+.thanh .bar{flex:1;height:8px;background:var(--card2);border-radius:99px;overflow:hidden}
+.thanh .fill{height:100%;background:var(--star);border-radius:99px;width:0}
+.thanh .num{width:28px;font-family:var(--mono)}
+
+/* ── Bộ lọc ── */
+.loc{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0 16px}
+.chip{border:1px solid var(--border);background:var(--card2);color:var(--muted);
+  border-radius:99px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip.active{border-color:var(--accent);background:rgba(79,142,247,.12);color:#fff}
+
+/* ── Thẻ đánh giá ── */
+.ds{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.tv{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:17px 18px}
+.tv .top{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.tv .ava{width:36px;height:36px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--a2);flex:0 0 auto}
+.tv .ten{font-weight:600;font-size:14px;color:#fff;line-height:1.25}
+.tv .ngay{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.tv .sao{color:var(--star);font-size:14px;letter-spacing:1.5px;margin-bottom:8px}
+.tv .noi{font-size:14px;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.tv .tn{display:inline-block;margin-top:11px;font-size:11.5px;font-weight:600;
+  background:var(--card2);border:1px solid var(--border);border-radius:99px;padding:4px 11px;color:var(--a3)}
+
+/* ── Trạng thái rỗng ── */
+.rong{text-align:center;padding:46px 20px;background:var(--card);border:1px dashed var(--border2);border-radius:var(--radius-lg)}
+.rong .ico{font-size:44px;margin-bottom:12px}
+.rong h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px}
+.rong p{font-size:14px;color:var(--muted);max-width:460px;margin:0 auto 6px}
+
+/* ── Form ── */
+.form-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;margin-top:26px}
+.form-box h2{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.form-box .sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:14px}
+.field textarea{min-height:120px;resize:vertical;line-height:1.6}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.chonsao{display:flex;gap:6px}
+.chonsao button{background:none;border:none;font-size:30px;cursor:pointer;color:#334155;padding:0;line-height:1;transition:.12s}
+.chonsao button.on{color:var(--star)}
+.chonsao button:hover{transform:scale(1.12)}
+.btn{font-family:inherit;font-weight:600;border:none;border-radius:8px;cursor:pointer;font-size:14px;padding:12px 18px;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3b7de8}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed}
+.msg{font-size:13px;min-height:18px;margin:2px 0 10px}
+.msg.err{color:var(--danger)}.msg.ok{color:var(--a3)}
+.dem-chu{font-size:11.5px;color:var(--muted);font-family:var(--mono);text-align:right;margin-top:4px}
+.hidden{display:none!important}
+
+.note{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:13px 15px;font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:16px}
+.note b{color:var(--text)}
+.moi{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.35);border-radius:var(--radius-lg);
+  padding:18px 20px;margin-top:26px;text-align:center}
+.moi h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.moi p{font-size:13.5px;color:var(--muted);margin-bottom:13px}
+.moi a{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;
+  font-size:14px;padding:11px 22px;border-radius:8px}
+.foot{border-top:1px solid var(--border);padding:20px;text-align:center;font-size:13px;color:var(--muted)}
+.foot a{color:var(--accent);text-decoration:none;font-weight:600}
+@media(max-width:640px){
+  .tongquan{grid-template-columns:1fr;gap:16px}
+  .diem{border-right:none;border-bottom:1px solid var(--border);padding:0 0 16px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+</header>
+
+<div class="wrap">
+  <h1>Học viên nói gì về EnglishUp</h1>
+  <p class="lede">Toàn bộ đánh giá dưới đây do chính học viên có tài khoản viết. Chúng tôi duyệt để lọc spam, nhưng <b>không sửa chữ nào</b> — điều này được khoá ở tầng cơ sở dữ liệu.</p>
+
+  <!-- TỔNG QUAN -->
+  <div class="tongquan" id="tongquan">
+    <div class="diem">
+      <div class="so" id="tq-diem">—</div>
+      <div class="sao" id="tq-sao">☆☆☆☆☆</div>
+      <div class="dem" id="tq-dem">đang tải…</div>
+    </div>
+    <div class="thanh" id="tq-thanh"></div>
+  </div>
+
+  <!-- LỌC -->
+  <div class="loc" id="loc"></div>
+
+  <!-- DANH SÁCH -->
+  <div id="ds"></div>
+
+  <!-- FORM (chỉ hiện khi đã đăng nhập) -->
+  <div class="form-box hidden" id="form-box">
+    <h2 id="fb-title">Viết đánh giá của bạn</h2>
+    <div class="sub" id="fb-sub">Bạn đã học ở đây rồi — kể lại thật lòng giúp người sau quyết định dễ hơn.</div>
+
+    <div class="field">
+      <label>Bạn cho mấy sao?</label>
+      <div class="chonsao" id="chonsao">
+        <button type="button" data-v="1">★</button>
+        <button type="button" data-v="2">★</button>
+        <button type="button" data-v="3">★</button>
+        <button type="button" data-v="4">★</button>
+        <button type="button" data-v="5">★</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Tên hiển thị</label>
+      <input type="text" id="f-ten" maxlength="60" placeholder="Ví dụ: Minh Anh, hoặc M.A.">
+    </div>
+
+    <div class="field">
+      <label>Phần bạn thấy hiệu quả nhất</label>
+      <select id="f-tn">
+        <option value="">— Chọn một phần —</option>
+        <option value="mindmap">🗺️ Bản đồ từ vựng (Mindmap)</option>
+        <option value="flashcard">🃏 Flashcard &amp; ôn tập ngắt quãng</option>
+        <option value="video">🎬 Học qua video</option>
+        <option value="giaotrinh">📖 Giáo trình</option>
+        <option value="tuvung">📚 Kho từ vựng</option>
+        <option value="game">🎮 Trò chơi &amp; gõ phím</option>
+        <option value="baitap">📝 Bài tập về nhà</option>
+        <option value="khac">Phần khác</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Trải nghiệm của bạn</label>
+      <textarea id="f-noi" maxlength="1200"
+        placeholder="Bạn học được bao lâu rồi? Trước đó bạn gặp khó ở đâu? Phần nào giúp bạn nhiều nhất, và nó thay đổi cách bạn học thế nào?"></textarea>
+      <div class="dem-chu"><span id="dem">0</span> / 1200 · tối thiểu 30 ký tự</div>
+    </div>
+
+    <div class="msg" id="msg"></div>
+    <button class="btn btn-primary" id="btn-gui" onclick="guiDanhGia()">Gửi đánh giá</button>
+
+    <div class="note">
+      <b>Sau khi gửi:</b> đánh giá vào hàng chờ duyệt, thường trong vòng 24 giờ. Chúng tôi chỉ có thể
+      <b>duyệt</b> hoặc <b>từ chối</b> — cơ sở dữ liệu chặn cứng việc sửa số sao và nội dung, kể cả tài khoản quản trị.
+      Bạn đổi ý thì xoá đánh giá của mình bất cứ lúc nào. Mỗi tài khoản viết được một đánh giá.
+    </div>
+  </div>
+
+  <!-- MỜI ĐĂNG NHẬP (khách chưa đăng nhập) -->
+  <div class="moi hidden" id="moi-dn">
+    <h3>Bạn đang học ở EnglishUp?</h3>
+    <p>Đăng nhập để viết đánh giá. Chỉ tài khoản có thật mới gửi được — đó là lý do bạn tin được những gì đọc ở trên.</p>
+    <a href="tai-khoan.html">Đăng nhập để viết đánh giá →</a>
+  </div>
+</div>
+
+<footer class="foot">
+  © <span id="yr"></span> EnglishUp ·
+  <a href="index.html">Trang chủ</a> ·
+  <a href="nangcap.html">Bảng giá</a> ·
+  <a href="quyen-rieng-tu.html">Quyền riêng tư</a>
+</footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
+const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth:{ lock:(_n,_t,fn)=>fn() } });
+
+const TEN_TN = {
+  mindmap:'🗺️ Bản đồ từ vựng', flashcard:'🃏 Flashcard', video:'🎬 Học qua video',
+  giaotrinh:'📖 Giáo trình', tuvung:'📚 Kho từ vựng', game:'🎮 Trò chơi',
+  baitap:'📝 Bài tập về nhà', khac:'Phần khác'
+};
+
+let _all = [], _loc = '', _sao = 0, _me = null;
+
+function saoChuoi(n){ return '★'.repeat(n) + '☆'.repeat(5-n); }
+function ngayVN(t){ return new Date(t).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function chuCai(s){ return (s||'?').trim().charAt(0).toUpperCase(); }
+function setMsg(t,k){ const m=document.getElementById('msg'); m.textContent=t||''; m.className='msg'+(k?' '+k:''); }
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+
+/* ---------- Tổng quan ---------- */
+async function taiTongQuan(){
+  const { data, error } = await sb.rpc('reviews_summary');
+  const r = (data && data[0]) || null;
+  if(error || !r || !r.so_danh_gia){
+    document.getElementById('tq-diem').textContent = '—';
+    document.getElementById('tq-sao').textContent = '☆☆☆☆☆';
+    document.getElementById('tq-dem').textContent = 'chưa có đánh giá';
+    document.getElementById('tq-thanh').innerHTML =
+      '<div style="color:var(--muted);font-size:13px">Biểu đồ sẽ hiện khi có đánh giá đầu tiên được duyệt.</div>';
+    return;
+  }
+  const tong = r.so_danh_gia;
+  document.getElementById('tq-diem').textContent = (r.diem_tb ?? 0).toString().replace('.', ',');
+  document.getElementById('tq-sao').textContent  = saoChuoi(Math.round(r.diem_tb || 0));
+  document.getElementById('tq-dem').textContent  = tong + ' đánh giá';
+  const hang = [[5,r.sao5],[4,r.sao4],[3,r.sao3],[2,r.sao2],[1,r.sao1]];
+  document.getElementById('tq-thanh').innerHTML = hang.map(([s,n])=>{
+    const pct = tong ? Math.round(n*100/tong) : 0;
+    return `<div class="row"><span class="lbl">${s} ★</span>
+      <span class="bar"><span class="fill" style="width:${pct}%"></span></span>
+      <span class="num">${n}</span></div>`;
+  }).join('');
+}
+
+/* ---------- Danh sách ---------- */
+async function taiDanhSach(){
+  const { data, error } = await sb.from('reviews')
+    .select('id,display_name,rating,feature,body,created_at')
+    .eq('status','approved')
+    .order('created_at',{ascending:false})
+    .limit(200);
+  if(error){ console.error('reviews:',error); }
+  _all = data || [];
+  veLoc(); veDanhSach();
+}
+
+function veLoc(){
+  const co = {};
+  _all.forEach(r=>{ if(r.feature) co[r.feature]=(co[r.feature]||0)+1; });
+  const ks = Object.keys(co).sort((a,b)=>co[b]-co[a]);
+  if(!_all.length){ document.getElementById('loc').innerHTML=''; return; }
+  document.getElementById('loc').innerHTML =
+    `<button class="chip ${_loc===''?'active':''}" onclick="datLoc('')">Tất cả (${_all.length})</button>` +
+    ks.map(k=>`<button class="chip ${_loc===k?'active':''}" onclick="datLoc('${k}')">${TEN_TN[k]||k} (${co[k]})</button>`).join('');
+}
+function datLoc(k){ _loc=k; veLoc(); veDanhSach(); }
+
+function veDanhSach(){
+  const ds = document.getElementById('ds');
+  const list = _loc ? _all.filter(r=>r.feature===_loc) : _all;
+  if(!list.length){
+    ds.innerHTML = _all.length
+      ? '<div class="rong"><div class="ico">🔍</div><h3>Chưa có đánh giá nào ở mục này</h3><p>Thử chọn mục khác.</p></div>'
+      : `<div class="rong"><div class="ico">✍️</div>
+           <h3>Chưa có đánh giá nào được đăng</h3>
+           <p>Trang này chỉ đăng đánh giá của học viên có tài khoản thật. Chúng tôi thà để trống còn hơn tự viết lời khen cho mình.</p>
+           <p>Nếu bạn đang học ở đây, đánh giá của bạn sẽ là đánh giá đầu tiên.</p></div>`;
+    return;
+  }
+  ds.innerHTML = '<div class="ds">' + list.map(r=>`
+    <div class="tv">
+      <div class="top">
+        <div class="ava">${esc(chuCai(r.display_name))}</div>
+        <div><div class="ten">${esc(r.display_name)}</div>
+             <div class="ngay">${ngayVN(r.created_at)}</div></div>
+      </div>
+      <div class="sao">${saoChuoi(r.rating)}</div>
+      <div class="noi">${esc(r.body)}</div>
+      ${r.feature ? `<span class="tn">${TEN_TN[r.feature]||esc(r.feature)}</span>` : ''}
+    </div>`).join('') + '</div>';
+}
+
+/* ---------- Chọn sao ---------- */
+document.querySelectorAll('#chonsao button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    _sao = +b.dataset.v;
+    document.querySelectorAll('#chonsao button').forEach(x=>x.classList.toggle('on', +x.dataset.v <= _sao));
+    setMsg('');
+  });
+});
+document.getElementById('f-noi').addEventListener('input', e=>{
+  document.getElementById('dem').textContent = e.target.value.trim().length;
+});
+
+/* ---------- Phiên đăng nhập ---------- */
+async function khoiDong(){
+  await Promise.all([taiTongQuan(), taiDanhSach()]);
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ document.getElementById('moi-dn').classList.remove('hidden'); return; }
+  _me = session.user;
+
+  document.getElementById('form-box').classList.remove('hidden');
+
+  const { data:prof } = await sb.from('user_profiles').select('full_name').eq('id', _me.id).maybeSingle();
+  if(prof && prof.full_name) document.getElementById('f-ten').value = prof.full_name;
+
+  /* đã có đánh giá rồi thì hiện trạng thái, không cho gửi thêm */
+  const { data:cu } = await sb.from('reviews')
+    .select('id,rating,body,status,admin_note,created_at').eq('uid', _me.id).maybeSingle();
+  if(cu) hienDanhGiaCuaToi(cu);
+}
+
+function hienDanhGiaCuaToi(cu){
+  const nhan = {pending:'⏳ Đang chờ duyệt', approved:'✅ Đã đăng', rejected:'✋ Chưa được đăng'}[cu.status];
+  /* Dựng lại HẲN nội dung khối, không cắt chuỗi innerHTML (dễ vỡ khi sửa giao diện) */
+  document.getElementById('form-box').innerHTML =
+    `<h2>Đánh giá của bạn</h2>
+     <div class="sub">Trạng thái: <b style="color:var(--text)">${nhan}</b> · gửi ngày ${ngayVN(cu.created_at)}`
+     + (cu.status==='rejected' && cu.admin_note ? `<br>Lý do: ${esc(cu.admin_note)}` : '')
+     + `</div>
+     <div class="tv" style="margin-top:6px">
+       <div class="sao">${saoChuoi(cu.rating)}</div>
+       <div class="noi">${esc(cu.body)}</div>
+     </div>
+     <button class="btn" style="background:var(--card2);color:var(--danger);border:1px solid var(--border);margin-top:14px"
+             onclick="xoaDanhGia(${cu.id})">Xoá đánh giá của tôi</button>
+     <div class="note" style="margin-top:14px">Mỗi tài khoản viết được một đánh giá. Muốn viết lại thì xoá cái cũ đi đã.</div>`;
+}
+
+async function xoaDanhGia(id){
+  if(!confirm('Xoá đánh giá của bạn? Sau đó bạn có thể viết lại.')) return;
+  const { error } = await sb.from('reviews').delete().eq('id', id);
+  if(error){ alert('Không xoá được: ' + error.message); return; }
+  location.reload();
+}
+
+async function guiDanhGia(){
+  const ten = document.getElementById('f-ten').value.trim();
+  const tn  = document.getElementById('f-tn').value;
+  const noi = document.getElementById('f-noi').value.trim();
+  if(!_sao){ setMsg('Bạn chưa chọn số sao.','err'); return; }
+  if(!ten){ setMsg('Vui lòng nhập tên hiển thị.','err'); return; }
+  if(noi.length < 30){ setMsg('Viết thêm chút nữa nhé — tối thiểu 30 ký tự để người đọc hiểu được.','err'); return; }
+
+  const btn = document.getElementById('btn-gui');
+  btn.disabled = true; btn.textContent = 'Đang gửi…'; setMsg('');
+  const { error } = await sb.from('reviews').insert({
+    uid: _me.id, display_name: ten, rating: _sao, feature: tn || null, body: noi, status: 'pending'
+  });
+  btn.disabled = false; btn.textContent = 'Gửi đánh giá';
+
+  if(error){
+    let m = error.message || 'Gửi thất bại';
+    if(/duplicate key|unique/i.test(m)) m = 'Bạn đã gửi một đánh giá rồi. Tải lại trang để xem.';
+    else if(/row-level security|violates/i.test(m)) m = 'Tài khoản cần quá 24 giờ tuổi mới gửi được đánh giá.';
+    setMsg(m,'err');
+    return;
+  }
+  setMsg('Đã gửi! Đánh giá của bạn đang chờ duyệt, thường trong vòng 24 giờ. Cảm ơn bạn.','ok');
+  setTimeout(()=>location.reload(), 2200);
+}
+
+khoiDong();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>

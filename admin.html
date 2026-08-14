@@ -327,6 +327,7 @@ select.input{cursor:pointer}
       <div class="nav-group-label">Người dùng</div>
       <button class="nav-btn" data-section="users" onclick="nav('users',this)"><span class="nbi">👥</span>Học viên<span class="nav-count" id="nav-count-users">—</span></button>
       <button class="nav-btn" data-section="trial" onclick="nav('trial',this)"><span class="nbi">🎯</span>Khách dùng thử<span class="nav-count" id="nav-count-trial">—</span></button>
+      <button class="nav-btn" data-section="reviews" onclick="nav('reviews',this)"><span class="nbi">⭐</span>Đánh giá<span class="nav-count" id="nav-count-reviews">—</span></button>
       <div class="nav-group-label">Quản lý</div>
       <a class="nav-btn" href="accounts.html" style="text-decoration:none"><span class="nbi">👤</span>Tài khoản &amp; phân quyền</a>
       <a class="nav-btn" href="report.html" style="text-decoration:none"><span class="nbi">📊</span>Thống kê học tập</a>
@@ -583,6 +584,29 @@ select.input{cursor:pointer}
         <p style="color:var(--muted);font-size:12px;margin:10px 2px">
           🔥 <b>Gọi ngay</b> = học nhiều + đã ngó bảng giá. ❄️ <b>Nguội</b> = đăng ký rồi bỏ đó.
           Số liệu chỉ ghi trong <b>7 ngày đầu</b> kể từ lúc đăng ký; không thu thập vị trí, IP hay thiết bị.
+        </p>
+      </div>
+
+      <!-- ══════════ DUYỆT ĐÁNH GIÁ ══════════ -->
+      <div class="section-page" id="sec-reviews">
+        <div class="page-header">
+          <h1>⭐ Đánh giá của học viên</h1>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="input" id="rv-loc" style="width:auto" onchange="renderReviews()">
+              <option value="pending">Đang chờ duyệt</option>
+              <option value="approved">Đã đăng</option>
+              <option value="rejected">Đã từ chối</option>
+              <option value="">Tất cả</option>
+            </select>
+            <button class="btn" onclick="loadReviews()">🔄 Làm mới</button>
+          </div>
+        </div>
+        <div id="rv-stats" class="stats-row" style="margin-bottom:14px"></div>
+        <div id="rv-body"><div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div></div>
+        <p style="color:var(--muted);font-size:12px;margin:12px 2px;line-height:1.7">
+          ⚠️ Bạn chỉ <b>duyệt</b> hoặc <b>từ chối</b> được — cơ sở dữ liệu chặn cứng việc sửa số sao và nội dung,
+          kể cả bằng tài khoản quản trị. Đây là điều trang đánh giá cam kết với người đọc, đừng gỡ.
+          Từ chối thì nên ghi lý do, học viên sẽ thấy lý do đó ở trang của họ.
         </p>
       </div>
 
@@ -1166,7 +1190,7 @@ function nav(section,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+section).classList.add('active');
   btn.classList.add('active');
-  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers,extras:loadExtras,trial:loadTrial})[section]?.();
+  ({words:loadWords,courses:loadCourses,video:loadVideos,users:loadUsers,extras:loadExtras,trial:loadTrial,reviews:loadReviews})[section]?.();
 }
 
 // ── DASHBOARD ──
@@ -1941,6 +1965,102 @@ function renderTrial(){
       <td style="font-size:12px;color:var(--muted)">${r.top_page||'—'}</td>
       <td style="font-size:12px;color:var(--muted)">${trKhiNao(r.last_seen)}${(r.lock_hits>0)?`<div style="font-size:11px;color:#f87171">🔒 quay lại ${r.lock_hits}× sau khi hết hạn</div>`:''}</td>
     </tr>`).join('')}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// DUYỆT ĐÁNH GIÁ HỌC VIÊN
+// Chỉ đổi được `status` + `admin_note`. Trigger reviews_freeze_content
+// ở DB sẽ BÁO LỖI nếu có ai cố sửa rating/body — đó là cố ý.
+// ══════════════════════════════════════════════════════════
+let _reviews = [];
+const RV_TN = {mindmap:'🗺️ Bản đồ từ vựng', flashcard:'🃏 Flashcard', video:'🎬 Video',
+  giaotrinh:'📖 Giáo trình', tuvung:'📚 Từ vựng', game:'🎮 Trò chơi',
+  baitap:'📝 Bài tập', khac:'Khác'};
+const RV_TT = {pending:['⏳ Chờ duyệt','#78350f','#fde68a'],
+               approved:['✅ Đã đăng','#14532d','#86efac'],
+               rejected:['✋ Từ chối','#450a0a','#fca5a5']};
+
+function rvSao(n){ return '★'.repeat(n) + '☆'.repeat(5-n); }
+function rvNgay(t){ return new Date(t).toLocaleDateString('vi-VN'); }
+function rvEsc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+
+async function loadReviews(){
+  const body = document.getElementById('rv-body');
+  body.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><p>Đang tải…</p></div>';
+  const { data, error } = await _sb.from('reviews')
+    .select('id,uid,display_name,rating,feature,body,status,admin_note,created_at,reviewed_at')
+    .order('created_at', {ascending:false}).limit(500);
+  if(error){
+    console.error('reviews:', error);
+    body.innerHTML = '<div class="empty-state"><div class="es-icon">⚠️</div><p>Không tải được: '
+      + (error.message||'lỗi') + '</p><p style="font-size:12px;color:var(--muted)">Đã chạy <code>migration_danhgia_2026-08-14.sql</code> chưa?</p></div>';
+    return;
+  }
+  _reviews = data || [];
+  const cho = _reviews.filter(r=>r.status==='pending').length;
+  const el = document.getElementById('nav-count-reviews'); if(el) el.textContent = cho || _reviews.length;
+
+  const dang = _reviews.filter(r=>r.status==='approved');
+  const tb = dang.length ? (dang.reduce((s,r)=>s+r.rating,0)/dang.length).toFixed(1) : '—';
+  document.getElementById('rv-stats').innerHTML =
+     `<div class="stat-card"><div class="st-val" style="color:#fbbf24">⏳ ${cho}</div><div class="st-lbl">Đang chờ bạn duyệt</div></div>`
+    +`<div class="stat-card"><div class="st-val" style="color:var(--accent3)">✅ ${dang.length}</div><div class="st-lbl">Đang hiển thị công khai</div></div>`
+    +`<div class="stat-card"><div class="st-val" style="color:#fbbf24">${tb} ★</div><div class="st-lbl">Điểm trung bình</div></div>`
+    +`<div class="stat-card"><div class="st-val" style="color:var(--muted)">${_reviews.length}</div><div class="st-lbl">Tổng đã nhận</div></div>`;
+  renderReviews();
+}
+
+function renderReviews(){
+  const loc = document.getElementById('rv-loc').value;
+  const list = loc ? _reviews.filter(r=>r.status===loc) : _reviews;
+  const body = document.getElementById('rv-body');
+  if(!list.length){
+    body.innerHTML = '<div class="empty-state"><div class="es-icon">⭐</div><p>Không có đánh giá nào ở mục này</p>'
+      + (loc==='pending' ? '<p style="font-size:12px;color:var(--muted)">Học viên được mời viết đánh giá khi bản dùng thử còn dưới 3 ngày.</p>' : '')
+      + '</div>';
+    return;
+  }
+  body.innerHTML = list.map(r=>{
+    const tt = RV_TT[r.status] || ['?','#1e293b','#94a3b8'];
+    return `<div class="table-wrap" style="margin-bottom:12px;padding:16px 18px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <strong style="font-size:15px">${rvEsc(r.display_name)}</strong>
+        <span style="color:#fbbf24;letter-spacing:1px">${rvSao(r.rating)}</span>
+        <span class="badge" style="background:${tt[1]};color:${tt[2]}">${tt[0]}</span>
+        ${r.feature ? `<span class="badge badge-blue">${RV_TN[r.feature]||rvEsc(r.feature)}</span>` : ''}
+        <span style="margin-left:auto;color:var(--muted);font-size:12px;font-family:var(--mono)">${rvNgay(r.created_at)}</span>
+      </div>
+      <div style="font-size:14px;white-space:pre-wrap;color:var(--text);background:var(--card2);
+                  border:1px solid var(--border);border-radius:8px;padding:12px 14px">${rvEsc(r.body)}</div>
+      ${r.admin_note ? `<div style="font-size:12.5px;color:var(--muted);margin-top:8px">Ghi chú: ${rvEsc(r.admin_note)}</div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        ${r.status!=='approved' ? `<button class="btn" onclick="duyetReview(${r.id},'approved')">✅ Duyệt &amp; đăng</button>` : ''}
+        ${r.status!=='rejected' ? `<button class="btn" onclick="duyetReview(${r.id},'rejected')">✋ Từ chối</button>` : ''}
+        ${r.status==='approved' ? `<button class="btn" onclick="duyetReview(${r.id},'pending')">↩︎ Gỡ xuống</button>` : ''}
+        <button class="btn" style="color:var(--danger)" onclick="xoaReview(${r.id})">🗑 Xoá hẳn</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function duyetReview(id, tt){
+  let note = null;
+  if(tt === 'rejected'){
+    note = prompt('Lý do từ chối (học viên sẽ đọc được):', 'Nội dung không liên quan đến trải nghiệm học.');
+    if(note === null) return;
+  }
+  const patch = { status: tt };
+  if(note !== null) patch.admin_note = note;
+  const { error } = await _sb.from('reviews').update(patch).eq('id', id);
+  if(error){ alert('Không đổi được trạng thái: ' + error.message); return; }
+  loadReviews();
+}
+
+async function xoaReview(id){
+  if(!confirm('Xoá hẳn đánh giá này? Không khôi phục được.')) return;
+  const { error } = await _sb.from('reviews').delete().eq('id', id);
+  if(error){ alert('Không xoá được: ' + error.message); return; }
+  loadReviews();
 }
 
 // ── FILE UPLOAD (Supabase Storage) ──
