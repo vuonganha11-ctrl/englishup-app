@@ -388,14 +388,35 @@ async function fetchIn(table, cols, col, vals){
    gần 7 GIÂY chỉ để đếm. Nay chạy SONG SONG; thêm giáo trình cũng không chậm thêm.
    ⚠️ Nhánh dự phòng chỉ lấy `n_vocab` (21 KB) — `word_terms` là mảng từ, nặng gấp
    3,5 lần (76 KB) mà chỉ dùng để đếm. Chỉ lấy khi n_vocab thật sự rỗng. */
+/* Đếm từ đã gắn `topic_code` theo tiền tố mã giáo trình — GỘP CẢ 10 GIÁO TRÌNH
+   VÀO MỘT truy vấn `.or(...)` thay vì 10 truy vấn `count exact` riêng.
+   ⚠️ 2026-08-15 đã kiểm trên kho thật: `words.topic_code` KHÔNG có dấu gạch nối
+   (giá trị là 'A1' · 'B1' · 'Q3'…), nên điều kiện `<mã>-%` hiện khớp 0 dòng ở CẢ
+   10 giáo trình — 10 truy vấn cũ tốn 3,4 giây chỉ để nhận về số 0. Giữ lại truy
+   vấn này (dạng gộp, ~350ms) để sau có gắn topic_code theo mã giáo trình vẫn đếm đúng. */
+async function countByTopicCode(){
+  const codes = CURRICULA.filter(c=>c.status!=='soon').map(c=>c.code).filter(Boolean);
+  const m = {};
+  if(!codes.length) return m;
+  const rows = await fetchAll(
+    ()=>sb.from('words').select('topic_code').or(codes.map(k=>'topic_code.like.'+k+'-*').join(',')),
+    'topic_code');
+  rows.forEach(function(r){
+    const tc = String(r.topic_code||'');
+    const k = codes.find(function(x){ return tc.indexOf(x+'-') === 0; });
+    if(k) m[k] = (m[k]||0) + 1;
+  });
+  return m;
+}
+
 async function countCurricula(){
+  let byCode = {};
+  try{ byCode = await countByTopicCode(); }
+  catch(e){ console.warn('countByTopicCode:', e); }
   await Promise.all(CURRICULA.map(async function(c){
     c._words = 0;
     if(c.status==='soon') return;
-    try{
-      const {count} = await sb.from('words').select('id',{count:'exact',head:true}).like('topic_code', c.code+'-%');
-      c._words = count || 0;
-    }catch(e){ console.warn('countCurricula', c.code, e); }
+    c._words = byCode[c.code] || 0;
     if(c._words) return;
     // chưa gắn topic_code → đếm theo cột n_vocab (nhẹ)
     try{
