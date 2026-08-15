@@ -1668,11 +1668,22 @@ let _groupList     = [];     // [{prefix, topics:[...]}] cho sidebar nhiều c�
 let _collapsedGroups = new Set(); // các prefix đang thu gọn
 
 // ── INIT ─────────────────────────────────────────────
+/* Trang chưa khởi động xong thì chưa biết đang mở KHO nào (currentCollection còn
+   null). Sự kiện 'eu-access' của topbar.js hay bắn vào đúng khoảng đó → nếu cho
+   nó gọi loadWords() thì sinh thêm một lượt nạp thừa với kho sai.
+   _bootDone chặn chuyện đó; xong init mới cho eu-access hoạt động. */
+let _bootDone = false;
+
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SB_URL, SB_KEY);
   await checkAuth();
   await loadCollections();
-  await Promise.all([loadTopics(), loadWordExtras(), loadWords()]);
+  try {
+    await Promise.all([loadTopics(), loadWordExtras(), loadWords()]);
+  } finally {
+    _bootDone = true;
+    euApplyGate();          // quyền có thể đã đổi trong lúc nạp → cắt lại mảng (không gọi mạng)
+  }
 });
 
 // ── AUTH ─────────────────────────────────────────────
@@ -3640,6 +3651,7 @@ let _euGateSig = null;
 function euApplyGate() {
   const a = window.EU_ACCESS || {};
   const sig = [a.ready, a.loggedIn, a.role, a.plan, a.planExpiresAt, a.status, a.isPremium].join('|');
+  if (!_bootDone) { _euGateSig = sig; return; }      // init đang chạy → để nó nạp, đừng nạp thêm
   if (sig === _euGateSig && _wordsRaw) return;        // quyền y hệt lần trước → khỏi vẽ lại
   _euGateSig = sig;
   if (_wordsRaw && _wordsRawCol === currentCollection) {
