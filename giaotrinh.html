@@ -382,22 +382,31 @@ async function fetchIn(table, cols, col, vals){
   route();
 })();
 
-// đếm số từ đã có của mỗi giáo trình (theo tiền tố mã chủ đề)
+/* Đếm số từ đã có của mỗi giáo trình (theo tiền tố mã chủ đề).
+   ⚠️ 2026-08-15: hàm này TỪNG chạy vòng for tuần tự — mỗi giáo trình đợi giáo
+   trình trước xong mới bắn request. Với 10 giáo trình, đo thật trên trang live là
+   gần 7 GIÂY chỉ để đếm. Nay chạy SONG SONG; thêm giáo trình cũng không chậm thêm.
+   ⚠️ Nhánh dự phòng chỉ lấy `n_vocab` (21 KB) — `word_terms` là mảng từ, nặng gấp
+   3,5 lần (76 KB) mà chỉ dùng để đếm. Chỉ lấy khi n_vocab thật sự rỗng. */
 async function countCurricula(){
-  for(const c of CURRICULA){
+  await Promise.all(CURRICULA.map(async function(c){
     c._words = 0;
-    if(c.status==='soon') continue;
+    if(c.status==='soon') return;
     try{
       const {count} = await sb.from('words').select('id',{count:'exact',head:true}).like('topic_code', c.code+'-%');
       c._words = count || 0;
-    }catch(e){}
-    if(!c._words){ // chưa gắn topic_code → đếm theo danh sách từ mượn
-      try{
-        const rows = await fetchAll(()=>sb.from('curriculum_topics').select('code,word_terms,n_vocab').eq('curriculum_code',c.code));
-        c._words = rows.reduce((s,r)=>s+(r.n_vocab||(r.word_terms||[]).length),0);
-      }catch(e){}
-    }
-  }
+    }catch(e){ console.warn('countCurricula', c.code, e); }
+    if(c._words) return;
+    // chưa gắn topic_code → đếm theo cột n_vocab (nhẹ)
+    try{
+      const rows = await fetchAll(()=>sb.from('curriculum_topics').select('code,n_vocab').eq('curriculum_code',c.code));
+      c._words = rows.reduce((s,r)=>s+(r.n_vocab||0),0);
+      if(c._words) return;
+      // n_vocab rỗng hẳn → mới phải kéo danh sách từ mượn để đếm
+      const rows2 = await fetchAll(()=>sb.from('curriculum_topics').select('code,word_terms').eq('curriculum_code',c.code));
+      c._words = rows2.reduce((s,r)=>s+((r.word_terms||[]).length),0);
+    }catch(e){ console.warn('countCurricula dự phòng', c.code, e); }
+  }));
 }
 
 // ══════════════ ĐỊNH TUYẾN ══════════════
