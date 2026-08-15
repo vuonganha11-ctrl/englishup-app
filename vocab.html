@@ -1957,6 +1957,69 @@ async function euFetchIn(table, cols, col, ids){
 
 const WORD_PAGE = 1000;   // PostgREST trả tối đa 1000 dòng/lần
 
+/* ── NẠP 2 TẦNG (2026-08-15) ───────────────────────────────────────────────
+   Đo thật trên kho 4.957 từ: `select('*')` = 4,6 MB / 1.000 dòng, trong đó
+   qa_5w1h chiếm 58,1% và examples 32,2% — cộng lại 90,3%. Hai cột này CHỈ
+   dùng ở popup chi tiết và 3 cột bảng ẩn mặc định, nên không kéo về từ đầu.
+   Bảng nạp cột nhẹ (358 KB / 1.000 dòng) → mở trang 23 MB xuống ~1,8 MB.
+   ⚠️ Thêm cột mới vào bảng words thì phải thêm tên vào đây, nếu không
+   cột đó sẽ luôn rỗng trên vocab.html. */
+const VT_LIGHT_SELECT = [
+  'id','term','phonetic','definition_vi','definition_en','part_of_speech',
+  'level','topic','example_sentence','image_url','audio_url',
+  'part_code','part_name','branch_code','branch_name','topic_code','group_code',
+  'onset','rime1','syl2','syl3','syl4p','syllables','stress','suffix','root_word',
+  'collection','image_credit','image_credit_url','image_source','word_set'
+].join(',');
+const VT_HEAVY_SELECT = 'id,examples,qa_5w1h';
+
+/* Nạp cột nặng cho ĐÚNG MỘT từ (khi mở popup). Có cờ _full để khỏi gọi lại. */
+async function ensureFullWord(w){
+  if (!w || w._full) return w;
+  try {
+    const { data, error } = await sb.from('words')
+      .select(VT_HEAVY_SELECT).eq('id', w.id).single();
+    if (error) throw error;
+    if (data) { w.examples = data.examples; w.qa_5w1h = data.qa_5w1h; }
+  } catch(e) { console.warn('ensureFullWord:', e); }
+  try { Object.defineProperty(w, '_full', { value: true, enumerable: false, configurable: true }); }
+  catch(e) { w._full = true; }
+  try { delete w._blob; } catch(e) {}      // buộc exBlob tính lại khi đã có examples
+  return w;
+}
+
+/* Nạp cột examples cho TOÀN kho — chỉ chạy khi người dùng bật 1 trong 3 cột
+   bảng phụ thuộc câu mẫu (mặc định cả 3 đều ẩn). */
+const VT_EX_COLS = ['situation','excount','exblob'];
+function vtNeedsExamples(){
+  return VT_EX_COLS.some(k => _vtOn[k] || _vtFilters[k]);
+}
+let _exAllLoaded = false, _exAllPromise = null;
+async function ensureExamplesAll(){
+  if (_exAllLoaded) return;
+  if (_exAllPromise) return _exAllPromise;
+  _exAllPromise = (async () => {
+    const rows = await euFetchAll(() => sb.from('words').select('id,examples'));
+    const m = {};
+    (rows || []).forEach(r => { m[r.id] = r.examples; });
+    (currentWords || []).forEach(w => {
+      if (m[w.id] !== undefined) { w.examples = m[w.id]; try { delete w._blob; } catch(e) {} }
+    });
+    _exAllLoaded = true;
+  })();
+  try { await _exAllPromise; }
+  catch(e) { console.warn('ensureExamplesAll:', e); }
+  finally { _exAllPromise = null; }
+  return;
+}
+/* Bật cột câu mẫu → nạp bổ sung rồi vẽ lại bảng. */
+function vtSyncExamples(){
+  if (!vtNeedsExamples() || _exAllLoaded) return;
+  const more = document.getElementById('vt-more');
+  if (more) more.textContent = 'Đang tải câu mẫu…';
+  ensureExamplesAll().then(() => renderWords(currentWords));
+}
+
 async function loadWords() {
   if (!sb) return;                       // chưa khởi tạo client
   if (euGateLocked()) { euRenderLockPanel(); return; }
@@ -1966,7 +2029,7 @@ async function loadWords() {
   try {
     let all = [], from = 0;
     for (;;) {
-      let q = sb.from('words').select('*').order('term');
+      let q = sb.from('words').select(VT_LIGHT_SELECT).order('term');
       if (currentCollection) q = q.eq('collection', currentCollection);
       const { data, error } = await q.range(from, from + WORD_PAGE - 1);
       if (error) throw error;
@@ -1987,6 +2050,7 @@ async function loadWords() {
 
     updateHero();
     renderWords(currentWords);
+    vtSyncExamples();                    // cột câu mẫu đang bật từ phiên trước
   } catch(e) {
     console.error('loadWords error:', e);
     grid.innerHTML = `<div class="empty-state"><h3>Lỗi tải dữ liệu</h3><p>${esc(e.message)}</p></div>`;
@@ -2055,7 +2119,7 @@ function exBlob(w){                       // gộp câu + nghĩa + gợi ý + tr
   const t = exRows(w).map(r =>
     [r.sentence, r.meaning, r.alternatives, r.opposites].filter(Boolean).join(' ')
   ).join(' ');
-  try { Object.defineProperty(w, '_blob', { value: t, enumerable: false }); } catch(e) { w._blob = t; }
+  try { Object.defineProperty(w, '_blob', { value: t, enumerable: false, configurable: true, writable: true }); } catch(e) { w._blob = t; }
   return t;
 }
 function exAltCount(w){ return exRows(w).filter(r => r.alternatives).length; }
@@ -2545,6 +2609,7 @@ function toggleColPanel(){
       vtSaveCols();
       p.classList.remove('open');
       renderWords(currentWords);
+      vtSyncExamples();
     });
   });
   p.querySelectorAll('input[data-ck]').forEach(cb => {
@@ -2554,6 +2619,7 @@ function toggleColPanel(){
       if (!cb.checked) _vtFilters[k] = '';     // ẩn cột → bỏ luôn bộ lọc, tránh lọc "ma"
       vtSaveCols();
       renderWords(currentWords);
+      vtSyncExamples();
     });
   });
 }
@@ -2665,6 +2731,16 @@ function openWord(id) {
     srsBtn.innerHTML = '➕ Thêm vào Flashcard SRS';
     srsBtn.classList.remove('added');
     srsBtn.disabled = false;
+  }
+
+  // Cột nặng (examples · qa_5w1h) nạp riêng → mở popup NGAY rồi vẽ lại khi về.
+  if (!w._full) {
+    ensureFullWord(w).then(() => {
+      if (openedWord !== w) return;            // người dùng đã chuyển sang từ khác
+      try { renderQA5W1H(w); }       catch(err){ console.error('renderQA5W1H:', err); }
+      try { renderWordExamples(w); } catch(err){ console.error('renderWordExamples:', err); }
+      try { renderUsage(w); }        catch(err){ console.error('renderUsage:', err); }
+    });
   }
 
   document.getElementById('overlay-word').classList.add('open');
