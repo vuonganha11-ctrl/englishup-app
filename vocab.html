@@ -2020,9 +2020,31 @@ function vtSyncExamples(){
   ensureExamplesAll().then(() => renderWords(currentWords));
 }
 
-async function loadWords() {
+/* ── CHỐNG NẠP LẶP (2026-08-15) ────────────────────────────────────────────
+   topbar.js bắn sự kiện 'eu-access' NHIỀU LẦN (getSession + onAuthStateChange,
+   lại nhân đôi vì trang có 2 client Supabase — xem cảnh báo "Multiple
+   GoTrueClient instances" trong console). Trước đây mỗi lần bắn là gọi
+   loadWords() → tải lại CẢ KHO. Đo thật 2026-08-15: 6 lượt nạp / 1 lần mở trang
+   = 7,9 MB thay vì 1,3 MB.
+   Nay: (1) giữ mảng thô `_wordsRaw` trong bộ nhớ để eu-access chỉ cắt lại,
+        (2) gộp các lượt gọi loadWords trùng nhau đang bay. */
+let _wordsRaw = null, _wordsRawCol = null;
+let _lwInflight = null, _lwInflightCol = null;
+
+function loadWords(){
+  // Đang có lượt nạp cho ĐÚNG kho này → dùng chung, đừng bắn thêm request
+  if (_lwInflight && _lwInflightCol === currentCollection) return _lwInflight;
+  _lwInflightCol = currentCollection;
+  _lwInflight = loadWordsRun()
+    .catch(e => { console.error('loadWords:', e); })
+    .then(() => { _lwInflight = null; });
+  return _lwInflight;
+}
+
+async function loadWordsRun() {
   if (!sb) return;                       // chưa khởi tạo client
   if (euGateLocked()) { euRenderLockPanel(); return; }
+  const _col = currentCollection;        // chốt kho lúc bắt đầu — chống đua khi đổi kho
   const grid = document.getElementById('words-grid');
   grid.innerHTML = renderSkeletons(10);
 
@@ -2042,8 +2064,11 @@ async function loadWords() {
       if (from > 50000) break;           // chặn vòng lặp vô hạn
     }
 
+    if (_col !== currentCollection) return;   // người dùng đã đổi kho giữa chừng
     // Kho chung chỉ gồm từ do Admin thêm — ẩn từ học viên tự lưu khi xem video
     const shared = all.filter(w => (w.topic || '') !== EU_USER_TOPIC);
+    _wordsRaw = shared; _wordsRawCol = _col;
+    _exAllLoaded = false;                     // mảng mới → câu mẫu phải nạp lại nếu đang bật
     currentWords = euApplySlice(shared);
 
     if (currentUser && !_srsLoaded) await loadSrsMap();
@@ -3608,7 +3633,23 @@ function euApplySlice(all) {
   return free;
 }
 
-function euApplyGate() { loadWords(); }
+/* Sự kiện 'eu-access' chỉ đổi PHẠM VI được xem (euApplySlice), không đổi dữ liệu
+   → cắt lại mảng đã có trong bộ nhớ, không truy vấn Supabase lần nữa.
+   Thêm chữ ký quyền để bỏ qua các lần bắn trùng hệt nhau. */
+let _euGateSig = null;
+function euApplyGate() {
+  const a = window.EU_ACCESS || {};
+  const sig = [a.ready, a.loggedIn, a.role, a.plan, a.planExpiresAt, a.status, a.isPremium].join('|');
+  if (sig === _euGateSig && _wordsRaw) return;        // quyền y hệt lần trước → khỏi vẽ lại
+  _euGateSig = sig;
+  if (_wordsRaw && _wordsRawCol === currentCollection) {
+    currentWords = euApplySlice(_wordsRaw);
+    updateHero();
+    renderWords(currentWords);
+  } else {
+    loadWords();
+  }
+}
 document.addEventListener('eu-access', euApplyGate);
 </script>
 
