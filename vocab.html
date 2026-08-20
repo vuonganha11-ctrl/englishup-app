@@ -2540,7 +2540,14 @@ function vtMatch(c, w){
   if (!f) return true;
   const v = c.get(w);
   switch (c.filter){
-    case 'text':   return String(v == null ? '' : v).toLowerCase().includes(f.toLowerCase());
+    case 'text': {
+      const q = f.toLowerCase();
+      if (String(v == null ? '' : v).toLowerCase().includes(q)) return true;
+      /* Cột "Gốc": nút "xem từ cùng họ" phải hiện cả CHÍNH từ gốc (create), chứ
+         không chỉ các từ phái sinh (creative) — nếu không thì bấm vào chỉ ra 1 dòng. */
+      if (c.k === 'root_word' && String(w.term || '').toLowerCase() === q) return true;
+      return false;
+    }
     case 'select': return f === VT_EMPTY ? !String(v == null ? '' : v).trim()
                                          : String(v == null ? '' : v).trim() === f;
     case 'pos':    return f === VT_EMPTY ? !posTags(v).length : posTags(v).indexOf(f) >= 0;

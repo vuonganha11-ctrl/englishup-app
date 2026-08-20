@@ -2352,19 +2352,40 @@ function escRegex(s) {
 /* Bên vocab, 2 nút "cùng hậu tố / cùng họ" lọc bảng. Trên bản đồ thì tô sáng
    toàn bộ từ khớp rồi bung đúng các nhánh chứa chúng — nhìn ra ngay họ từ đó
    nằm rải ở những chủ đề nào. */
-function vtQuickFilter(key, value){
+async function vtQuickFilter(key, value){
   closeWord();
   const v = String(value == null ? '' : value);
   if (!v) return;
+  /* ⚠️ Bản đồ chỉ tải 14 cột NHẸ (không có suffix/root_word) để tiết kiệm băng
+     thông, nên KHÔNG dò được trong bộ nhớ — trước đây vòng lặp luôn ra 0 từ và
+     nút trông như chết. Nay hỏi riêng Supabase, chỉ tốn 1 request lúc bấm. */
+  const ids = new Set();
+  try {
+    const { data, error } = await sb.from('words').select('id').eq(key, v).limit(1000);
+    if (error) throw error;
+    (data || []).forEach(r => ids.add(r.id));
+    if (key === 'root_word'){
+      // gộp luôn CHÍNH từ gốc (create) chứ không chỉ từ phái sinh (creative)
+      const { data: d2, error: e2 } = await sb.from('words').select('id').eq('term', v).limit(50);
+      if (e2) throw e2;
+      (d2 || []).forEach(r => ids.add(r.id));
+    }
+  } catch(e){ console.warn('vtQuickFilter:', e.message); mmToast('Không tra được, thử lại sau nhé.'); return; }
+
   hitWords.clear(); hitNodes.clear();
   TREE.forEach(P => P.kids.forEach(B => B.kids.forEach(T => {
     let any = false;
-    T.words.forEach(w => { if (String(w[key] == null ? '' : w[key]) === v) { hitWords.add(w.id); any = true; } });
+    T.words.forEach(w => { if (ids.has(w.id)) { hitWords.add(w.id); any = true; } });
     if (any) {
       hitNodes.add(T.key); hitNodes.add(B.key); hitNodes.add(P.key);
       openSet.add(P.key); openSet.add(B.key); openSet.add(T.key);
     }
   })));
+  if (!hitWords.size){
+    mmToast(key === 'suffix' ? 'Chưa có từ nào khác cùng hậu tố ' + v
+                             : 'Chưa có từ nào khác cùng họ với ' + v);
+    return;
+  }
   query = (key === 'suffix' ? 'hậu tố ' : 'cùng họ ') + v;
   const qi = document.getElementById('q');  if (qi) qi.value = query;
   const qx = document.getElementById('qx'); if (qx) qx.style.display = 'block';
@@ -2373,6 +2394,24 @@ function vtQuickFilter(key, value){
     const f = document.querySelector('.wchip.hit');
     if (f) f.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
   }, 60);
+}
+
+/* Nhắn nhanh 1 dòng ở giữa dưới màn hình (không dùng alert vì chặn cả trang). */
+function mmToast(msg){
+  let el = document.getElementById('mm-toast');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'mm-toast';
+    el.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);' +
+      'background:#1b2133;color:#dde3f0;border:1px solid #2e3a55;border-radius:12px;' +
+      'padding:11px 16px;font-size:13.5px;z-index:100001;box-shadow:0 8px 26px rgba(0,0,0,.45);' +
+      'max-width:88vw;text-align:center';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 2800);
 }
 
 /* Bản đồ chỉ tải 13 cột nhẹ cho 2.990 từ (cột `examples` jsonb một mình đã ~6MB).
