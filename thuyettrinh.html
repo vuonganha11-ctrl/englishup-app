@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Thuyết trình tiếng Anh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.topbar .spacer{flex:1}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+
+.page{max-width:1000px;margin:0 auto;padding:30px 18px 90px}
+.crumb{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.crumb a{color:var(--muted);text-decoration:none}
+.crumb a:hover{color:var(--accent)}
+.hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:26px}
+.hero .hico{font-size:40px;line-height:1;flex-shrink:0}
+h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
+.lead{font-size:14.5px;color:var(--muted);margin-top:5px;max-width:700px}
+
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:28px}
+.step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px}
+.step .k{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--a3);letter-spacing:.5px}
+.step .t{font-size:14px;font-weight:700;margin-top:3px}
+.step .d{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:3px}
+
+h2{font-size:16px;font-weight:800;letter-spacing:-.2px;margin:0 0 13px}
+h2 small{font-weight:500;color:var(--muted);font-size:12.5px;margin-left:8px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;text-decoration:none;color:var(--text);transition:.16s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card .cover{aspect-ratio:1468/1071;background:#fff;overflow:hidden;border-bottom:1px solid var(--border)}
+.card .cover img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.card .bd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card .unit{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--a4);letter-spacing:.4px}
+.card .tt{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.card .ds{font-size:13.5px;color:var(--muted);line-height:1.6;flex:1}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.32);color:#9dc0fb}
+.chip.g{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.32);color:#7ee2bd}
+.chip.p{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.32);color:#c4b0fc}
+.card .go{font-size:13px;font-weight:700;color:var(--accent);display:inline-flex;align-items:center;gap:6px;margin-top:2px}
+
+.soon{border-style:dashed;opacity:.72}
+.soon:hover{transform:none;border-color:var(--border2)}
+.soon .bd{padding:22px 18px}
+
+.note{margin-top:26px;font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  border-left:3px solid var(--a2);border-radius:12px;padding:14px 16px;line-height:1.7}
+.note b{color:var(--text)}
+.note + .note{margin-top:12px;border-left-color:var(--a4)}
+
+@media(max-width:560px){
+  .page{padding:20px 14px 70px}
+  h1{font-size:21px}
+  .hero .hico{font-size:32px}
+  .grid{grid-template-columns:1fr;gap:13px}
+  .steps{grid-template-columns:1fr;gap:10px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav"></nav>
+  <div class="spacer"></div>
+  <div class="topbar-right"></div>
+</header>
+
+<div class="page">
+  <div class="crumb"><a href="luyentap.html">🏋️ Luyện tập</a> &nbsp;›&nbsp; Thuyết trình tiếng Anh</div>
+
+  <div class="hero">
+    <div class="hico">🎤</div>
+    <div>
+      <h1>Thuyết trình tiếng Anh</h1>
+      <div class="lead">Học từ rồi mà chưa bao giờ <b>nói thành bài</b> thì vẫn run khi đứng trước lớp. Mỗi bài ở đây là một sơ đồ tư duy phóng to được, kèm kịch bản từng câu — bấm câu nào là sơ đồ tự sáng đúng chỗ đang nói, nên học viên chỉ việc nhìn và nói theo.</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="k">BƯỚC 1</div>
+      <div class="t">Nghe mẫu</div>
+      <div class="d">Bấm ▶ Đọc để máy đọc cả bài. Nghe hết một lượt cho quen giọng và nhịp câu.</div>
+    </div>
+    <div class="step">
+      <div class="k">BƯỚC 2</div>
+      <div class="t">Đọc theo từng câu</div>
+      <div class="d">Bấm 🔊 ở từng câu rồi nhắc lại. Còn nghĩa tiếng Việt bên dưới nên hiểu mình đang nói gì, không đọc vẹt.</div>
+    </div>
+    <div class="step">
+      <div class="k">BƯỚC 3</div>
+      <div class="t">Tắt tiếng Việt</div>
+      <div class="d">Bấm 🇻🇳 Việt để ẩn nghĩa đi. Chỉ nhìn sơ đồ và nói. Đây là lúc bài học thật sự vào đầu.</div>
+    </div>
+    <div class="step">
+      <div class="k">BƯỚC 4</div>
+      <div class="t">Bấm giờ nói thật</div>
+      <div class="d">Bấm vào đồng hồ ⏱ rồi trình bày một mạch. Làm theo gợi ý 💡 về cử chỉ, ánh mắt, chỗ dừng.</div>
+    </div>
+  </div>
+
+  <h2>Bài đang có <small>2 bài · trình độ Level A</small></h2>
+
+  <div class="grid">
+    <a class="card" href="thuyettrinh-A-U1-L1-we-eat-flowers.html">
+      <div class="cover"><img src="tt-u1l1-thumb.webp?v=20260820" alt="Mindmap bài We Eat Flowers" loading="lazy"></div>
+      <div class="bd">
+        <div class="unit">UNIT 1 · LESSON 1</div>
+        <div class="tt">We Eat Flowers!</div>
+        <div class="ds">Các phần của cây mà con người ăn: rễ, thân, lá, hoa và hạt. Mở bài bằng câu chuyện đi chợ với mẹ, kết lại bằng phát hiện buồn cười — hoá ra ăn súp lơ là đang ăn hoa.</div>
+        <div class="meta">
+          <span class="chip">57 câu</span>
+          <span class="chip g">~5–6 phút</span>
+          <span class="chip p">11 từ khoá</span>
+        </div>
+        <div class="go">Mở bài thuyết trình <span aria-hidden="true">&rarr;</span></div>
+      </div>
+    </a>
+
+    <a class="card" href="thuyettrinh-A-U2-L4-animals-help-people.html">
+      <div class="cover"><img src="tt-u2l4-thumb.webp?v=20260820" alt="Mindmap bài Animals Help People" loading="lazy"></div>
+      <div class="bd">
+        <div class="unit">UNIT 2 · LESSON 4</div>
+        <div class="tt">Animals Help People</div>
+        <div class="ds">Năm con vật giúp người và năm công việc chúng làm. Mở bài bằng chuyện gặp chú chó dẫn đường ở công viên, kết lại bằng câu hỏi ngược: mình giúp được gì cho con vật?</div>
+        <div class="meta">
+          <span class="chip">60 câu</span>
+          <span class="chip g">~5–6 phút</span>
+          <span class="chip p">12 từ khoá</span>
+        </div>
+        <div class="go">Mở bài thuyết trình <span aria-hidden="true">&rarr;</span></div>
+      </div>
+    </a>
+
+    <div class="card soon">
+      <div class="bd">
+        <div class="unit">SẮP CÓ</div>
+        <div class="tt">Các bài tiếp theo</div>
+        <div class="ds">Mỗi bài đọc trong giáo trình Level A sẽ có một sơ đồ thuyết trình riêng. Bài mới sẽ hiện ngay tại đây.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><b>Mẹo dùng sơ đồ khi nói:</b> để nút <b>🎯 Bám theo câu</b> luôn bật — sơ đồ sẽ tự phóng vào đúng khối đang nói và tô vàng đúng dòng từ vựng, nên học viên không bị lạc giữa bài. Muốn nhìn lại toàn cảnh thì bấm <b>⤢ Toàn cảnh</b> hoặc phím <b>F</b>. Dùng phím <b>←</b> <b>→</b> để chuyển câu, phím <b>S</b> để nghe lại câu đang đứng.</div>
+
+  <div class="note"><b>Trình bày trước lớp:</b> bấm <b>⛶ Toàn màn hình</b>, chiếu máy lên màn hình lớn rồi phóng vào từng khối theo lời nói. Điện thoại cũng dùng được — chụm hai ngón để phóng, vuốt để kéo sơ đồ.</div>
+</div>
+
+<script src="mobile-nav.js"></script>
+</body>
+</html>

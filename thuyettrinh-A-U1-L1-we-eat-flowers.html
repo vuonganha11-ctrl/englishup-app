@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Level A – Unit 1 – Lesson 1 · We Eat Flowers!</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1468px;height:1071px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1468px;height:1071px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · We Eat Flowers!<small>Level A – Unit 1 – Lesson 1</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học We Eat Flowers" src="tt-u1l1.webp?v=20260820">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1468 x 1071 ====== */
+const AREAS = {
+  ALL :null,
+  hero:[480,12,520,288],
+  b0  :[469,302,521,202],
+  b1  :[8,15,423,1027],
+  b2  :[1029,12,421,632],
+  b3  :[443,562,273,468],
+  b4  :[740,562,271,468],
+  b5  :[1030,661,419,369]
+};
+const ROWS = {
+  vegetable:[14,58,413,95], flower:[14,153,413,90], leaf:[14,243,413,90],
+  root:[14,333,413,106],    stem:[14,439,413,83],   seed:[14,522,413,98],
+  carrot:[14,624,413,94],   potato:[14,718,413,80], lettuce:[14,798,413,86],
+  pea:[14,884,413,80],      small:[14,964,413,73],
+  roots:[1038,58,407,117],  stems:[1038,175,407,118], leaves:[1038,293,407,117],
+  flowers:[1038,410,407,117],seeds:[1038,527,407,113],
+  'carrot-ex':[450,600,262,80],'broccoli-ex':[450,680,262,82],'lettuce-ex':[450,762,262,82],
+  'peas-ex':[450,844,262,82], 'celery-ex':[450,926,262,100]
+};
+
+const SECTIONS = {
+  intro : {label:'Mở đầu',                 color:'#38bdf8'},
+  story : {label:'Câu chuyện của tôi',     color:'#f6c453'},
+  s1    : {label:'1. Key Vocabulary',      color:'#5aa9f0'},
+  s2    : {label:'2. Plant Parts We Eat',  color:'#6fcf7a'},
+  s3    : {label:'3. Examples',            color:'#b795ec'},
+  s4    : {label:'4. Reading Idea',        color:'#f0b45a'},
+  s5    : {label:'5. Remember',            color:'#f07aa2'},
+  end   : {label:'Kết bài',                color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+ // ---------------- MỞ ĐẦU ----------------
+ ['intro','ALL',null,"Hello everyone! My name is ___. I am very happy to be here today.","Xin chào cả nhà! Tên mình là ___. Hôm nay mình rất vui khi được đứng đây.","Đứng thẳng, cười, nhìn khắp lớp rồi mới nói."],
+ ['intro','ALL',null,"Before I start, I have one question for you. Did you eat a flower today?","Trước khi bắt đầu, mình có một câu hỏi cho các bạn. Hôm nay bạn có ăn hoa không?","Hỏi xong dừng 3 giây, đưa tay mời cả lớp trả lời."],
+ ['intro','b0',null,"You say no? Let's see! My lesson today is: We Eat Flowers!","Các bạn nói không à? Cùng xem nhé! Bài học hôm nay của mình là: Chúng ta ăn cả hoa!","Chỉ tay vào tên bài ở giữa sơ đồ."],
+ ['intro','ALL',null,"This is my mindmap. It has five parts.","Đây là sơ đồ tư duy của mình. Nó có năm phần.","Đưa tay vẽ một vòng quanh cả sơ đồ."],
+ ['intro','ALL',null,"Part one: my new words. Part two: the parts of a plant. Part three: examples.","Phần một: từ mới. Phần hai: các phần của cây. Phần ba: ví dụ.","Đếm bằng ngón tay: một, hai, ba."],
+ ['intro','ALL',null,"Part four: the reading idea. And part five: the big thing to remember.","Phần bốn: ý chính bài đọc. Và phần năm: điều quan trọng cần nhớ.","Đếm tiếp: bốn, năm."],
+
+ // ---------------- CÂU CHUYỆN ----------------
+ ['story','ALL',null,"But first, let me tell you a small story.","Nhưng trước tiên, hãy để mình kể một câu chuyện nhỏ.","Hạ giọng xuống một chút cho giống kể chuyện."],
+ ['story','ALL',null,"Yesterday I went to the market with my mom.","Hôm qua mình đi chợ với mẹ.","Nhìn lên bức hình giỏ rau ở giữa sơ đồ."],
+ ['story','ALL',null,"We came home with a big basket of vegetables. Look at it!","Bọn mình mang về một giỏ rau thật to. Nhìn xem này!","Chỉ vào giỏ rau phía trên tên bài."],
+ ['story','ALL',null,"There were red tomatoes, yellow and green peppers, and one big potato.","Có cà chua đỏ, ớt chuông vàng và xanh, và một củ khoai tây to.","Chỉ từng món khi đọc tên nó."],
+ ['story','ALL',null,"There were orange carrots, white cauliflower, green broccoli and fresh lettuce.","Có cà rốt màu cam, súp lơ trắng, súp lơ xanh và xà lách tươi.","Đọc chậm, nhấn vào các từ chỉ màu."],
+ ['story','ALL',null,"So many colors in one basket!","Bao nhiêu là màu trong một cái giỏ!","Mở to mắt, nói với giọng ngạc nhiên."],
+ ['story','ALL',null,"Then my mom asked me a funny question.","Rồi mẹ hỏi mình một câu rất thú vị.","Dừng một nhịp để tạo tò mò."],
+ ['story','ALL',null,"She said: Do you know which part of the plant you are eating?","Mẹ nói: Con có biết con đang ăn phần nào của cây không?","Đổi giọng một chút khi nói lời của mẹ."],
+ ['story','ALL',null,"I did not know. So I opened my book — and I learned these new words.","Mình không biết. Thế là mình mở sách ra — và mình học được những từ mới này.","Quay người, đưa tay về phía khối số 1."],
+
+ // ---------------- 1. KEY VOCABULARY ----------------
+ ['s1','b1',null,"Part one: my key vocabulary. I learned eleven new words.","Phần một: từ khoá của mình. Mình học được mười một từ mới.","Chỉ vào tên khối màu xanh dương."],
+ ['s1','b1','vegetable',"A vegetable is the part of a plant that we eat. Everything in my basket was a vegetable.","Rau củ là phần của cây mà chúng ta ăn. Mọi thứ trong giỏ của mình đều là rau củ.","Nhấn mạnh từ vegetable."],
+ ['s1','b1','flower',"A flower is the part of a plant that makes seeds.","Hoa là phần của cây tạo ra hạt.","Đọc chậm từ flower — đây là từ quan trọng nhất của bài."],
+ ['s1','b1','leaf',"A leaf is the flat, green part of a plant.","Lá là phần dẹt, màu xanh của cây.","Xoè bàn tay ra như một chiếc lá."],
+ ['s1','b1','root',"A root is the part of a plant that grows down in the dirt.","Rễ là phần của cây mọc xuống dưới đất.","Chỉ tay xuống đất khi nói down."],
+ ['s1','b1','stem',"A stem is the part of a plant that holds the plant up.","Thân là phần của cây giữ cho cây đứng thẳng.","Dựng thẳng cánh tay lên như một cái thân cây."],
+ ['s1','b1','seed',"A seed is the part of a plant that grows into a new plant.","Hạt là phần của cây mọc lên thành một cây mới.","Chụm ngón tay lại cho nhỏ như một hạt giống."],
+ ['s1','b1','carrot',"A carrot is an orange vegetable that is a root. My mom bought many carrots.","Cà rốt là loại rau màu cam, và nó là rễ. Mẹ mình mua rất nhiều cà rốt.","Chỉ vào hình cà rốt."],
+ ['s1','b1','potato',"A potato is a vegetable that is a stem. It grows under the ground.","Khoai tây là loại rau, và nó là thân. Nó mọc ở dưới mặt đất.","Nói rõ: khoai tây là thân, không phải rễ."],
+ ['s1','b1','lettuce',"Lettuce is a green vegetable that is a leaf. We put it in a salad.","Xà lách là rau màu xanh, và nó là lá. Chúng ta cho nó vào món salad.","Chỉ vào hình xà lách."],
+ ['s1','b1','pea',"Peas are green seeds in a pod that we eat.","Đậu Hà Lan là những hạt xanh nằm trong vỏ mà chúng ta ăn.","Dùng hai bàn tay khép lại làm cái vỏ đậu."],
+ ['s1','b1','small',"Small means not big; little in size. Peas are very, very small.","Small nghĩa là nhỏ, không to. Hạt đậu thì rất, rất nhỏ.","Đưa hai ngón tay lại gần nhau."],
+ ['s1','b1',null,"Now I know eleven words. Let's look at the whole plant.","Bây giờ mình đã biết mười một từ. Cùng nhìn cả cái cây nào.","Chuyển người sang phía khối số 2."],
+
+ // ---------------- 2. PLANT PARTS WE EAT ----------------
+ ['s2','b2',null,"Part two: plant parts we eat. A plant has five parts.","Phần hai: những phần của cây mà ta ăn. Cây có năm phần.","Giơ năm ngón tay lên."],
+ ['s2','b2','roots',"First, roots. Roots grow down in the dirt. Many roots are vegetables we eat.","Đầu tiên là rễ. Rễ mọc xuống dưới đất. Nhiều loại rễ là rau chúng ta ăn.","Bắt đầu từ dưới cùng, tay chỉ thấp."],
+ ['s2','b2','stems',"Second, stems. Stems hold the plant up. Some stems are vegetables we eat.","Thứ hai là thân. Thân giữ cho cây đứng thẳng. Một số thân là rau chúng ta ăn.","Tay đưa cao lên một chút."],
+ ['s2','b2','leaves',"Third, leaves. Leaves are flat and green. Many leaves are vegetables we eat.","Thứ ba là lá. Lá thì dẹt và màu xanh. Nhiều loại lá là rau chúng ta ăn.","Tay đưa cao hơn nữa."],
+ ['s2','b2','flowers',"Fourth, flowers. Flowers make seeds. Some flowers are vegetables we eat.","Thứ tư là hoa. Hoa tạo ra hạt. Một số hoa là rau chúng ta ăn.","Nhấn mạnh — đây chính là tên bài học."],
+ ['s2','b2','seeds',"Last, seeds. Seeds grow into new plants. Many seeds are vegetables we eat.","Cuối cùng là hạt. Hạt mọc lên thành cây mới. Nhiều loại hạt là rau chúng ta ăn.","Tay vẽ một vòng tròn: hạt lại thành cây."],
+ ['s2','b2',null,"So we can eat every part of a plant — from the root to the flower.","Vậy là chúng ta ăn được mọi phần của cây — từ rễ cho tới hoa.","Đưa tay từ dưới lên trên."],
+
+ // ---------------- 3. EXAMPLES ----------------
+ ['s3','b3',null,"Part three: examples. Now let's open my basket again!","Phần ba: ví dụ. Bây giờ mở lại cái giỏ của mình nào!","Làm động tác mở giỏ."],
+ ['s3','b3','carrot-ex',"A carrot is a root. When I eat a carrot, I am eating a root.","Cà rốt là rễ. Khi mình ăn cà rốt, là mình đang ăn phần rễ.","Nói chậm câu thứ hai."],
+ ['s3','b3','broccoli-ex',"Broccoli is a flower. Yes — we really do eat flowers!","Súp lơ xanh là hoa. Đúng vậy — chúng ta ăn hoa thật đấy!","Nói to và vui, nhìn xuống lớp."],
+ ['s3','b3','lettuce-ex',"Lettuce is a leaf. When I eat a salad, I am eating leaves.","Xà lách là lá. Khi mình ăn salad, là mình đang ăn lá.","Chỉ vào hình xà lách."],
+ ['s3','b3','peas-ex',"Peas are seeds. They are small, green and sweet.","Đậu Hà Lan là hạt. Chúng nhỏ, xanh và ngọt.","Nhắc lại từ small vừa học."],
+ ['s3','b3','celery-ex',"Celery is a stem. It is long, and it goes crunch, crunch!","Cần tây là thân. Nó dài, và khi ăn thì kêu rôm rốp!","Làm bộ cắn một miếng cần tây."],
+ ['s3','b3',null,"Five vegetables — and five different parts of a plant.","Năm loại rau — và năm phần khác nhau của cây.","Giơ lại năm ngón tay."],
+
+ // ---------------- 4. READING IDEA ----------------
+ ['s4','b4',null,"Part four: the reading idea. This is the big idea of my lesson.","Phần bốn: ý chính của bài đọc. Đây là ý lớn của bài học.","Chỉ vào khối màu cam."],
+ ['s4','b4',null,"People eat different parts of plants every day.","Con người ăn nhiều phần khác nhau của cây mỗi ngày.","Đọc thật rõ — đây là câu quan trọng."],
+ ['s4','b4',null,"Look at this plate. There is a salad with lettuce and tomatoes. Those are leaves.","Nhìn cái đĩa này. Có món salad với xà lách và cà chua. Đó là lá.","Chỉ vào từng món trên đĩa."],
+ ['s4','b4',null,"There is a bowl of peas — those are seeds. There are carrot sticks — those are roots.","Có một bát đậu Hà Lan — đó là hạt. Có mấy que cà rốt — đó là rễ.","Chỉ vào bát đậu rồi tới cà rốt."],
+ ['s4','b4',null,"There is celery and a baked potato — those are stems. And there is broccoli — that is a flower.","Có cần tây và khoai tây nướng — đó là thân. Và có súp lơ xanh — đó là hoa.","Chỉ nốt các món còn lại."],
+ ['s4','b4',null,"In one meal, I eat a root, a stem, a leaf, a flower and seeds. All five parts!","Trong một bữa ăn, mình ăn cả rễ, thân, lá, hoa và hạt. Đủ cả năm phần!","Đếm năm ngón tay thật chậm."],
+
+ // ---------------- 5. REMEMBER ----------------
+ ['s5','b5',null,"Part five: remember. Look at this heart made of fruits and vegetables.","Phần năm: ghi nhớ. Nhìn trái tim làm bằng rau củ và trái cây này.","Chỉ vào hình trái tim."],
+ ['s5','b5',null,"Plants give us healthy foods.","Cây cối cho chúng ta những món ăn tốt cho sức khoẻ.","Đọc chậm, rõ từng chữ."],
+ ['s5','b5',null,"Green, red, orange, yellow and purple — every color helps our body.","Xanh, đỏ, cam, vàng và tím — mỗi màu đều giúp cơ thể chúng ta.","Chỉ vào từng màu trong trái tim."],
+ ['s5','b5',null,"So eat many colors every day, and you will be strong.","Vậy nên hãy ăn nhiều màu mỗi ngày, và bạn sẽ khoẻ mạnh.","Gồng tay lên làm động tác khoẻ mạnh."],
+
+ // ---------------- KẾT BÀI ----------------
+ ['end','ALL',null,"Now, my question again: did you eat a flower today?","Bây giờ, lại câu hỏi của mình: hôm nay bạn có ăn hoa không?","Hỏi lại đúng câu mở đầu, mỉm cười."],
+ ['end','ALL',null,"If you ate broccoli or cauliflower — then yes, you did!","Nếu bạn đã ăn súp lơ xanh hay súp lơ trắng — thì có đấy!","Chờ cả lớp cười rồi mới nói tiếp."],
+ ['end','ALL',null,"Next time you eat, ask yourself: which part of the plant is this?","Lần tới khi ăn, hãy tự hỏi: đây là phần nào của cây nhỉ?","Chỉ tay vào chính mình rồi vào cả lớp."],
+ ['end','b0',null,"That is my presentation: We Eat Flowers! Thank you for listening.","Bài thuyết trình của mình đến đây là hết: Chúng ta ăn cả hoa! Cảm ơn mọi người đã lắng nghe.","Đứng thẳng, cúi đầu nhẹ."],
+ ['end','ALL',null,"Do you have any questions for me?","Mọi người có câu hỏi nào cho mình không ạ?","Mở hai tay ra mời cả lớp hỏi."]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1468, MAPH=1071;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

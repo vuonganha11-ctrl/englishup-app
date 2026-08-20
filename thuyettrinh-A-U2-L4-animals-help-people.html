@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Level A – Unit 2 – Lesson 4 · Animals Help People</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1448px;height:1086px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1448px;height:1086px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Animals Help People<small>Level A – Unit 2 – Lesson 4</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Animals Help People" src="tt-u2l4.webp?v=20260820">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1448 x 1086 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[368,428,624,236],
+  b1  :[8,16,326,1063],
+  b2  :[362,16,582,348],
+  b3  :[975,16,463,736],
+  b4  :[348,704,317,366],
+  b5  :[694,765,373,304],
+  b6  :[1093,765,343,303]
+};
+const ROWS = {
+  cheerful:[14,72,316,95], talent:[14,167,316,94],  elephant:[14,261,316,96],
+  clever:[14,357,316,92],  lonely:[14,449,316,89],  wild:[14,538,316,85],
+  helpful:[14,623,316,85], dolphin:[14,708,316,82], dog:[14,790,316,77],
+  horse:[14,867,316,77],   guide:[14,944,316,69],   rescue:[14,1013,316,64],
+  dogs:[372,78,113,280], horses:[485,78,115,280], dolphins:[600,78,112,280],
+  elephants:[712,78,112,280], birds:[824,78,112,280],
+  'guide-people':[980,78,454,140], 'carry-things':[980,218,454,136],
+  'find-people':[980,354,454,134], 'help-farmers':[980,488,454,130],
+  'make-happy':[980,618,454,130],
+  'wild-live':[354,786,306,124], 'learn-jobs':[354,915,306,149]
+};
+
+const SECTIONS = {
+  intro : {label:'Mở đầu',                    color:'#38bdf8'},
+  story : {label:'Câu chuyện của tôi',        color:'#f6c453'},
+  s1    : {label:'1. Key Vocabulary',         color:'#6fcf7a'},
+  s2    : {label:'2. Helpful Animals',        color:'#b795ec'},
+  s3    : {label:'3. How Animals Help',       color:'#f0a24a'},
+  s4    : {label:'4. Wild and Trained',       color:'#4bc4bd'},
+  s5    : {label:'5. Reading Idea',           color:'#f07aa2'},
+  s6    : {label:'6. Remember',               color:'#5aa9f0'},
+  end   : {label:'Kết bài',                   color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+ // ---------------- MỞ ĐẦU ----------------
+ ['intro','ALL',null,"Hello everyone! My name is ___. Today I want to talk about my friends.","Xin chào cả nhà! Tên mình là ___. Hôm nay mình muốn nói về những người bạn của mình.","Đứng thẳng, cười, nhìn khắp lớp rồi mới nói."],
+ ['intro','ALL',null,"My friends have four legs. Some have fins. Some have wings. Can you guess who they are?","Bạn của mình có bốn chân. Có bạn có vây. Có bạn có cánh. Đố các bạn đó là ai?","Dừng 3 giây, đưa tay mời cả lớp đoán."],
+ ['intro','b0',null,"Yes — animals! My lesson today is: Animals Help People.","Đúng rồi — các con vật! Bài học hôm nay của mình là: Động vật giúp con người.","Chỉ tay vào tên bài ở giữa sơ đồ."],
+ ['intro','ALL',null,"This is my mindmap. It has six parts.","Đây là sơ đồ tư duy của mình. Nó có sáu phần.","Đưa tay vẽ một vòng quanh cả sơ đồ."],
+ ['intro','ALL',null,"Part one: my new words. Part two: five helpful animals. Part three: how they help us.","Phần một: từ mới. Phần hai: năm con vật giúp người. Phần ba: chúng giúp ta thế nào.","Đếm bằng ngón tay: một, hai, ba."],
+ ['intro','ALL',null,"Part four: wild and trained animals. Part five: the reading idea. Part six: the big thing to remember.","Phần bốn: thú hoang và thú được huấn luyện. Phần năm: ý chính bài đọc. Phần sáu: điều quan trọng cần nhớ.","Đếm tiếp: bốn, năm, sáu."],
+
+ // ---------------- CÂU CHUYỆN ----------------
+ ['story','ALL',null,"But first, let me tell you a true story.","Nhưng trước tiên, để mình kể một câu chuyện có thật.","Hạ giọng xuống một chút cho giống kể chuyện."],
+ ['story','ALL',null,"Last Sunday I went to the park with my mom.","Chủ nhật tuần trước mình đi công viên với mẹ.","Nói chậm, như đang nhớ lại."],
+ ['story','ALL',null,"I saw a man walking with a big yellow dog.","Mình thấy một chú đi bộ cùng một con chó vàng to.","Đưa tay tả con chó to."],
+ ['story','ALL',null,"The dog was wearing a special harness. It walked slowly and very carefully.","Con chó đeo một cái đai đặc biệt. Nó đi chậm và rất cẩn thận.","Nói chậm đúng như con chó đi chậm."],
+ ['story','ALL',null,"I love dogs, so I ran to play with it.","Mình rất thích chó, nên mình chạy tới định chơi với nó.","Làm động tác chạy tới."],
+ ['story','ALL',null,"But my mom stopped me. She said: Wait! That dog is working right now.","Nhưng mẹ giữ mình lại. Mẹ nói: Khoan đã! Con chó đó đang làm việc đấy.","Giơ tay lên như đang ngăn lại."],
+ ['story','ALL',null,"A dog with a job? I was very surprised.","Chó mà cũng có việc làm ư? Mình ngạc nhiên lắm.","Mở to mắt, nói giọng ngạc nhiên."],
+ ['story','ALL',null,"My mom said: That man cannot see. The dog is his eyes. It is a guide dog.","Mẹ nói: Chú ấy không nhìn được. Con chó chính là đôi mắt của chú. Đó là chó dẫn đường.","Đổi giọng một chút khi nói lời của mẹ."],
+ ['story','ALL',null,"That day I learned something big. So I opened my book and studied these words.","Hôm đó mình học được một điều lớn. Thế là mình mở sách ra và học những từ này.","Quay người, đưa tay về phía khối số 1."],
+
+ // ---------------- 1. KEY VOCABULARY ----------------
+ ['s1','b1',null,"Part one: my key vocabulary. I learned twelve new words.","Phần một: từ khoá của mình. Mình học được mười hai từ mới.","Chỉ vào tên khối màu xanh lá."],
+ ['s1','b1','cheerful',"Cheerful means happy and showing good feelings. That dog looked very cheerful.","Cheerful nghĩa là vui vẻ, tươi tắn. Con chó đó trông rất vui vẻ.","Cười thật tươi khi nói từ này."],
+ ['s1','b1','talent',"A talent is a natural ability to do something well. Every animal has a talent.","Talent là năng khiếu trời cho để làm giỏi một việc gì đó. Con vật nào cũng có năng khiếu riêng.","Nhấn mạnh: mỗi con vật đều có tài riêng."],
+ ['s1','b1','elephant',"An elephant is a very large animal with a long trunk.","Voi là con vật rất to, có cái vòi dài.","Đưa cánh tay ra trước làm cái vòi."],
+ ['s1','b1','clever',"Clever means able to learn or think quickly. Guide dogs are very clever.","Clever nghĩa là thông minh, học nhanh, nghĩ nhanh. Chó dẫn đường rất thông minh.","Chỉ ngón tay vào đầu mình."],
+ ['s1','b1','lonely',"Lonely means unhappy because you are alone. A pet can help a lonely person.","Lonely nghĩa là buồn vì ở một mình. Một con thú cưng có thể giúp người đang cô đơn.","Hạ giọng xuống cho hợp với từ buồn."],
+ ['s1','b1','wild',"Wild means living in nature, not kept by people.","Wild nghĩa là sống trong tự nhiên, không do con người nuôi.","Đưa tay ra xa như chỉ về rừng núi."],
+ ['s1','b1','helpful',"Helpful means giving help or being useful. This is the key word of my lesson.","Helpful nghĩa là hay giúp đỡ, có ích. Đây là từ quan trọng nhất của bài.","Nói chậm và rõ — đây là từ trục của cả bài."],
+ ['s1','b1','dolphin',"A dolphin is a smart sea animal that swims and plays.","Cá heo là con vật biển thông minh, biết bơi và biết chơi đùa.","Lượn bàn tay như cá heo bơi."],
+ ['s1','b1','dog',"A dog is a common pet that is loyal and helpful.","Chó là thú cưng quen thuộc, trung thành và hay giúp đỡ.","Nhắc lại con chó trong câu chuyện lúc nãy."],
+ ['s1','b1','horse',"A horse is a strong animal that people ride.","Ngựa là con vật khoẻ mà con người cưỡi được.","Làm động tác cầm dây cương."],
+ ['s1','b1','guide',"To guide means to lead the way. A guide dog is a dog that helps blind people.","Guide nghĩa là dẫn đường. Guide dog là con chó giúp người khiếm thị.","Đưa tay chỉ về phía trước như đang dẫn đường."],
+ ['s1','b1','rescue',"To rescue means to save someone from danger. It is also the act of saving.","Rescue nghĩa là cứu ai đó khỏi nguy hiểm. Nó cũng có nghĩa là việc cứu hộ.","Nói mạnh, dứt khoát."],
+ ['s1','b1',null,"Twelve words. Now let's meet the animals.","Mười hai từ. Bây giờ mình cùng gặp các con vật nhé.","Chuyển người sang phía khối số 2."],
+
+ // ---------------- 2. HELPFUL ANIMALS ----------------
+ ['s2','b2',null,"Part two: five helpful animals.","Phần hai: năm con vật hay giúp người.","Giơ năm ngón tay lên."],
+ ['s2','b2','dogs',"Dogs are loyal and protective. They stay with us and keep us safe.","Chó thì trung thành và biết bảo vệ. Chúng ở bên ta và giữ cho ta an toàn.","Chỉ vào ảnh con chó."],
+ ['s2','b2','horses',"Horses are strong and hardworking. They can work all day long.","Ngựa thì khoẻ và chăm chỉ. Chúng có thể làm việc cả ngày.","Gồng tay lên cho thấy chữ strong."],
+ ['s2','b2','dolphins',"Dolphins are smart and friendly. They love to play with people.","Cá heo thì thông minh và thân thiện. Chúng thích chơi với con người.","Cười khi nói friendly."],
+ ['s2','b2','elephants',"Elephants are gentle and powerful. They are very big, but they are kind.","Voi thì hiền lành và mạnh mẽ. Chúng rất to, nhưng rất hiền.","Nói chậm hai từ gentle và powerful."],
+ ['s2','b2','birds',"Birds are smart and good helpers, too. Long ago, birds carried letters for people.","Chim cũng thông minh và giúp việc rất tốt. Ngày xưa chim còn đưa thư cho con người.","Vẫy hai tay như đôi cánh."],
+ ['s2','b2',null,"Five animals — and five different talents.","Năm con vật — và năm năng khiếu khác nhau.","Nhắc lại từ talent vừa học."],
+
+ // ---------------- 3. HOW ANIMALS HELP ----------------
+ ['s3','b3',null,"Part three: how animals help us. Here are five jobs.","Phần ba: các con vật giúp ta thế nào. Đây là năm công việc.","Chỉ vào khối màu cam."],
+ ['s3','b3','guide-people',"Number one: they guide people. They help people find the way safely.","Một: chúng dẫn đường. Chúng giúp con người đi đúng đường và an toàn.","Nhắc lại chú chó vàng ở công viên."],
+ ['s3','b3','carry-things',"Number two: they carry things. They carry heavy loads for people.","Hai: chúng chở đồ. Chúng chở những thứ nặng giúp con người.","Làm bộ vác một túi nặng trên vai."],
+ ['s3','b3','find-people',"Number three: they find people. They find people who are lost or in danger.","Ba: chúng tìm người. Chúng tìm những người bị lạc hoặc đang gặp nguy hiểm.","Nói: đây chính là rescue — cứu hộ."],
+ ['s3','b3','help-farmers',"Number four: they help farmers. They work on farms and help grow food.","Bốn: chúng giúp nhà nông. Chúng làm việc trên đồng và giúp trồng ra thức ăn.","Chỉ vào ảnh bác nông dân và con ngựa."],
+ ['s3','b3','make-happy',"Number five: they make people happy. They bring joy, comfort and friendship.","Năm: chúng làm con người vui. Chúng mang lại niềm vui, sự an ủi và tình bạn.","Nói ấm áp, chậm rãi."],
+ ['s3','b3',null,"That last one is my favourite. My grandma lives alone, but she is never lonely — she has a cat.","Điều cuối cùng là điều mình thích nhất. Bà mình sống một mình, nhưng bà không bao giờ cô đơn — bà có một con mèo.","Dùng lại từ lonely vừa học."],
+
+ // ---------------- 4. WILD AND TRAINED ----------------
+ ['s4','b4',null,"Part four: wild and trained animals. But not every animal has a job.","Phần bốn: thú hoang và thú được huấn luyện. Nhưng không phải con vật nào cũng có việc làm.","Lắc đầu nhẹ khi nói câu thứ hai."],
+ ['s4','b4','wild-live',"Some animals live in the wild. Giraffes, zebras and elephants live free in nature.","Một số con vật sống trong tự nhiên. Hươu cao cổ, ngựa vằn và voi sống tự do giữa thiên nhiên.","Chỉ vào ảnh đồng cỏ."],
+ ['s4','b4','learn-jobs',"But some animals can learn jobs. People train them slowly, with love and patience.","Nhưng một số con vật học được việc. Con người huấn luyện chúng từ từ, bằng tình thương và sự kiên nhẫn.","Chỉ vào ảnh cô huấn luyện viên và con chó."],
+ ['s4','b4',null,"A wild animal is not better or worse. It is just different — and it needs a safe home too.","Thú hoang không tốt hơn cũng không kém hơn. Chỉ là khác thôi — và chúng cũng cần một nơi sống an toàn.","Nói nhẹ nhàng, nghiêm túc."],
+
+ // ---------------- 5. READING IDEA ----------------
+ ['s5','b5',null,"Part five: the reading idea. This is the big idea of my lesson.","Phần năm: ý chính của bài đọc. Đây là ý lớn của bài học.","Chỉ vào khối màu hồng."],
+ ['s5','b5',null,"People and animals can work together.","Con người và động vật có thể cùng làm việc với nhau.","Đọc thật rõ — đây là câu quan trọng."],
+ ['s5','b5',null,"Look at this picture. A boy with his dog. A girl with her horse. Everybody is smiling.","Nhìn bức hình này. Một bạn trai với con chó. Một bạn gái với con ngựa. Ai cũng đang cười.","Chỉ vào từng bạn trong hình."],
+ ['s5','b5',null,"We help animals, and animals help us. That is teamwork.","Ta giúp con vật, con vật giúp ta. Đó chính là làm việc cùng nhau.","Đan hai bàn tay vào nhau."],
+
+ // ---------------- 6. REMEMBER ----------------
+ ['s6','b6',null,"Part six: remember. This is the sentence I want you to take home today.","Phần sáu: ghi nhớ. Đây là câu mình muốn các bạn mang về nhà hôm nay.","Chỉ vào khối màu xanh dương."],
+ ['s6','b6',null,"Animals can be helpful friends.","Động vật có thể là những người bạn hay giúp đỡ.","Đọc chậm, rõ từng chữ."],
+ ['s6','b6',null,"So please be kind to animals. Give them food, water and a safe home.","Vậy nên hãy đối xử tử tế với con vật. Cho chúng thức ăn, nước uống và một nơi ở an toàn.","Nói chân thành, nhìn thẳng vào lớp."],
+
+ // ---------------- KẾT BÀI ----------------
+ ['end','ALL',null,"Now, back to the park. In the end, I did not play with that guide dog.","Bây giờ quay lại công viên. Cuối cùng thì mình đã không chơi với chú chó dẫn đường ấy.","Mỉm cười, nói như đang kết chuyện."],
+ ['end','ALL',null,"I just said thank you — because that clever dog was doing a very important job.","Mình chỉ nói cảm ơn thôi — vì chú chó thông minh ấy đang làm một việc rất quan trọng.","Gật đầu nhẹ như đang cảm ơn."],
+ ['end','ALL',null,"Next time you see an animal, ask yourself: how can this animal help people?","Lần tới khi gặp một con vật, hãy tự hỏi: con vật này giúp con người được gì nhỉ?","Chỉ tay vào cả lớp."],
+ ['end','ALL',null,"And one more question: how can I help this animal?","Và thêm một câu hỏi nữa: mình giúp được gì cho con vật này?","Chỉ tay vào chính mình."],
+ ['end','b0',null,"That is my presentation: Animals Help People. Thank you for listening!","Bài thuyết trình của mình đến đây là hết: Động vật giúp con người. Cảm ơn mọi người đã lắng nghe!","Đứng thẳng, cúi đầu nhẹ."],
+ ['end','ALL',null,"Do you have any questions for me?","Mọi người có câu hỏi nào cho mình không ạ?","Mở hai tay ra mời cả lớp hỏi."]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1448, MAPH=1086;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>
