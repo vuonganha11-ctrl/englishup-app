@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Animals Around Us</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Animals Around Us<small>Level A · Chủ đề: Động vật quanh ta</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Animals Around Us" src="tt-animals.webp?v=20260820">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[456,400,539,223],
+  b1  :[10,8,364,848],
+  b2  :[392,10,694,391],
+  b3  :[1107,10,416,456],
+  b4  :[1010,465,514,268],
+  b5  :[386,747,243,262],
+  b6  :[641,736,517,272],
+  b7  :[1177,742,344,266]
+};
+const ROWS = {
+  'pet':[14,33,355,110],
+  'feed':[14,143,355,87],
+  'care':[14,230,355,88],
+  'cage':[14,318,355,88],
+  'tank':[14,406,355,82],
+  'leash':[14,488,355,76],
+  'vet':[14,564,355,70],
+  'groom':[14,634,355,70],
+  'foodw':[14,704,355,74],
+  'bed':[14,778,355,74],
+  'mammals':[398,34,104,364],
+  'birds':[502,34,115,364],
+  'fish':[617,34,117,364],
+  'reptiles':[734,34,118,364],
+  'amphibians':[852,34,121,364],
+  'insects':[973,34,107,364],
+  'n-food':[1112,50,408,86],
+  'n-water':[1112,136,408,81],
+  'n-shelter':[1112,217,408,84],
+  'n-air':[1112,301,408,80],
+  'n-love':[1112,381,408,80],
+  'puppy':[1024,505,93,195],
+  'kitten':[1117,505,98,195],
+  'chick':[1215,505,99,195],
+  'duckling':[1314,505,99,195],
+  'turtle':[1413,505,102,195],
+  'hatch':[1016,698,500,30],
+  'guide-us':[648,770,86,235],
+  'give-food':[734,770,108,235],
+  'plants':[842,770,101,235],
+  'give-things':[943,770,103,235],
+  'protect':[1046,770,104,235]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Animal Groups', color:'#6fcf7a'},
+  s3   : {label:'3. What Animals Need', color:'#b795ec'},
+  s4   : {label:'4. Animal Babies', color:'#f0a24a'},
+  s5   : {label:'6. How Animals Help Us', color:'#4bc4bd'},
+  s6   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s7   : {label:'7. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+  ['intro','ALL',null,"Good morning, everyone. My name is Anh, and I am very happy to be here today.","Chào buổi sáng cả nhà. Em tên là Anh, hôm nay em rất vui khi được đứng đây.","Đứng thẳng, mỉm cười, đưa mắt nhìn khắp lớp"],
+  ['intro','b0',null,"The name of my mind map is Animals Around Us.","Tên sơ đồ tư duy của em là Animals Around Us - Những con vật quanh ta.","Chỉ hai tay vào đám mây tiêu đề ở giữa"],
+  ['intro','ALL',null,"I drew this map by myself, and it has seven parts.","Em tự vẽ sơ đồ này, và nó có bảy phần.","Đặt tay lên ngực, rồi giơ 7 ngón tay"],
+  ['intro','ALL',null,"Key vocabulary, animal groups, what animals need, animal babies, a reading idea, how animals help us, and one thing to remember.","Từ vựng, các nhóm động vật, nhu cầu của động vật, các con non, ý bài đọc, cách động vật giúp người, và một điều cần ghi nhớ.","Chỉ lần lượt từng khối theo thứ tự, mỗi khối một nhịp"],
+  ['intro','ALL',null,"But first, I want to tell you a true story about me.","Nhưng trước tiên, em muốn kể cho cả nhà nghe một câu chuyện có thật của em.","Hạ giọng, nghiêng người về phía khán giả"],
+
+  ['story','ALL',null,"One rainy afternoon, I walked home from school.","Một buổi chiều mưa, em đi bộ từ trường về nhà.","Hai tay làm động tác che đầu như đang trú mưa"],
+  ['story','ALL',null,"I heard a small sound near the gate. It said meow, meow.","Em nghe một tiếng kêu nhỏ gần cổng. Nó kêu meo, meo.","Khum tay sau tai, lắng nghe"],
+  ['story','ALL',null,"It was a tiny kitten. It was wet and it was cold.","Đó là một chú mèo con bé xíu. Nó ướt sũng và lạnh run.","Chụm hai tay lại như đang nâng một con mèo nhỏ"],
+  ['story','ALL',null,"I put the kitten in my jacket, I ran home, and I asked my mother, Can we keep it, please?","Em bỏ chú mèo vào áo khoác, chạy về nhà và hỏi mẹ, Mẹ ơi, nhà mình giữ nó lại được không ạ?","Ôm chặt trước ngực, rồi chắp hai tay xin, mắt mở to"],
+  ['story','ALL',null,"My mother smiled. She said, Yes, but a pet is a big job.","Mẹ em mỉm cười. Mẹ nói, Được, nhưng nuôi thú cưng là một việc lớn đấy.","Gật đầu chậm, giơ một ngón trỏ như mẹ đang dặn"],
+  ['story','ALL',null,"I did not know how to take care of a kitten. I only knew how to love it.","Lúc đó em chưa biết chăm mèo con thế nào. Em chỉ biết yêu nó thôi.","Nhún vai, rồi đặt hai tay lên tim"],
+  ['story','ALL',null,"So I read books, I asked the vet, and I made this mind map.","Vậy là em đọc sách, hỏi bác sĩ thú y, và làm ra sơ đồ tư duy này.","Làm động tác mở sách, rồi chỉ vào sơ đồ"],
+  ['story','ALL',null,"Now let me show you everything I learned. Here is part one.","Bây giờ em xin chia sẻ tất cả những gì em đã học. Đây là phần một.","Bước sang một bên, mở tay mời cả lớp nhìn vào khối 1"],
+
+  ['s1','b1',null,"Part one is my key vocabulary. I learned ten new words.","Phần một là từ vựng quan trọng. Em đã học được mười từ mới.","Chỉ vào tiêu đề khối 1, rồi giơ 10 ngón tay"],
+  ['s1','b1','pet',"A pet is an animal that people keep for fun and companionship.","Pet là con vật mà người ta nuôi để vui và làm bạn.","Chỉ vào dòng chữ pet, rồi vuốt ve một chú mèo tưởng tượng"],
+  ['s1','b1','feed',"Feed means to give food to animals. I feed my kitten two times a day.","Feed nghĩa là cho động vật ăn. Em cho mèo của em ăn hai lần một ngày.","Làm động tác đặt bát thức ăn xuống sàn, giơ 2 ngón tay"],
+  ['s1','b1','care',"Care means to look after and protect animals.","Care nghĩa là chăm sóc và bảo vệ con vật.","Vòng hai tay như đang ôm che chở"],
+  ['s1','b1','cage',"A cage is a small house made of wire for pets.","Cage là cái chuồng nhỏ làm bằng lưới sắt cho thú cưng.","Đan các ngón tay lại thành hình song sắt"],
+  ['s1','b1','tank',"A tank is a glass container for fish.","Tank là bể kính để nuôi cá.","Hai tay vẽ hình khối hộp trên không"],
+  ['s1','b1','leash',"A leash is a rope or strap used to walk a dog.","Leash là sợi dây dắt dùng để dắt chó đi dạo.","Nắm tay như đang cầm dây dắt, bước đi vài bước"],
+  ['s1','b1','vet',"A vet is a doctor who takes care of animals. My vet is very kind.","Vet là bác sĩ chuyên chăm sóc động vật. Bác sĩ thú y của em rất hiền.","Làm động tác đặt ống nghe lên ngực"],
+  ['s1','b1','groom',"Groom means to clean and brush an animal.","Groom nghĩa là tắm rửa và chải lông cho con vật.","Tay phải làm động tác chải lông từ trên xuống"],
+  ['s1','b1','foodw',"Food is something that animals eat to stay healthy.","Food là thức ăn giúp con vật khỏe mạnh.","Làm động tác đưa tay lên miệng như đang ăn"],
+  ['s1','b1','bed',"A bed is a soft place for pets to sleep. My kitten loves her bed.","Bed là chỗ nằm êm ái cho thú cưng ngủ. Mèo của em rất thích ổ của nó.","Chắp hai tay đặt nghiêng bên má như đang ngủ"],
+
+  ['s2','b2',null,"Part two is animal groups. There are six groups on my map.","Phần hai là các nhóm động vật. Trên sơ đồ của em có sáu nhóm.","Chỉ vào khối 2, giơ 6 ngón tay"],
+  ['s2','b2','mammals',"First, mammals, for example a dog. They have hair or fur, and mothers give milk to their babies.","Thứ nhất là thú, ví dụ con chó. Chúng có lông, và mẹ cho con bú sữa.","Chỉ vào ảnh con chó, rồi vuốt tay lên cánh tay mình như vuốt lông"],
+  ['s2','b2','birds',"Second, birds, for example a parrot. They have feathers and wings, and they lay eggs.","Thứ hai là chim, ví dụ con vẹt. Chúng có lông vũ và cánh, và chúng đẻ trứng.","Vẫy hai tay như vỗ cánh"],
+  ['s2','b2','fish',"Third, fish, for example a goldfish. They live in water and they have gills and fins.","Thứ ba là cá, ví dụ cá vàng. Chúng sống dưới nước, có mang và có vây.","Chụm tay làm động tác cá bơi lượn"],
+  ['s2','b2','reptiles',"Fourth, reptiles, for example a turtle. They have dry, scaly skin and they often lay eggs.","Thứ tư là bò sát, ví dụ con rùa. Da chúng khô và có vảy, và chúng thường đẻ trứng.","Chỉ vào ảnh con rùa, rồi xoa mu bàn tay"],
+  ['s2','b2','amphibians',"Fifth, amphibians, for example a frog. They live on land and in water, and their skin is usually moist.","Thứ năm là lưỡng cư, ví dụ con ếch. Chúng sống cả trên cạn và dưới nước, da thường ẩm ướt.","Một tay chỉ xuống đất, một tay làm sóng nước"],
+  ['s2','b2','insects',"Sixth, insects, for example a butterfly. They have six legs and three body parts, and many have wings.","Thứ sáu là côn trùng, ví dụ con bướm. Chúng có sáu chân và ba phần cơ thể, nhiều loài có cánh.","Giơ 6 ngón tay, rồi 3 ngón, rồi chụm hai bàn tay vẫy như cánh bướm"],
+
+  ['s3','b3',null,"Part three is what animals need. Every animal needs five things.","Phần ba là những thứ động vật cần. Mọi con vật đều cần năm thứ.","Chỉ vào khối 3, giơ 5 ngón tay"],
+  ['s3','b3','n-food',"Animals need food to give them energy.","Động vật cần thức ăn để có năng lượng.","Gồng nhẹ hai cánh tay thể hiện khỏe mạnh"],
+  ['s3','b3','n-water',"Animals need clean water to drink.","Động vật cần nước sạch để uống.","Làm động tác cầm cốc uống nước"],
+  ['s3','b3','n-shelter',"Animals need a safe place to live and rest.","Động vật cần một nơi an toàn để sống và nghỉ ngơi.","Chụm hai tay trên đầu thành hình mái nhà"],
+  ['s3','b3','n-air',"Animals need clean air to breathe.","Động vật cần không khí sạch để thở.","Hít một hơi thật sâu rồi thở ra"],
+  ['s3','b3','n-love',"Animals need love and care to be happy and healthy.","Động vật cần tình yêu thương và sự chăm sóc để vui và khỏe.","Vẽ hình trái tim bằng hai tay"],
+
+  ['s4','b4',null,"Part four is animal babies. Baby animals have special names.","Phần bốn là các con non. Động vật con có tên gọi riêng.","Chỉ vào khối 4, hai tay khum nhỏ lại"],
+  ['s4','b4','puppy',"A baby dog is a puppy. A puppy is born alive.","Chó con gọi là puppy. Chó con được sinh ra.","Chỉ vào ảnh chó con"],
+  ['s4','b4','kitten',"A baby cat is a kitten. A kitten is born alive, like my little cat.","Mèo con gọi là kitten. Mèo con được sinh ra, giống bé mèo của em.","Chỉ vào ảnh mèo con, rồi chỉ vào mình"],
+  ['s4','b4','chick',"A baby chicken is a chick. A chick hatches from an egg.","Gà con gọi là chick. Gà con nở ra từ quả trứng.","Hai tay chụm rồi mở ra như trứng nở"],
+  ['s4','b4','duckling',"A baby duck is a duckling. A duckling hatches from an egg too.","Vịt con gọi là duckling. Vịt con cũng nở ra từ trứng.","Chụm ngón tay làm mỏ vịt kêu quạc quạc"],
+  ['s4','b4','turtle',"A baby turtle hatches from an egg in the warm sand.","Rùa con nở ra từ quả trứng trong cát ấm.","Bàn tay bò chậm trên không như rùa con"],
+  ['s4','b4','hatch',"So remember this. Some animals are born alive. Some animals hatch from eggs.","Vậy hãy nhớ nhé. Có loài được sinh ra, có loài nở ra từ trứng.","Tay trái đưa ra một bên, tay phải đưa ra bên kia, so sánh hai nhóm"],
+
+  ['s5','b6',null,"Part six is how animals help us. Animals are our friends and our helpers.","Phần sáu là cách động vật giúp chúng ta. Động vật là bạn và là người giúp đỡ chúng ta.","Chỉ vào khối 6, mở rộng hai tay"],
+  ['s5','b6','guide-us',"Animals guide us. Guide dogs help blind people.","Động vật dẫn đường cho ta. Chó dẫn đường giúp người khiếm thị.","Che mắt bằng một tay, tay kia đưa ra phía trước dò đường"],
+  ['s5','b6','give-food',"Animals give us food. Cows give us milk and meat.","Động vật cho ta thức ăn. Bò cho ta sữa và thịt.","Chỉ vào ảnh con bò, rồi làm động tác uống sữa"],
+  ['s5','b6','plants',"Animals help plants grow. Bees help flowers make fruits and seeds.","Động vật giúp cây lớn lên. Ong giúp hoa tạo ra quả và hạt.","Ngón tay bay vòng vòng như con ong, rồi xòe tay như bông hoa"],
+  ['s5','b6','give-things',"Animals give us things. Sheep give us wool for warm clothes.","Động vật cho ta nhiều thứ. Cừu cho ta len để làm áo ấm.","Xoa hai tay lên vai như đang mặc áo len ấm"],
+  ['s5','b6','protect',"Animals protect us. Dogs help police find people and keep us safe.","Động vật bảo vệ chúng ta. Chó giúp cảnh sát tìm người và giữ an toàn cho ta.","Đứng thẳng, tay đưa ra trước như chào kiểu bảo vệ"],
+
+  ['s6','b5',null,"Part five is my reading idea. This is my favourite picture on the map.","Phần năm là ý bài đọc của em. Đây là bức tranh em thích nhất trên sơ đồ.","Chỉ vào bức tranh bạn gái ôm chú chó golden"],
+  ['s6','b5',null,"In the picture, a girl hugs her golden dog. They look very happy together.","Trong tranh, một bạn gái ôm chú chó golden. Hai bạn trông rất hạnh phúc.","Tự ôm mình, nghiêng đầu mỉm cười"],
+  ['s6','b5',null,"The idea is simple. Pets are part of our families, and we should care for them every day.","Ý chính rất đơn giản. Thú cưng là một phần của gia đình, và ta nên chăm sóc chúng mỗi ngày.","Vẽ vòng tròn ôm trọn trước ngực, rồi lắc nhẹ ngón trỏ"],
+
+  ['s7','b7',null,"Part seven is the most important part. It says, remember.","Phần bảy là phần quan trọng nhất. Phần này nói, hãy ghi nhớ.","Chỉ vào khối 7, gõ nhẹ ngón tay lên thái dương"],
+  ['s7','b7',null,"In this picture I drew a dog, a cat, a rabbit, a parrot, a turtle, a fish tank, and a chicken.","Trong tranh này em vẽ chó, mèo, thỏ, vẹt, rùa, bể cá và gà.","Chỉ lần lượt vào từng con vật trong khối 7"],
+  ['s7','b7',null,"Animals are everywhere. They need our care, and we need them!","Động vật ở khắp mọi nơi. Chúng cần ta chăm sóc, và ta cũng cần chúng!","Chỉ xuống sàn, chỉ lên trời, rồi đưa hai tay lại nắm chặt vào nhau"],
+
+  ['end','ALL',null,"Now I want to go back to my rainy afternoon.","Bây giờ em xin quay lại buổi chiều mưa hôm ấy.","Nhắm mắt một giây, rồi mở ra nhìn khán giả"],
+  ['end','ALL',null,"The little wet kitten is big now. Her name is Miu and she sleeps on my bed.","Chú mèo con ướt sũng ngày ấy nay đã lớn. Tên bạn ấy là Miu, và bạn ấy ngủ trên giường em.","Đưa tay từ thấp lên cao thể hiện mèo lớn lên"],
+  ['end','ALL',null,"My mother asked me, Can you take care of her? Today my answer is yes.","Mẹ từng hỏi em, Con chăm được bạn ấy không? Hôm nay câu trả lời của em là có.","Gật đầu chắc chắn, một tay đặt lên tim"],
+  ['end','ALL',null,"Because now I know their groups, their babies, and everything they need.","Bởi vì bây giờ em đã biết nhóm của chúng, con non của chúng và mọi thứ chúng cần.","Chỉ nhanh qua ba khối 2, 4 và 3"],
+  ['end','ALL',null,"Thank you for listening to me today. I hope you love animals too.","Cảm ơn cả nhà đã lắng nghe em hôm nay. Em mong cả nhà cũng yêu động vật.","Cúi đầu chào, hai tay đặt trước bụng"],
+  ['end','ALL',null,"Do you have any questions for me? I am happy to answer.","Cả nhà có câu hỏi nào cho em không ạ? Em rất sẵn lòng trả lời.","Mở hai tay mời gọi, mỉm cười và nhìn quanh lớp"]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

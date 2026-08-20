@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Healthy Food, Healthy Body</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Healthy Food, Healthy Body<small>Level A · Chủ đề: Ăn uống lành mạnh</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Healthy Food, Healthy Body" src="tt-food.webp?v=20260820">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[484,359,597,241],
+  b1  :[6,8,386,988],
+  b2  :[405,9,723,308],
+  b3  :[1144,8,386,598],
+  b4  :[409,632,364,362],
+  b5  :[790,633,347,363],
+  b6  :[1155,633,375,363]
+};
+const ROWS = {
+  'apple':[12,33,374,92],
+  'bread':[12,125,374,74],
+  'milk':[12,199,374,74],
+  'meat':[12,273,374,74],
+  'vegetable':[12,347,374,74],
+  'fruit':[12,421,374,74],
+  'rice':[12,495,374,75],
+  'healthy':[12,570,374,75],
+  'delicious':[12,645,374,76],
+  'water':[12,721,374,79],
+  'strong':[12,800,374,89],
+  'energy':[12,889,374,101],
+  'g-fruits':[413,50,134,262],
+  'g-veg':[547,50,150,262],
+  'g-grains':[697,50,147,262],
+  'g-protein':[844,50,142,262],
+  'g-dairy':[986,50,132,262],
+  'h-variety':[1152,55,370,117],
+  'h-more':[1152,172,370,113],
+  'h-less':[1152,285,370,98],
+  'h-water':[1152,383,370,106],
+  'h-family':[1152,489,370,111],
+  'ex1':[415,668,352,66],
+  'ex2':[415,734,352,66],
+  'ex3':[415,800,352,58],
+  'ex4':[415,858,352,60],
+  'ex5':[415,918,352,72],
+  'formula':[1163,678,360,240],
+  'quote':[1163,920,360,70]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Food Groups', color:'#b795ec'},
+  s3   : {label:'4. Examples', color:'#4bc4bd'},
+  s4   : {label:'3. Healthy Eating Habits', color:'#f0a24a'},
+  s5   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+  ['intro','ALL',null,"Good morning, everyone. My name is Anh, and I am very happy to be here today.","Chào buổi sáng cả lớp. Tớ tên là Anh, hôm nay tớ rất vui khi được đứng đây.","Đứng thẳng, mỉm cười, vẫy tay chào cả lớp"],
+  ['intro','b0',null,"My topic today is Healthy Food, Healthy Body.","Chủ đề của tớ hôm nay là Thức ăn lành mạnh, cơ thể khoẻ mạnh.","Chỉ hai tay vào đám mây tiêu đề trên màn hình"],
+  ['intro','ALL',null,"This is my mind map. It has six parts.","Đây là sơ đồ tư duy của tớ. Nó có sáu phần.","Vẽ một vòng tròn lớn trong không khí quanh sơ đồ"],
+  ['intro','ALL',null,"Part one is key words. Part two is food groups. Part three is healthy eating habits.","Phần một là từ khoá. Phần hai là các nhóm thực phẩm. Phần ba là thói quen ăn uống lành mạnh.","Giơ lần lượt một, hai, ba ngón tay"],
+  ['intro','ALL',null,"Part four is examples. Part five is a reading idea. Part six is what we must remember.","Phần bốn là câu ví dụ. Phần năm là ý bài đọc. Phần sáu là điều cần ghi nhớ.","Giơ tiếp bốn, năm, sáu ngón tay"],
+  ['intro','ALL',null,"But first, please listen to my small story.","Nhưng trước tiên, mời các bạn nghe câu chuyện nhỏ của tớ.","Chụm hai tay trước ngực, hạ giọng nhẹ như sắp kể chuyện"],
+
+  ['story','ALL',null,"Last month, I loved snacks very much.","Tháng trước, tớ rất thích ăn quà vặt.","Xoa bụng, cười thích thú"],
+  ['story','ALL',null,"Every morning, I ate candy and chips. I did not eat breakfast.","Sáng nào tớ cũng ăn kẹo và bim bim. Tớ không ăn bữa sáng.","Giả bộ bóc gói bim bim rồi bỏ vào miệng"],
+  ['story','ALL',null,"One day, we had a P.E. lesson. We ran around the school yard.","Một hôm, lớp tớ có giờ thể dục. Chúng tớ chạy quanh sân trường.","Chạy tại chỗ hai ba bước"],
+  ['story','ALL',null,"After two rounds, I was very tired. My legs were soft like noodles.","Sau hai vòng, tớ mệt lắm. Chân tớ mềm nhũn như sợi bún.","Thở dốc, hai tay chống đầu gối"],
+  ['story','ALL',null,"My friends were still running and laughing. I sat down alone.","Các bạn vẫn chạy và cười vui. Còn tớ thì ngồi bệt xuống một mình.","Ngồi xổm nhẹ, mặt buồn, nhìn theo tay chỉ ra xa"],
+  ['story','ALL',null,"I asked myself one question. Why am I not strong like my friends?","Tớ tự hỏi một câu. Vì sao tớ không khoẻ như các bạn nhỉ?","Đưa ngón trỏ lên thái dương, nhíu mày suy nghĩ"],
+  ['story','ALL',null,"That evening, I told my mother about it.","Tối hôm đó, tớ kể chuyện này cho mẹ nghe.","Quay sang một bên như đang nói với mẹ"],
+  ['story','ALL',null,"The next morning, my mother made a new breakfast. Rice, eggs, vegetables, and a glass of milk.","Sáng hôm sau, mẹ làm cho tớ bữa sáng mới. Cơm, trứng, rau và một ly sữa.","Dùng hai tay vẽ một mâm cơm trước mặt"],
+  ['story','ALL',null,"After two weeks, I could run and run. So today I want to share what I learned.","Sau hai tuần, tớ chạy được mãi không mệt. Nên hôm nay tớ muốn chia sẻ điều tớ đã học.","Gồng tay khoe cơ bắp rồi mở rộng hai tay về phía lớp"],
+
+  ['s1','b1',null,"Part one is my key vocabulary. I have twelve words here.","Phần một là từ vựng quan trọng. Tớ có mười hai từ ở đây.","Chỉ vào khung số 1, xoè hai bàn tay"],
+  ['s1','b1','apple',"An apple is a round, sweet fruit. Its skin can be red, green, or yellow.","Quả táo là một loại quả tròn và ngọt. Vỏ của nó có thể đỏ, xanh hoặc vàng.","Chụm hai tay thành hình quả táo tròn"],
+  ['s1','b1','bread',"Bread is a soft food. We make it from flour.","Bánh mì là món ăn mềm. Chúng ta làm nó từ bột mì.","Giả vờ bóp một ổ bánh mì mềm trong tay"],
+  ['s1','b1','milk',"Milk is a white drink from cows. It is very good for our bones.","Sữa là thức uống màu trắng lấy từ bò. Nó rất tốt cho xương của chúng ta.","Giả bộ cầm ly sữa uống một ngụm"],
+  ['s1','b1','meat',"Meat is the flesh of animals that we eat.","Thịt là phần thịt của động vật mà chúng ta ăn.","Giả vờ cầm đũa gắp một miếng thịt"],
+  ['s1','b1','vegetable',"A vegetable is a healthy plant food. Carrots and broccoli are vegetables.","Rau là thức ăn lành mạnh từ cây. Cà rốt và bông cải xanh là rau.","Giơ tay lên như cầm một cây bông cải"],
+  ['s1','b1','fruit',"Fruit is a sweet food. It comes from a tree or a plant.","Trái cây là thức ăn ngọt. Nó mọc từ cây hoặc cành.","Đưa tay lên cao rồi hái xuống như hái quả"],
+  ['s1','b1','rice',"Rice is a kind of food. We eat it with many meals.","Cơm là một loại thức ăn. Chúng ta ăn cơm trong nhiều bữa.","Giả bộ bưng chén cơm và và cơm"],
+  ['s1','b1','healthy',"Healthy means good for your body. Healthy food helps you stay strong.","Lành mạnh nghĩa là tốt cho cơ thể. Đồ ăn lành mạnh giúp bạn khoẻ mạnh.","Vỗ nhẹ lên ngực, gật đầu chắc chắn"],
+  ['s1','b1','delicious',"Delicious means very tasty. My mother cooks delicious food.","Ngon nghĩa là rất vừa miệng. Mẹ tớ nấu ăn rất ngon.","Xoa bụng, chụm ngón tay hôn gió"],
+  ['s1','b1','water',"Water is a clear drink. Our body needs water every day.","Nước là thức uống trong suốt. Cơ thể chúng ta cần nước mỗi ngày.","Cầm chai nước giơ lên cho cả lớp thấy"],
+  ['s1','b1','strong',"Strong means having power and energy to do things.","Khoẻ nghĩa là có sức mạnh và năng lượng để làm mọi việc.","Gồng hai cánh tay khoe cơ"],
+  ['s1','b1','energy',"Energy is the power to move and be active.","Năng lượng là sức để di chuyển và hoạt động.","Nhảy tại chỗ một cái, hai tay giơ lên"],
+
+  ['s2','b2',null,"Part two is food groups. There are five groups on my map.","Phần hai là các nhóm thực phẩm. Có năm nhóm trên sơ đồ của tớ.","Chỉ vào khung số 2, xoè năm ngón tay"],
+  ['s2','b2','g-fruits',"The first group is fruits. Fruits give us vitamins and keep us healthy.","Nhóm đầu tiên là trái cây. Trái cây cho chúng ta vitamin và giữ cơ thể khoẻ mạnh.","Chỉ vào cột trái cây rồi làm động tác ăn một quả táo"],
+  ['s2','b2','g-veg',"The second group is vegetables. They help our body fight sickness.","Nhóm thứ hai là rau củ. Rau giúp cơ thể chống lại bệnh tật.","Chỉ vào cột rau, giơ hai nắm tay như đang bảo vệ"],
+  ['s2','b2','g-grains',"The third group is grains. Grains give us energy to move and play.","Nhóm thứ ba là ngũ cốc. Ngũ cốc cho chúng ta năng lượng để chạy nhảy và chơi.","Chỉ vào cột ngũ cốc rồi chạy tại chỗ"],
+  ['s2','b2','g-protein',"The fourth group is protein. Protein helps our body grow and build muscles.","Nhóm thứ tư là chất đạm. Đạm giúp cơ thể lớn lên và xây dựng cơ bắp.","Chỉ vào cột đạm rồi gồng bắp tay"],
+  ['s2','b2','g-dairy',"The fifth group is dairy. Dairy keeps our bones and teeth strong.","Nhóm thứ năm là sữa và chế phẩm từ sữa. Nó giúp xương và răng chắc khoẻ.","Chỉ vào cột sữa, sau đó gõ nhẹ vào răng và cánh tay"],
+
+  ['s3','b4',null,"Part four is my examples. I put each food in the right group.","Phần bốn là các câu ví dụ. Tớ xếp mỗi món ăn vào đúng nhóm của nó.","Chỉ vào khung số 4, tay kia làm động tác sắp xếp"],
+  ['s3','b4','ex1',"An apple is a fruit.","Quả táo là trái cây.","Chụm tay thành quả táo rồi chỉ sang cột trái cây"],
+  ['s3','b4','ex2',"Broccoli is a vegetable.","Bông cải xanh là rau.","Giơ nắm tay lên như cầm bông cải"],
+  ['s3','b4','ex3',"Bread is a grain.","Bánh mì thuộc nhóm ngũ cốc.","Hai tay vẽ hình ổ bánh mì dài"],
+  ['s3','b4','ex4',"Chicken is a protein.","Thịt gà thuộc nhóm chất đạm.","Vỗ nhẹ hai khuỷu tay như đôi cánh gà"],
+  ['s3','b4','ex5',"Milk is a dairy food.","Sữa thuộc nhóm sữa.","Chỉ vào ly sữa rồi giả bộ uống"],
+
+  ['s4','b3',null,"Part three is healthy eating habits. I have five green ticks here.","Phần ba là thói quen ăn uống lành mạnh. Tớ có năm dấu tích xanh ở đây.","Chỉ vào khung số 3, tay vẽ dấu tích trong không khí"],
+  ['s4','b3','h-variety',"Eat a variety of foods. Do not eat the same food every day.","Hãy ăn đa dạng các món. Đừng ăn mãi một món mỗi ngày.","Xoay tay vòng tròn như đang chọn nhiều món trên bàn"],
+  ['s4','b3','h-more',"Eat more fruits and vegetables. They are my new best friends.","Hãy ăn nhiều trái cây và rau hơn. Chúng là bạn thân mới của tớ.","Đưa hai tay lên cao, gật đầu vui vẻ"],
+  ['s4','b3','h-less',"Eat less junk food and sugary snacks. This one is hard for me.","Hãy ăn ít đồ ăn vặt và bánh kẹo ngọt. Điều này với tớ hơi khó.","Đẩy hai tay ra trước như từ chối gói bánh"],
+  ['s4','b3','h-water',"Drink enough water every day. I drink water before I feel thirsty.","Hãy uống đủ nước mỗi ngày. Tớ uống nước trước khi thấy khát.","Giơ chai nước lên và uống một ngụm nhỏ"],
+  ['s4','b3','h-family',"Enjoy meals with family. Food is more delicious when we eat together.","Hãy ăn cơm vui vẻ cùng gia đình. Bữa ăn ngon hơn khi có mọi người.","Vòng hai tay như ôm cả nhà, cười ấm áp"],
+
+  ['s5','b5',null,"Part five is my reading idea. Look at this picture.","Phần năm là ý bài đọc. Các bạn nhìn bức tranh này nhé.","Chỉ vào bức tranh cậu bé trong khung số 5"],
+  ['s5','b5',null,"This boy is showing his muscles. He looks happy and strong.","Bạn nam này đang khoe cơ bắp. Bạn ấy trông vui vẻ và khoẻ mạnh.","Gồng tay khoe cơ giống bạn nhỏ trong tranh"],
+  ['s5','b5',null,"In front of him, there is fruit, a salad, and a glass of milk.","Trước mặt bạn ấy có trái cây, một đĩa salad và một ly sữa.","Lần lượt chỉ vào trái cây, đĩa salad và ly sữa"],
+  ['s5','b5',null,"The idea is simple. If we eat healthy food, drink water, and exercise, we can be strong and happy.","Ý chính rất đơn giản. Nếu ăn đồ lành mạnh, uống nước và tập thể dục, chúng ta sẽ khoẻ và vui.","Đọc chậm, nhấn từng từ, tay đánh nhịp theo"],
+  ['s5','b5',null,"This is true. I was tired before, but now I am not.","Điều này đúng thật. Trước đây tớ hay mệt, còn bây giờ thì không.","Chỉ vào ngực mình rồi lắc đầu cười"],
+
+  ['s6','b6',null,"Part six is what we must remember.","Phần sáu là điều chúng ta phải ghi nhớ.","Chỉ vào khung số 6, gõ nhẹ ngón tay lên thái dương"],
+  ['s6','b6','formula',"Here is my easy formula. Healthy food plus clean water plus exercise equals a healthy body.","Đây là công thức dễ nhớ của tớ. Đồ ăn lành mạnh cộng nước sạch cộng tập thể dục bằng cơ thể khoẻ mạnh.","Chỉ lần lượt vào từng hình trong công thức, dừng lại ở dấu bằng"],
+  ['s6','b6','formula',"We need all three. One thing alone is not enough.","Chúng ta cần cả ba thứ. Chỉ một thứ thôi là chưa đủ.","Giơ ba ngón tay, rồi hạ xuống còn một ngón và lắc đầu"],
+  ['s6','b6','quote',"And here is my favourite sentence. Healthy food makes a healthy body.","Và đây là câu tớ thích nhất. Thức ăn lành mạnh tạo nên cơ thể khoẻ mạnh.","Đưa hai tay chỉ vào băng-rôn vàng, nói to và rõ"],
+  ['s6','b6','quote',"Please say it with me one time. Healthy food makes a healthy body.","Mời cả lớp đọc cùng tớ một lần nhé. Thức ăn lành mạnh tạo nên cơ thể khoẻ mạnh.","Vẫy tay mời cả lớp cùng đọc, đánh nhịp bằng tay"],
+
+  ['end','ALL',null,"Now let me go back to my story.","Bây giờ tớ xin quay lại câu chuyện lúc đầu.","Bước lùi một bước, mở rộng hai tay"],
+  ['end','ALL',null,"In that P.E. lesson, I sat down and asked, why am I not strong like my friends?","Trong giờ thể dục hôm ấy, tớ đã ngồi xuống và hỏi, vì sao tớ không khoẻ như các bạn?","Ngồi xổm nhẹ, mặt buồn như lúc kể chuyện"],
+  ['end','ALL',null,"Today I know the answer. My body was hungry for good food.","Hôm nay tớ đã biết câu trả lời. Cơ thể tớ đang đói thức ăn tốt.","Đứng dậy, vỗ nhẹ lên bụng rồi gật đầu"],
+  ['end','ALL',null,"Last week, I ran the whole yard and I was still smiling.","Tuần trước, tớ chạy hết cả sân trường mà vẫn còn cười tươi.","Chạy tại chỗ vài bước rồi giơ hai tay lên chiến thắng"],
+  ['end','ALL',null,"So please eat your breakfast, drink your water, and move your body.","Vậy nên các bạn hãy ăn sáng, uống nước và vận động nhé.","Chỉ vào các bạn, làm động tác ăn, uống rồi nhảy nhẹ"],
+  ['end','ALL',null,"Thank you for listening. Now I am happy to answer your questions.","Cảm ơn các bạn đã lắng nghe. Bây giờ tớ rất vui được trả lời câu hỏi.","Cúi chào, sau đó mở rộng hai tay mời cả lớp giơ tay"]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

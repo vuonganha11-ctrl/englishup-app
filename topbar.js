@@ -85,7 +85,9 @@
     { href: "luyentap.html",  icon: "🏋️", label: "Luyện tập",
       match: ["flashcard.html", "vocab.html", "game.html", "goquai.html", "tuvunghinh.html",
               "thuyettrinh.html", "thuyettrinh-A-U1-L1-we-eat-flowers.html",
-              "thuyettrinh-A-U2-L4-animals-help-people.html"] },
+              "thuyettrinh-A-U2-L4-animals-help-people.html",
+              "thuyettrinh-animals-around-us.html", "thuyettrinh-healthy-food.html",
+              "thuyettrinh-animals-homes.html"] },
     { href: "report.html",    icon: "📊", label: "Thống kê" }
   ];
   var EU_MORE = [
