@@ -890,6 +890,102 @@ body.fsmap .zoombar button.zb-fs { border-color: var(--accent); color: var(--acc
   .box.lv3 { width: 150px; }
   .wpanel { width: 200px; margin: 0 5px; }
 }
+/* ═══════════ MINI STORY THEO NHÁNH LÁ (2026-08-21) ═══════════ */
+/* Nút 📖 nằm trong hàng đầu của hộp chủ đề, cạnh dấu ▶.
+   Hộp lv3 chỉ rộng 180px nên nút phải nhỏ và KHÔNG nới bề ngang hộp. */
+.box .storybtn{
+  all: unset; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 19px; height: 19px; margin-left: auto; margin-right: 4px;
+  border-radius: 6px; font-size: 11px; line-height: 1;
+  background: rgba(52,211,153,.14); border: 1px solid rgba(52,211,153,.45);
+  transition: background .15s, transform .15s;
+}
+.box .storybtn:hover{ background: rgba(52,211,153,.32); transform: scale(1.12); }
+
+/* ── Popup truyện ── */
+#overlay-story{ z-index: 95; }          /* thấp hơn overlay-word (100) để bấm từ
+                                           trong truyện thì popup từ nổi lên trên */
+.modal-story{
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; width: 100%; max-width: 720px; max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: scale(.97) translateY(10px); transition: transform .2s;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+}
+#overlay-story.open .modal-story{ transform: scale(1) translateY(0); }
+
+.sm-head{
+  padding: 14px 16px 12px; border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(52,211,153,.10), transparent);
+  position: relative; flex: none;
+}
+.sm-head .sm-x{
+  all: unset; cursor: pointer; position: absolute; top: 10px; right: 12px;
+  width: 28px; height: 28px; border-radius: 8px; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.sm-head .sm-x:hover{ background: var(--card); color: var(--text); }
+.sm-kicker{ font-size: 11px; color: var(--a3); letter-spacing: .04em; font-weight: 600; }
+.sm-topic{ font-size: 17px; font-weight: 700; margin-top: 2px; padding-right: 36px; }
+.sm-note{ font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.sm-parts{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.sm-parts button{
+  all: unset; cursor: pointer; font-size: 12px; padding: 5px 11px;
+  border-radius: 999px; border: 1px solid var(--border); color: var(--muted);
+  background: var(--card);
+}
+.sm-parts button.on{ background: var(--a3); color: #06231a; border-color: var(--a3); font-weight: 600; }
+
+.sm-bar{
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 10px 16px; border-bottom: 1px solid var(--border); flex: none;
+}
+.sm-bar button{
+  all: unset; cursor: pointer; font-size: 12px; padding: 6px 12px;
+  border-radius: 8px; border: 1px solid var(--border); color: var(--text);
+  background: var(--card);
+}
+.sm-bar button:hover{ border-color: var(--a3); color: var(--a3); }
+.sm-bar button.on{ background: var(--a3); color: #06231a; border-color: var(--a3); font-weight: 600; }
+.sm-bar .sm-count{ margin-left: auto; font-size: 12px; color: var(--muted); }
+
+.sm-body{ padding: 6px 16px 18px; overflow-y: auto; flex: 1; }
+.sm-ttl{ font-size: 14px; font-weight: 700; margin: 12px 0 2px; }
+.sm-ttl-vi{ font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+
+.sm-s{
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 9px 10px; border-radius: 10px; border: 1px solid transparent;
+}
+.sm-s:hover{ background: var(--card); }
+.sm-s.playing{ background: rgba(52,211,153,.10); border-color: rgba(52,211,153,.45); }
+.sm-s .sm-play{
+  all: unset; cursor: pointer; flex: none; margin-top: 1px;
+  width: 26px; height: 26px; border-radius: 8px; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--card2); border: 1px solid var(--border); color: var(--text);
+}
+.sm-s .sm-play:hover{ border-color: var(--a3); color: var(--a3); }
+.sm-s .sm-no{ flex: none; width: 18px; color: var(--muted); font-size: 11px; margin-top: 5px; text-align: right; }
+.sm-s .sm-tx{ flex: 1; min-width: 0; }
+.sm-en{ font-size: 15px; line-height: 1.55; }
+.sm-vi{ font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+.sm-body.hidevi .sm-vi{ display: none; }
+.sm-en .sw{
+  color: var(--a3); font-weight: 700; cursor: pointer;
+  border-bottom: 1px dashed rgba(52,211,153,.5);
+}
+.sm-en .sw:hover{ background: rgba(52,211,153,.16); border-radius: 4px; }
+.sm-loading{ padding: 26px 4px; text-align: center; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 640px){
+  #overlay-story{ padding: 0; }
+  .modal-story{ max-width: 100%; max-height: 100dvh; height: 100dvh; border-radius: 0; border: none; }
+  .sm-en{ font-size: 16px; }
+}
+
 </style>
 </head>
 <body>
@@ -963,6 +1059,25 @@ body.fsmap .zoombar button.zb-fs { border-color: var(--accent); color: var(--acc
   <button onclick="zoomBy(1/1.15)" title="Thu nhỏ">－</button>
   <button onclick="zoomReset()" title="Về 100%">⌂</button>
   <button class="zb-fs" id="zb-fs" onclick="toggleFullMap()" title="Toàn màn hình (F)">⛶</button>
+</div>
+
+<!-- ══════ POPUP MINI STORY THEO NHÁNH LÁ ══════ -->
+<div class="overlay" id="overlay-story" onclick="handleStoryOverlayClick(event)">
+  <div class="modal-story">
+    <div class="sm-head">
+      <button class="sm-x" onclick="closeStory()" title="Đóng (Esc)">✕</button>
+      <div class="sm-kicker">📖 TRUYỆN NHỎ CỦA CHỦ ĐỀ</div>
+      <div class="sm-topic" id="sm-topic">—</div>
+      <div class="sm-note" id="sm-note">Học thuộc đoạn truyện này là thuộc hết từ trong chủ đề.</div>
+      <div class="sm-parts" id="sm-parts"></div>
+    </div>
+    <div class="sm-bar">
+      <button id="sm-all" onclick="storyPlayAll()">▶ Đọc cả đoạn</button>
+      <button id="sm-vi" class="on" onclick="storyToggleVi()">🇻🇳 Nghĩa Việt</button>
+      <span class="sm-count" id="sm-count"></span>
+    </div>
+    <div class="sm-body" id="sm-body"></div>
+  </div>
 </div>
 
 <!-- ══════ POPUP CHI TIẾT TỪ (giống hệt vocab.html) ══════ -->
@@ -1196,6 +1311,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   computeFreeValue();
   buildTree();
   await loadSrs();
+  loadStoryIndex();          // không await: chỉ để hiện nút 📖, xong thì vẽ lại
   document.getElementById('loading').style.display = 'none';
   // Vào trang: chỉ mở tầng Phần (5 hộp) — gọn, nhìn ra ngay tổng thể
   render();
@@ -1223,7 +1339,10 @@ function bindUI(){
       // (Có Fullscreen API thì trình duyệt tự thoát rồi, fullscreenchange lo phần nút.)
       const wordOpen = document.getElementById('overlay-word').classList.contains('open');
       closeWord();
-      if (!wordOpen && isFsMode() && !document.fullscreenElement) setFullMap(false);
+      // Ba lớp chồng nhau: từ → truyện → toàn màn hình. Mỗi lần Esc gỡ đúng một lớp.
+      if (wordOpen) return;
+      if (isStoryOpen()){ closeStory(); return; }
+      if (isFsMode() && !document.fullscreenElement) setFullMap(false);
     }
     if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); }
   });
@@ -2397,6 +2516,212 @@ async function vtQuickFilter(key, value){
 }
 
 /* Nhắn nhanh 1 dòng ở giữa dưới màn hình (không dùng alert vì chặn cả trang). */
+/* ═══════════ MINI STORY THEO NHÁNH LÁ (2026-08-21) ═══════════
+   Mỗi chủ đề (nhánh lá) có một đoạn truyện chứa TOÀN BỘ từ của lá đó,
+   chia đoạn theo cấp độ: đoạn 1 = A1/A2, đoạn 2 = B1/B2, đoạn 3 = C1.
+
+   ⚠️ BĂNG THÔNG: lúc boot CHỈ tải cột topic_code (≈200 dòng, vài KB) để biết
+   lá nào có truyện mà hiện nút. Nội dung truyện chỉ tải khi người học bấm.
+   Đừng gộp `sentences` vào truy vấn boot — jsonb đó nặng gấp hàng trăm lần.
+   (Bài học từ vụ select('*') làm nổ egress — xem ghi chú bang-thong-select-sao.) */
+let STORY_SET   = new Set();   // topic_code đã có truyện
+const STORY_CACHE = {};        // topic_code -> mảng part
+let storyTopic  = null;
+let storyPart   = 0;
+let storyShowVi = true;
+let storyQueue  = null;        // đang đọc cả đoạn
+
+async function loadStoryIndex(){
+  try {
+    const { data, error } = await sb.from('topic_stories').select('topic_code');
+    if (error) throw error;
+    STORY_SET = new Set((data || []).map(r => r.topic_code));
+    if (STORY_SET.size) render();
+  } catch(e){
+    // Chưa đăng nhập hoặc chưa có bảng → không có nút, KHÔNG chặn cả trang.
+    console.warn('Không tải được danh mục truyện:', e.message || e);
+  }
+}
+
+function storyBtnHTML(code){
+  if (!code || !STORY_SET.has(code)) return '';
+  return '<button class="storybtn" data-story="' + esc(code) +
+         '" title="Đọc truyện nhỏ của chủ đề này">📖</button>';
+}
+
+async function openStory(code, name){
+  storyTopic = code; storyPart = 0; storyStop();
+  document.getElementById('sm-topic').textContent = name || code;
+  document.getElementById('sm-parts').innerHTML = '';
+  document.getElementById('sm-count').textContent = '';
+  document.getElementById('sm-body').innerHTML =
+    '<div class="sm-loading">Đang tải truyện…</div>';
+  document.getElementById('overlay-story').classList.add('open');
+
+  let data = STORY_CACHE[code];
+  if (!data){
+    try {
+      const { data: rows, error } = await sb.from('topic_stories')
+        .select('part_no,title,title_vi,level_span,sentences,word_count')
+        .eq('topic_code', code).order('part_no');
+      if (error) throw error;
+      data = rows || [];
+      STORY_CACHE[code] = data;
+    } catch(e){
+      console.warn('story', e);
+      document.getElementById('sm-body').innerHTML =
+        '<div class="sm-loading">⚠️ Không tải được truyện.<br><small>' +
+        esc(e.message || '') + '</small></div>';
+      return;
+    }
+  }
+  if (storyTopic !== code) return;         // người dùng đã đóng hoặc mở lá khác
+  if (!data.length){
+    document.getElementById('sm-body').innerHTML =
+      '<div class="sm-loading">Chủ đề này chưa có truyện.</div>';
+    return;
+  }
+  renderStory();
+}
+
+function renderStory(){
+  const data = STORY_CACHE[storyTopic] || [];
+  const p = data[storyPart]; if (!p) return;
+
+  document.getElementById('sm-parts').innerHTML = data.length < 2 ? '' :
+    data.map((x, i) =>
+      '<button class="' + (i === storyPart ? 'on' : '') + '" data-part="' + i + '">Đoạn ' +
+      (i + 1) + ' · ' + esc(x.level_span || '') + '</button>').join('');
+
+  const ss = Array.isArray(p.sentences) ? p.sentences : [];
+  document.getElementById('sm-count').textContent =
+    ss.length + ' câu · ' + (p.word_count || 0) + ' từ mục tiêu';
+
+  const body = document.getElementById('sm-body');
+  body.classList.toggle('hidevi', !storyShowVi);
+  body.innerHTML =
+    '<div class="sm-ttl">' + esc(p.title || '') + '</div>' +
+    '<div class="sm-ttl-vi">' + esc(p.title_vi || '') + '</div>' +
+    ss.map((s, i) =>
+      '<div class="sm-s" data-i="' + i + '">' +
+        '<button class="sm-play" data-play="' + i + '" title="Nghe câu này">🔊</button>' +
+        '<span class="sm-no">' + (i + 1) + '</span>' +
+        '<div class="sm-tx"><div class="sm-en">' + storyMark(s) + '</div>' +
+        '<div class="sm-vi">' + esc(s.vi || '') + '</div></div>' +
+      '</div>').join('');
+  body.scrollTop = 0;
+}
+
+/* Tô đậm từ mục tiêu.
+   ⚠️ KHÔNG replace thẳng trên chuỗi đã escape: từ sau có thể khớp nhầm vào
+   thuộc tính data-term của từ trước. Cắm mốc \u0001 trước, escape, rồi mới thay. */
+function storyMark(s){
+  let en = String(s.en || '');
+  const marks = [];
+  (s.w || []).forEach(pair => {
+    const surf = Array.isArray(pair) ? pair[0] : pair;
+    const term = Array.isArray(pair) ? pair[1] : pair;
+    if (!surf) return;
+    const at = en.indexOf(surf);
+    if (at < 0) return;
+    const tok = '\u0001' + marks.length + '\u0001';
+    marks.push({ surf, term });
+    en = en.slice(0, at) + tok + en.slice(at + surf.length);
+  });
+  let out = esc(en);
+  marks.forEach((m, i) => {
+    out = out.replace('\u0001' + i + '\u0001',
+      '<b class="sw" data-term="' + esc(m.term) + '">' + esc(m.surf) + '</b>');
+  });
+  return out;
+}
+
+function storySetPart(i){ storyStop(); storyPart = i; renderStory(); }
+function storyToggleVi(){
+  storyShowVi = !storyShowVi;
+  document.getElementById('sm-vi').classList.toggle('on', storyShowVi);
+  document.getElementById('sm-body').classList.toggle('hidevi', !storyShowVi);
+}
+
+/* Giọng đọc: ưu tiên Google US English — giọng mặc định của Windows
+   (Microsoft David/Zira) đọc câu dài rất cứng. */
+function storyVoice(){
+  if (!('speechSynthesis' in window)) return null;
+  const v = window.speechSynthesis.getVoices().filter(x => /^en/i.test(x.lang));
+  return v.find(x => /google.*us/i.test(x.name)) ||
+         v.find(x => /google/i.test(x.name)) ||
+         v.find(x => /^en-US/i.test(x.lang)) || v[0] || null;
+}
+
+function storySentences(){
+  const p = (STORY_CACHE[storyTopic] || [])[storyPart];
+  return (p && Array.isArray(p.sentences)) ? p.sentences : [];
+}
+
+function storySpeak(i, after){
+  const ss = storySentences(); const s = ss[i];
+  if (!s || !('speechSynthesis' in window)) { if (after) after(); return; }
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.sm-s.playing').forEach(el => el.classList.remove('playing'));
+  const row = document.querySelector('.sm-s[data-i="' + i + '"]');
+  if (row){
+    row.classList.add('playing');
+    row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  const u = new SpeechSynthesisUtterance(s.en);
+  u.lang = 'en-US'; u.rate = 0.85;
+  const v = storyVoice(); if (v) u.voice = v;
+  const done = () => { if (row) row.classList.remove('playing'); if (after) after(); };
+  u.onend = done; u.onerror = done;
+  window.speechSynthesis.speak(u);
+}
+
+function storyPlayAll(){
+  if (storyQueue !== null){ storyStop(); return; }
+  const n = storySentences().length; if (!n) return;
+  document.getElementById('sm-all').classList.add('on');
+  document.getElementById('sm-all').textContent = '⏹ Dừng';
+  const step = i => {
+    if (storyQueue === null || i >= n){ storyStop(); return; }
+    storyQueue = i;
+    storySpeak(i, () => { if (storyQueue !== null) step(i + 1); });
+  };
+  storyQueue = 0; step(0);
+}
+
+function storyStop(){
+  storyQueue = null;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  document.querySelectorAll('.sm-s.playing').forEach(el => el.classList.remove('playing'));
+  const b = document.getElementById('sm-all');
+  if (b){ b.classList.remove('on'); b.textContent = '▶ Đọc cả đoạn'; }
+}
+
+function closeStory(){
+  storyStop(); storyTopic = null;
+  document.getElementById('overlay-story').classList.remove('open');
+}
+function handleStoryOverlayClick(e){ if (e.target.id === 'overlay-story') closeStory(); }
+function isStoryOpen(){
+  const el = document.getElementById('overlay-story');
+  return !!el && el.classList.contains('open');
+}
+
+/* Bấm trong popup truyện: nút đoạn · nút loa · từ được tô đậm */
+document.getElementById('overlay-story').addEventListener('click', e => {
+  const pb = e.target.closest('[data-part]');
+  if (pb){ storySetPart(+pb.dataset.part); return; }
+  const play = e.target.closest('[data-play]');
+  if (play){ storyStop(); storySpeak(+play.dataset.play); return; }
+  const sw = e.target.closest('.sw');
+  if (sw){
+    const t = (sw.dataset.term || '').toLowerCase();
+    const w = ALL.find(x => (x.term || '').toLowerCase() === t);
+    // openWordFull nhận ID chứ không nhận object — đã dính lỗi này một lần rồi.
+    if (w) openWordFull(w.id); else mmToast('Không tìm thấy từ "' + t + '" trong kho');
+  }
+});
+
 function mmToast(msg){
   let el = document.getElementById('mm-toast');
   if (!el){
@@ -2466,13 +2791,14 @@ function ownTag(touched, n){
   return ' · <span class="own' + (t ? '' : ' zero') + '" title="Đã thêm ' + t + '/' + (n || 0) +
          ' từ vào Flashcard">\uD83C\uDCCF ' + t.toLocaleString('vi') + '</span>';
 }
-function boxHTML(cls, key, code, title, sub, learned, n, color, leaf, touched){
+function boxHTML(cls, key, code, title, sub, learned, n, color, leaf, touched, storyCode){
   const open = openSet.has(key);
   const hit  = hitNodes.has(key);
   const dim  = query && !hit;
   return '<div class="box ' + cls + (open ? ' open' : '') + (hit && query ? ' hit' : '') + (dim ? ' dim' : '') +
            (leaf ? ' leafnode' : '') + '" data-key="' + key + '" style="--pc:' + color + '">' +
            '<div class="bh">' + (code ? '<span class="code">' + esc(code) + '</span>' : '<span></span>') +
+             storyBtnHTML(storyCode) +
              '<span class="caret">▶</span></div>' +
            '<div class="tt">' + esc(title) + '</div>' +
            '<div class="sub">' + sub + '</div>' +
@@ -2529,7 +2855,7 @@ function render(){
                 boxHTML('lv3', T.key, T.code, T.name,
                   ts.n + ' từ' + (ts.n5 ? ' · <span style="color:#f472b6">+' + ts.n5 + '</span>' : '')
                     + ownTag(ts.touched, ts.n),
-                  ts.learned, ts.n, T.color, false, ts.touched);
+                  ts.learned, ts.n, T.color, false, ts.touched, T.code);
               if (openSet.has(T.key)) {
                 h += '<div class="kids"><div class="node"><div class="wpanel">' +
                   wgroupHTML(ts.words) + '</div></div></div>';
@@ -2619,6 +2945,16 @@ function renderAnchored(key, opening){
 const cssKey = k => String(k).replace(/"/g, '\\"');
 
 document.getElementById('stage').addEventListener('click', e => {
+  // ⚠️ Nút truyện phải xét TRƯỚC .box, không thì bấm nút là xổ luôn chủ đề ra.
+  const sbtn = e.target.closest('.storybtn');
+  if (sbtn){
+    e.stopPropagation();
+    const code = sbtn.dataset.story;
+    const bx = sbtn.closest('.box');
+    const nm = bx ? (bx.querySelector('.tt') || {}).textContent : '';
+    openStory(code, nm);
+    return;
+  }
   const chip = e.target.closest('.wchip');
   if (chip) { openWordFull(chip.dataset.wid); return; }
   const box = e.target.closest('.box');
@@ -2726,6 +3062,7 @@ document.addEventListener('keydown', e => {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (document.getElementById('overlay-word').classList.contains('open')) return;
+  if (isStoryOpen()) return;
   if (e.code === 'KeyF') { e.preventDefault(); toggleFullMap(); }
 });
 
