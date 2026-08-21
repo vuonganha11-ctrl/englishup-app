@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Not Just for Food</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1448px;height:1086px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1448px;height:1086px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Not Just for Food<small>Level A · Chủ đề: Cây cối quanh ta</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Not Just for Food" src="tt-plants.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1448 x 1086 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[517,391,365,339],
+  b1  :[10,14,492,988],
+  b2  :[533,17,344,353],
+  b3  :[890,21,548,604],
+  b4  :[484,744,598,338],
+  b5  :[1081,663,357,376]
+};
+const ROWS = {
+  'toothbrush':[16,60,480,106],
+  'lemon':[16,166,480,121],
+  'perfume':[16,287,480,111],
+  'oilw':[16,398,480,108],
+  'rope':[16,506,480,110],
+  'medicine':[16,616,480,117],
+  'cotton':[16,733,480,118],
+  'rubber':[16,851,480,139],
+  'tb-handles':[896,60,134,280],
+  'lemon-drink':[1030,60,134,280],
+  'perfume2':[1164,60,134,280],
+  'cooking-oil':[1298,60,134,280],
+  'rope2':[896,340,134,280],
+  'medicine2':[1030,340,134,280],
+  'cotton-clothes':[1164,340,134,280],
+  'rubber-goods':[1298,340,134,280],
+  'use-clean':[490,785,98,293],
+  'use-smell':[588,785,97,293],
+  'use-cook':[685,785,98,293],
+  'use-clothes':[783,785,98,293],
+  'use-health':[881,785,97,293],
+  'use-tools':[978,785,98,293]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. More Than Food', color:'#b795ec'},
+  s3   : {label:'3. Things Made From Plants', color:'#f0a24a'},
+  s4   : {label:'4. How We Use Plants', color:'#4bc4bd'},
+  s5   : {label:'5. Remember', color:'#f07aa2'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Good morning, everyone.","Chào buổi sáng cả nhà ạ.","Đứng thẳng, mỉm cười, nhìn khắp lớp một vòng."],
+['intro','ALL',null,"My name is Mai. I am a student in class four.","Em tên là Mai. Em là học sinh lớp bốn ạ.","Đặt nhẹ một tay lên ngực khi nói tên mình."],
+['intro','ALL',null,"Today I want to talk about plants.","Hôm nay em muốn nói về cây cối ạ.","Hai tay mở rộng ra trước ngực."],
+['intro','ALL',null,"We eat rice, fruit and vegetables every day.","Chúng ta ăn cơm, trái cây và rau mỗi ngày.","Đưa tay lên miệng làm động tác ăn."],
+['intro','ALL',null,"But plants do much more than that.","Nhưng cây cối còn làm được nhiều hơn thế ạ.","Lắc nhẹ ngón trỏ, mắt mở to."],
+['intro','b0',null,"My mind map is called Not Just for Food.","Sơ đồ tư duy của em có tên là Not Just for Food ạ.","Chỉ tay vào vòng tròn tiêu đề ở giữa sơ đồ."],
+['story','ALL',null,"First, let me tell you a small story.","Trước tiên, em xin kể một câu chuyện nhỏ ạ.","Bước lên nửa bước, hạ giọng như sắp kể bí mật."],
+['story','ALL',null,"One morning I got up at six oclock.","Một buổi sáng em thức dậy lúc sáu giờ.","Vươn vai, dụi mắt như vừa ngủ dậy."],
+['story','ALL',null,"I went to the bathroom to brush my teeth.","Em đi vào nhà tắm để đánh răng.","Đi tại chỗ hai bước nhỏ."],
+['story','ALL',null,"My old toothbrush was broken, so I took a new one.","Bàn chải cũ của em bị gãy nên em lấy cái mới.","Bẻ nhẹ hai tay rồi giơ một tay lên như cầm bàn chải."],
+['story','ALL',null,"The new toothbrush felt warm and light in my hand.","Cái bàn chải mới cầm thấy ấm và nhẹ trong tay em.","Nắm tay lại, nhìn vào lòng bàn tay."],
+['story','ALL',null,"It was not plastic. It was brown and smooth.","Nó không phải bằng nhựa. Nó màu nâu và nhẵn ạ.","Đưa ngón tay vuốt nhẹ trong không khí."],
+['story','ALL',null,"I asked my mom, and she said it was bamboo.","Em hỏi mẹ, và mẹ nói đó là tre ạ.","Nghiêng đầu như đang hỏi, rồi gật đầu."],
+['story','ALL',null,"Bamboo is a plant, so a plant was in my hand every morning.","Tre là một loại cây, vậy là mỗi sáng em đều cầm một cái cây trong tay.","Mở to mắt, giơ tay lên cao một chút."],
+['story','ALL',null,"That was the day I started to look around me.","Đó là ngày em bắt đầu nhìn quanh mình ạ.","Quay đầu nhìn trái rồi nhìn phải."],
+['s1','b1',null,"Part one is Key Vocabulary, with eight new words.","Phần một là Từ vựng quan trọng, có tám từ mới ạ.","Chỉ vào khối số 1, giơ tám ngón tay."],
+['s1','b1','toothbrush',"Number one is toothbrush.","Từ số một là toothbrush, cái bàn chải đánh răng ạ.","Chỉ vào dòng toothbrush."],
+['s1','b1','toothbrush',"It is a tool with bristles that we use to clean our teeth.","Đó là dụng cụ có lông bàn chải mà ta dùng để làm sạch răng ạ.","Xoè ngón tay như lông bàn chải, rồi làm động tác chải răng."],
+['s1','b1','lemon',"Number two is lemon.","Từ số hai là lemon, quả chanh ạ.","Chỉ vào dòng lemon."],
+['s1','b1','lemon',"It is a yellow fruit that tastes sour and has a nice smell.","Đó là quả màu vàng, có vị chua và mùi rất thơm ạ.","Nhăn mặt chua rồi hít một hơi thơm."],
+['s1','b1','perfume',"Number three is perfume.","Từ số ba là perfume, nước hoa ạ.","Chỉ vào dòng perfume."],
+['s1','b1','perfume',"It is a liquid that people put on their body to smell nice.","Đó là chất lỏng người ta xịt lên người cho thơm ạ.","Làm động tác xịt vào cổ tay."],
+['s1','b1','oilw',"Number four is oil.","Từ số bốn là oil, dầu ăn ạ.","Chỉ vào dòng oil."],
+['s1','b1','oilw',"It is a liquid made from plants that we use to cook food.","Đó là chất lỏng làm từ cây mà ta dùng để nấu ăn ạ.","Nghiêng tay như rót dầu vào chảo."],
+['s1','b1','rope',"Number five is rope.","Từ số năm là rope, sợi dây thừng ạ.","Chỉ vào dòng rope."],
+['s1','b1','rope',"It is a strong, thick line made from plant fibers that we tie to things.","Đó là sợi dây to và chắc làm từ sợi cây, dùng để buộc đồ vật ạ.","Hai tay kéo mạnh như kéo dây rồi thắt nút."],
+['s1','b1','medicine',"Number six is medicine.","Từ số sáu là medicine, thuốc ạ.","Chỉ vào dòng medicine."],
+['s1','b1','medicine',"It is made from plants and helps us feel better when we are sick.","Đó là thứ làm từ cây, giúp ta thấy khoẻ hơn khi bị ốm ạ.","Đưa tay lên trán như đang sốt rồi gật đầu nhẹ."],
+['s1','b1','cotton',"Number seven is cotton.","Từ số bảy là cotton, sợi bông ạ.","Chỉ vào dòng cotton."],
+['s1','b1','cotton',"It is a soft fiber from a plant that we use to make clothes.","Đó là sợi mềm lấy từ cây, dùng để may quần áo ạ.","Vuốt nhẹ tay áo của mình."],
+['s1','b1','rubber',"Number eight is rubber.","Từ số tám là rubber, cao su ạ.","Chỉ vào dòng rubber."],
+['s1','b1','rubber',"It is a stretchy material from plants that we use to make many useful things.","Đó là vật liệu co giãn lấy từ cây, dùng làm nhiều thứ hữu ích ạ.","Hai tay kéo giãn ra rồi thả về."],
+['s2','b2',null,"Part two is Plants Give Us More Than Food.","Phần hai là Cây cho ta nhiều hơn thức ăn ạ.","Chỉ tay vào khối số 2, nhìn vào ảnh bụi lá trà xanh."],
+['s2','b2',null,"Plants are not just for food.","Cây không phải chỉ để làm thức ăn ạ.","Lắc đầu nhẹ, xua tay một cái."],
+['s2','b2',null,"They give us many things we use every day.","Cây cho chúng ta nhiều thứ ta dùng hằng ngày ạ.","Hai tay mở rộng như ôm nhiều đồ vật."],
+['s2','b2',null,"Different parts of plants can become useful products.","Những bộ phận khác nhau của cây có thể thành sản phẩm hữu ích ạ.","Chỉ lần lượt lên cao, giữa và thấp như chỉ lá, thân, rễ."],
+['s3','b3',null,"Part three shows eight things made from plants.","Phần ba cho thấy tám thứ được làm từ cây ạ.","Chỉ vào khối số 3, quét tay qua tám ô ảnh."],
+['s3','b3','tb-handles',"These are toothbrush handles made from bamboo.","Đây là những cán bàn chải làm từ tre ạ.","Chỉ vào ô toothbrush handles, rồi chỉ vào mình và mỉm cười."],
+['s3','b3','lemon-drink',"This is a lemon drink, cool and sour on a hot day.","Đây là ly nước chanh, mát và chua trong ngày nóng ạ.","Chỉ vào ô lemon drink rồi làm động tác cầm ly uống."],
+['s3','b3','perfume2',"This is perfume. It comes from flowers and smells sweet.","Đây là nước hoa. Nó đến từ hoa và có mùi rất thơm ạ.","Chỉ vào ô perfume, hít một hơi sâu."],
+['s3','b3','cooking-oil',"This is cooking oil. My mom uses it in the kitchen every day.","Đây là dầu ăn. Mẹ em dùng nó trong bếp mỗi ngày ạ.","Chỉ vào ô cooking oil rồi làm động tác đảo chảo."],
+['s3','b3','rope2',"This is a rope. Farmers use ropes on boats and in fields.","Đây là dây thừng. Các bác nông dân dùng nó trên thuyền và ngoài đồng ạ.","Chỉ vào ô rope rồi kéo tay như kéo thuyền vào bờ."],
+['s3','b3','medicine2',"This is medicine. Many pills start as leaves and roots.","Đây là thuốc. Nhiều viên thuốc bắt đầu từ lá và rễ cây ạ.","Chỉ vào ô medicine, chụm ngón tay như cầm viên thuốc nhỏ."],
+['s3','b3','cotton-clothes',"These are cotton clothes. My school shirt is cotton too.","Đây là quần áo vải bông. Áo đi học của em cũng bằng vải bông ạ.","Chỉ vào ô cotton clothes rồi kéo nhẹ cổ áo mình."],
+['s3','b3','rubber-goods',"These are rubber goods, like balls, shoes and tires.","Đây là đồ dùng bằng cao su, như quả bóng, giày và lốp xe ạ.","Chỉ vào ô rubber goods, đá nhẹ chân rồi vẽ vòng tròn bằng hai tay."],
+['s3','b3',null,"Eight different things, and all of them come from plants.","Tám thứ khác nhau, và tất cả đều đến từ cây ạ.","Giơ tám ngón tay lên lần nữa."],
+['s3','b3',null,"Some come from leaves, some from seeds, and some from trees.","Có thứ đến từ lá, có thứ từ hạt, có thứ từ thân cây ạ.","Đếm ba ngón tay khi kể ba nguồn."],
+['s4','b4',null,"Part four shows six ways we use plants.","Phần bốn cho thấy sáu cách chúng ta dùng cây ạ.","Chỉ vào khối số 4, giơ sáu ngón tay."],
+['s4','b4','use-clean',"We clean our teeth and our bodies.","Chúng ta làm sạch răng và cơ thể mình ạ.","Chỉ vào cột clean, làm động tác chải răng rồi xoa hai tay."],
+['s4','b4','use-smell',"We enjoy nice scents from plant products.","Chúng ta thích những mùi hương dễ chịu từ sản phẩm của cây ạ.","Chỉ vào cột smell good, đưa tay lên mũi hít nhẹ."],
+['s4','b4','use-cook',"We cook food with plant oils.","Chúng ta nấu thức ăn bằng dầu thực vật ạ.","Chỉ vào cột cook, làm động tác rót dầu và khuấy."],
+['s4','b4','use-clothes',"We wear soft clothes made from plant fibers.","Chúng ta mặc quần áo mềm làm từ sợi cây ạ.","Chỉ vào cột make clothes, vuốt hai tay dọc theo áo."],
+['s4','b4','use-health',"Plants can help us feel better and stay healthy.","Cây có thể giúp ta thấy khoẻ hơn và giữ sức khoẻ ạ.","Chỉ vào cột help health, gồng nhẹ hai cánh tay."],
+['s4','b4','use-tools',"We use plant materials to make tools and other things.","Chúng ta dùng vật liệu từ cây để làm dụng cụ và nhiều thứ khác ạ.","Chỉ vào cột make tools, làm động tác đóng búa nhẹ."],
+['s5','b5',null,"Part five is the most important part. It is Remember.","Phần năm là phần quan trọng nhất, đó là phần Ghi nhớ ạ.","Chỉ vào khối số 5, nói chậm lại."],
+['s5','b5',null,"Look at this big tree standing on the grass.","Các bạn nhìn cái cây to đứng trên đồng cỏ này ạ.","Hai tay vẽ hình tán cây thật rộng."],
+['s5','b5',null,"Plants are useful in many ways, not just for food.","Cây hữu ích theo rất nhiều cách, không chỉ để làm thức ăn ạ.","Nói to, rõ, nhìn thẳng vào cả lớp."],
+['end','ALL',null,"I still brush my teeth at six oclock every morning.","Em vẫn đánh răng lúc sáu giờ mỗi sáng ạ.","Làm lại động tác chải răng, mỉm cười."],
+['end','ALL',null,"But now I know I am holding a plant in my hand.","Nhưng bây giờ em biết em đang cầm một cái cây trong tay ạ.","Nhìn vào lòng bàn tay, rồi giơ lên."],
+['end','ALL',null,"Tonight, please look around your home.","Tối nay, các bạn hãy nhìn quanh nhà mình nhé ạ.","Đưa tay chỉ vòng quanh lớp."],
+['end','ALL',null,"That is why my mind map is called Not Just for Food.","Đó là lý do sơ đồ của em có tên là Not Just for Food ạ.","Chỉ lại vào vòng tròn tiêu đề."],
+['end','ALL',null,"Thank you for listening to me.","Em cảm ơn cả nhà đã lắng nghe ạ.","Cúi đầu chào, hai tay để trước bụng."]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1448, MAPH=1086;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

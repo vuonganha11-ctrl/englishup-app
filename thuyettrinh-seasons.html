@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · The Seasons</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · The Seasons<small>Level A · Unit 5 – Lesson 9</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học The Seasons" src="tt-seasons.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[520,425,488,378],
+  b1  :[10,15,424,824],
+  b2  :[450,15,654,384],
+  b3  :[1110,18,418,368],
+  b4  :[1104,412,422,408],
+  b5  :[330,839,410,174],
+  b6  :[809,839,382,174]
+};
+const ROWS = {
+  'spring':[16,73,412,76],
+  'summer':[16,149,412,79],
+  'fall':[16,228,412,86],
+  'winter':[16,314,412,81],
+  'season':[16,395,412,78],
+  'fresh':[16,473,412,76],
+  'warm':[16,549,412,73],
+  'hot':[16,622,412,74],
+  'cold':[16,696,412,67],
+  'prepare':[16,763,412,70],
+  'c-spring':[464,55,154,335],
+  'c-summer':[618,55,159,335],
+  'c-fall':[777,55,159,335],
+  'c-winter':[936,55,154,335],
+  'f-spring':[1116,68,406,80],
+  'f-summer':[1116,148,406,81],
+  'f-fall':[1116,229,406,81],
+  'f-winter':[1116,310,406,73],
+  'plant-flowers':[1110,463,410,93],
+  'swim':[1110,556,410,87],
+  'collect-leaves':[1110,643,410,88],
+  'wear-warm':[1110,731,410,86]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Four Seasons', color:'#b795ec'},
+  s3   : {label:'3. What Weather Feels Like', color:'#f0a24a'},
+  s4   : {label:'4. What People Do', color:'#4bc4bd'},
+  s5   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Hello everyone. My name is Mai.","Xin chào cả nhà. Em tên là Mai.","Đứng thẳng, mỉm cười, vẫy tay chào cả lớp."],
+['intro','ALL',null,"Please look outside the window with me.","Mọi người nhìn ra ngoài cửa sổ cùng em nhé.","Đưa tay chỉ về phía cửa sổ, quay đầu nhìn theo."],
+['intro','ALL',null,"Is it hot today, or is it cool?","Hôm nay trời nóng hay trời mát ạ?","Ngửa hai bàn tay, nghiêng đầu như đang hỏi."],
+['intro','ALL',null,"The weather is not the same every day.","Thời tiết không giống nhau mỗi ngày đâu ạ.","Lắc đầu nhẹ, xua tay sang hai bên."],
+['intro','b0',null,"Today my topic is The Seasons.","Hôm nay chủ đề của em là Các Mùa Trong Năm.","Chỉ hai tay vào tên bài ở giữa sơ đồ."],
+['intro','b0',null,"Look at my picture. Four seasons go around and around.","Nhìn hình của em nè. Bốn mùa cứ xoay vòng, xoay vòng.","Dùng ngón trỏ vẽ một vòng tròn trong không khí."],
+
+['story','ALL',null,"First, I want to tell you a small story.","Đầu tiên, em muốn kể một câu chuyện nhỏ.","Áp tay lên ngực, hạ giọng xuống một chút."],
+['story','ALL',null,"There is a big tree in front of my house.","Trước nhà em có một cái cây to.","Giơ hai tay lên cao làm tán cây."],
+['story','ALL',null,"Last year, my dad took a photo of the tree.","Năm ngoái, bố em chụp ảnh cái cây đó.","Hai tay làm động tác bấm máy ảnh."],
+['story','ALL',null,"He took one photo in every season. Four photos.","Bố chụp mỗi mùa một tấm. Bốn tấm ảnh.","Giơ bốn ngón tay lên."],
+['story','ALL',null,"In the first photo, the tree has pink flowers.","Trong tấm thứ nhất, cây có hoa màu hồng.","Chụm rồi xoè bàn tay như bông hoa nở."],
+['story','ALL',null,"In the second photo, the tree is very green.","Trong tấm thứ hai, cây xanh mướt luôn.","Xoè rộng hai bàn tay, mắt mở to."],
+['story','ALL',null,"In the third photo, the leaves are yellow and red.","Trong tấm thứ ba, lá cây vàng và đỏ.","Bàn tay lượn từ trên xuống như lá rơi."],
+['story','ALL',null,"In the last photo, the tree has no leaves at all.","Trong tấm cuối, cây không còn một chiếc lá nào.","Hai tay dang ra, nhún vai."],
+['story','ALL',null,"One tree, four photos. That is a year. Now let me show you.","Một cái cây, bốn tấm ảnh. Đó là một năm đó ạ. Giờ em xin giới thiệu nhé.","Vỗ nhẹ hai tay, bước một bước về phía sơ đồ."],
+
+['s1','b1',null,"Part one is my Key Vocabulary. I have ten words.","Phần một là Từ Vựng Quan Trọng. Em có mười từ ạ.","Chỉ vào tiêu đề khối 1, giơ mười ngón tay."],
+['s1','b1','spring',"Spring is a warm and rainy season when plants and flowers grow.","Mùa xuân là mùa ấm áp và nhiều mưa, cây cối và hoa lá lớn lên.","Chỉ vào dòng spring, tay kia làm mưa rơi lất phất."],
+['s1','b1','summer',"Summer is a hot season with lots of sunshine.","Mùa hè là mùa nóng, có thật nhiều nắng.","Chỉ dòng summer, giơ tay che mắt như bị chói nắng."],
+['s1','b1','fall',"Fall is a dry and cool season when leaves change color and fall from trees.","Mùa thu là mùa khô và mát, lá đổi màu rồi rụng khỏi cây.","Chỉ dòng fall, ngón tay lượn xuống như chiếc lá rơi."],
+['s1','b1','winter',"Winter is a cold season when it often snows.","Mùa đông là mùa lạnh, trời hay có tuyết rơi.","Chỉ dòng winter, ôm hai vai và run nhẹ."],
+['s1','b1','season',"A season is a time of the year with special weather.","Mùa là một khoảng thời gian trong năm có kiểu thời tiết riêng.","Chỉ dòng season, vẽ vòng tròn nhỏ bằng ngón trỏ."],
+['s1','b1','fresh',"Fresh means clean and new, not old or spoiled.","Fresh nghĩa là trong lành và mới, không cũ, không hỏng.","Chỉ dòng fresh, hít một hơi thật sâu."],
+['s1','b1','warm',"Warm means not cold. It has a comfortable heat.","Warm nghĩa là không lạnh, ấm áp dễ chịu.","Chỉ dòng warm, xoa xoa hai bàn tay vào nhau."],
+['s1','b1','hot',"Hot means a high temperature. It is very warm.","Hot nghĩa là nhiệt độ cao, rất nóng luôn ạ.","Chỉ dòng hot, quạt tay trước mặt."],
+['s1','b1','cold',"Cold means a low temperature. It is not warm.","Cold nghĩa là nhiệt độ thấp, không ấm chút nào.","Chỉ dòng cold, so vai, hai tay ôm lấy người."],
+['s1','b1','prepare',"Prepare means to get ready for something that will happen.","Prepare nghĩa là chuẩn bị sẵn cho việc sắp tới.","Chỉ dòng prepare, làm động tác gấp áo bỏ vào cặp."],
+
+['s2','b2',null,"Part two is the Four Seasons. Look at these four pictures.","Phần hai là Bốn Mùa. Mọi người nhìn bốn bức hình này ạ.","Quét tay ngang qua bốn cột hình."],
+['s2','b2','c-spring',"In spring, flowers bloom and rain falls. Everything is new.","Mùa xuân, hoa nở và mưa rơi. Mọi thứ đều mới mẻ.","Chỉ cột mùa xuân, xoè tay như hoa nở rồi rung ngón tay xuống."],
+['s2','b2','c-spring',"My tree has pink flowers in this season.","Cây nhà em ra hoa hồng vào mùa này đó ạ.","Chỉ cột mùa xuân rồi chỉ tay ra phía sau như chỉ về nhà."],
+['s2','b2','c-summer',"In summer, the days are long and sunny.","Mùa hè, ngày dài và đầy nắng.","Chỉ cột mùa hè, hai tay vẽ vòng tròn mặt trời to."],
+['s2','b2','c-summer',"Summer is the warmest season of the year.","Mùa hè là mùa ấm nhất trong năm.","Chỉ cột mùa hè, giơ ngón cái lên cao."],
+['s2','b2','c-fall',"In fall, leaves change color and fall down.","Mùa thu, lá đổi màu rồi rụng xuống.","Chỉ cột mùa thu, tay lượn từ cao xuống thấp."],
+['s2','b2','c-fall',"The weather in fall is cool and nice.","Thời tiết mùa thu mát mẻ và dễ chịu.","Chỉ cột mùa thu, nhắm mắt hít thở nhẹ nhàng."],
+['s2','b2','c-winter',"In winter, it is cold and it often snows.","Mùa đông trời lạnh, và hay có tuyết rơi.","Chỉ cột mùa đông, ngón tay rơi lả tả từ trên xuống."],
+['s2','b2','c-winter',"Some winter days are shorter. The sun goes home early.","Có những ngày đông ngắn hơn. Mặt trời về nhà sớm lắm.","Chỉ cột mùa đông, hạ bàn tay xuống thấp như mặt trời lặn."],
+
+['s3','b3',null,"Part three is What Weather Feels Like.","Phần ba là Cảm Giác Thời Tiết Ra Sao.","Chỉ tiêu đề khối 3, rồi chạm nhẹ vào má."],
+['s3','b3','f-spring',"Spring is fresh and warm.","Mùa xuân trong lành và ấm áp.","Chỉ dòng mùa xuân, hít sâu rồi mỉm cười."],
+['s3','b3','f-summer',"Summer is hot.","Mùa hè thì nóng.","Chỉ dòng mùa hè, quạt tay và lau trán."],
+['s3','b3','f-fall',"Fall is cool.","Mùa thu thì mát.","Chỉ dòng mùa thu, phe phẩy tay nhẹ trước mặt."],
+['s3','b3','f-winter',"Winter is cold.","Mùa đông thì lạnh.","Chỉ dòng mùa đông, ôm vai và run cầm cập."],
+['s3','b3',null,"Look at the little thermometer in each row. It goes up, then down.","Nhìn cái nhiệt kế nhỏ ở mỗi dòng nhé. Nó lên cao rồi lại xuống thấp.","Ngón trỏ vuốt lên cao rồi hạ xuống dọc theo khối 3."],
+
+['s4','b4',null,"Part four is What People Do in each season.","Phần bốn là Người Ta Làm Gì trong mỗi mùa.","Chỉ tiêu đề khối 4, rồi chỉ vào cả lớp."],
+['s4','b4','plant-flowers',"We plant flowers in the spring.","Chúng ta trồng hoa vào mùa xuân.","Chỉ dòng đầu, làm động tác đào đất và đặt cây xuống."],
+['s4','b4','swim',"We swim in the summer.","Chúng ta đi bơi vào mùa hè.","Chỉ dòng thứ hai, hai tay quạt như đang bơi ếch."],
+['s4','b4','collect-leaves',"We collect leaves in the fall.","Chúng ta nhặt lá vào mùa thu.","Chỉ dòng thứ ba, cúi người nhặt lá rồi giơ lên."],
+['s4','b4','wear-warm',"We wear warm clothes in the winter.","Chúng ta mặc quần áo ấm vào mùa đông.","Chỉ dòng cuối, làm động tác quàng khăn quanh cổ."],
+['s4','b4','wear-warm',"So we prepare for the cold before it comes.","Nên chúng ta chuẩn bị sẵn cho trời lạnh trước khi nó đến.","Vỗ nhẹ vào khăn tưởng tượng, gật đầu chắc chắn."],
+
+['s5','b5',null,"Part five is my Reading Idea.","Phần năm là Ý Chính Của Bài Đọc.","Chỉ tiêu đề khối 5, hai tay mở ra như quyển sách."],
+['s5','b5',null,"The weather changes during the year.","Thời tiết thay đổi trong suốt cả năm.","Nói chậm, rõ, tay vẽ một đường lượn sóng."],
+['s5','b5',null,"Look at this circle. Sun, cloud, rain, and snow.","Nhìn vòng tròn này ạ. Nắng, mây, mưa và tuyết.","Chỉ lần lượt bốn phần của biểu đồ tròn."],
+['s5','b5',null,"Each piece is a part of one year.","Mỗi phần là một mảnh của một năm.","Dùng hai tay ghép các mảnh lại thành vòng tròn."],
+
+['s6','b6',null,"Part six is the thing I want you to Remember.","Phần sáu là điều em muốn mọi người Ghi Nhớ.","Chỉ tiêu đề khối 6, chạm ngón tay lên thái dương."],
+['s6','b6',null,"Each season has different weather and activities.","Mỗi mùa có thời tiết và hoạt động khác nhau.","Nói to, rõ, nhìn thẳng vào cả lớp."],
+['s6','b6',null,"A flower, a sun, a yellow leaf, and a snowflake.","Một bông hoa, một mặt trời, một chiếc lá vàng và một bông tuyết.","Chỉ bốn biểu tượng theo đúng thứ tự."],
+['s6','b6',null,"Four small pictures, and they tell the whole year.","Bốn hình nhỏ thôi, mà kể được cả một năm.","Gom bốn ngón tay lại rồi giơ cả bàn tay lên."],
+
+['end','ALL',null,"Now please think about my tree again.","Bây giờ mọi người nghĩ lại về cái cây của em nhé.","Nhắm mắt một giây, rồi giơ hai tay làm tán cây."],
+['end','ALL',null,"It has flowers, then green leaves, then yellow leaves, then no leaves.","Cây có hoa, rồi lá xanh, rồi lá vàng, rồi trụi lá.","Đưa tay qua bốn vị trí trong không khí theo thứ tự."],
+['end','ALL',null,"The tree does not move, but the seasons come to visit it.","Cái cây không đi đâu cả, nhưng các mùa tự đến thăm nó.","Đứng yên như cây, tay kia đi vòng quanh mình."],
+['end','ALL',null,"This year my dad will take four new photos.","Năm nay bố em sẽ chụp bốn tấm ảnh mới.","Làm động tác bấm máy ảnh, giơ bốn ngón tay."],
+['end','ALL',null,"Which season do you like best?","Mọi người thích mùa nào nhất ạ?","Chỉ về phía các bạn, nghiêng đầu chờ trả lời."],
+['end','ALL',null,"Thank you for listening to me.","Em cảm ơn mọi người đã lắng nghe ạ.","Cúi đầu chào, mỉm cười, hai tay để trước bụng."]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

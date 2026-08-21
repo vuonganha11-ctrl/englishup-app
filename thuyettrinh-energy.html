@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Energy</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Energy<small>Level A · Unit 7 – Lesson 13</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Energy" src="tt-energy.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[477,366,496,251],
+  b1  :[8,15,467,996],
+  b2  :[557,25,311,315],
+  b3  :[885,27,647,309],
+  b4  :[969,388,563,290],
+  b5  :[489,679,508,330],
+  b6  :[1036,707,416,296]
+};
+const ROWS = {
+  'window':[14,71,456,81],
+  'cleanv':[14,152,456,87],
+  'switch':[14,239,456,86],
+  'sleep':[14,325,456,86],
+  'heatw':[14,411,456,84],
+  'cook':[14,495,456,84],
+  'soundw':[14,579,456,82],
+  'give':[14,661,456,83],
+  'turn-on':[14,744,456,82],
+  'lightw':[14,826,456,82],
+  'energyw':[14,908,456,81],
+  'u-light':[891,65,127,265],
+  'u-heat':[1018,65,127,265],
+  'u-sound':[1145,65,127,265],
+  'u-movement':[1272,65,127,265],
+  'u-electricity':[1399,65,127,265],
+  's-sun':[975,420,110,252],
+  's-food':[1085,420,110,252],
+  's-batteries':[1195,420,111,252],
+  's-fuel':[1306,420,110,252],
+  's-wind':[1416,420,110,252],
+  'e-cook':[495,715,99,290],
+  'e-lights':[594,715,99,290],
+  'e-sound':[693,715,100,290],
+  'e-warm':[793,715,99,290],
+  'e-move':[892,715,99,290]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. What Is Energy', color:'#b795ec'},
+  s3   : {label:'3. Energy We Use', color:'#f0a24a'},
+  s4   : {label:'4. Sources of Energy', color:'#4bc4bd'},
+  s5   : {label:'5. Everyday Uses', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Good morning, everyone.","Chào buổi sáng cả lớp ạ.","Đứng thẳng, mỉm cười, nhìn cả lớp một vòng."],
+['intro','ALL',null,"My name is Minh. I am in grade four.","Em tên là Minh. Em học lớp bốn ạ.","Đặt bàn tay phải lên ngực khi nói tên mình."],
+['intro','ALL',null,"Please look at my mind map.","Mời cả lớp nhìn vào sơ đồ tư duy của em.","Đưa cả bàn tay mở về phía sơ đồ."],
+['intro','b0',null,"My topic today is Energy.","Chủ đề của em hôm nay là Năng lượng.","Chỉ vào đám mây tiêu đề Energy ở giữa."],
+['intro','ALL',null,"Energy is everywhere around us.","Năng lượng ở khắp nơi quanh chúng ta.","Xoay hai tay mở rộng vòng quanh người."],
+['intro','ALL',null,"First, let me tell you a small story.","Đầu tiên, cho em kể một câu chuyện nhỏ nhé.","Giơ một ngón tay lên, hạ giọng như sắp kể chuyện."],
+['story','ALL',null,"Last Sunday night, my house went dark.","Tối Chủ nhật tuần trước, nhà em tối om.","Chớp mắt, hai tay che mắt rồi bỏ ra."],
+['story','ALL',null,"The power was off in all my street.","Cả con phố nhà em bị mất điện.","Vẽ một đường ngang trong không khí như con phố."],
+['story','ALL',null,"My fan stopped. My room was very hot.","Quạt của em dừng lại. Phòng em nóng lắm.","Lấy tay quạt quạt trước mặt, nhăn mặt."],
+['story','ALL',null,"I tried the switch, but no light came.","Em bấm công tắc, nhưng chẳng có ánh sáng nào.","Bấm ngón trỏ vào không khí hai lần rồi lắc đầu."],
+['story','ALL',null,"My mother could not cook our dinner.","Mẹ em không nấu được bữa tối.","Làm động tác khuấy nồi rồi buông tay xuống."],
+['story','ALL',null,"So we sat together and ate cold bread.","Thế là cả nhà ngồi với nhau ăn bánh mì nguội.","Hai tay giả bộ cầm bánh mì cắn một miếng."],
+['story','ALL',null,"Then I counted all the things we needed.","Rồi em đếm hết những thứ nhà mình cần.","Bấm đốt ngón tay đếm một, hai, ba."],
+['story','ALL',null,"That night I learned one big word: energy.","Đêm đó em học được một từ rất lớn: năng lượng.","Mở rộng hai tay, nói chậm và rõ từ energy."],
+['s1','b1','energyw',"Number one is my key vocabulary.","Phần một là các từ khoá của em.","Chỉ vào tiêu đề Key Vocabulary ở khối một."],
+['s1','b1','energyw',"Energy is the ability to do work.","Năng lượng là khả năng làm ra công việc.","Nắm tay lại rồi bung ra mạnh mẽ."],
+['s1','b1','lightw',"Light is energy that lets us see things.","Ánh sáng là năng lượng giúp chúng ta nhìn thấy.","Mở bàn tay trước mắt như tia sáng toả ra."],
+['s1','b1','heatw',"Heat is energy that makes things warm.","Nhiệt là năng lượng làm cho mọi thứ ấm lên.","Xoa hai lòng bàn tay vào nhau cho ấm."],
+['s1','b1','soundw',"Sound is energy that travels in waves.","Âm thanh là năng lượng đi theo các sóng.","Vẽ đường sóng lượn từ miệng ra ngoài."],
+['s1','b1','switch',"A switch turns something on or off.","Công tắc dùng để bật hoặc tắt một thứ gì đó.","Búng ngón tay lên xuống như bật công tắc."],
+['s1','b1','turn-on',"Turn on means to start something so it works.","Bật lên nghĩa là làm cho cái gì đó chạy.","Xoay cổ tay như vặn núm, rồi gật đầu."],
+['s1','b1','window',"A window is a hole we look through.","Cửa sổ là ô trống mà chúng ta nhìn qua.","Hai tay tạo thành khung vuông trước mặt."],
+['s1','b1','cleanv',"Clean means to make something free from dust.","Lau sạch là làm cho vật hết bụi bẩn.","Đưa tay lau lau qua lại trong không khí."],
+['s1','b1','cook',"Cook means to use heat to change food.","Nấu là dùng nhiệt để làm thay đổi thức ăn.","Một tay cầm nồi, tay kia khuấy tròn."],
+['s1','b1','sleep',"Sleep means to rest at night.","Ngủ là nghỉ ngơi vào ban đêm.","Chắp hai tay nghiêng đầu tựa lên."],
+['s1','b1','give',"Give means to let someone have something.","Cho là để người khác có được thứ gì đó.","Chìa hai bàn tay ra phía trước như trao đồ."],
+['s1','b1','give',"Food gives me energy to run and play.","Thức ăn cho em năng lượng để chạy và chơi.","Vỗ nhẹ vào bụng rồi giơ nắm tay lên."],
+['s2','b2',null,"Number two: what is energy?","Phần hai: năng lượng là gì?","Chỉ vào tiêu đề What Is Energy."],
+['s2','b2',null,"Look at this happy boy in the field.","Hãy nhìn bạn nhỏ vui vẻ trên cánh đồng.","Chỉ vào bức ảnh cậu bé đang chạy."],
+['s2','b2',null,"He is running fast on the green grass.","Bạn ấy đang chạy nhanh trên bãi cỏ xanh.","Đánh hai tay tại chỗ như đang chạy."],
+['s2','b2',null,"Energy helps things work and change.","Năng lượng giúp mọi vật hoạt động và thay đổi.","Nói chậm, tay phải vẽ vòng tròn nhỏ."],
+['s2','b2',null,"Without energy, nothing can move or grow.","Không có năng lượng, chẳng gì di chuyển hay lớn lên được.","Đứng yên như tượng trong một giây."],
+['s3','b3','u-light',"Number three: energy we use every day.","Phần ba: những dạng năng lượng chúng ta dùng mỗi ngày.","Chỉ vào tiêu đề Energy We Use."],
+['s3','b3','u-light',"We use light to see and to read.","Chúng ta dùng ánh sáng để nhìn và để đọc.","Chỉ vào cột light, rồi giả bộ mở sách."],
+['s3','b3','u-heat',"We use heat to make our food hot.","Chúng ta dùng nhiệt để làm nóng thức ăn.","Chỉ vào cột heat, xoè tay như hơi nóng bốc lên."],
+['s3','b3','u-sound',"We use sound to talk and to sing.","Chúng ta dùng âm thanh để nói và để hát.","Chỉ vào cột sound, đưa tay lên miệng."],
+['s3','b3','u-movement',"We use movement to walk and to ride.","Chúng ta dùng chuyển động để đi và để đạp xe.","Chỉ vào cột movement, đạp chân tại chỗ."],
+['s3','b3','u-electricity',"We use electricity in almost every home.","Chúng ta dùng điện trong hầu hết mọi nhà.","Chỉ vào cột electricity, vẽ tia zíc zắc."],
+['s3','b3','u-electricity',"That dark night, my electricity was gone.","Cái đêm tối đó, điện nhà em đã mất.","Chỉ vào cột electricity rồi lắc đầu buồn."],
+['s4','b4','s-sun',"Number four: where does energy come from?","Phần bốn: năng lượng đến từ đâu?","Chỉ vào tiêu đề Sources of Energy, nhướn mày."],
+['s4','b4','s-sun',"The Sun gives us light and heat.","Mặt Trời cho chúng ta ánh sáng và hơi ấm.","Chỉ vào cột Sun, vẽ vòng tròn lớn trên cao."],
+['s4','b4','s-food',"Food gives energy to my body.","Thức ăn cho cơ thể em năng lượng.","Chỉ vào cột food, đưa tay lên miệng."],
+['s4','b4','s-batteries',"Batteries give energy to my toys and clock.","Pin cho năng lượng cho đồ chơi và đồng hồ của em.","Chỉ vào cột batteries, giơ hai ngón tay như viên pin."],
+['s4','b4','s-fuel',"Fuel gives energy to cars and buses.","Nhiên liệu cho năng lượng cho ô tô và xe buýt.","Chỉ vào cột fuel, hai tay giả vờ cầm vô lăng."],
+['s4','b4','s-wind',"Wind gives energy to big white turbines.","Gió cho năng lượng cho những cối xay gió trắng lớn.","Chỉ vào cột wind, xoay một cánh tay chầm chậm."],
+['s5','b5','e-cook',"Number five: energy in my day.","Phần năm: năng lượng trong một ngày của em.","Chỉ vào tiêu đề Everyday Uses."],
+['s5','b5','e-cook',"My mother uses energy to cook food.","Mẹ em dùng năng lượng để nấu thức ăn.","Chỉ vào cột cook food, khuấy nồi."],
+['s5','b5','e-lights',"I use energy to turn on lights.","Em dùng năng lượng để bật đèn.","Chỉ vào cột turn on lights, bấm công tắc."],
+['s5','b5','e-sound',"My radio uses energy to make sound.","Cái đài của em dùng năng lượng để phát ra âm thanh.","Chỉ vào cột make sound, vẫy tay cạnh tai."],
+['s5','b5','e-warm',"My family uses energy to keep warm.","Gia đình em dùng năng lượng để giữ ấm.","Chỉ vào cột keep warm, ôm hai tay vào vai."],
+['s5','b5','e-move',"Cars use energy to move things.","Ô tô dùng năng lượng để di chuyển đồ vật.","Chỉ vào cột move things, đẩy hai tay sang ngang."],
+['s5','b5','e-lights',"Now I never forget to turn off lights.","Bây giờ em không bao giờ quên tắt đèn.","Bấm công tắc rồi lắc ngón tay dặn dò."],
+['s6','b6',null,"Number six: please remember this.","Phần sáu: cả lớp hãy nhớ điều này nhé.","Chỉ vào tiêu đề Remember, gõ nhẹ ngón tay."],
+['s6','b6',null,"Look at this plug and this small globe.","Hãy nhìn cái phích cắm và quả địa cầu nhỏ này.","Chỉ vào phích cắm rồi kéo tay tới quả địa cầu."],
+['s6','b6',null,"Energy is needed to do work.","Năng lượng là thứ cần thiết để làm việc.","Nói to, rõ, dừng một nhịp sau câu này."],
+['s6','b6',null,"So we must use our energy carefully.","Vì thế chúng ta phải dùng năng lượng thật cẩn thận.","Đặt tay lên ngực, gật đầu nghiêm túc."],
+['end','ALL',null,"That dark Sunday night is now my friend.","Cái đêm Chủ nhật tối om ấy giờ là bạn của em.","Mỉm cười, hai tay mở ra nhẹ nhàng."],
+['end','ALL',null,"It taught me how much energy we need.","Nó dạy em chúng ta cần năng lượng nhiều thế nào.","Giơ hai tay lên cao rồi hạ xuống."],
+['end','ALL',null,"Now the lights are on in my house.","Bây giờ đèn nhà em đã sáng lại rồi.","Bấm công tắc rồi xoè tay như đèn bật sáng."],
+['end','ALL',null,"And I turn them off when I sleep.","Và em tắt đèn khi em đi ngủ.","Chắp tay nghiêng đầu ngủ một giây."],
+['end','ALL',null,"Thank you for listening to me today.","Cảm ơn cả lớp đã lắng nghe em hôm nay.","Cúi đầu chào, hai tay để xuôi."],
+['end','ALL',null,"Now, do you have any questions?","Bây giờ, cả lớp có câu hỏi nào không ạ?","Mở hai tay về phía lớp, mỉm cười chờ đợi."]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

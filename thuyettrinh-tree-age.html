@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · How Old is that Tree?</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · How Old is that Tree?<small>Level A · Unit 4 – Lesson 7</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học How Old is that Tree?" src="tt-tree.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[520,315,455,265],
+  b1  :[10,8,494,1006],
+  b2  :[959,10,570,406],
+  b3  :[981,425,535,254],
+  b4  :[919,692,600,295],
+  b5  :[541,595,336,193],
+  b6  :[514,793,400,199]
+};
+const ROWS = {
+  'wood':[16,56,482,92],
+  'bark':[16,148,482,98],
+  'ring':[16,246,482,98],
+  'huge':[16,344,482,98],
+  'center':[16,442,482,90],
+  'skinny':[16,532,482,93],
+  'circle':[16,625,482,89],
+  'outside':[16,714,482,88],
+  'tree':[16,802,482,95],
+  'oldw':[16,897,482,111],
+  'p-bark':[968,52,190,109],
+  'p-wood':[968,161,190,108],
+  'p-trunk':[968,269,190,119],
+  'p-branches':[1332,70,192,82],
+  'p-leaves':[1332,198,192,88],
+  'p-roots':[1332,312,192,86],
+  'r-eachyear':[1198,468,316,51],
+  'r-oneyear':[1198,519,316,51],
+  'r-center':[1198,570,316,51],
+  'r-outside':[1198,621,316,51],
+  'seedling':[925,730,147,250],
+  'young-tree':[1072,730,147,250],
+  'big-tree':[1219,730,147,250],
+  'old-tree':[1366,730,147,250]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Parts of a Tree', color:'#b795ec'},
+  s3   : {label:'3. Tree Rings', color:'#f0a24a'},
+  s4   : {label:'4. How Trees Grow', color:'#4bc4bd'},
+  s5   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Good morning, everyone. My name is Anh.","Chào buổi sáng cả nhà. Em tên là Anh.","Đứng thẳng, cười tươi và vẫy tay chào cả lớp"],
+['intro','ALL',null,"I am very happy to talk with you today.","Hôm nay em rất vui được nói chuyện với các bạn.","Đặt một tay lên ngực, gật đầu nhẹ"],
+['intro','b0',null,"My topic is How Old is that Tree?","Chủ đề của em là How Old is that Tree?","Chỉ hai tay vào tấm biển gỗ ghi tên bài"],
+['intro','b0',null,"Look at this wood. Can you see the circles?","Nhìn khúc gỗ này nhé. Các bạn có thấy những vòng tròn không?","Chỉ vào ảnh khúc gỗ cưa ngang phía trên tấm biển"],
+['intro','ALL',null,"My talk has six parts. I will show you all of them.","Bài của em có sáu phần. Em sẽ giới thiệu hết cho các bạn.","Giơ bàn tay xoè năm ngón rồi thêm một ngón nữa"],
+['intro','ALL',null,"Words, parts, rings, growing, reading, and one big idea.","Từ vựng, bộ phận, vòng gỗ, cây lớn lên, bài đọc, và một điều cần nhớ.","Quét tay từ trái sang phải qua sáu khối trên sơ đồ"],
+
+['story','ALL',null,"First, I want to tell you a true story.","Trước tiên, em muốn kể cho các bạn một câu chuyện có thật.","Bước lên một bước, hạ giọng như sắp kể chuyện"],
+['story','ALL',null,"Last month, I went to my grandpa's garden.","Tháng trước, em theo ông ra vườn.","Hai tay mở rộng như vẽ một khu vườn"],
+['story','ALL',null,"There was a big tree near the gate.","Có một cây to gần cổng.","Giơ hai tay lên cao làm hình cái cây"],
+['story','ALL',null,"My grandpa cut one branch. I saw the flat wood.","Ông em cưa một cành cây. Em thấy mặt gỗ phẳng.","Làm động tác cưa qua lại, rồi xoè bàn tay ngửa lên"],
+['story','ALL',null,"Wow! There were many small circles inside.","Ồ! Bên trong có rất nhiều vòng tròn nhỏ.","Mở to mắt, vẽ vòng tròn bằng ngón tay trỏ"],
+['story','ALL',null,"I touched the center with my finger. It felt very old.","Em chạm ngón tay vào lõi giữa. Nó có cảm giác rất cũ.","Chạm ngón trỏ vào giữa lòng bàn tay kia"],
+['story','ALL',null,"I asked my grandpa, how old is this tree?","Em hỏi ông, cây này bao nhiêu tuổi ạ?","Nghiêng đầu, đưa hai tay ra như đang hỏi"],
+['story','ALL',null,"He smiled and said, count the circles.","Ông cười và nói, cháu đếm các vòng tròn đi.","Cười và làm động tác đếm bằng ngón tay"],
+['story','ALL',null,"So today I want to answer that question with you.","Vậy hôm nay em muốn cùng các bạn trả lời câu hỏi đó.","Chỉ về phía cả lớp rồi chỉ vào sơ đồ"],
+
+['s1','b1',null,"Part one is Key Vocabulary. I have ten words.","Phần một là Từ vựng chính. Em có mười từ.","Chỉ vào khối số 1, giơ mười ngón tay"],
+['s1','b1','wood',"Wood is the hard part inside the bark.","Gỗ là phần cứng nằm bên trong lớp vỏ cây.","Gõ nhẹ nắm tay vào bàn cho tiếng cộc cộc"],
+['s1','b1','bark',"Bark is the rough cover outside the tree.","Vỏ cây là lớp bọc sần sùi bên ngoài thân cây.","Xoa lòng bàn tay lên mu bàn tay kia cho thấy nhám"],
+['s1','b1','ring',"A ring is a circle inside the trunk.","Vòng gỗ là một vòng tròn bên trong thân cây.","Vẽ một vòng tròn nhỏ trong không khí"],
+['s1','b1','huge',"Huge means very big.","Huge nghĩa là rất to.","Dang rộng hai tay hết cỡ"],
+['s1','b1','center',"The center is the middle point of something.","Center là điểm chính giữa của một vật.","Chấm ngón trỏ vào giữa lòng bàn tay"],
+['s1','b1','skinny',"Skinny means very thin, not wide.","Skinny nghĩa là rất mảnh, không rộng.","Đưa hai ngón tay sát gần nhau"],
+['s1','b1','circle',"A circle is round. Every point is the same from the center.","Hình tròn là hình tròn xoe. Mọi điểm đều cách đều tâm.","Vẽ một vòng tròn to bằng cả cánh tay"],
+['s1','b1','outside',"Outside is the part far from the center.","Outside là phần nằm xa tâm, ở rìa ngoài.","Chỉ ngón tay ra mép ngoài bàn tay xoè"],
+['s1','b1','tree',"A tree is a tall plant with a trunk and leaves.","Cây là một loài thực vật cao, có thân và lá.","Đứng thẳng, hai tay giơ lên như tán lá"],
+['s1','b1','oldw',"Old means many years, not new.","Old nghĩa là đã nhiều năm, không còn mới.","Vuốt cằm như ông cụ, đi chậm một bước"],
+
+['s2','b2',null,"Part two is Parts of a Tree. There are six parts.","Phần hai là Các bộ phận của cây. Có sáu bộ phận.","Chỉ vào khối số 2, giơ sáu ngón tay"],
+['s2','b2','p-bark',"The bark is on the outside. It protects the tree.","Vỏ cây ở bên ngoài. Nó bảo vệ cái cây.","Chỉ vào nhãn bark rồi vuốt dọc cánh tay"],
+['s2','b2','p-wood',"The wood is the strong part inside the trunk.","Gỗ là phần chắc khoẻ bên trong thân cây.","Chỉ vào nhãn wood, gồng nhẹ cánh tay"],
+['s2','b2','p-trunk',"The trunk is the main stem of the tree.","Thân cây là phần chính, mọc thẳng lên.","Chỉ vào nhãn trunk, đưa tay dọc từ dưới lên"],
+['s2','b2','p-branches',"The branches grow out and hold the leaves.","Cành cây mọc ra và đỡ lấy lá.","Chỉ vào nhãn branches, xoè hai cánh tay sang ngang"],
+['s2','b2','p-leaves',"The leaves make food with sunlight.","Lá làm ra thức ăn nhờ ánh nắng mặt trời.","Chỉ vào nhãn leaves, vẫy các ngón tay như lá rung"],
+['s2','b2','p-roots',"The roots take in water and hold the tree.","Rễ hút nước và giữ chặt cây trong đất.","Chỉ vào nhãn roots, chúc các ngón tay xuống đất"],
+['s2','b2',null,"Six parts work together. Then the tree is happy.","Sáu bộ phận cùng làm việc. Nhờ vậy cây khoẻ mạnh.","Đan hai bàn tay vào nhau"],
+
+['s3','b3',null,"Part three is Tree Rings. This is my favourite part.","Phần ba là Vòng gỗ. Đây là phần em thích nhất.","Chỉ vào khối số 3, gật đầu hào hứng"],
+['s3','b3','r-eachyear',"Trees add a new ring each year.","Mỗi năm cây lại thêm một vòng mới.","Vẽ vòng tròn ngày càng rộng bằng ngón tay"],
+['s3','b3','r-oneyear',"One ring can show one year of growth.","Một vòng có thể cho biết một năm cây lớn lên.","Giơ một ngón tay, rồi hai, rồi ba"],
+['s3','b3','r-center',"The rings in the center are older.","Những vòng ở giữa thì già hơn.","Chỉ vào lõi giữa khúc gỗ trong ảnh"],
+['s3','b3','r-outside',"The rings near the outside are newer.","Những vòng gần mép ngoài thì mới hơn.","Chỉ ra mép ngoài của khúc gỗ trong ảnh"],
+['s3','b3',null,"So we can count the rings. Then we know the age.","Vậy nên chúng ta đếm các vòng. Thế là biết cây bao nhiêu tuổi.","Làm động tác đếm từ giữa ra ngoài"],
+['s3','b3',null,"Some rings are huge. Some rings are skinny.","Có vòng rất to. Có vòng lại rất mảnh.","Dang rộng tay, rồi thu hai ngón lại gần nhau"],
+
+['s4','b4',null,"Part four is How Trees Grow. There are four steps.","Phần bốn là Cây lớn lên thế nào. Có bốn giai đoạn.","Chỉ vào khối số 4, giơ bốn ngón tay"],
+['s4','b4','seedling',"First, a small seedling. A tiny new plant starts to grow.","Đầu tiên là cây mầm nhỏ. Một cây con tí xíu bắt đầu mọc lên.","Ngồi thấp xuống, hai tay chụm lại rồi nhú lên"],
+['s4','b4','young-tree',"Next, a young tree. It grows taller and stronger.","Tiếp theo là cây non. Nó cao hơn và khoẻ hơn.","Đứng dần lên, đưa tay ngang ngực"],
+['s4','b4','big-tree',"Then, a big tree. It gets bigger and wider.","Rồi thành cây to. Nó lớn hơn và rộng hơn.","Đứng thẳng, dang rộng hai tay"],
+['s4','b4','old-tree',"Last, an old tree. It has grown for many years.","Cuối cùng là cây già. Nó đã lớn lên suốt nhiều năm.","Giơ tay cao và giữ yên, gật đầu chậm"],
+['s4','b4',null,"An old tree can be huge. It has many rings inside.","Cây già có thể rất to. Bên trong nó có rất nhiều vòng.","Vòng hai tay như ôm một thân cây lớn"],
+
+['s5','b5',null,"Part five is the Reading Idea.","Phần năm là Ý chính của bài đọc.","Chỉ vào khối số 5"],
+['s5','b5',null,"We can learn a tree's age by looking at its rings.","Chúng ta biết được tuổi của cây khi nhìn vào các vòng gỗ.","Đọc chậm, tay chỉ từng chữ trên dòng"],
+['s5','b5',null,"We do not ask the tree. We just look and count.","Chúng ta không hỏi cái cây. Chúng ta chỉ nhìn và đếm.","Lắc đầu, rồi chỉ vào mắt và đếm ngón tay"],
+['s5','b5',null,"The tree keeps the answer inside.","Cái cây giữ câu trả lời ở bên trong.","Nắm tay lại rồi mở ra như mở một bí mật"],
+
+['s6','b6',null,"Part six is Remember. This is the big idea.","Phần sáu là Điều cần nhớ. Đây là ý quan trọng nhất.","Chỉ vào khối số 6, giơ ngón tay cái"],
+['s6','b6',null,"Trees grow slowly and record time inside their trunks.","Cây lớn lên thật chậm và ghi lại thời gian bên trong thân của nó.","Đưa tay lên rất chậm, rồi đặt tay lên ngực"],
+['s6','b6',null,"Look at this old tree in the forest.","Hãy nhìn cây cổ thụ này trong rừng.","Chỉ vào ảnh gốc cây cổ thụ"],
+['s6','b6',null,"It is like a book. Every ring is one page.","Nó giống như một quyển sách. Mỗi vòng là một trang.","Chụm hai bàn tay rồi mở ra như mở sách"],
+
+['end','ALL',null,"Now I go back to my grandpa's garden.","Bây giờ em quay lại khu vườn của ông em.","Bước lùi một bước, mắt nhìn xa như nhớ lại"],
+['end','ALL',null,"I asked him, how old is that tree?","Em đã hỏi ông, cây kia bao nhiêu tuổi?","Nghiêng đầu, mở hai tay như đang hỏi"],
+['end','ALL',null,"Now I know the answer. I count the rings.","Bây giờ em biết câu trả lời rồi. Em đếm các vòng gỗ.","Cười tươi, làm động tác đếm từ giữa ra ngoài"],
+['end','ALL',null,"Please look at wood at home. Find the center and count.","Về nhà các bạn hãy nhìn một khúc gỗ nhé. Tìm lõi giữa rồi đếm.","Chỉ vào cả lớp, rồi chấm ngón tay vào lòng bàn tay"],
+['end','ALL',null,"Thank you for listening. I hope you love trees like me.","Cảm ơn các bạn đã lắng nghe. Em mong các bạn cũng yêu cây như em.","Đặt tay lên ngực rồi cúi chào"],
+['end','ALL',null,"That is the end of my talk. Do you have any questions?","Bài của em đến đây là hết. Các bạn có câu hỏi nào không ạ?","Mở hai tay ra mời hỏi, cười tươi"],
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

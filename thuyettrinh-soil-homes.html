@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Soil Homes</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Soil Homes<small>Level A · Unit 6 – Lesson 12</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Soil Homes" src="tt-soil.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[516,418,518,134],
+  b1  :[10,8,392,848],
+  b2  :[426,8,638,330],
+  b3  :[1086,8,440,516],
+  b4  :[436,592,312,388],
+  b5  :[1002,582,524,398],
+  b6  :[714,850,474,168]
+};
+const ROWS = {
+  'house':[16,66,380,77],
+  'hole':[16,143,380,81],
+  'store':[16,224,380,80],
+  'sturdy':[16,304,380,80],
+  'brick':[16,384,380,78],
+  'walk':[16,462,380,74],
+  'build':[16,536,380,75],
+  'nest':[16,611,380,76],
+  'tunnel':[16,687,380,76],
+  'animalw':[16,763,380,79],
+  'holes':[432,45,125,287],
+  'tunnels':[557,45,125,287],
+  'nests':[682,45,126,287],
+  'burrows':[808,45,125,287],
+  'rootsh':[933,45,125,287],
+  'ants':[1092,79,428,80],
+  'wormss':[1092,159,428,88],
+  'rabbits':[1092,247,428,89],
+  'moles':[1092,336,428,92],
+  'beetles':[1092,428,428,88],
+  'soil-strong':[442,638,300,87],
+  'soil-soft':[442,725,300,86],
+  'soil-roots':[442,811,300,80],
+  'soil-safe':[442,891,300,84],
+  'bricks':[1006,614,130,362],
+  'clay-houses':[1136,614,132,362],
+  'gardens':[1268,614,129,362],
+  'paths':[1397,614,123,362]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Homes in Soil', color:'#b795ec'},
+  s3   : {label:'3. Animals That Live in Soil', color:'#f0a24a'},
+  s4   : {label:'4. Soil Helps Homes', color:'#4bc4bd'},
+  s5   : {label:'5. People Use Soil', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Hello everyone. My name is Anh.","Xin chào tất cả các bạn. Mình tên là Anh.","Đứng thẳng, mỉm cười, đưa tay chào cả lớp"],
+['intro','ALL',null,"I am very happy to be here today.","Hôm nay mình rất vui khi được đứng đây.","Đặt tay lên ngực, gật đầu nhẹ"],
+['intro','ALL',null,"Please look at my mind map with me.","Mời các bạn cùng nhìn vào sơ đồ tư duy của mình.","Xoè tay mời cả lớp nhìn lên màn hình"],
+['intro','b0',null,"My topic today is Soil Homes.","Chủ đề của mình hôm nay là Soil Homes, nghĩa là Những ngôi nhà trong đất.","Chỉ tay vào ô tiêu đề ở giữa sơ đồ"],
+['intro','b0',null,"Soil is the brown ground under our feet.","Đất là phần màu nâu ngay dưới chân chúng ta.","Chỉ tay xuống sàn nhà"],
+['story','ALL',null,"First, I want to tell you a true story.","Đầu tiên, mình muốn kể cho các bạn một câu chuyện có thật.","Bước lên một bước, hạ giọng như sắp kể bí mật"],
+['story','ALL',null,"Last summer I played in my grandma garden.","Mùa hè năm ngoái mình chơi trong khu vườn của bà.","Đưa tay vẽ một vòng rộng trước mặt"],
+['story','ALL',null,"I saw a small hole under a big tree.","Mình nhìn thấy một cái lỗ nhỏ dưới gốc một cây to.","Chụm ngón trỏ và ngón cái thành vòng tròn nhỏ"],
+['story','ALL',null,"The hole was dark and very quiet.","Cái lỗ tối om và rất yên tĩnh.","Nheo mắt, nghiêng đầu nhìn xuống"],
+['story','ALL',null,"Who lives in there? I wanted to know.","Ai sống trong đó nhỉ? Mình rất muốn biết.","Đặt tay lên cằm, làm bộ suy nghĩ"],
+['story','ALL',null,"I sat down and waited for ten minutes.","Mình ngồi xuống và chờ khoảng mười phút.","Ngồi xổm xuống một chút rồi đứng lên"],
+['story','ALL',null,"Then a line of ants walked out slowly.","Rồi một hàng kiến bò ra thật chậm.","Dùng ngón trỏ vẽ một đường lượn trong không khí"],
+['story','ALL',null,"That little hole was their home in the soil.","Cái lỗ nhỏ đó chính là nhà của chúng ở trong đất.","Mở hai bàn tay như đang giới thiệu ngôi nhà"],
+['story','ALL',null,"That day I started to love soil homes.","Từ hôm đó mình bắt đầu yêu những ngôi nhà trong đất.","Đặt tay lên ngực, mỉm cười ấm áp"],
+['s1','b1',null,"Part one is my key vocabulary.","Phần một là những từ vựng quan trọng của mình.","Chỉ tay vào khối từ vựng bên trái"],
+['s1','b1','house',"A house is a place where people live.","Ngôi nhà là nơi con người sinh sống.","Chắp hai tay thành hình mái nhà"],
+['s1','b1','hole',"A hole is an opening in the ground or in something.","Cái lỗ là một khoảng hở trong đất hoặc trong một vật gì đó.","Tạo vòng tròn bằng hai ngón tay"],
+['s1','b1','store',"To store is to keep or save something for later use.","Cất trữ là giữ hoặc để dành một thứ gì đó để dùng sau.","Làm động tác cất đồ vào túi"],
+['s1','b1','sturdy',"Sturdy means strong and lasting, not easy to break.","Chắc chắn nghĩa là khỏe và bền, không dễ bị vỡ.","Gồng hai cánh tay lên"],
+['s1','b1','brick',"A brick is a block made from clay used to build things.","Viên gạch là một khối làm từ đất sét dùng để xây đồ vật.","Hai bàn tay tạo hình khối chữ nhật nhỏ"],
+['s1','b1','walk',"To walk is to move along on foot step by step.","Đi bộ là di chuyển bằng chân từng bước một.","Dùng hai ngón tay bước đi trên lòng bàn tay kia"],
+['s1','b1','build',"To build is to make or put together something.","Xây dựng là làm ra hoặc lắp ghép một thứ gì đó.","Xếp chồng hai nắm tay lên nhau"],
+['s1','b1','nest',"A nest is a place where birds lay eggs and raise young.","Cái tổ là nơi chim đẻ trứng và nuôi con.","Khum hai bàn tay thành hình cái tổ"],
+['s1','b1','tunnel',"A tunnel is a long hole or passage under the ground.","Đường hầm là một cái lỗ dài hoặc lối đi ở dưới lòng đất.","Đưa tay thẳng ra trước như một đường ống dài"],
+['s1','b1','animalw',"An animal is a living thing that can move, eat, and grow.","Động vật là sinh vật sống có thể di chuyển, ăn và lớn lên.","Vẫy tay như đôi tai thỏ hai bên đầu"],
+['s2','b2',null,"Part two is homes in soil.","Phần hai là những ngôi nhà ở trong đất.","Giơ hai ngón tay, rồi chỉ vào khối thứ hai"],
+['s2','b2',null,"There are five kinds of homes here.","Ở đây có năm loại nhà.","Xoè năm ngón tay"],
+['s2','b2','holes',"Holes are openings in the ground for living in.","Lỗ là những khoảng hở trong đất để sinh sống.","Chỉ tay xuống đất rồi tạo vòng tròn"],
+['s2','b2','tunnels',"Tunnels are long passages underground for moving and living.","Đường hầm là những lối đi dài dưới lòng đất để di chuyển và sinh sống.","Đưa tay lượn ngang như đang chui qua hầm"],
+['s2','b2','nests',"Nests are built by birds in or near the ground.","Tổ được chim làm ở trong đất hoặc gần mặt đất.","Khum tay thành tổ rồi hạ thấp xuống"],
+['s2','b2','burrows',"Burrows are underground homes dug by animals.","Hang là những ngôi nhà dưới đất do động vật đào ra.","Làm động tác đào đất bằng hai tay"],
+['s2','b2','rootsh',"Roots are plant parts in soil that provide support and food.","Rễ là bộ phận của cây nằm trong đất, giúp cây đứng vững và có thức ăn.","Xoè năm ngón tay chúc xuống như bộ rễ"],
+['s3','b3',null,"Part three is animals that live in soil.","Phần ba là những con vật sống trong đất.","Giơ ba ngón tay, chỉ vào khối thứ ba"],
+['s3','b3','ants',"Ants are small insects that build nests underground.","Kiến là loài côn trùng nhỏ làm tổ dưới lòng đất.","Dùng ngón tay bò nhanh trên cánh tay"],
+['s3','b3','wormss',"Worms are soft animals that live in tunnels in the soil.","Giun là loài vật thân mềm sống trong các đường hầm trong đất.","Uốn lượn ngón trỏ như con giun"],
+['s3','b3','rabbits',"Rabbits are animals that dig burrows to live in.","Thỏ là loài vật đào hang để ở.","Giơ hai ngón tay lên đầu làm tai thỏ"],
+['s3','b3','moles',"Moles are small animals that dig tunnels underground.","Chuột chũi là loài vật nhỏ đào đường hầm dưới đất.","Hai tay đào về hai bên rồi chúi xuống"],
+['s3','b3','beetles',"Beetles are insects that live in or under the soil.","Bọ cánh cứng là côn trùng sống trong đất hoặc dưới đất.","Úp lòng bàn tay lên mu bàn tay kia như mai bọ"],
+['s3','b3',null,"My little ants were part of this family.","Mấy chú kiến của mình cũng thuộc gia đình này đấy.","Chỉ tay vào dòng kiến rồi cười"],
+['s4','b4',null,"Part four is how soil helps homes.","Phần bốn là đất giúp cho những ngôi nhà như thế nào.","Giơ bốn ngón tay, chỉ vào khối thứ tư"],
+['s4','b4','soil-strong',"Soil is strong. It can hold up animal homes and plant roots.","Đất rất khỏe. Nó có thể nâng đỡ nhà của con vật và rễ cây.","Chống hai tay xuống như đang đỡ vật nặng"],
+['s4','b4','soil-soft',"Soil is soft to dig. Animals can dig and make tunnels and burrows.","Đất mềm và dễ đào. Con vật có thể đào để làm đường hầm và hang.","Làm động tác đào bới nhẹ nhàng"],
+['s4','b4','soil-roots',"Soil holds roots. Roots get water and nutrients from the soil.","Đất giữ rễ cây. Rễ lấy nước và chất dinh dưỡng từ đất.","Nắm tay lại rồi kéo nhẹ lên như hút nước"],
+['s4','b4','soil-safe',"Soil keeps animals safe. It protects them from heat, cold, and danger.","Đất giữ cho con vật an toàn. Nó che chở chúng khỏi nóng, lạnh và nguy hiểm.","Ôm hai tay trước ngực như đang che chở"],
+['s4','b4',null,"Soil is like a big kind friend.","Đất giống như một người bạn to lớn và tốt bụng.","Dang rộng hai tay như một cái ôm lớn"],
+['s5','b5',null,"Part five is how people use soil.","Phần năm là con người dùng đất như thế nào.","Giơ năm ngón tay, chỉ vào khối thứ năm"],
+['s5','b5','bricks',"Bricks are made from clay soil and used to build strong buildings.","Gạch được làm từ đất sét và dùng để xây những tòa nhà chắc chắn.","Xếp chồng hai nắm tay như xếp gạch"],
+['s5','b5','clay-houses',"Clay soil is shaped and dried to make houses.","Đất sét được nặn và phơi khô để làm nhà.","Làm động tác nặn đất bằng hai bàn tay"],
+['s5','b5','gardens',"Soil helps plants grow food for people.","Đất giúp cây trồng lớn lên và cho con người thức ăn.","Đưa tay từ thấp lên cao như cây đang mọc"],
+['s5','b5','paths',"Soil is used to make paths and walkways.","Đất được dùng để làm đường mòn và lối đi.","Đưa bàn tay đi thẳng về phía trước"],
+['s5','b5',null,"So we walk on soil and build with soil.","Vậy là chúng ta đi trên đất và xây bằng đất.","Chỉ xuống chân rồi giơ tay lên cao"],
+['s6','b6',null,"Part six is my remember box.","Phần sáu là ô ghi nhớ của mình.","Giơ sáu ngón tay, chỉ vào ô cuối"],
+['s6','b6',null,"Here I see a rabbit in a burrow.","Ở đây mình thấy một chú thỏ trong hang đất.","Chỉ vào hình chú thỏ trên sơ đồ"],
+['s6','b6',null,"Next to it I see some bricks.","Bên cạnh nó mình thấy mấy viên gạch.","Chỉ sang hình mấy viên gạch"],
+['s6','b6',null,"Soil can be a home and a building material.","Đất có thể là một ngôi nhà và cũng là vật liệu xây dựng.","Đưa tay trái rồi tay phải, cân bằng hai bên"],
+['end','ALL',null,"That is the end of my mind map.","Đó là phần cuối của sơ đồ tư duy của mình.","Lùi lại một bước, mở rộng tay về phía sơ đồ"],
+['end','ALL',null,"Now I know who lived in that little hole.","Bây giờ mình đã biết ai sống trong cái lỗ nhỏ đó.","Chụm ngón tay thành vòng tròn nhỏ như lúc kể chuyện"],
+['end','ALL',null,"The ants had a home in my grandma garden.","Đàn kiến có một ngôi nhà trong khu vườn của bà mình.","Mỉm cười, gật đầu nhẹ"],
+['end','ALL',null,"Please look at the soil near your house too.","Các bạn hãy thử nhìn vào đất gần nhà mình nhé.","Chỉ tay về phía các bạn trong lớp"],
+['end','ALL',null,"Thank you for listening to me.","Cảm ơn các bạn đã lắng nghe mình.","Đặt tay lên ngực và cúi đầu chào"],
+['end','ALL',null,"I am happy to answer your questions.","Mình rất vui được trả lời câu hỏi của các bạn.","Xoè hai tay mời hỏi, mỉm cười"],
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Keeping Warm</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1448px;height:1086px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1448px;height:1086px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Keeping Warm<small>Level A · Chủ đề: Giữ ấm</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Keeping Warm" src="tt-warm.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1448 x 1086 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[476,385,338,166],
+  b1  :[10,10,494,730],
+  b2  :[734,20,700,285],
+  b3  :[828,282,614,412],
+  b4  :[760,718,676,358],
+  b5  :[50,765,318,312],
+  b6  :[396,765,285,312]
+};
+const ROWS = {
+  'jacket':[16,58,482,62],
+  'glove':[16,120,482,57],
+  'outsidew':[16,177,482,70],
+  'thick':[16,247,482,62],
+  'fur':[16,309,482,55],
+  'scarf':[16,364,482,50],
+  'bearw':[16,414,482,65],
+  'coldw':[16,479,482,51],
+  'warmw':[16,530,482,51],
+  'snow':[16,581,482,54],
+  'icy':[16,635,482,53],
+  'foot':[16,688,482,47],
+  'polar-bear':[740,55,172,245],
+  'seal':[912,55,172,245],
+  'penguin':[1084,55,172,245],
+  'arctic-fox':[1256,55,172,245],
+  'thick-fur':[834,315,120,375],
+  'fat':[954,315,121,375],
+  'feathers':[1075,315,120,375],
+  'huddling':[1195,315,121,375],
+  'shelters':[1316,315,120,375],
+  'p-jacket':[766,755,166,315],
+  'p-gloves':[932,755,166,315],
+  'p-scarf':[1098,755,166,315],
+  'p-boots':[1264,755,166,315]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Animals in Cold Places', color:'#b795ec'},
+  s3   : {label:'3. How Animals Stay Warm', color:'#f0a24a'},
+  s4   : {label:'4. People Stay Warm', color:'#4bc4bd'},
+  s5   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+  ['intro','ALL',null,"Good morning, everyone.","Chào buổi sáng cả lớp mình ạ.","Đứng thẳng, mỉm cười, vẫy tay chào cả lớp"],
+  ['intro','ALL',null,"I am very happy to talk to you today.","Hôm nay mình rất vui được nói chuyện với các bạn.","Đặt một tay lên ngực, gật đầu nhẹ"],
+  ['intro','ALL',null,"Please look at my mind map.","Mời cả lớp nhìn vào sơ đồ tư duy của mình.","Đưa cả bàn tay mở về phía sơ đồ, không chỉ bằng một ngón"],
+  ['intro','b0',null,"My topic is Keeping Warm.","Chủ đề của mình là Giữ Ấm.","Chỉ vào ô tiêu đề, nói to và chậm hai từ Keeping Warm"],
+  ['intro','ALL',null,"I have six small parts here.","Ở đây mình có sáu phần nhỏ.","Xoè bàn tay, đếm nhanh sáu ngón trong không khí"],
+  ['intro','ALL',null,"First, I want to tell you a true story.","Nhưng trước tiên, mình muốn kể cho các bạn một chuyện có thật.","Bước lên nửa bước, hạ giọng như sắp kể bí mật"],
+  ['story','ALL',null,"Last winter, I stayed at my grandma's house in the countryside.","Mùa đông năm ngoái, mình về quê ở nhà bà ngoại.","Đưa tay chỉ ra xa như chỉ về phía quê nhà"],
+  ['story','ALL',null,"One morning, it was very, very cold.","Có một buổi sáng trời rét đậm, rét lắm luôn.","Ôm hai tay vào vai, người hơi rùng mình"],
+  ['story','ALL',null,"I opened the door, and the cold wind hit my face.","Mình mở cửa ra thì gió lạnh tạt thẳng vào mặt.","Làm động tác mở cửa rồi quay mặt đi, nhắm mắt lại"],
+  ['story','ALL',null,"My hands and my feet were cold like ice.","Tay với chân mình lạnh cóng như nước đá.","Xoa hai bàn tay vào nhau thật nhanh"],
+  ['story','ALL',null,"My grandma told me to put on more clothes.","Bà bảo mình phải mặc thêm áo vào.","Chống hai tay vào hông, nói giọng hiền như bà"],
+  ['story','ALL',null,"So I wore two shirts, one jacket, one scarf and thick socks.","Thế là mình mặc hai cái áo, một áo khoác, quàng một cái khăn và đi tất dày.","Làm động tác mặc áo rồi quàng khăn quanh cổ"],
+  ['story','ALL',null,"Then I went outside, and I felt warm again.","Rồi mình đi ra ngoài, và mình thấy ấm trở lại.","Mở rộng hai tay, mặt tươi lên, thở ra nhẹ nhõm"],
+  ['story','ALL',null,"But I saw my grandma's dog. It has thick fur and no jacket.","Nhưng mình nhìn thấy con chó của bà. Nó có bộ lông dày mà chẳng có áo khoác nào cả.","Chỉ xuống thấp bên cạnh chân như đang chỉ con chó"],
+  ['story','ALL',null,"So I asked myself, how do animals stay warm?","Nên mình tự hỏi, vậy các con vật giữ ấm bằng cách nào nhỉ.","Đưa ngón trỏ lên thái dương, nghiêng đầu ra vẻ suy nghĩ"],
+  ['s1','b1',null,"Part one is my key vocabulary, with twelve words.","Phần một là từ khoá của mình, gồm mười hai từ.","Chỉ vào khung phần một, giơ mười ngón rồi thêm hai ngón"],
+  ['s1','b1','jacket',"A jacket is a warm coat with sleeves.","Jacket là cái áo khoác ấm và có tay áo.","Vuốt dọc hai cánh tay như đang mặc áo khoác"],
+  ['s1','b1','glove',"A glove is the warm thing you wear on your hand.","Glove là cái găng tay ấm mình đeo vào bàn tay.","Làm động tác kéo găng tay vào một bàn tay"],
+  ['s1','b1','outsidew',"Outside is the place that is not inside a house.","Outside là bên ngoài, chỗ không ở trong nhà.","Chỉ tay ra phía cửa sổ hoặc cửa lớp"],
+  ['s1','b1','thick',"Thick means not thin, like my grandma's blanket.","Thick nghĩa là dày, không mỏng, giống cái chăn của bà mình.","Hai bàn tay đặt song song rồi tách xa nhau ra"],
+  ['s1','b1','fur',"Fur is the hair that covers an animal's body.","Fur là bộ lông phủ khắp người con vật.","Vuốt nhẹ mu bàn tay như vuốt lông mèo"],
+  ['s1','b1','scarf',"A scarf is a piece of cloth for your neck.","Scarf là cái khăn choàng quanh cổ.","Quàng tay một vòng quanh cổ"],
+  ['s1','b1','bearw',"A bear is a large, strong animal with thick fur.","Bear là con gấu, to và khoẻ, có bộ lông dày.","Giơ hai tay lên cao, cong ngón như vuốt gấu, gầm nhẹ"],
+  ['s1','b1','coldw',"Cold means a low temperature, not warm.","Cold nghĩa là lạnh, nhiệt độ thấp, không ấm.","Rùng mình, hai tay ôm lấy vai"],
+  ['s1','b1','warmw',"Warm means a nice and comfortable temperature.","Warm nghĩa là ấm áp, dễ chịu.","Xoè tay như hơ trên bếp lửa, mặt thoải mái"],
+  ['s1','b1','snow',"Snow is white ice that falls from the sky.","Snow là tuyết, những hạt băng trắng rơi từ trên trời xuống.","Ngửa mặt lên, các ngón tay rơi nhẹ từ cao xuống thấp"],
+  ['s1','b1','icy',"Icy means covered with ice, very cold and slippery.","Icy nghĩa là phủ băng, rất lạnh và trơn trượt.","Một bàn tay trượt nhanh trên bàn tay kia"],
+  ['s1','b1','foot',"Your foot is the part of your leg for standing and walking.","Foot là bàn chân, phần chân mình dùng để đứng và đi.","Nhấc một chân lên, chỉ xuống bàn chân"],
+  ['s1','b1',null,"These twelve words help me tell my whole story.","Mười hai từ này giúp mình kể được cả câu chuyện.","Đưa tay quét ngang qua toàn bộ danh sách từ"],
+  ['s2','b2',null,"Part two is Animals in Cold Places.","Phần hai là Những con vật ở xứ lạnh.","Chỉ vào khung phần hai, quay lại nhìn cả lớp"],
+  ['s2','b2','polar-bear',"The polar bear lives on the snow and the ice.","Con gấu Bắc Cực sống trên tuyết và trên băng.","Đi hai bước chậm và nặng nề như gấu"],
+  ['s2','b2','seal',"The seal swims in very cold water.","Con hải cẩu bơi trong nước rất lạnh.","Chụm hai tay trước ngực, đẩy tới như đang bơi"],
+  ['s2','b2','penguin',"The penguin walks on the ice with its friends.","Con chim cánh cụt đi trên băng cùng với bạn của nó.","Ép hai tay sát người, lắc lư đi vài bước nhỏ"],
+  ['s2','b2','arctic-fox',"The arctic fox has white fur in winter.","Con cáo Bắc Cực có bộ lông trắng vào mùa đông.","Đưa hai tay lên đầu làm tai nhọn"],
+  ['s2','b2',null,"These four animals live where it is cold every day.","Bốn con vật này sống ở nơi ngày nào cũng lạnh.","Chỉ lần lượt bốn cột ảnh từ trái sang phải"],
+  ['s3','b3',null,"Part three shows five ways animals stay warm.","Phần ba cho thấy năm cách các con vật giữ ấm.","Xoè năm ngón tay lên cao cho cả lớp nhìn rõ"],
+  ['s3','b3','thick-fur',"Many animals have thick fur that traps warm air close to their bodies.","Nhiều con vật có bộ lông dày, giữ lớp không khí ấm sát người chúng.","Vuốt dọc thân mình từ vai xuống eo"],
+  ['s3','b3','fat',"A layer of fat under the skin helps keep their bodies warm.","Một lớp mỡ dưới da giúp cơ thể chúng luôn ấm.","Vỗ nhẹ hai tay vào bụng, cười"],
+  ['s3','b3','feathers',"Feathers trap warm air and keep birds from losing heat.","Bộ lông vũ giữ không khí ấm, không cho chim mất nhiệt.","Vẫy nhẹ hai cánh tay như cánh chim"],
+  ['s3','b3','huddling',"Some animals stay close together to share body heat.","Có những con vật đứng sát nhau để chia hơi ấm cho nhau.","Kẹp hai bàn tay áp sát vào nhau trước ngực"],
+  ['s3','b3','shelters',"Some animals stay in dens, burrows, or caves to stay warm and safe.","Có con thì ở trong hang, trong lỗ dưới đất hoặc trong hốc đá cho ấm và an toàn.","Chụm hai tay thành mái nhà trên đầu"],
+  ['s3','b3',null,"So animals do not need jackets, because their bodies help them.","Vậy nên các con vật không cần áo khoác, vì cơ thể chúng đã giúp chúng rồi.","Lắc đầu nhẹ, xoè hai tay ra hai bên"],
+  ['s4','b4',null,"Part four is how people stay warm.","Phần bốn là con người giữ ấm như thế nào.","Chỉ vào khung phần bốn rồi chỉ vào chính mình"],
+  ['s4','b4','p-jacket',"A warm jacket keeps our body warm.","Một cái áo khoác ấm giữ ấm cho cả người mình.","Kéo hai vạt áo khép lại trước ngực"],
+  ['s4','b4','p-gloves',"Gloves keep our hands warm.","Găng tay giữ ấm cho đôi bàn tay.","Giơ hai bàn tay lên, xoa vào nhau"],
+  ['s4','b4','p-scarf',"A scarf keeps our neck and chest warm.","Khăn choàng giữ ấm cổ và ngực.","Quàng tay quanh cổ rồi thả xuống trước ngực"],
+  ['s4','b4','p-boots',"Boots keep our feet warm and dry.","Ủng giữ cho bàn chân ấm và khô.","Giậm nhẹ hai chân xuống sàn hai lần"],
+  ['s4','b4',null,"On that cold morning, I used all of these things.","Sáng hôm rét ấy, mình đã dùng đúng những thứ này.","Chỉ vào bốn cột, rồi gật đầu chắc chắn"],
+  ['s5','b5',null,"Part five is my reading idea.","Phần năm là ý chính của bài đọc.","Chỉ vào khung phần năm, dừng một nhịp"],
+  ['s5','b5',null,"Some animals and people need protection from cold weather.","Một số con vật và cả con người đều cần được che chắn khỏi thời tiết lạnh.","Nói chậm từng từ, hai tay ôm vòng trước ngực như che chở"],
+  ['s5','b5',null,"In the picture, a boy in a wool hat stands next to a white bear.","Trong hình, một bạn nhỏ đội mũ len đứng cạnh một con gấu trắng.","Chỉ vào bạn nhỏ trước, rồi chỉ sang con gấu"],
+  ['s5','b5',null,"They are different, but they both need help from the cold.","Hai bạn ấy khác nhau, nhưng cả hai đều cần được bảo vệ khỏi cái lạnh.","Đưa hai tay ra hai bên rồi đưa lại gần nhau"],
+  ['s6','b6',null,"Part six is the thing I must remember.","Phần sáu là điều mình phải nhớ.","Gõ nhẹ ngón tay vào thái dương"],
+  ['s6','b6',null,"Body coverings help animals stay warm.","Lớp phủ trên cơ thể giúp các con vật giữ ấm.","Nói to và chậm, tay vuốt dọc thân mình"],
+  ['s6','b6',null,"In the picture, two white bears lie close together on the snow.","Trong hình, hai con gấu trắng nằm cuộn vào nhau trên tuyết.","Chỉ vào ảnh, hai bàn tay áp sát vào nhau"],
+  ['s6','b6',null,"Fur, fat and feathers are body coverings, like our clothes.","Lông, mỡ và lông vũ chính là lớp phủ cơ thể, giống như quần áo của chúng ta.","Đếm ba ngón tay, rồi chỉ vào áo mình"],
+  ['end','ALL',null,"Now I can answer my question from that cold morning.","Bây giờ mình đã trả lời được câu hỏi của buổi sáng rét ấy rồi.","Gật đầu, mỉm cười, nhìn thẳng cả lớp"],
+  ['end','ALL',null,"My grandma's dog does not need a jacket, because it has thick fur.","Con chó của bà mình không cần áo khoác, vì nó đã có bộ lông dày.","Chỉ xuống bên cạnh chân như lúc kể chuyện"],
+  ['end','ALL',null,"But I need a jacket, gloves, a scarf and boots.","Còn mình thì cần áo khoác, găng tay, khăn choàng và ủng.","Đếm bốn thứ trên bốn ngón tay"],
+  ['end','ALL',null,"Animals and people stay warm in different ways.","Con vật và con người giữ ấm theo những cách khác nhau.","Đưa tay trái sang trái, tay phải sang phải"],
+  ['end','ALL',null,"When you go outside on a cold day, please remember to keep warm.","Khi các bạn ra ngoài vào ngày lạnh, nhớ giữ ấm nhé.","Chỉ nhẹ về phía các bạn, cười thân thiện"],
+  ['end','ALL',null,"Thank you for listening to me.","Cảm ơn cả lớp đã lắng nghe mình.","Cúi đầu chào, giữ nụ cười, chờ vỗ tay"]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1448, MAPH=1086;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

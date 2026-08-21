@@ -87,7 +87,13 @@
               "thuyettrinh.html", "thuyettrinh-A-U1-L1-we-eat-flowers.html",
               "thuyettrinh-A-U2-L4-animals-help-people.html",
               "thuyettrinh-animals-around-us.html", "thuyettrinh-healthy-food.html",
-              "thuyettrinh-animals-homes.html"] },
+              "thuyettrinh-animals-homes.html",
+              "thuyettrinh-all-grown-up.html", "thuyettrinh-tree-age.html",
+              "thuyettrinh-save-forests.html", "thuyettrinh-seasons.html",
+              "thuyettrinh-bad-weather.html", "thuyettrinh-dirt-is-good.html",
+              "thuyettrinh-soil-homes.html", "thuyettrinh-energy.html",
+              "thuyettrinh-electricity.html", "thuyettrinh-keeping-warm.html",
+              "thuyettrinh-not-just-food.html", "thuyettrinh-your-senses.html"] },
     { href: "report.html",    icon: "📊", label: "Thống kê" }
   ];
   var EU_MORE = [

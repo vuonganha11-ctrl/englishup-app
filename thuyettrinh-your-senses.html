@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Your Senses</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1535px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1535px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Your Senses<small>Level A · Chủ đề: Năm giác quan</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Your Senses" src="tt-senses.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1535 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[536,445,492,161],
+  b1  :[10,15,496,992],
+  b2  :[563,20,434,390],
+  b3  :[1052,20,473,406],
+  b4  :[1039,454,486,430],
+  b5  :[508,645,286,366],
+  b6  :[796,645,244,366]
+};
+const ROWS = {
+  'glasses':[16,62,484,88],
+  'sweetw':[16,150,484,83],
+  'feather':[16,233,484,77],
+  'sour':[16,310,484,89],
+  'softw':[16,399,484,82],
+  'rock':[16,481,484,83],
+  'smellw':[16,564,484,81],
+  'tastew':[16,645,484,82],
+  'hearw':[16,727,484,82],
+  'seew':[16,809,484,82],
+  'touchw':[16,891,484,109],
+  'sight':[569,58,422,73],
+  'hearing':[569,131,422,68],
+  'smellr':[569,199,422,67],
+  'taster':[569,266,422,71],
+  'touchr':[569,337,422,68],
+  'eyes':[1058,62,461,69],
+  'ears':[1058,131,461,71],
+  'nose':[1058,202,461,70],
+  'tongue':[1058,272,461,70],
+  'skin':[1058,342,461,78],
+  'w-sweet':[1045,490,158,194],
+  'w-sour':[1203,490,158,194],
+  'w-soft':[1361,490,158,194],
+  'w-hard':[1045,684,158,194],
+  'w-loud':[1203,684,158,194],
+  'w-quiet':[1361,684,158,194]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Five Senses', color:'#b795ec'},
+  s3   : {label:'3. Sense Organs', color:'#f0a24a'},
+  s4   : {label:'4. Words That Describe Things', color:'#4bc4bd'},
+  s5   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Hello everyone. My name is Minh.","Xin chào cả nhà. Mình tên là Minh.","Đứng thẳng, mỉm cười, vẫy tay chào cả lớp."],
+['intro','ALL',null,"Please close your eyes for five seconds.","Mọi người nhắm mắt lại năm giây nhé.","Đưa hai bàn tay lên che mắt, đếm ngón tay từ một đến năm."],
+['intro','ALL',null,"Now open your eyes. What do you see?","Bây giờ mở mắt ra. Bạn thấy gì nào?","Mở bung hai tay ra khỏi mắt, nhìn quanh lớp."],
+['intro','ALL',null,"Your body has five amazing helpers.","Cơ thể chúng ta có năm người bạn siêu giỏi.","Giơ bàn tay xoè năm ngón thật cao."],
+['intro','b0',null,"Today I talk about my topic: Your Senses.","Hôm nay mình nói về chủ đề: Your Senses.","Chỉ tay vào đám mây tiêu đề trên sơ đồ."],
+['intro','b0',null,"My mind map has six parts. Let us go.","Sơ đồ của mình có sáu phần. Mình bắt đầu nhé.","Quét tay từ trái sang phải qua cả sơ đồ."],
+
+['story','ALL',null,"First, I tell you a true story about me.","Đầu tiên, mình kể một chuyện có thật của mình.","Đặt tay lên ngực, hạ giọng kể chuyện."],
+['story','ALL',null,"Last month I had a bad cold for four days.","Tháng trước mình bị cảm nặng suốt bốn ngày.","Giả bộ hắt hơi, xoa xoa cái mũi."],
+['story','ALL',null,"My nose was blocked. I could not smell.","Mũi mình bị nghẹt. Mình không ngửi được gì cả.","Bịt hai lỗ mũi, lắc đầu."],
+['story','ALL',null,"My mom cooked my favourite chicken soup.","Mẹ mình nấu món súp gà mình thích nhất.","Hai tay làm động tác khuấy nồi súp."],
+['story','ALL',null,"But the soup had no taste for me.","Nhưng với mình, món súp chẳng có vị gì cả.","Đưa thìa tưởng tượng lên miệng rồi nhún vai buồn."],
+['story','ALL',null,"I was very sad. I ate only a little.","Mình buồn lắm. Mình chỉ ăn được một chút.","Cúi mặt, mím môi tỏ vẻ buồn."],
+['story','ALL',null,"On day five, my nose was fine again.","Đến ngày thứ năm, mũi mình khoẻ lại rồi.","Hít một hơi thật sâu, mỉm cười thật tươi."],
+['story','ALL',null,"I smelled the soup and it was so good.","Mình ngửi thấy mùi súp và nó thơm ơi là thơm.","Đưa hai tay lên mũi, nhắm mắt hít hà."],
+['story','ALL',null,"Then I knew: my senses are my superpower.","Rồi mình hiểu: các giác quan là siêu năng lực của mình.","Giơ hai nắm tay lên cao như siêu nhân."],
+
+['s1','b1',null,"Part one is my Key Vocabulary. Eleven words.","Phần một là Từ Vựng Chính. Mười một từ.","Chỉ vào khung số một, giơ mười ngón rồi thêm một ngón."],
+['s1','b1','glasses',"Glasses help you see. I wear glasses when I read books.","Kính giúp ta nhìn rõ. Mình đeo kính khi đọc sách.","Hai tay tạo vòng tròn đeo lên mắt, rồi mở sách tưởng tượng."],
+['s1','b1','sweetw',"Sweet is the taste of candy. This ice cream is so sweet.","Sweet là vị của kẹo. Cây kem này ngọt ơi là ngọt.","Giả bộ liếm kem, gật gù thích thú."],
+['s1','b1','feather',"A feather grows on a bird wing. The birds have beautiful feathers.","Lông vũ mọc trên cánh chim. Những chú chim có bộ lông rất đẹp.","Hai tay vẫy nhẹ như cánh chim bay."],
+['s1','b1','sour',"Sour is the taste of lemons. These grapes taste sweet and sour.","Sour là vị chua của chanh. Mấy quả nho này vừa ngọt vừa chua.","Nheo mắt, chu môi như đang ăn chanh."],
+['s1','b1','softw',"Soft means easy to press. The blanket is soft and warm.","Soft nghĩa là mềm, dễ bóp. Cái chăn thì mềm và ấm.","Bóp bóp hai bàn tay rồi ôm vào ngực như quấn chăn."],
+['s1','b1','rock',"A rock is a hard stone. He threw the rock into the water.","Rock là hòn đá cứng. Bạn ấy ném hòn đá xuống nước.","Nắm chặt nắm tay gõ vào bàn, rồi làm động tác ném."],
+['s1','b1','smellw',"Smell means to use your nose. I smell flowers in the garden.","Smell là ngửi bằng mũi. Mình ngửi thấy mùi hoa trong vườn.","Chụm tay như cầm bông hoa, đưa lên mũi hít hà."],
+['s1','b1','tastew',"Taste means to use your tongue. I taste the sweet ice cream.","Taste là nếm bằng lưỡi. Mình nếm cây kem ngọt lịm.","Thè lưỡi một chút, rồi giả bộ nếm kem."],
+['s1','b1','hearw',"Hear means to use your ears. I hear music playing.","Hear là nghe bằng tai. Mình nghe thấy tiếng nhạc đang bật.","Khum tay sau vành tai, lắc lư theo nhạc."],
+['s1','b1','seew',"See means to use your eyes. I see the birds in the sky.","See là nhìn bằng mắt. Mình thấy những chú chim trên trời.","Che tay trên trán, ngước nhìn lên cao."],
+['s1','b1','touchw',"Touch means to use your skin. I touch the soft puppy.","Touch là chạm bằng da. Mình chạm vào chú cún mềm mềm.","Vuốt ve một chú cún tưởng tượng trong lòng."],
+
+['s2','b2',null,"Part two is the Five Senses. Look with me.","Phần hai là Năm Giác Quan. Nhìn cùng mình nhé.","Chỉ vào khung số hai, giơ năm ngón tay."],
+['s2','b2','sight',"Sight. We see with our eyes.","Thị giác. Chúng ta nhìn bằng mắt.","Chỉ vào mắt, rồi mở to mắt nhìn cả lớp."],
+['s2','b2','hearing',"Hearing. We hear with our ears.","Thính giác. Chúng ta nghe bằng tai.","Mời cả lớp bịt tai lại rồi mở ra."],
+['s2','b2','smellr',"Smell. We smell with our nose.","Khứu giác. Chúng ta ngửi bằng mũi.","Mời cả lớp hít một hơi thật sâu."],
+['s2','b2','taster',"Taste. We taste with our tongue.","Vị giác. Chúng ta nếm bằng lưỡi.","Chỉ vào miệng, chép chép môi."],
+['s2','b2','touchr',"Touch. We touch with our skin.","Xúc giác. Chúng ta chạm bằng da.","Mời cả lớp sờ vào mặt bàn của mình."],
+
+['s3','b3',null,"Part three is my Sense Organs.","Phần ba là các Cơ Quan Cảm Giác của mình.","Chỉ vào khung số ba rồi chỉ vào cơ thể."],
+['s3','b3','eyes',"My eyes see.","Đôi mắt của mình để nhìn.","Chớp chớp hai mắt thật nhanh."],
+['s3','b3','ears',"My ears hear.","Đôi tai của mình để nghe.","Kéo nhẹ hai vành tai."],
+['s3','b3','nose',"My nose smells.","Cái mũi của mình để ngửi.","Chạm ngón trỏ vào chóp mũi."],
+['s3','b3','tongue',"My tongue tastes.","Cái lưỡi của mình để nếm.","Thè lưỡi ra rồi cười."],
+['s3','b3','skin',"My skin touches. Five organs, five senses.","Làn da của mình để chạm. Năm cơ quan, năm giác quan.","Xoa hai bàn tay vào nhau rồi giơ năm ngón."],
+
+['s4','b4',null,"Part four is Words That Describe Things.","Phần bốn là Các Từ Miêu Tả Sự Vật.","Chỉ vào khung số bốn, quét tay qua sáu ô ảnh."],
+['s4','b4','w-sweet',"The lollipop is sweet.","Cây kẹo mút thì ngọt.","Giơ tay như cầm que kẹo mút và liếm."],
+['s4','b4','w-sour',"The lemon is sour.","Quả chanh thì chua.","Nhăn mặt, rùng mình một cái."],
+['s4','b4','w-soft',"The teddy bear is soft.","Con gấu bông thì mềm.","Ôm chặt một chú gấu bông tưởng tượng."],
+['s4','b4','w-hard',"The rock is hard.","Hòn đá thì cứng.","Gõ nắm tay lên mặt bàn hai cái."],
+['s4','b4','w-loud',"The boy is loud with the speaker.","Bạn nam hét rất to vào cái loa.","Khum tay quanh miệng, làm động tác hét."],
+['s4','b4','w-quiet',"The girl is quiet with her bear.","Bạn nữ ôm gấu ngủ rất yên tĩnh.","Đưa ngón trỏ lên môi, nghiêng đầu ngủ."],
+
+['s5','b5',null,"Part five is my Reading Idea. It is short.","Phần năm là Ý Bài Đọc. Rất ngắn thôi.","Chỉ vào khung số năm, nghiêng người tới trước."],
+['s5','b5',null,"We use our senses to learn about the world.","Chúng ta dùng giác quan để tìm hiểu thế giới.","Đọc chậm, hai tay mở rộng vẽ vòng tròn lớn."],
+['s5','b5',null,"In the picture, four kids smell flowers and eat ice cream.","Trong hình, bốn bạn nhỏ ngửi hoa và ăn kem.","Chỉ vào từng bạn nhỏ trong bức ảnh."],
+['s5','b5',null,"They also listen and read books.","Các bạn ấy còn lắng nghe và đọc sách.","Khum tay bên tai rồi mở sách tưởng tượng."],
+['s5','b5',null,"They learn with their senses every day.","Các bạn ấy học bằng giác quan mỗi ngày.","Gật đầu, chỉ tay vào cả lớp."],
+
+['s6','b6',null,"Part six is Remember. This is important.","Phần sáu là Điều Cần Nhớ. Phần này quan trọng.","Chỉ vào khung số sáu, giơ ngón trỏ lên cao."],
+['s6','b6',null,"Your senses help keep you safe and aware.","Các giác quan giúp bạn an toàn và tỉnh táo.","Đọc to, rõ, chỉ vào biểu tượng cái khiên."],
+['s6','b6',null,"The boy wears a helmet and gives a thumbs up.","Bạn nam đội mũ bảo hiểm và giơ ngón tay cái.","Đội mũ tưởng tượng rồi giơ ngón cái thật cao."],
+['s6','b6',null,"I hear a car, so I stop and wait.","Mình nghe tiếng xe, nên mình dừng lại và chờ.","Giơ bàn tay ra hiệu dừng lại."],
+['s6','b6',null,"I smell smoke, so I run and tell my teacher.","Mình ngửi mùi khói, nên mình chạy đi báo cô giáo.","Hít mũi rồi chỉ tay ra phía cửa lớp."],
+
+['end','ALL',null,"Now please close your eyes again for five seconds.","Bây giờ mọi người nhắm mắt lại năm giây nữa nhé.","Che mắt lại, đếm to từ một đến năm."],
+['end','ALL',null,"Open your eyes. Now you see the world again.","Mở mắt ra. Bây giờ bạn lại thấy cả thế giới.","Mở bung tay ra, cười thật tươi."],
+['end','ALL',null,"That is the gift of your five senses.","Đó chính là món quà từ năm giác quan của bạn.","Hai tay đưa ra phía trước như tặng quà."],
+['end','ALL',null,"Like my nose after my cold, do not forget them.","Như cái mũi mình sau trận cảm, đừng quên chúng nhé.","Chạm vào mũi rồi lắc ngón trỏ."],
+['end','ALL',null,"See, hear, smell, taste and touch every day.","Hãy nhìn, nghe, ngửi, nếm và chạm mỗi ngày.","Chỉ lần lượt vào mắt, tai, mũi, miệng, tay."],
+['end','ALL',null,"Thank you for listening to me.","Cảm ơn mọi người đã lắng nghe mình.","Cúi chào, mỉm cười và vẫy tay."]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1535, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

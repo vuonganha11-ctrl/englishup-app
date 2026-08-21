@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · All Grown Up</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1536px;height:1024px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1536px;height:1024px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · All Grown Up<small>Level A · Unit 3 – Lesson 6</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học All Grown Up" src="tt-grown.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1536 x 1024 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[526,338,506,234],
+  b1  :[8,8,462,930],
+  b2  :[476,18,622,282],
+  b3  :[1110,20,422,596],
+  b4  :[456,610,268,378],
+  b5  :[728,610,314,378],
+  b6  :[1046,652,484,352]
+};
+const ROWS = {
+  'toddler':[14,58,450,81],
+  'baby':[14,139,450,77],
+  'child':[14,216,450,81],
+  'teen':[14,297,450,77],
+  'adult':[14,374,450,77],
+  'grow':[14,451,450,77],
+  'oldw':[14,528,450,76],
+  'young':[14,604,450,76],
+  'taller':[14,680,450,78],
+  'smaller':[14,758,450,79],
+  'change':[14,837,450,93],
+  'st-baby':[482,50,122,245],
+  'st-toddler':[604,50,122,245],
+  'st-child':[726,50,122,245],
+  'st-teen':[848,50,122,245],
+  'st-adult':[970,50,122,245],
+  'taller-body':[1116,76,410,143],
+  'teeth':[1116,219,410,144],
+  'skills':[1116,363,410,138],
+  'learn':[1116,501,410,109],
+  'young-old':[462,638,256,154],
+  'small-tall':[462,792,256,190]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. Life Stages', color:'#b795ec'},
+  s3   : {label:'3. How People Grow', color:'#f0a24a'},
+  s4   : {label:'4. Comparing Ages', color:'#4bc4bd'},
+  s5   : {label:'5. Reading Idea', color:'#f07aa2'},
+  s6   : {label:'6. Remember', color:'#5aa9f0'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Hello everyone. My name is Minh.","Xin chào tất cả các bạn. Mình tên là Minh.","Đứng thẳng, mỉm cười và vẫy tay chào cả lớp"],
+['intro','b0',null,"My topic today is All Grown Up.","Chủ đề của mình hôm nay là All Grown Up.","Chỉ hai tay vào đám mây tiêu đề trên sơ đồ"],
+['intro','ALL',null,"This is my mind map. It has six parts.","Đây là sơ đồ tư duy của mình. Nó có sáu phần.","Vẽ một vòng tròn lớn bằng tay quanh cả sơ đồ"],
+['intro','ALL',null,"Key words, life stages, how people grow, comparing ages, a reading idea and one thing to remember.","Từ khoá, các giai đoạn cuộc đời, cách con người lớn lên, so sánh tuổi tác, ý bài đọc và một điều cần nhớ.","Đếm sáu phần trên đầu ngón tay"],
+['intro','ALL',null,"But first, let me tell you a small story.","Nhưng trước hết, hãy để mình kể một câu chuyện nhỏ.","Nghiêng người về phía trước, hạ giọng như sắp kể bí mật"],
+['story','ALL',null,"Last Sunday, I helped my mother clean the house.","Chủ nhật tuần trước, mình giúp mẹ dọn nhà.","Làm động tác lau bàn bằng tay"],
+['story','ALL',null,"I moved a big box near the kitchen door.","Mình dịch một cái thùng to gần cửa bếp.","Hai tay giả vờ đẩy một cái thùng nặng"],
+['story','ALL',null,"Then I saw many pencil lines on the door frame.","Rồi mình nhìn thấy rất nhiều vạch bút chì trên khung cửa.","Mở to mắt, chỉ tay vào một điểm trên tường"],
+['story','ALL',null,"Every line had a number and a year.","Mỗi vạch có một con số và một năm.","Dùng ngón trỏ vẽ những vạch ngang nhỏ trong không khí"],
+['story','ALL',null,"My mother said, Those lines are you.","Mẹ mình nói, Những vạch đó là con đấy.","Chỉ vào mình rồi làm mặt ngạc nhiên"],
+['story','ALL',null,"The lowest line was very very low.","Vạch thấp nhất thì thấp lắm luôn.","Cúi người, đưa tay xuống gần đầu gối"],
+['story','ALL',null,"I stood next to it. My knee touched the line.","Mình đứng cạnh vạch đó. Đầu gối mình chạm tới vạch.","Đứng thẳng và vỗ nhẹ vào đầu gối"],
+['story','ALL',null,"I asked myself, How did I grow so much?","Mình tự hỏi, Sao mình lại lớn nhiều đến vậy nhỉ?","Đưa tay lên cằm, nghiêng đầu suy nghĩ"],
+['story','ALL',null,"So today I want to answer that question with you.","Nên hôm nay mình muốn cùng các bạn trả lời câu hỏi đó.","Mở rộng hai tay về phía khán giả"],
+['s1','b1',null,"Part one is Key Vocabulary. I have eleven words.","Phần một là Từ vựng chính. Mình có mười một từ.","Chỉ vào khối 1 rồi giơ mười ngón tay và thêm một ngón"],
+['s1','b1','baby',"A baby is a very young child, zero to one year old. A baby cannot walk or talk.","Em bé là một đứa trẻ rất nhỏ, từ không đến một tuổi. Em bé chưa biết đi và chưa biết nói.","Khoanh hai tay như đang bế em bé rồi lắc đầu nhẹ"],
+['s1','b1','toddler',"A toddler is a child who is learning to walk, one to three years old. A toddler can walk without help.","Trẻ tập đi là em bé đang học đi, từ một đến ba tuổi. Trẻ tập đi có thể tự đi mà không cần ai đỡ.","Dùng hai ngón tay bước lắc lư trên lòng bàn tay kia"],
+['s1','b1','child',"A child is a boy or a girl from three to twelve years old.","Trẻ em là bạn nam hoặc bạn nữ từ ba đến mười hai tuổi.","Đưa tay chỉ vào chính mình rồi chỉ vào các bạn"],
+['s1','b1','teen',"A teen is a boy or a girl from thirteen to nineteen years old.","Thiếu niên là bạn nam hoặc bạn nữ từ mười ba đến mười chín tuổi.","Giơ tay ngang vai đo chiều cao của anh chị lớn"],
+['s1','b1','adult',"An adult is a man or a woman over twenty years old.","Người lớn là người đàn ông hoặc phụ nữ trên hai mươi tuổi.","Giơ tay lên cao quá đầu để đo người lớn"],
+['s1','b1','grow',"To grow means to get bigger or taller as time goes on.","Lớn lên nghĩa là to hơn hoặc cao hơn theo thời gian.","Đưa hai lòng bàn tay từ thấp lên cao từ từ"],
+['s1','b1','oldw',"Old means having lived many years, near the end of life.","Già nghĩa là đã sống nhiều năm, gần cuối cuộc đời.","Chống một tay như đang cầm gậy, lưng hơi khom"],
+['s1','b1','young',"Young means having lived only a short time. Young is not old.","Trẻ nghĩa là mới sống một thời gian ngắn. Trẻ thì không già.","Nhảy nhẹ tại chỗ, mỉm cười tươi"],
+['s1','b1','taller',"Taller means higher in height. Taller is not short.","Cao hơn nghĩa là chiều cao nhiều hơn. Cao hơn thì không thấp.","Kiễng chân và đưa một tay lên trên đỉnh đầu"],
+['s1','b1','smaller',"Smaller means lower in height or size. Smaller is not big.","Nhỏ hơn nghĩa là thấp hơn hoặc bé hơn. Nhỏ hơn thì không to.","Chụm hai ngón tay lại thành một khoảng bé xíu"],
+['s1','b1','change',"To change means to become different. Something is not the same as before.","Thay đổi nghĩa là trở nên khác đi. Cái gì đó không còn giống như trước.","Xoay hai bàn tay đổi chỗ cho nhau"],
+['s2','b2',null,"Part two is Life Stages. There are five stages.","Phần hai là Các giai đoạn cuộc đời. Có năm giai đoạn.","Chỉ vào khối 2 và giơ năm ngón tay"],
+['s2','b2','st-baby',"Stage one is baby, from zero to one year.","Giai đoạn một là em bé, từ không đến một tuổi.","Chỉ vào ảnh em bé rồi làm động tác ru"],
+['s2','b2','st-toddler',"Stage two is toddler, from one to three years.","Giai đoạn hai là trẻ tập đi, từ một đến ba tuổi.","Chỉ vào ảnh trẻ tập đi, bước hai bước nhỏ tại chỗ"],
+['s2','b2','st-child',"Stage three is child, from three to twelve years. I am here now.","Giai đoạn ba là trẻ em, từ ba đến mười hai tuổi. Mình đang ở đây.","Chỉ vào ảnh trẻ em rồi chỉ vào ngực mình"],
+['s2','b2','st-teen',"Stage four is teen, from thirteen to nineteen years.","Giai đoạn bốn là thiếu niên, từ mười ba đến mười chín tuổi.","Chỉ vào ảnh thiếu niên rồi chỉ ra phía trước"],
+['s2','b2','st-adult',"Stage five is adult, twenty years and more.","Giai đoạn năm là người lớn, hai mươi tuổi trở lên.","Chỉ vào ảnh người lớn và đứng thẳng lưng"],
+['s2','b2',null,"Every person goes through these five stages.","Ai cũng đi qua năm giai đoạn này.","Lướt tay ngang qua cả năm cột ảnh"],
+['s2','b2',null,"On my door frame, one pencil line is one stage of me.","Trên khung cửa nhà mình, mỗi vạch bút chì là một giai đoạn của mình.","Vẽ các vạch ngang nhỏ dần lên cao trong không khí"],
+['s3','b3',null,"Part three is How People Grow. There are four things.","Phần ba là Con người lớn lên như thế nào. Có bốn điều.","Chỉ vào khối 3 và giơ bốn ngón tay"],
+['s3','b3','taller-body',"First, bodies get taller. People grow taller as they get older.","Thứ nhất, cơ thể cao lên. Người ta cao hơn khi lớn tuổi hơn.","Giơ tay lên cao đo chiều cao"],
+['s3','b3','teeth',"Second, teeth change. Baby teeth fall out and adult teeth grow in.","Thứ hai, răng thay đổi. Răng sữa rụng đi và răng người lớn mọc lên.","Chỉ vào răng và cười thật tươi"],
+['s3','b3','teeth',"Last year I lost two teeth. Now I have new ones.","Năm ngoái mình rụng hai cái răng. Bây giờ mình có răng mới rồi.","Giơ hai ngón tay rồi chỉ vào miệng"],
+['s3','b3','skills',"Third, skills improve. People get better at the things they practice.","Thứ ba, kỹ năng tốt lên. Người ta giỏi hơn ở những việc mình luyện tập.","Làm động tác đá bóng hoặc viết bài"],
+['s3','b3','learn',"Fourth, people learn more. People learn new things every day.","Thứ tư, con người học nhiều hơn. Mỗi ngày người ta học điều mới.","Mở hai lòng bàn tay như đang mở một quyển sách"],
+['s3','b3',null,"So we do not only get taller. We get better too.","Vậy nên chúng ta không chỉ cao lên. Chúng ta còn giỏi lên nữa.","Chỉ lên cao rồi chỉ vào đầu mình"],
+['s4','b4',null,"Part four is Comparing Ages. I have two pairs.","Phần bốn là So sánh tuổi tác. Mình có hai cặp từ.","Chỉ vào khối 4 và giơ hai ngón tay"],
+['s4','b4','young-old',"The first pair is young and old.","Cặp thứ nhất là trẻ và già.","Đưa tay trái sang một bên rồi tay phải sang bên kia"],
+['s4','b4','young-old',"Young is the beginning of life. Old is the later part of life.","Trẻ là lúc bắt đầu cuộc đời. Già là phần sau của cuộc đời.","Chỉ tay sang trái rồi từ từ chỉ sang phải"],
+['s4','b4','small-tall',"The second pair is small and tall.","Cặp thứ hai là nhỏ và cao.","Chụm tay lại nhỏ rồi giơ tay lên cao"],
+['s4','b4','small-tall',"Small is shorter in size. Tall is higher in height.","Nhỏ là kích thước thấp hơn. Cao là chiều cao nhiều hơn.","Hạ tay xuống thấp rồi nâng tay lên cao"],
+['s5','b5',null,"Part five is the Reading Idea.","Phần năm là Ý chính của bài đọc.","Chỉ vào khối 5"],
+['s5','b5',null,"Look at this picture. Five people stand in a line.","Hãy nhìn bức tranh này. Năm người đứng thành một hàng.","Chỉ lần lượt vào từng người trong tranh"],
+['s5','b5',null,"The first one is a baby. The last one is a teen.","Người đầu tiên là em bé. Người cuối cùng là bạn thiếu niên.","Chỉ vào đầu hàng rồi chỉ vào cuối hàng"],
+['s5','b5',null,"The big idea is simple. People grow and change over time.","Ý lớn rất đơn giản. Con người lớn lên và thay đổi theo thời gian.","Nói chậm, gật đầu và đưa tay từ trái sang phải"],
+['s6','b6',null,"Part six is the thing I want you to Remember.","Phần sáu là điều mình muốn các bạn ghi nhớ.","Chỉ vào khối 6 và đặt tay lên ngực"],
+['s6','b6',null,"In this picture, five children stand near some flowers.","Trong bức tranh này, năm bạn nhỏ đứng cạnh những cây hoa.","Chỉ vào các bạn nhỏ và các cây hoa trong tranh"],
+['s6','b6',null,"They are not the same height. Some are tall and some are small.","Các bạn ấy không cao bằng nhau. Có bạn cao và có bạn thấp.","Đưa tay lên cao rồi hạ tay xuống thấp"],
+['s6','b6',null,"That is okay. Flowers do not open on the same day.","Điều đó không sao cả. Những bông hoa đâu có nở cùng một ngày.","Xoè bàn tay ra như một bông hoa đang nở"],
+['s6','b6',null,"Please remember this. Everyone grows at their own pace.","Xin hãy nhớ điều này. Mỗi người lớn lên theo nhịp của riêng mình.","Nói thật chậm, nhìn thẳng vào cả lớp"],
+['end','ALL',null,"Now I can answer my question at the kitchen door.","Bây giờ mình có thể trả lời câu hỏi của mình ở cửa bếp rồi.","Chỉ tay ra xa như chỉ về phía nhà mình"],
+['end','ALL',null,"I grew line by line, year by year.","Mình đã lớn lên từng vạch một, từng năm một.","Vẽ những vạch ngang cao dần lên trong không khí"],
+['end','ALL',null,"Tonight I will draw a new line on the door frame.","Tối nay mình sẽ vẽ một vạch mới trên khung cửa.","Giơ tay lên cao và vẽ một vạch ngang"],
+['end','ALL',null,"One day that line will be higher than my mother.","Một ngày nào đó vạch ấy sẽ cao hơn cả mẹ mình.","Kiễng chân, đưa tay lên thật cao và mỉm cười"],
+['end','ALL',null,"Thank you for listening to me today.","Cảm ơn các bạn đã lắng nghe mình hôm nay.","Cúi đầu chào và mỉm cười"],
+['end','ALL',null,"Do you have any questions for me?","Các bạn có câu hỏi nào cho mình không?","Mở rộng hai tay mời cả lớp đặt câu hỏi"]
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1536, MAPH=1024;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>

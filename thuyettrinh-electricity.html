@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Thuyết trình · Electricity</title>
+<style>
+  :root{
+    --bg:#0f1720; --bg2:#16212d; --line:#26374a; --ink:#e8f0f7; --mut:#9fb3c8; --acc:#38bdf8;
+    --sw:400px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+
+  #app{display:flex;height:100dvh;width:100%}
+  #left{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+  #right{width:var(--sw);flex:none;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+
+  .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#111c27;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .ttl{font-weight:700;font-size:14px;margin-right:auto;letter-spacing:.2px}
+  .bar .ttl small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+  button.b{background:#1d2c3b;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+  button.b:hover{background:#26394d}
+  button.b:active{transform:translateY(1px)}
+  button.b.on{background:var(--acc);color:#04222f;border-color:var(--acc);font-weight:700}
+
+  #stage{flex:1;position:relative;overflow:hidden;background:#0b131b;cursor:grab;touch-action:none}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #map{position:relative;width:1448px;height:1086px;background:#fff;overflow:hidden}
+  #pic{display:block;width:1448px;height:1086px;user-select:none;-webkit-user-drag:none}
+
+  #spot{position:absolute;border-radius:18px;border:4px solid var(--acc);
+        box-shadow:0 0 0 9999px rgba(5,14,24,.58);pointer-events:none;opacity:0;
+        transition:left .45s cubic-bezier(.22,.75,.3,1),top .45s cubic-bezier(.22,.75,.3,1),width .45s cubic-bezier(.22,.75,.3,1),height .45s cubic-bezier(.22,.75,.3,1),opacity .3s}
+  #map.focusing #spot{opacity:1}
+  #rowspot{position:absolute;border-radius:12px;background:rgba(255,214,64,.28);outline:4px solid #ffc933;
+        pointer-events:none;opacity:0;transition:all .32s cubic-bezier(.22,.75,.3,1)}
+  #rowspot.on{opacity:1}
+
+  #meta{padding:10px 14px 6px;border-bottom:1px solid var(--line)}
+  #meta .h{font-size:13px;color:var(--mut)}
+  #meta .p{font-size:16px;font-weight:700;margin-top:2px}
+  #prog{height:6px;background:#0d1620;border-radius:99px;margin-top:8px;overflow:hidden}
+  #prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+
+  #list{flex:1;overflow:auto;padding:8px 10px 26px;scroll-behavior:smooth}
+  .sec{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#0b1a24;margin:14px 4px 8px;padding:5px 10px;border-radius:8px;display:inline-block}
+  .line{display:flex;gap:9px;padding:10px 11px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:5px}
+  .line:hover{background:#1c2b3a}
+  .line.cur{background:#123043;border-color:var(--acc)}
+  .line .n{flex:none;width:26px;height:26px;border-radius:50%;background:#22364a;color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .line.cur .n{background:var(--acc);color:#04222f}
+  .line .body{min-width:0;flex:1}
+  .line .en{font-size:19px;line-height:1.42;font-weight:600}
+  .line.cur .en{font-size:21px}
+  .line .vi{font-size:14px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .line .sp{flex:none;align-self:flex-start;background:transparent;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:2px 4px;border-radius:8px}
+  .line .sp:hover{background:#26394d;color:var(--ink)}
+  body.novi .vi{display:none}
+  .line .tip{font-size:13px;color:#f6c453;margin-top:5px;line-height:1.35;background:#2a2415;border-left:3px solid #f6c453;border-radius:0 8px 8px 0;padding:4px 8px}
+  body.notip .tip{display:none}
+
+  #foot{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#111c27}
+  #foot .clock{font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;margin-left:auto;color:var(--mut)}
+  #foot .clock.run{color:var(--acc)}
+
+  #zoomer{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #zoomer button{width:42px;height:42px;border-radius:12px;border:1px solid #cdd8e4;background:#ffffffee;color:#123;font-size:19px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  #zoomer button:hover{background:#fff}
+  #hint{position:absolute;left:12px;bottom:12px;z-index:5;background:#ffffffdd;color:#33475b;border:1px solid #cdd8e4;border-radius:10px;padding:6px 10px;font-size:12px}
+
+  @media (max-width:900px){
+    #app{flex-direction:column}
+    #right{width:100%;border-left:0;border-top:1px solid var(--line);height:45dvh}
+    #left{height:55dvh}
+    .bar{padding:6px 8px;gap:5px;flex-wrap:nowrap}
+    .bar .ttl{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar .ttl small{display:none}
+    button.b{padding:7px 9px;font-size:12px}
+    #meta{padding:7px 12px 5px}
+    #meta .h{font-size:11px}#meta .p{font-size:14px}
+    .line .en{font-size:18px}.line.cur .en{font-size:19px}
+    #zoomer button{width:38px;height:38px;font-size:17px}
+    #hint{display:none}
+  }
+  @media print{body{overflow:visible}#left,#foot,#zoomer{display:none}#right{width:100%}}
+  /* mobile.css dùng chung có rule img{max-width:100%} — khoá lại kẻo lệch hệ toạ độ */
+  #map #pic{max-width:none}
+  .eu-hamburger,.eu-drawer,.eu-drawer-overlay{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260820"></script>
+</head>
+<body>
+<div id="app">
+  <div id="left">
+    <div class="bar">
+      <div class="ttl">🗺️ Mindmap · Electricity<small>Level A · Unit 7 – Lesson 14</small></div>
+      <a class="b" id="btnBack" href="thuyettrinh.html" title="Về danh sách bài thuyết trình" style="text-decoration:none;display:inline-flex;align-items:center">← Danh sách</a>
+      <button class="b" id="btnFit" title="Xem toàn bộ mindmap">⤢ Toàn cảnh</button>
+      <button class="b on" id="btnFollow" title="Tự phóng vào phần đang nói">🎯 Bám theo câu</button>
+      <button class="b" id="btnFull" title="Toàn màn hình">⛶ Toàn màn hình</button>
+    </div>
+    <div id="stage">
+      <div id="world">
+        <div id="map">
+          <img id="pic" alt="Mindmap bài học Electricity" src="tt-electric.webp?v=20260821">
+          <div id="spot"></div>
+          <div id="rowspot"></div>
+        </div>
+      </div>
+      <div id="zoomer">
+        <button id="zIn" title="Phóng to">＋</button>
+        <button id="zOut" title="Thu nhỏ">－</button>
+        <button id="zFit" title="Vừa màn hình">⤢</button>
+      </div>
+      <div id="hint">Lăn chuột để phóng · Kéo để di chuyển · Bấm đúp để phóng nhanh</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="bar">
+      <div class="ttl">🎤 Kịch bản trình bày</div>
+      <button class="b on" id="btnVi" title="Ẩn / hiện nghĩa tiếng Việt">🇻🇳 Việt</button>
+      <button class="b on" id="btnTip" title="Ẩn / hiện gợi ý cử chỉ khi trình bày">💡</button>
+      <button class="b" id="btnAuto" title="Tự động đọc và chuyển câu">▶ Đọc</button>
+    </div>
+    <div id="meta">
+      <div class="h">Đang trình bày</div>
+      <div class="p" id="mPart">Mở đầu</div>
+      <div id="prog"><i></i></div>
+    </div>
+    <div id="list"></div>
+    <div id="foot">
+      <button class="b" id="prev">◀ Câu trước</button>
+      <button class="b" id="next">Câu sau ▶</button>
+      <span class="clock" id="clock" title="Bấm để bắt đầu/dừng đếm giờ">⏱ 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== vùng toạ độ trên ảnh gốc 1448 x 1086 ====== */
+const AREAS = {
+  ALL :null,
+  b0  :[470,320,470,325],
+  b1  :[10,8,366,1076],
+  b2  :[398,33,340,255],
+  b3  :[773,38,665,290],
+  b4  :[948,362,490,286],
+  b5  :[396,670,528,268],
+  b6  :[988,675,406,293],
+  b7  :[396,972,688,106]
+};
+const ROWS = {
+  'turbine':[16,83,354,108],
+  'cord':[16,191,354,99],
+  'send':[16,290,354,113],
+  'wire':[16,403,354,94],
+  'power':[16,497,354,106],
+  'power-plant':[16,603,354,104],
+  'solar-panel':[16,707,354,94],
+  'computer':[16,801,354,96],
+  'electricityw':[16,897,354,100],
+  'plug':[16,997,354,79],
+  't-plant':[779,75,131,155],
+  't-wires':[910,75,130,155],
+  't-cords':[1040,75,131,155],
+  't-plugs':[1171,75,130,155],
+  't-devices':[1301,75,131,155],
+  'travel-caption':[779,232,653,56],
+  'src-plant':[954,400,120,200],
+  'src-turbine':[1074,400,119,200],
+  'src-solar':[1193,400,119,200],
+  'src-battery':[1312,400,120,200],
+  'src-caption':[954,602,478,42],
+  'ev-lights':[402,700,103,200],
+  'ev-computer':[505,700,103,200],
+  'ev-fan':[608,700,104,200],
+  'ev-tv':[712,700,103,200],
+  'ev-charger':[815,700,103,200],
+  'ev-caption':[402,902,516,32],
+  'no-wet-hands':[994,721,394,122],
+  'ask-adult':[994,843,394,113]
+};
+
+const SECTIONS = {
+  intro: {label:'Mở đầu', color:'#38bdf8'},
+  story: {label:'Câu chuyện của tôi', color:'#f6c453'},
+  s1   : {label:'1. Key Vocabulary', color:'#6fcf7a'},
+  s2   : {label:'2. What Is Electricity', color:'#b795ec'},
+  s3   : {label:'3. How Electricity Travels', color:'#f0a24a'},
+  s4   : {label:'4. Sources of Electricity', color:'#4bc4bd'},
+  s5   : {label:'5. Everyday Uses', color:'#f07aa2'},
+  s6   : {label:'6. Stay Safe', color:'#5aa9f0'},
+  s7   : {label:'7. Remember', color:'#86c06f'},
+  end  : {label:'Kết bài', color:'#38bdf8'}
+};
+
+/* mỗi câu: [phần, khối phóng ('ALL' = toàn cảnh), dòng tô vàng, tiếng Anh, tiếng Việt, gợi ý cho người trình bày] */
+const SCRIPT = [
+['intro','ALL',null,"Good morning, everyone.","Chào buổi sáng cả nhà ạ.","Đứng thẳng, mỉm cười, nhìn khắp lớp một lượt"],
+['intro','ALL',null,"My name is Anh, and I am very happy today.","Em tên là Anh, hôm nay em rất vui ạ.","Đặt bàn tay lên ngực, gật đầu nhẹ"],
+['intro','b0',null,"My topic today is Electricity.","Chủ đề của em hôm nay là Điện ạ.","Chỉ vào đám mây tiêu đề, dừng lại một nhịp"],
+['intro','b0',null,"Look at the light bulb above the title. It is shining.","Cả lớp nhìn bóng đèn phía trên tiêu đề nhé, nó đang sáng đó ạ.","Chỉ tay lên bóng đèn rồi xòe năm ngón tay như tia sáng"],
+['intro','ALL',null,"I have seven small parts to share with you.","Em có bảy phần nhỏ để chia sẻ với cả lớp ạ.","Giơ bảy ngón tay lên cao"],
+
+['story','ALL',null,"First, I want to tell you a true story.","Đầu tiên, em muốn kể cho cả lớp một câu chuyện có thật ạ.","Hạ tay xuống, hạ giọng, bước lên nửa bước"],
+['story','ALL',null,"One evening, I washed my hands in the kitchen.","Một buổi tối, em rửa tay trong bếp.","Xoa hai bàn tay vào nhau như đang rửa tay"],
+['story','ALL',null,"I wanted to help my mom, so I ran to the rice cooker.","Em muốn giúp mẹ nên em chạy tới chỗ nồi cơm điện.","Chạy tại chỗ hai bước nhỏ, mắt sáng lên"],
+['story','ALL',null,"I put my hand on the plug to pull it out.","Em đưa tay ra cầm cái phích cắm để rút ra.","Vươn tay ra phía trước như sắp nắm phích cắm"],
+['story','ALL',null,"Then my mom shouted, Stop! Do not touch it!","Rồi mẹ em hét lên, Dừng lại! Đừng chạm vào!","Giật mình, rụt tay lại thật nhanh"],
+['story','ALL',null,"My heart went boom boom. I was very surprised.","Tim em đập thình thịch, em giật cả mình ạ.","Đặt tay lên ngực, vỗ nhẹ hai cái"],
+['story','ALL',null,"My mom dried my hands and said, Wet hands and electricity are not friends.","Mẹ lau khô tay em rồi nói, Tay ướt và điện không phải là bạn của nhau đâu con.","Làm động tác lau tay bằng khăn, nói chậm rãi"],
+['story','ALL',null,"After that day, I wanted to learn about electricity. So here is my mind map.","Từ hôm đó, em muốn tìm hiểu về điện. Và đây là sơ đồ tư duy của em ạ.","Mở rộng hai tay về phía sơ đồ, mỉm cười"],
+
+['s1','b1',null,"Part one is Key Vocabulary with full definitions.","Phần một là Từ khóa quan trọng kèm định nghĩa đầy đủ ạ.","Chỉ vào tiêu đề khối một"],
+['s1','b1','turbine',"A turbine is a machine with blades that spin when the wind, water, or steam moves them.","Tua bin là một cỗ máy có cánh, nó quay khi gió, nước hoặc hơi nước làm nó chuyển động.","Xoay một ngón trỏ tròn tròn như cánh quạt quay"],
+['s1','b1','cord',"A cord is a thick wire with a plug on the end. It gives electricity to a device.","Dây dẫn là sợi dây to có phích cắm ở đầu, nó đưa điện tới đồ dùng.","Kéo hai tay xa nhau như đang căng một sợi dây"],
+['s1','b1','send',"To send means to move something to someone or somewhere else.","Gửi nghĩa là chuyển một thứ gì đó tới ai đó hoặc tới nơi khác.","Đẩy hai bàn tay về phía trước một cách dứt khoát"],
+['s1','b1','wire',"A wire is a long, thin piece of metal that carries electricity.","Dây điện là một sợi kim loại dài và mảnh, nó mang điện đi.","Dùng ngón trỏ vẽ một đường dài trong không khí"],
+['s1','b1','power',"Power is the ability or energy that is used to make things work.","Năng lượng là sức mạnh được dùng để làm cho mọi thứ hoạt động.","Gồng nhẹ hai cánh tay, nắm chặt hai bàn tay"],
+['s1','b1','power-plant',"A power plant is a building or place where electricity is made.","Nhà máy điện là tòa nhà hoặc nơi người ta tạo ra điện.","Hai tay vẽ hình một tòa nhà to trong không khí"],
+['s1','b1','solar-panel',"A solar panel is a device that changes sunlight into electricity.","Tấm pin mặt trời là thiết bị biến ánh nắng thành điện.","Ngửa lòng bàn tay lên trời rồi nghiêng nhẹ như tấm pin"],
+['s1','b1','computer',"A computer is an electronic machine that can store and process information.","Máy tính là máy điện tử có thể lưu trữ và xử lý thông tin.","Gõ nhẹ mười ngón tay trong không khí như đang gõ phím"],
+['s1','b1','electricityw',"Electricity is a kind of energy that can make lights, machines, and computers work.","Điện là một loại năng lượng làm cho đèn, máy móc và máy tính hoạt động.","Bật ngón tay tách một cái rồi xòe bàn tay ra"],
+['s1','b1','plug',"A plug is the part on the end of a cord that goes into an outlet.","Phích cắm là bộ phận ở đầu dây dẫn, dùng để cắm vào ổ điện.","Chụm hai ngón tay lại rồi đẩy vào lòng bàn tay kia"],
+
+['s2','b2',null,"Part two answers a big question. What is electricity?","Phần hai trả lời một câu hỏi lớn. Điện là gì ạ?","Nghiêng đầu, mở to mắt, một tay đưa lên như đang hỏi"],
+['s2','b2',null,"Look at the bright light bulb in this box.","Cả lớp nhìn bóng đèn sáng trong ô này nhé.","Chỉ vào hình bóng đèn trong khối hai"],
+['s2','b2',null,"Electricity is energy that can make lights, machines, and computers work.","Điện là năng lượng làm cho đèn, máy móc và máy tính hoạt động ạ.","Đọc chậm, đếm ba ngón tay theo ba thứ vừa kể"],
+
+['s3','b3',null,"Part three shows how electricity travels. Five pictures are joined by arrows.","Phần ba cho thấy điện đi tới nhà mình thế nào ạ, năm bức hình được nối với nhau bằng mũi tên.","Chỉ vào tiêu đề rồi lướt ngón tay theo hàng mũi tên"],
+['s3','b3','t-plant',"It starts at the power plant.","Điện bắt đầu từ nhà máy điện.","Chỉ vào ô nhà máy điện, dừng một nhịp"],
+['s3','b3','t-wires',"Next, it goes into long wires.","Tiếp theo, điện đi vào những sợi dây điện dài.","Vẽ một đường dài trong không khí"],
+['s3','b3','t-cords',"Then it goes into cords in our house.","Rồi điện đi vào các dây dẫn trong nhà mình.","Chỉ xuống thấp như chỉ dây dưới sàn"],
+['s3','b3','t-plugs',"After that, it goes through plugs.","Sau đó, điện đi qua các phích cắm.","Chụm ngón tay và đẩy tới như cắm phích"],
+['s3','b3','t-devices',"Finally, it reaches our devices.","Cuối cùng, điện tới các thiết bị của chúng ta.","Xòe hai tay ra, mỉm cười"],
+['s3','b3','travel-caption',"The note says: Electricity is made at a power plant. It travels through wires. Cords and plugs bring electricity to our devices.","Dòng chú thích viết rằng, Điện được tạo ra ở nhà máy điện, đi qua dây điện, rồi dây dẫn và phích cắm mang điện tới thiết bị của chúng ta.","Đặt ngón tay dưới dòng chú thích, đọc rõ ràng"],
+
+['s4','b4',null,"Part four is Sources of Electricity.","Phần bốn là Các nguồn tạo ra điện ạ.","Chỉ vào tiêu đề khối bốn"],
+['s4','b4','src-plant',"The first source is a power plant.","Nguồn thứ nhất là nhà máy điện.","Chỉ vào ô nhà máy điện"],
+['s4','b4','src-turbine',"The second one is a wind turbine. Its blades spin in the wind.","Nguồn thứ hai là tua bin gió, cánh của nó quay trong gió.","Xoay cánh tay tròn như cánh quạt gió"],
+['s4','b4','src-solar',"The third one is a solar panel. It uses sunlight.","Nguồn thứ ba là tấm pin mặt trời, nó dùng ánh nắng.","Đưa tay lên cao như đón nắng"],
+['s4','b4','src-battery',"The fourth one is a battery. It is small but very useful.","Nguồn thứ tư là cục pin, nhỏ thôi nhưng rất hữu ích.","Chụm ngón cái và ngón trỏ chỉ vật nhỏ"],
+['s4','b4','src-caption',"The note says: Electricity can be made in many ways using different sources.","Dòng chú thích viết rằng, Điện có thể được tạo ra bằng nhiều cách từ những nguồn khác nhau.","Đưa tay quét ngang qua cả bốn ô hình"],
+
+['s5','b5',null,"Part five is Everyday Uses.","Phần năm là Những việc dùng điện hằng ngày ạ.","Chỉ vào tiêu đề khối năm"],
+['s5','b5','ev-lights',"We use electricity for lights when the room is dark.","Chúng ta dùng điện cho đèn khi phòng tối.","Bật ngón tay rồi xòe tay như đèn bật sáng"],
+['s5','b5','ev-computer',"We use a computer to study and to play.","Chúng ta dùng máy tính để học và để chơi.","Gõ phím trong không khí"],
+['s5','b5','ev-fan',"We turn on a fan when the day is hot.","Chúng ta bật quạt khi trời nóng.","Phe phẩy tay trước mặt như đang quạt"],
+['s5','b5','ev-tv',"We watch cartoons on the television.","Chúng ta xem hoạt hình trên tivi.","Hai tay vẽ khung hình chữ nhật"],
+['s5','b5','ev-charger',"We use a charger for a phone or a tablet.","Chúng ta dùng sạc cho điện thoại hoặc máy tính bảng.","Làm động tác cắm dây sạc vào lòng bàn tay"],
+['s5','b5','ev-caption',"The note says: We use electricity every day at home, at school, and almost everywhere!","Dòng chú thích viết rằng, Chúng ta dùng điện mỗi ngày ở nhà, ở trường và gần như ở mọi nơi.","Xoay người chỉ quanh lớp học một vòng"],
+
+['s6','b6',null,"Now, part six. Please listen carefully. This part is Stay Safe.","Bây giờ là phần sáu. Cả lớp lắng nghe kỹ giúp em nhé. Phần này là Giữ an toàn ạ.","Đứng nghiêm, hạ tay xuống, nhìn thẳng vào lớp"],
+['s6','b6','no-wet-hands',"Rule one. Do not touch plugs with wet hands.","Điều thứ nhất. Không chạm vào phích cắm khi tay còn ướt.","Bắt chéo hai tay trước ngực thành dấu X"],
+['s6','b6','no-wet-hands',"This is the rule my mom taught me in the kitchen.","Đây chính là điều mẹ đã dạy em trong bếp hôm ấy.","Chỉ tay về phía mình, gật đầu"],
+['s6','b6','no-wet-hands',"Water and electricity together are very dangerous.","Nước và điện đi cùng nhau thì rất nguy hiểm.","Nói chậm, nhấn mạnh từng từ"],
+['s6','b6','ask-adult',"Rule two. Ask an adult for help.","Điều thứ hai. Hãy nhờ người lớn giúp đỡ.","Giơ tay lên như đang xin phép"],
+['s6','b6','ask-adult',"Ask your mom, your dad, or your teacher first.","Hãy hỏi mẹ, hỏi bố, hoặc hỏi thầy cô trước đã.","Chỉ lần lượt sang ba hướng khác nhau"],
+
+['s7','b7',null,"Part seven is Remember.","Phần bảy là phần Ghi nhớ ạ.","Chỉ vào dải ngang cuối sơ đồ"],
+['s7','b7',null,"I can see a shield and an electric warning sign here.","Em nhìn thấy một cái khiên và một biển cảnh báo điện ở đây.","Chỉ vào biểu tượng khiên rồi tới biển cảnh báo"],
+['s7','b7',null,"The shield means protection. The sign means be careful.","Cái khiên nghĩa là bảo vệ. Biển báo nghĩa là hãy cẩn thận.","Đưa tay lên che trước ngực rồi lắc ngón trỏ"],
+['s7','b7',null,"Electricity is useful, but we must use it safely.","Điện rất hữu ích, nhưng chúng ta phải dùng nó một cách an toàn.","Đọc thật chậm và rõ, dừng lại sau khi nói xong"],
+
+['end','ALL',null,"That is my mind map about electricity.","Đó là sơ đồ tư duy của em về điện ạ.","Lùi lại nửa bước, mở tay về phía sơ đồ"],
+['end','ALL',null,"Remember my story in the kitchen with wet hands?","Cả lớp còn nhớ chuyện em ở trong bếp với đôi tay ướt không ạ?","Giơ hai bàn tay ướt tưởng tượng lên, nghiêng đầu"],
+['end','ALL',null,"So please, keep your hands dry and ask an adult for help.","Vậy nên cả lớp nhớ giữ tay khô và nhờ người lớn giúp nhé.","Chỉ nhẹ về phía các bạn, giọng thân thiện"],
+['end','ALL',null,"Thank you for listening to me today.","Em cảm ơn cả lớp đã lắng nghe em hôm nay ạ.","Cúi đầu chào lịch sự"],
+['end','ALL',null,"Now I am happy to answer your questions.","Bây giờ em rất vui được trả lời câu hỏi của các bạn ạ.","Mở hai tay ra, mỉm cười chờ đợi"],
+];
+
+/* ====================================================================
+   ZOOM / KÉO
+   ==================================================================== */
+const stage=document.getElementById('stage'), world=document.getElementById('world'),
+      map=document.getElementById('map'), spot=document.getElementById('spot'),
+      rowspot=document.getElementById('rowspot');
+const MAPW=1448, MAPH=1086;
+let vx=0, vy=0, vs=1;
+
+function apply(anim){
+  world.style.transition = anim ? 'transform .45s cubic-bezier(.22,.75,.3,1)' : 'none';
+  world.style.transform  = `translate(${vx}px,${vy}px) scale(${vs})`;
+}
+const clampScale = s => Math.max(0.1, Math.min(6, s));
+
+function fit(anim=true){
+  const r=stage.getBoundingClientRect(), pad=18;
+  vs=clampScale(Math.min((r.width-pad*2)/MAPW,(r.height-pad*2)/MAPH));
+  vx=(r.width-MAPW*vs)/2; vy=(r.height-MAPH*vs)/2;
+  apply(anim);
+}
+function zoomArea(a, anim=true){
+  if(!a){ fit(anim); return; }
+  const [x,y,w,h]=a, r=stage.getBoundingClientRect(), pad=26;
+  vs=clampScale(Math.min((r.width-pad*2)/w,(r.height-pad*2)/h,3.2));
+  vx=(r.width-w*vs)/2-x*vs; vy=(r.height-h*vs)/2-y*vs;
+  apply(anim);
+}
+function zoomAt(cx,cy,f){
+  const r=stage.getBoundingClientRect(), px=cx-r.left, py=cy-r.top, ns=clampScale(vs*f);
+  vx=px-(px-vx)*(ns/vs); vy=py-(py-vy)*(ns/vs); vs=ns; apply(false);
+}
+
+stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.12:1/1.12);},{passive:false});
+document.getElementById('zIn').onclick =()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25);};
+document.getElementById('zOut').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1/1.25);};
+document.getElementById('zFit').onclick=()=>fit();
+document.getElementById('btnFit').onclick=()=>{map.classList.remove('focusing');rowspot.classList.remove('on');fit();};
+stage.addEventListener('dblclick',e=>zoomAt(e.clientX,e.clientY,1.6));
+
+const pts=new Map(); let last=null, pinch=null;
+stage.addEventListener('pointerdown',e=>{
+  stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){last={x:e.clientX,y:e.clientY};stage.classList.add('drag');}
+  if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch);pinch=d;return;}
+  if(pts.size===1&&last){vx+=e.clientX-last.x;vy+=e.clientY-last.y;last={x:e.clientX,y:e.clientY};apply(false);}
+});
+['pointerup','pointercancel','pointerleave'].forEach(t=>stage.addEventListener(t,e=>{
+  pts.delete(e.pointerId); if(pts.size<2)pinch=null;
+  if(pts.size===0){last=null;stage.classList.remove('drag');}
+}));
+
+/* ====================================================================
+   DANH SÁCH CÂU
+   ==================================================================== */
+const list=document.getElementById('list');
+let cur=0, follow=true, autoPlay=false;
+
+(function build(){
+  let lastSec=null, html='';
+  SCRIPT.forEach((s,i)=>{
+    const [sec,box,row,en,vi,tip]=s;
+    if(sec!==lastSec){ html+=`<div class="sec" style="background:${SECTIONS[sec].color}">${SECTIONS[sec].label}</div>`; lastSec=sec; }
+    html+=`<div class="line" data-i="${i}">
+        <div class="n">${i+1}</div>
+        <div class="body"><div class="en">${en}</div><div class="vi">${vi}</div>${tip?`<div class="tip">💡 ${tip}</div>`:''}</div>
+        <button class="sp" data-say="${i}" title="Nghe câu này">🔊</button>
+      </div>`;
+  });
+  list.innerHTML=html;
+})();
+
+list.addEventListener('click',e=>{
+  const sp=e.target.closest('.sp');
+  if(sp){e.stopPropagation();say(SCRIPT[+sp.dataset.say][3]);return;}
+  const ln=e.target.closest('.line');
+  if(ln) go(+ln.dataset.i);
+});
+
+function place(el,a){ el.style.left=a[0]+'px'; el.style.top=a[1]+'px'; el.style.width=a[2]+'px'; el.style.height=a[3]+'px'; }
+
+function go(i,anim=true){
+  cur=Math.max(0,Math.min(SCRIPT.length-1,i));
+  const [sec,boxId,rowKey]=SCRIPT[cur];
+
+  document.querySelectorAll('.line').forEach(el=>el.classList.toggle('cur',+el.dataset.i===cur));
+  const act=list.querySelector('.line.cur'); if(act) act.scrollIntoView({block:'center',behavior:'smooth'});
+  document.getElementById('mPart').textContent=SECTIONS[sec].label;
+  document.querySelector('#prog i').style.width=((cur+1)/SCRIPT.length*100)+'%';
+
+  const area=AREAS[boxId]||null;
+  if(area){ map.classList.add('focusing'); place(spot,area); }
+  else    { map.classList.remove('focusing'); }
+
+  if(rowKey && ROWS[rowKey]){ place(rowspot,ROWS[rowKey]); rowspot.classList.add('on'); }
+  else rowspot.classList.remove('on');
+
+  if(follow) zoomArea(area,anim);
+}
+
+/* ====================================================================
+   ĐỌC TO
+   ==================================================================== */
+let voice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices()||[];
+  voice=vs.find(v=>/en-US/i.test(v.lang)&&/google/i.test(v.name))||vs.find(v=>/en-US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;
+}
+pickVoice(); if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=pickVoice;
+function say(text,after){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.82; u.pitch=1.05; if(voice)u.voice=voice;
+    if(after)u.onend=after;
+    speechSynthesis.speak(u);
+  }catch(err){ console.warn('TTS lỗi:',err); if(after)setTimeout(after,1500); }
+}
+
+/* ====================================================================
+   NÚT ĐIỀU KHIỂN
+   ==================================================================== */
+document.getElementById('prev').onclick=()=>go(cur-1);
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('btnFollow').onclick=e=>{
+  follow=!follow; e.currentTarget.classList.toggle('on',follow);
+  if(follow) go(cur); else fit();
+};
+document.getElementById('btnVi').onclick=e=>{
+  document.body.classList.toggle('novi');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('novi'));
+};
+document.getElementById('btnTip').onclick=e=>{
+  document.body.classList.toggle('notip');
+  e.currentTarget.classList.toggle('on',!document.body.classList.contains('notip'));
+};
+document.getElementById('btnFull').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+};
+const btnAuto=document.getElementById('btnAuto');
+btnAuto.onclick=()=>{
+  autoPlay=!autoPlay; btnAuto.classList.toggle('on',autoPlay);
+  btnAuto.textContent=autoPlay?'⏸ Dừng':'▶ Đọc';
+  if(autoPlay) step(); else speechSynthesis.cancel();
+};
+function step(){
+  if(!autoPlay)return;
+  say(SCRIPT[cur][3],()=>{
+    if(!autoPlay)return;
+    if(cur<SCRIPT.length-1){ go(cur+1); setTimeout(step,550); }
+    else { autoPlay=false; btnAuto.classList.remove('on'); btnAuto.textContent='▶ Đọc'; }
+  });
+}
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(SCRIPT.length-1);
+  else if(e.key.toLowerCase()==='f')document.getElementById('btnFit').click();
+  else if(e.key.toLowerCase()==='s')say(SCRIPT[cur][3]);
+});
+
+const clock=document.getElementById('clock');
+let t0=null,tick=null;
+clock.onclick=()=>{
+  if(tick){clearInterval(tick);tick=null;clock.classList.remove('run');return;}
+  if(!t0)t0=Date.now();
+  clock.classList.add('run');
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    clock.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },500);
+};
+
+addEventListener('resize',()=>{ follow ? zoomArea(AREAS[SCRIPT[cur][1]]||null,false) : fit(false); });
+fit(false);
+go(0,false);
+</script>
+</body>
+</html>
