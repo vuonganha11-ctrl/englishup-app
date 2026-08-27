@@ -758,11 +758,11 @@ let gSenses=[], gPhrasals=[], gPreps=[];   // đã nối sẵn với từ gốc 
 let _xtRaw=null;                           // {senses, phrasals, preps} bản thô, nạp 1 lần
 let _senseCount={};                        // term thường → số nghĩa
 
-async function xtFetch(table, ord){
+async function xtFetch(table, ord, sel){
   const all=[]; const STEP=1000;
   try{
     for(let from=0; from<40000; from+=STEP){
-      const {data,error}=await sb.from(table).select('*').order(ord).range(from,from+STEP-1);
+      const {data,error}=await sb.from(table).select(sel||'*').order(ord).range(from,from+STEP-1);
       if(error) throw error;
       all.push.apply(all,data||[]);
       if(!data||data.length<STEP) break;
@@ -772,8 +772,13 @@ async function xtFetch(table, ord){
 }
 async function loadGameExtras(){
   if(_xtRaw) return;
+  /* ⚠️ BĂNG THÔNG (đo thật 2026-08-27): select('*') trên 3 bảng này tốn 2.724 KB
+     mỗi lượt mở trang; chỉ lấy đúng cột dùng đến thì còn 857 KB (giảm 68%).
+     Thêm cột mới mà chế độ chơi cần thì PHẢI thêm tên vào 3 chuỗi dưới đây. */
   const [s,p,g]=await Promise.all([
-    xtFetch('word_senses','term'), xtFetch('phrasal_verbs','term'), xtFetch('word_preps','term')]);
+    xtFetch('word_senses',  'term', 'term,sense_no,meaning_vi,example'),
+    xtFetch('phrasal_verbs','term', 'term,phrase,meaning_vi,example'),
+    xtFetch('word_preps',   'term', 'term,phrase,prep,meaning_vi,example')]);
   _xtRaw={senses:s, phrasals:p, preps:g};
   _senseCount={};
   s.forEach(r=>{ const k=String(r.term||'').toLowerCase(); _senseCount[k]=(_senseCount[k]||0)+1; });

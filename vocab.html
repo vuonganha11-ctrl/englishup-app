@@ -1889,10 +1889,10 @@ let _xtLoaded   = false;
 const XT_PAGE = 1000;   // PostgREST trả tối đa 1000 dòng/lần
 
 // Đọc trọn một bảng, chia lô 1000 dòng
-async function xtFetchAll(table, orderBy){
+async function xtFetchAll(table, orderBy, sel){
   let all = [], from = 0;
   for (;;){
-    const { data, error } = await sb.from(table).select('*')
+    const { data, error } = await sb.from(table).select(sel || '*')
       .order(orderBy).range(from, from + XT_PAGE - 1);
     if (error) throw error;
     const batch = data || [];
@@ -1914,27 +1914,71 @@ function xtGroup(rows){
   return m;
 }
 
-// Bảng phụ chưa tồn tại (chưa chạy migration) → bỏ qua, trang vẫn chạy bình thường
+/* Bảng phụ chưa tồn tại (chưa chạy migration) → bỏ qua, trang vẫn chạy bình thường.
+
+   ⚠️ BĂNG THÔNG (đo thật 2026-08-27): kéo cả 3 bảng bằng select('*') tốn
+   2.724 KB · 7 request MỖI LƯỢT MỞ TRANG (word_senses 2.094 KB · phrasal_verbs
+   257 KB · word_preps 373 KB). Nhưng lúc khởi động trang CHỈ CẦN ĐẾM số dòng để
+   vẽ 3 cột lọc "Đa nghĩa · Cụm ĐT · Giới từ" — nạp mỗi cột `term` chỉ 121 KB,
+   nhẹ hơn 22 lần. Dữ liệu thật chỉ cần khi mở popup → ensureExtras() nạp cho
+   ĐÚNG 1 từ. Cùng một cách làm với ensureFullWord() ở trên. */
+let _senseCnt = {}, _phrasalCnt = {}, _prepCnt = {};   // term thường → số dòng
+const _xtDone = new Set();                             // term đã nạp đủ dữ liệu
+
+function xtCount(rows){
+  const m = {};
+  (rows || []).forEach(r => {
+    const k = String((r && r.term) || '').toLowerCase();
+    if (k) m[k] = (m[k] || 0) + 1;
+  });
+  return m;
+}
+
 async function loadWordExtras(){
   if (!sb || _xtLoaded) return;
-  const grab = async (t, ord) => { try { return await xtFetchAll(t, ord); }
-                                   catch(e){ console.warn('loadWordExtras ' + t + ':', e.message); return []; } };
+  const grab = async (t) => { try { return await xtFetchAll(t, 'term', 'term'); }
+                              catch(e){ console.warn('loadWordExtras ' + t + ':', e.message); return []; } };
   const [s, p, g] = await Promise.all([
-    grab('word_senses',   'term'),
-    grab('phrasal_verbs', 'term'),
-    grab('word_preps',    'term'),
+    grab('word_senses'),
+    grab('phrasal_verbs'),
+    grab('word_preps'),
   ]);
-  s.sort((a, b) => (a.sense_no || 0) - (b.sense_no || 0));
-  _senseMap   = xtGroup(s);
-  _phrasalMap = xtGroup(p);
-  _prepMap    = xtGroup(g);
+  _senseCnt   = xtCount(s);
+  _phrasalCnt = xtCount(p);
+  _prepCnt    = xtCount(g);
   _xtLoaded   = true;
+}
+
+/* Nạp ĐỦ 3 bảng phụ cho ĐÚNG một từ (khi mở popup). Trả true nếu có dòng nào. */
+async function ensureExtras(term){
+  const k = String(term || '').toLowerCase();
+  if (!sb || !k || _xtDone.has(k)) return false;
+  _xtDone.add(k);
+  const one = async (t) => {
+    try {
+      const { data, error } = await sb.from(t).select('*').ilike('term', k);
+      if (error) throw error;
+      return data || [];
+    } catch(e){ console.warn('ensureExtras ' + t + ':', e.message); return []; }
+  };
+  const [s, p, g] = await Promise.all([one('word_senses'), one('phrasal_verbs'), one('word_preps')]);
+  s.sort((a, b) => (a.sense_no || 0) - (b.sense_no || 0));
+  if (s.length) _senseMap[k]   = s;
+  if (p.length) _phrasalMap[k] = p;
+  if (g.length) _prepMap[k]    = g;
+  return !!(s.length || p.length || g.length);
 }
 
 const xtKey     = w => String((w && w.term) || '').toLowerCase();
 const senseList = w => _senseMap[xtKey(w)]   || [];
 const phvList   = w => _phrasalMap[xtKey(w)] || [];
 const prepList  = w => _prepMap[xtKey(w)]    || [];
+
+/* ⚠️ Cột lọc & sắp xếp phải dùng SỐ ĐẾM nạp sẵn, KHÔNG dùng senseList().length —
+   dữ liệu đầy đủ chỉ có sau khi người dùng mở popup của đúng từ đó. */
+const senseCount = w => _senseCnt[xtKey(w)]   || 0;
+const phvCount   = w => _phrasalCnt[xtKey(w)] || 0;
+const prepCount  = w => _prepCnt[xtKey(w)]    || 0;
 
 // ── LOAD WORDS ───────────────────────────────────────
 
@@ -2194,11 +2238,11 @@ const VT_COLS = [
   { k:'exblob',         lab:'Nội dung câu', excel:'Câu mẫu',   w:'140px', sort:false, filter:'text',
     get:exBlob, on:false },
   { k:'nsense',         lab:'Đa nghĩa',   excel:'Từ đa nghĩa', w:'96px',  sort:true,  filter:'yn',
-    ynLab:['Có nhiều nghĩa','Chỉ một nghĩa'], get:w => senseList(w).length, on:true },
+    ynLab:['Có nhiều nghĩa','Chỉ một nghĩa'], get:w => senseCount(w), on:true },
   { k:'nphrasal',       lab:'Cụm ĐT',     excel:'Cụm động từ', w:'92px',  sort:true,  filter:'yn',
-    ynLab:['Có cụm động từ','Không có'],      get:w => phvList(w).length,   on:true },
+    ynLab:['Có cụm động từ','Không có'],      get:w => phvCount(w),   on:true },
   { k:'nprep',          lab:'Giới từ',    excel:'Giới từ đi kèm', w:'92px', sort:true, filter:'yn',
-    ynLab:['Có giới từ đi kèm','Không có'],   get:w => prepList(w).length,  on:true },
+    ynLab:['Có giới từ đi kèm','Không có'],   get:w => prepCount(w),  on:true },
   { k:'srs',            lab:'Flashcard',  excel:'—',           w:'100px', sort:true,  filter:'srs',
     get:w => { const c = _srsMap[w.id]; return c ? srsBucket(c.interval_days) : -1; }, on:true },
   { k:'audio',          lab:'Nghe',       excel:'—',           w:'68px',  sort:true,  filter:'yn',
@@ -2375,15 +2419,15 @@ function vtCell(c, w){
       return `<span class="vt-mini">${a ? `<b style="color:var(--a3)">🔄 ${a}</b>` : ''}${a && o ? ' · ' : ''}${o ? `<b style="color:var(--a5)">↔ ${o}</b>` : ''}</span>`;
     }
     case 'nsense': {
-      const k = senseList(w).length;
+      const k = senseCount(w);
       return k > 1 ? `<span class="vt-xt s">${k} nghĩa</span>` : `<span class="vt-ex-no">—</span>`;
     }
     case 'nphrasal': {
-      const k = phvList(w).length;
+      const k = phvCount(w);
       return k ? `<span class="vt-xt p">${k} cụm</span>` : `<span class="vt-ex-no">—</span>`;
     }
     case 'nprep': {
-      const k = prepList(w).length;
+      const k = prepCount(w);
       return k ? `<span class="vt-xt g">${k} cụm</span>` : `<span class="vt-ex-no">—</span>`;
     }
     case 'srs':           return vtSrsCell(w.id);
@@ -2756,14 +2800,26 @@ function openWord(id) {
     console.error('renderPhonetics:', err);
     const _p = document.getElementById('wm-phon-section'); if (_p) _p.style.display = 'none';
   }
-  [['renderSenses',  renderSenses,  'wm-senses-section'],
-   ['renderPhrasals', renderPhrasals, 'wm-phrasal-section'],
-   ['renderPreps',   renderPreps,   'wm-preps-section']].forEach(([nm, fn, sid]) => {
-    try { fn(w); } catch(err){
-      console.error(nm + ':', err);
-      const el = document.getElementById(sid); if (el) el.style.display = 'none';
-    }
-  });
+  const xtRenderSections = (ww) => {
+    [['renderSenses',  renderSenses,  'wm-senses-section'],
+     ['renderPhrasals', renderPhrasals, 'wm-phrasal-section'],
+     ['renderPreps',   renderPreps,   'wm-preps-section']].forEach(([nm, fn, sid]) => {
+      try { fn(ww); } catch(err){
+        console.error(nm + ':', err);
+        const el = document.getElementById(sid); if (el) el.style.display = 'none';
+      }
+    });
+  };
+  xtRenderSections(w);
+
+  /* 3 bảng phụ nạp riêng cho ĐÚNG từ này → mở popup NGAY rồi vẽ lại khi về.
+     (Lúc khởi động trang chỉ có SỐ ĐẾM — xem loadWordExtras.) */
+  if (!_xtDone.has(xtKey(w))) {
+    ensureExtras(w.term).then(got => {
+      if (openedWord !== w || !got) return;   // người dùng đã chuyển sang từ khác
+      xtRenderSections(w);
+    });
+  }
 
   // SRS button
   const srsBtn = document.getElementById('btn-srs');
