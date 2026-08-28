@@ -4,7 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bảng vần tiếng Anh — EnglishUp</title>
-<script src="topbar.js?v=20260828d"></script>
+<!-- supabase-js BẮT BUỘC phải đứng TRƯỚC topbar.js: thiếu nó thì sb() trả null,
+     loadAndRender() thoát sớm, EU_ACCESS.ready mãi false và eu-guard.js fail-open
+     => khách chưa đăng nhập xem được trọn trang. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260828e"></script>
 <style>
 :root{
   --bg:#08090d; --surface:#0e1018; --card:#151a25; --card2:#1b2133;
