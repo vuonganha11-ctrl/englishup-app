@@ -2622,7 +2622,12 @@ function storyMark(s){
     const surf = Array.isArray(pair) ? pair[0] : pair;
     const term = Array.isArray(pair) ? pair[1] : pair;
     if (!surf) return;
-    const at = en.indexOf(surf);
+    const isW = c => c !== undefined && /[A-Za-z0-9]/.test(c);
+    let at = -1;
+    for (let k = en.indexOf(surf); k >= 0; k = en.indexOf(surf, k + 1)) {
+      if (!isW(en[k - 1]) && !isW(en[k + surf.length])) { at = k; break; }
+    }
+    if (at < 0) at = en.indexOf(surf);
     if (at < 0) return;
     const tok = '\u0001' + marks.length + '\u0001';
     marks.push({ surf, term });
