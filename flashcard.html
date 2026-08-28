@@ -1353,23 +1353,22 @@ async function rate(grade){
   nextCard();
 }
 
-/* ⚠️ Trước đây hàm này ĐỌC LẠI xp từ máy chủ sau MỖI thẻ được chấm (2 request/thẻ).
-   loadProfile() đã nạp xp lúc mở trang rồi → nhớ vào _xpCache và chỉ ghi.
-   Nếu chưa có cache (loadProfile lỗi) thì vẫn đọc như cũ. */
+/* Cộng XP qua RPC eu_award_xp (SECURITY DEFINER): ghi CẢ tổng user_profiles.xp
+   LẪN xp_daily — xp_daily là nền của bảng xếp hạng Tuần/Tháng.
+   ⚠️ ĐỪNG quay lại tự upsert user_profiles.xp (xp_daily sẽ rỗng).
+   Hàm trả {ok, xp_total} nên vẫn giữ đúng 1 request/thẻ như bản đã tối ưu,
+   và _xpCache lấy thẳng số máy chủ trả về nên không lệch. Trần 1000 XP/lần. */
 async function awardXP(amount){
   if(!currentUser) return;
+  amount=Math.min(Math.round(amount),1000);
+  if(!(amount>0)) return;
   try{
-    let cur = _xpCache;
-    if(cur == null){
-      const { data } = await sb.from('user_profiles').select('xp').eq('id',currentUser.id).single();
-      cur = data?.xp;
-    }
-    const newXP=(cur||0)+amount;
-    _xpCache = newXP;
-    await sb.from('user_profiles').upsert({ id:currentUser.id, email:currentUser.email, xp:newXP });
-    document.getElementById('xp-val').textContent=newXP;
+    const { data, error } = await sb.rpc('eu_award_xp',{p_xp:amount,p_source:'flashcard'});
+    if(error||!data||data.ok!==true){ console.warn('xp',error?error.message:JSON.stringify(data)); return; }
+    _xpCache = data.xp_total;
+    document.getElementById('xp-val').textContent=data.xp_total;
     document.getElementById('xp-display').style.display='flex';
-  }catch(e){}
+  }catch(e){ console.warn('xp',e&&e.message); }
 }
 
 function finishSession(){

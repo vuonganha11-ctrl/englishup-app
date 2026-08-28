@@ -1956,11 +1956,16 @@ async function saveRun(win){
       : 'Chưa lưu được kết quả: '+esc(e.message||'lỗi mạng');
   }
 }
+/* Cộng XP qua RPC eu_award_xp (SECURITY DEFINER): ghi CẢ tổng user_profiles.xp
+   LẪN xp_daily — xp_daily là nền của bảng xếp hạng Tuần/Tháng.
+   ⚠️ ĐỪNG quay lại tự update user_profiles.xp (xp_daily sẽ rỗng). Trần 1000 XP/lần. */
 async function awardXP(n){
-  if(!sb||!ME||n<=0) return;
+  if(!sb||!ME) return;
+  n=Math.min(Math.round(n),1000);
+  if(!(n>0)) return;
   try{
-    const {data}=await sb.from('user_profiles').select('xp').eq('id',ME.id).maybeSingle();
-    await sb.from('user_profiles').update({xp:(data?.xp||0)+n}).eq('id',ME.id);
+    const {data,error}=await sb.rpc('eu_award_xp',{p_xp:n,p_source:'goquai'});
+    if(error||!data||data.ok!==true) console.warn('xp',error?error.message:JSON.stringify(data));
   }catch(e){ console.warn('xp',e.message); }
 }
 

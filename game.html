@@ -2231,13 +2231,22 @@ function replayListen(){
 function stopAudio(){ if(_audio){_audio.pause();_audio=null;} if('speechSynthesis'in window)window.speechSynthesis.cancel(); }
 
 // ── XP ──
+/* Cộng XP qua RPC eu_award_xp (SECURITY DEFINER): hàm này ghi CẢ tổng
+   user_profiles.xp LẪN xp_daily — xp_daily là nền của bảng xếp hạng Tuần/Tháng.
+   ⚠️ ĐỪNG quay lại tự upsert user_profiles.xp: làm vậy là xp_daily rỗng và
+   bảng xếp hạng Tuần/Tháng trắng trơn. Hàm trả {ok, xp_total} nên không phải
+   SELECT lại xp — bớt 1 request mỗi lần cộng. Trần mỗi lần gọi là 1000 XP. */
 async function awardXP(amount){
   if(!currentUser)return;
+  amount=Math.min(Math.round(amount),1000);
+  if(!(amount>0))return;
   try{
-    const {data}=await sb.from('user_profiles').select('xp').eq('id',currentUser.id).single();
-    const newXP=(data?.xp||0)+amount;
-    await sb.from('user_profiles').upsert({id:currentUser.id,email:currentUser.email,xp:newXP,last_study:new Date().toISOString()});
-    document.getElementById('xp-val').textContent=newXP;
+    const {data,error}=await sb.rpc('eu_award_xp',{p_xp:amount,p_source:'game'});
+    if(error||!data||data.ok!==true){ console.warn('xp',error?error.message:JSON.stringify(data)); return; }
+    /* last_study không nằm trong RPC nên ghi riêng, không chặn luồng chơi */
+    sb.from('user_profiles').update({last_study:new Date().toISOString()}).eq('id',currentUser.id)
+      .then(function(){},function(e){ console.warn('last_study',e&&e.message); });
+    document.getElementById('xp-val').textContent=data.xp_total;
     document.getElementById('xp-display').style.display='flex';
   }catch(e){ console.warn('xp',e.message); }
 }

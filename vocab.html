@@ -3605,20 +3605,22 @@ async function addToSRS() {
   }
 }
 
+/* Cộng XP qua RPC eu_award_xp (SECURITY DEFINER): ghi CẢ tổng user_profiles.xp
+   LẪN xp_daily — xp_daily là nền của bảng xếp hạng Tuần/Tháng.
+   ⚠️ ĐỪNG quay lại tự upsert user_profiles.xp (xp_daily sẽ rỗng). Trần 1000 XP/lần. */
 async function awardXP(amount) {
   if (!currentUser) return;
+  amount = Math.min(Math.round(amount), 1000);
+  if (!(amount > 0)) return;
   try {
-    const { data } = await sb.from('user_profiles').select('xp').eq('id', currentUser.id).single();
-    const newXP = (data?.xp || 0) + amount;
-    await sb.from('user_profiles').upsert({
-      id: currentUser.id,
-      email: currentUser.email,
-      xp: newXP,
-      last_study: new Date().toISOString()
-    });
-    document.getElementById('xp-val').textContent = newXP;
+    const { data, error } = await sb.rpc('eu_award_xp', { p_xp: amount, p_source: 'vocab' });
+    if (error || !data || data.ok !== true) { console.warn('xp', error ? error.message : JSON.stringify(data)); return; }
+    /* last_study không nằm trong RPC nên ghi riêng */
+    sb.from('user_profiles').update({ last_study: new Date().toISOString() }).eq('id', currentUser.id)
+      .then(function(){}, function(e){ console.warn('last_study', e && e.message); });
+    document.getElementById('xp-val').textContent = data.xp_total;
     document.getElementById('xp-display').style.display = 'flex';
-  } catch(e) {}
+  } catch(e) { console.warn('xp', e && e.message); }
 }
 
 // ── OVERLAY HELPERS ───────────────────────────────────
