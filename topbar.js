@@ -244,9 +244,11 @@
     var css =
       ".topbar-right{display:flex;align-items:center;gap:10px}" +
       /* Ô logo vuông đứng trước chữ EnglishUp */
-      ".topbar .logo,header.top .logo{display:inline-flex;align-items:center;gap:9px}" +
-      ".eu-logo-img{width:30px;height:30px;flex:0 0 30px;border-radius:7px;object-fit:cover;display:block}" +
-      "@media(max-width:768px){.eu-logo-img{width:26px;height:26px;flex:0 0 26px;border-radius:6px}}" +
+      /* gap:0 — KHÔNG dùng gap, kẻo tách luôn "English" và <span>Up</span> thành 2 flex item rời nhau.
+         Khoảng cách logo↔chữ đặt bằng margin-right của chính ảnh. */
+      ".topbar .logo,header.top .logo{display:inline-flex;align-items:center;gap:0}" +
+      ".eu-logo-img{width:30px;height:30px;flex:0 0 30px;margin-right:9px;border-radius:7px;object-fit:cover;display:block}" +
+      "@media(max-width:768px){.eu-logo-img{width:26px;height:26px;flex:0 0 26px;margin-right:8px;border-radius:6px}}" +
       ".eu-badge{display:flex;align-items:center;gap:6px;background:var(--card,#151a25);border:1px solid var(--border,#232d42);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;white-space:nowrap}" +
       ".eu-xp{color:var(--a4,#fb923c)}.eu-streak{color:var(--a5,#f472b6)}" +
       ".eu-login{background:var(--accent,#4f8ef7);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}" +
