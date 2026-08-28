@@ -47,6 +47,32 @@
     } catch (e) {}
   })();
 
+  /* ── Icon trình duyệt (favicon) dùng chung MỌI trang ──
+     Nạp ngay lúc parse <head> nên tab hiện icon trước cả khi body render.
+     Trang nào đã tự khai <link rel="icon"> thì tôn trọng, không ghi đè. */
+  (function injectIcons() {
+    try {
+      var head = document.head || document.getElementsByTagName("head")[0];
+      if (!head || document.getElementById("eu-favicon")) return;
+      if (head.querySelector('link[rel~="icon"]')) return;
+      var V = "?v=20260828";
+      var defs = [
+        { id: "eu-favicon", rel: "icon", href: "favicon.ico" + V, type: "image/x-icon" },
+        { rel: "icon", href: "logo.png" + V, type: "image/png", sizes: "512x512" },
+        { rel: "apple-touch-icon", href: "apple-touch-icon.png" + V }
+      ];
+      for (var i = 0; i < defs.length; i++) {
+        var d = defs[i];
+        var l = document.createElement("link");
+        if (d.id) l.id = d.id;
+        l.rel = d.rel; l.href = d.href;
+        if (d.type) l.type = d.type;
+        if (d.sizes) l.setAttribute("sizes", d.sizes);
+        head.appendChild(l);
+      }
+    } catch (e) {}
+  })();
+
   /* ── Ẩn ngay link "Trang chủ" (href .../index.html) để tránh nháy khi tải ──
      Logo sẽ đóng vai trò "về trang chủ". CSS nạp ở <head> trước khi body render.
      + Giấu tạm thanh nav cũ (7 link hardcode) cho tới khi buildChipNav() dựng lại
@@ -217,6 +243,10 @@
     if (document.getElementById("eu-topbar-css")) return;
     var css =
       ".topbar-right{display:flex;align-items:center;gap:10px}" +
+      /* Ô logo vuông đứng trước chữ EnglishUp */
+      ".topbar .logo,header.top .logo{display:inline-flex;align-items:center;gap:9px}" +
+      ".eu-logo-img{width:30px;height:30px;flex:0 0 30px;border-radius:7px;object-fit:cover;display:block}" +
+      "@media(max-width:768px){.eu-logo-img{width:26px;height:26px;flex:0 0 26px;border-radius:6px}}" +
       ".eu-badge{display:flex;align-items:center;gap:6px;background:var(--card,#151a25);border:1px solid var(--border,#232d42);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;white-space:nowrap}" +
       ".eu-xp{color:var(--a4,#fb923c)}.eu-streak{color:var(--a5,#f472b6)}" +
       ".eu-login{background:var(--accent,#4f8ef7);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}" +
@@ -445,7 +475,18 @@
       var bar = document.querySelector(".topbar");
       if (!bar) return;
       var logo = bar.querySelector(".logo");
-      if (logo) logo.setAttribute("href", "index.html");
+      if (logo) {
+        logo.setAttribute("href", "index.html");
+        /* Ô logo vuông chèn vào TRƯỚC chữ — chỉ chèn 1 lần, giữ nguyên chữ cũ. */
+        if (!logo.querySelector(".eu-logo-img")) {
+          var im = document.createElement("img");
+          im.className = "eu-logo-img";
+          im.src = "logo.png?v=20260828";
+          im.alt = "EnglishUp";
+          im.width = 30; im.height = 30;
+          logo.insertBefore(im, logo.firstChild);
+        }
+      }
       var nav = bar.querySelector("nav");
       if (nav) {
         var links = nav.querySelectorAll("a");
