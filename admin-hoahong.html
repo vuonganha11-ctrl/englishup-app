@@ -268,6 +268,7 @@ const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
 
 let USERS=[], UMAP={}, CFG=null, TREE=[], PICKED=null;
 let KINDS=[], VOU=null, VTIMER=null;
+const TEN_GOI={ plus:'Plus', pro:'Pro', vip:'VIP', other:'Khác' };
 const PRICE={ plus:2388000, pro:3790000, vip:5678999, other:0 };
 
 const vnd = n => (Number(n)||0).toLocaleString('vi-VN')+'₫';
@@ -326,11 +327,30 @@ function pickUser(){
   document.getElementById('f-who').innerHTML = PICKED
     ? '✅ '+esc(PICKED.full_name||'—')+' — <span class="mono">'+esc(PICKED.email||'')+'</span> · gói hiện tại: <b>'+esc(PICKED.plan||'free')+'</b>'
     : 'Chưa chọn học viên.';
+  if(PICKED) autoVoucherFor(PICKED.id);
+}
+
+/* Học viên đã nhập mã lúc đăng ký → điền sẵn, admin khỏi phải hỏi lại */
+let LAST_AUTO_USER=null;
+async function autoVoucherFor(userId){
+  if(LAST_AUTO_USER===userId) return;
+  LAST_AUTO_USER=userId;
+  const el=document.getElementById('f-voucher');
+  if((el.value||'').trim()) return;              /* admin đã tự gõ mã thì tôn trọng */
+  const { data, error } = await sb.rpc('claimed_voucher_of',{ p_user:userId });
+  if(error){ console.error('Không đọc được mã đã ghi nhận:', error); return; }
+  if(data && data.ok && data.code){
+    el.value=data.code;
+    document.getElementById('f-vinfo').textContent='Mã học viên đã nhập lúc đăng ký — đang kiểm tra…';
+    doCheckVoucher();
+  }
 }
 function autoAmount(){
   const p=document.getElementById('f-plan').value;
   if(PRICE[p]){ document.getElementById('f-list').value=PRICE[p]; }
-  tinhTien();
+  /* mã có thể bị giới hạn gói (VD 1040 không áp cho VIP) → kiểm lại theo gói mới */
+  if((document.getElementById('f-voucher').value||'').trim()) doCheckVoucher();
+  else tinhTien();
 }
 
 /* Giá gốc + mã → số tiền phải thu + hoa hồng.
@@ -366,13 +386,22 @@ async function doCheckVoucher(){
   const code=(el.value||'').replace(/[^0-9]/g,'');
   if(!code){ VOU=null; info.textContent='Chưa nhập mã.'; info.className='hint'; tinhTien(); return; }
   info.textContent='Đang kiểm tra…';
-  const { data, error } = await sb.rpc('voucher_check',{ p_code: code });
+  const plan=document.getElementById('f-plan').value;
+  const { data, error } = await sb.rpc('voucher_check',{ p_code: code, p_plan: plan });
   if(error){
     console.error('Kiểm tra mã lỗi:', error);
     VOU=null; info.textContent='Không kiểm tra được mã: '+error.message; tinhTien(); return;
   }
   if(!data || !data.ok){
     VOU=null;
+    if(data && data.reason==='khong_ap_dung_goi'){
+      const ds=(data.plans||[]).map(function(x){ return TEN_GOI[x]||x; }).join(' và ');
+      info.innerHTML = '⛔ Mã giảm '+Math.round(data.discount_pct)+'% / hoa hồng '+
+        Math.round(data.commission_pct)+'% <b>chỉ áp cho '+esc(ds)+'</b> — không dùng cho gói '+
+        esc(TEN_GOI[document.getElementById('f-plan').value]||'này')+
+        '. Đổi gói hoặc dùng mã khác của cùng người giới thiệu.';
+      tinhTien(); return;
+    }
     const ly={ thieu_ma:'Chưa nhập mã.', khong_ton_tai:'❌ Mã không tồn tại.',
                ma_da_khoa:'❌ Mã đã bị khoá.', het_luot:'❌ Mã đã hết lượt dùng.' };
     info.innerHTML = ly[data && data.reason] || '❌ Mã không dùng được.';

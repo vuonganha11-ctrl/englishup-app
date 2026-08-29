@@ -83,6 +83,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .vmsg b{color:var(--text,#e2e8f0)}
 .price .old{color:var(--muted,#94a3b8);text-decoration:line-through;font-size:17px;font-weight:600;margin-right:7px}
 .price .new{color:#34d399}
+.vplan-note{margin:-2px 0 6px;font-size:12px;color:#fb923c;line-height:1.5}
 </style>
 </head>
 <body>
@@ -225,19 +226,35 @@ async function doCheckVoucher(){
     renderPrices(); return;
   }
   VOU=data; box.classList.add('ok');
+  const dsGoi = data.plans
+    ? ('gói ' + data.plans.map(function(x){ return TEN_GOI[x]||x; }).join(' và '))
+    : 'mọi gói';
   msg.innerHTML='✅ Đã áp dụng mã của <b>'+escH(data.nguoi_gioi_thieu)+'</b> — bạn được giảm <b>'+
-    Math.round(data.discount_pct)+'%</b> mọi gói. Nhớ ghi <b>nội dung chuyển khoản</b> đúng như bên dưới để được kích hoạt nhanh.';
+    Math.round(data.discount_pct)+'%</b> cho <b>'+dsGoi+'</b>. Nhớ ghi <b>nội dung chuyển khoản</b> đúng như bên dưới để được kích hoạt nhanh.';
   renderPrices();
 }
 
+const TEN_GOI={ plus:'Plus', pro:'Pro', vip:'VIP' };
+function apDungGoi(k){
+  if(!(VOU && VOU.ok)) return false;
+  if(!VOU.plans) return true;               /* null = áp cho mọi gói */
+  return VOU.plans.indexOf(k) >= 0;
+}
 function renderPrices(){
-  const gg = (VOU && VOU.ok) ? Number(VOU.discount_pct)||0 : 0;
   ['plus','pro','vip'].forEach(function(k){
-    const el=document.querySelector('#plan-'+k+' .price'); if(!el) return;
+    const card=document.getElementById('plan-'+k); if(!card) return;
+    const el=card.querySelector('.price'); if(!el) return;
+    const ok=apDungGoi(k);
+    const gg= ok ? (Number(VOU.discount_pct)||0) : 0;
     const goc=GIA[k], sau=Math.round(goc*(100-gg)/100);
     el.innerHTML = gg>0
       ? '<span class="old">'+fmtVN(goc)+'đ</span><span class="new">'+fmtVN(sau)+'đ</span>'
       : fmtVN(goc)+'đ';
+    /* ghi chú khi mã không dùng được cho gói này */
+    let n=card.querySelector('.vplan-note');
+    if(!n){ n=document.createElement('div'); n.className='vplan-note'; el.insertAdjacentElement('afterend', n); }
+    n.textContent = (VOU && VOU.ok && !ok) ? 'Mã này không áp dụng cho gói '+(TEN_GOI[k]||k)+'.' : '';
+    n.style.display = n.textContent ? 'block' : 'none';
   });
   updateNote();
 }
@@ -291,9 +308,18 @@ async function loadMe(){
     cur.textContent='Không tải được thông tin tài khoản. Thử tải lại trang.';
   }
 }
-(function(){
+(async function(){
+  const el=document.getElementById('v-code'); if(!el) return;
   const m=(new URLSearchParams(location.search).get('ma')||'').replace(/[^0-9]/g,'');
-  if(m){ const el=document.getElementById('v-code'); if(el){ el.value=m; doCheckVoucher(); } }
+  if(m){ el.value=m; doCheckVoucher(); return; }
+  /* không có mã trên URL → lấy lại mã học viên đã nhập lúc đăng ký */
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) return;
+    const { data, error } = await sb.rpc('my_claimed_voucher');
+    if(error){ console.error('Không đọc được mã đã ghi nhận:', error); return; }
+    if(data && data.ok && data.code){ el.value=data.code; doCheckVoucher(); }
+  }catch(err){ console.error('Lỗi khi lấy mã đã ghi nhận:', err); }
 })();
 loadMe();
 </script>

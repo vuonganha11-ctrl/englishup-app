@@ -106,6 +106,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       </div>
 
       <div class="field">
+        <label>Mã giới thiệu của bạn bè <span style="color:var(--muted);font-weight:400">(nếu có)</span></label>
+        <input type="text" id="r-voucher" inputmode="numeric" autocomplete="off"
+               placeholder="13 chữ số, VD: 1040887778123" oninput="onVoucherInput()">
+        <div class="hint" id="v-msg" style="margin-top:6px;font-size:12.5px;color:var(--muted);line-height:1.55">
+          Nhập mã để được giảm giá khi nâng cấp. Mã sẽ được ghi nhớ sẵn cho tài khoản của bạn.
+        </div>
+      </div>
+
+      <div class="field">
         <label>Họ và tên</label>
         <input type="text" id="r-name" placeholder="Nguyễn Văn A" autocomplete="name">
       </div>
@@ -204,6 +213,58 @@ function clearRef(){
   document.getElementById('refbox').classList.add('hidden');
 }
 
+/* ---------- Mã voucher 13 số (?ma= hoặc ?ref=) ---------- */
+let VOU=null, VTIMER=null;
+const TEN_GOI={ plus:'Plus', pro:'Pro', vip:'VIP' };
+const escH = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+(function initVoucher(){
+  const q=new URLSearchParams(location.search);
+  let m=(q.get('ma') || q.get('ref') || '').replace(/[^0-9]/g,'');
+  if(m.length!==13){
+    try{ m=(localStorage.getItem('eu_voucher')||'').replace(/[^0-9]/g,''); }catch(_){ m=''; }
+  }
+  if(m.length===13){
+    const el=document.getElementById('r-voucher');
+    if(el){ el.value=m; doCheckVoucher(); }
+  }
+})();
+
+function onVoucherInput(){ clearTimeout(VTIMER); VTIMER=setTimeout(doCheckVoucher, 500); }
+
+async function doCheckVoucher(){
+  const el=document.getElementById('r-voucher'), msg=document.getElementById('v-msg');
+  const code=(el.value||'').replace(/[^0-9]/g,'');
+  if(!code){
+    VOU=null; try{ localStorage.removeItem('eu_voucher'); }catch(_){}
+    msg.innerHTML='Nhập mã để được giảm giá khi nâng cấp. Mã sẽ được ghi nhớ sẵn cho tài khoản của bạn.';
+    msg.style.color='var(--muted)'; return;
+  }
+  if(code.length<13){ msg.textContent='Mã gồm 13 chữ số.'; msg.style.color='var(--muted)'; return; }
+  msg.textContent='Đang kiểm tra mã…'; msg.style.color='var(--muted)';
+  const { data, error } = await sb.rpc('voucher_check', { p_code: code });
+  if(error){
+    console.error('Kiểm tra mã lỗi:', error);
+    VOU=null; msg.textContent='Chưa kiểm tra được mã lúc này — bạn vẫn đăng ký bình thường được.';
+    msg.style.color='var(--muted)'; return;
+  }
+  if(!data || !data.ok){
+    VOU=null;
+    const ly={ khong_ton_tai:'Mã này không tồn tại.', ma_da_khoa:'Mã này đã ngừng sử dụng.',
+               het_luot:'Mã này đã hết lượt dùng.', thieu_ma:'Bạn chưa nhập mã.' };
+    msg.innerHTML='❌ '+((ly[data && data.reason])||'Mã không dùng được.');
+    msg.style.color='var(--danger)'; return;
+  }
+  VOU=data;
+  try{ localStorage.setItem('eu_voucher', data.code); }catch(_){}
+  const dsGoi = data.plans
+    ? ('gói '+data.plans.map(function(x){ return TEN_GOI[x]||x; }).join(' và '))
+    : 'mọi gói';
+  msg.innerHTML='✅ Mã của <b>'+escH(data.nguoi_gioi_thieu)+'</b> — giảm <b>'+
+    Math.round(data.discount_pct)+'%</b> cho <b>'+dsGoi+'</b> khi bạn nâng cấp.';
+  msg.style.color='var(--a3)';
+}
+
 /* ---------- Độ tuổi & đồng ý (NĐ 13/2023) ---------- */
 let IS_MINOR = null;   /* null = chưa chọn */
 function pickAge(from16){
@@ -282,12 +343,31 @@ async function doRegister(){
       }catch(_){}
     }
 
+    /* Ghi nhận mã voucher cho tài khoản mới (cần có phiên đăng nhập).
+       Chưa có phiên (phải xác nhận email) thì mã vẫn nằm trong localStorage,
+       trang Nâng cấp sẽ tự điền lại. */
+    let vouMsg = '';
+    const vCode=(document.getElementById('r-voucher').value||'').replace(/[^0-9]/g,'');
+    if(vCode && data && data.session){
+      try{
+        const { data: cv, error: ce } = await sb.rpc('claim_voucher', { p_code: vCode });
+        if(ce){ console.error('Ghi nhận mã lỗi:', ce); }
+        else if(cv && cv.ok){
+          vouMsg = ' \u2705 Đã ghi nhận mã giảm <b>'+Math.round(cv.discount_pct)+'%</b> — mức giảm sẽ hiện sẵn ở trang Nâng cấp.';
+        } else if(cv && cv.reason==='ma_cua_chinh_minh'){
+          vouMsg = ' (Mã bạn nhập là mã của chính tài khoản này nên không dùng được.)';
+        } else if(cv && cv.reason==='khong_ton_tai'){
+          vouMsg = ' (Mã giới thiệu không tồn tại nên đã bỏ qua.)';
+        }
+      }catch(err){ console.error('Ghi nhận mã thất bại:', err); }
+    }
+
     const roleLabel = 'Học viên';
     document.getElementById('form-view').classList.add('hidden');
     document.getElementById('success-view').style.display='block';
     if(data.session){
       document.getElementById('s-title').textContent='Chào mừng bạn! 🎉';
-      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 7 ngày dùng thử toàn bộ nền tảng.</b> Hết 7 ngày, chọn một gói ở trang Nâng cấp để học tiếp.` + refMsg;
+      document.getElementById('s-desc').innerHTML=`Tài khoản đã sẵn sàng và bạn đã được đăng nhập.<br><b>Bạn đang có 7 ngày dùng thử toàn bộ nền tảng.</b> Hết 7 ngày, chọn một gói ở trang Nâng cấp để học tiếp.` + refMsg + vouMsg;
     } else {
       document.getElementById('s-title').textContent='Kiểm tra email của bạn 📧';
       document.getElementById('s-desc').textContent=`Đã gửi liên kết xác nhận tới ${email}. Xác nhận xong là có thể đăng nhập (vai trò: ${roleLabel}).`;
