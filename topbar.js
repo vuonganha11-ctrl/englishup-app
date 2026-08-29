@@ -527,11 +527,81 @@
     } catch (e) {}
   }
 
+
+  /* ── Chân trang LIÊN HỆ dùng chung MỌI trang ──────────────────────────
+     Chèn tự động nên không phải sửa từng file HTML. Quy tắc an toàn:
+       · trang không có .topbar (trang thuyết trình toàn màn hình) → bỏ qua
+       · đang nhúng (?embed=1) → bỏ qua
+       · trang đã có <footer class="foot"> (index.html) → chèn NGAY TRÊN nó
+         và không lặp lại dòng bản quyền. */
+  var EU_CONTACT = {
+    site: "englishup.xyz",
+    fb:   "https://www.facebook.com/profile.php?id=61593847084067",
+    tel:  "0943 887 778",
+    telRaw: "0943887778",
+    mail: "englishup.xyz@gmail.com"
+  };
+
+  function injectContactCSS() {
+    if (document.getElementById("eu-contact-css")) return;
+    var st = document.createElement("style");
+    st.id = "eu-contact-css";
+    st.textContent =
+      ".eu-contact{border-top:1px solid var(--border,#1f2937);margin-top:32px;padding:20px 18px 24px;font-size:13px;color:var(--muted,#94a3b8)}" +
+      ".eu-contact .eu-ct-in{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}" +
+      ".eu-contact .eu-ct-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;color:var(--text,#e2e8f0)}" +
+      ".eu-contact .eu-ct-brand img{width:26px;height:26px;border-radius:6px;max-width:none}" +
+      ".eu-contact .eu-ct-slogan{font-size:12.5px;line-height:1.6;max-width:640px}" +
+      ".eu-contact .eu-ct-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin-top:2px}" +
+      ".eu-contact .eu-ct-links a{display:inline-flex;align-items:center;gap:6px;color:var(--muted,#94a3b8);text-decoration:none;padding:4px 2px}" +
+      ".eu-contact .eu-ct-links a:hover{color:var(--text,#e2e8f0);text-decoration:underline}" +
+      ".eu-contact .eu-ct-copy{margin-top:4px;font-size:12px;opacity:.85}" +
+      ".eu-contact .eu-ct-copy a{color:inherit;text-decoration:none}" +
+      ".eu-contact .eu-ct-copy a:hover{text-decoration:underline}" +
+      "@media(max-width:640px){.eu-contact{padding:18px 14px 22px}.eu-contact .eu-ct-links{gap:6px 12px}}";
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  function buildFooter() {
+    try {
+      if (document.querySelector(".eu-contact")) return;
+      if (!document.querySelector(".topbar")) return;
+      if (/[?&]embed=1/.test(location.search || "")) return;
+      if (document.body && document.body.getAttribute("data-eu-nofooter") !== null) return;
+      injectContactCSS();
+
+      var old = document.querySelector("footer.foot");
+      var f = document.createElement("footer");
+      f.className = "eu-contact";
+      var html =
+        '<div class="eu-ct-in">' +
+          '<div class="eu-ct-brand"><img src="logo.png?v=20260828" alt="EnglishUp" width="26" height="26">EnglishUp</div>' +
+          '<div class="eu-ct-slogan">Học lại tiếng Anh từ đầu — nghe hiểu → nói → nói sai → nói đúng</div>' +
+          '<div class="eu-ct-links">' +
+            '<a href="index.html">🌐 ' + EU_CONTACT.site + '</a>' +
+            '<a href="' + EU_CONTACT.fb + '" target="_blank" rel="noopener">📘 Fanpage Facebook</a>' +
+            '<a href="https://zalo.me/' + EU_CONTACT.telRaw + '" target="_blank" rel="noopener">💬 Zalo ' + EU_CONTACT.tel + '</a>' +
+            '<a href="tel:' + EU_CONTACT.telRaw + '">📞 ' + EU_CONTACT.tel + '</a>' +
+            '<a href="mailto:' + EU_CONTACT.mail + '">✉️ ' + EU_CONTACT.mail + '</a>' +
+          '</div>' +
+          (old ? "" :
+            '<div class="eu-ct-copy">© ' + (new Date().getFullYear()) + ' EnglishUp · ' +
+            '<a href="danhgia.html">Đánh giá</a> · ' +
+            '<a href="quyen-rieng-tu.html">Quyền riêng tư</a> · ' +
+            '<a href="tai-khoan.html">Tài khoản</a></div>') +
+        '</div>';
+      f.innerHTML = html;
+      if (old && old.parentNode) old.parentNode.insertBefore(f, old);
+      else if (document.body) document.body.appendChild(f);
+    } catch (e) {}
+  }
+
   function boot() {
     injectCSS();
     fixHeader();
     setupLessons();
     buildChipNav();
+    buildFooter();
     var host = mount();
     if (host) { _hasWidget = true; host.innerHTML = widgetHTML(); }
     /* Vẫn đọc phiên kể cả trang không có .topbar-right — cần biết vai trò
