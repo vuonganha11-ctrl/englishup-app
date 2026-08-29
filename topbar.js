@@ -549,7 +549,9 @@
     st.textContent =
       ".eu-contact{border-top:1px solid var(--border,#1f2937);margin-top:32px;padding:20px 18px 24px;font-size:13px;color:var(--muted,#94a3b8)}" +
       ".eu-contact .eu-ct-in{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}" +
-      ".eu-contact .eu-ct-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;color:var(--text,#e2e8f0)}" +
+      ".eu-contact .eu-ct-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:-.4px}" +
+      ".eu-contact .eu-ct-name{color:var(--accent,#4f8ef7)}" +
+      ".eu-contact .eu-ct-name span{color:var(--a2,#a78bfa)}" +
       ".eu-contact .eu-ct-brand img{width:26px;height:26px;border-radius:6px;max-width:none}" +
       ".eu-contact .eu-ct-slogan{font-size:12.5px;line-height:1.6;max-width:640px}" +
       ".eu-contact .eu-ct-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin-top:2px}" +
@@ -575,7 +577,7 @@
       f.className = "eu-contact";
       var html =
         '<div class="eu-ct-in">' +
-          '<div class="eu-ct-brand"><img src="logo.png?v=20260828" alt="EnglishUp" width="26" height="26">EnglishUp</div>' +
+          '<div class="eu-ct-brand"><img src="logo.png?v=20260828" alt="EnglishUp" width="26" height="26"><span class="eu-ct-name">English<span>Up</span></span></div>' +
           '<div class="eu-ct-slogan">Học tiếng Anh thông minh hơn mỗi ngày — Nghe hiểu → Nói → Nói SAI → Nói Đúng → SỬ DỤNG NGÔN NGỮ để giao tiếp</div>' +
           '<div class="eu-ct-links">' +
             '<a href="index.html">🌐 ' + EU_CONTACT.site + '</a>' +
@@ -591,6 +593,23 @@
             '<a href="tai-khoan.html">Tài khoản</a></div>') +
         '</div>';
       f.innerHTML = html;
+      /* Lấy ĐÚNG màu chữ của logo trên header (mỗi trang có thể khai biến khác
+         nhau) để chữ "EnglishUp" ở chân trang không lệch màu với header. */
+      try {
+        var hLogo = document.querySelector(".topbar .logo");
+        var nm = f.querySelector(".eu-ct-name");
+        if (hLogo && nm) {
+          var c1 = getComputedStyle(hLogo).color;
+          if (c1) nm.style.color = c1;
+          var hSpan = hLogo.querySelector("span");
+          var nSpan = nm.querySelector("span");
+          if (hSpan && nSpan) {
+            var c2 = getComputedStyle(hSpan).color;
+            if (c2) nSpan.style.color = c2;
+          }
+        }
+      } catch (e2) {}
+
       if (old && old.parentNode) old.parentNode.insertBefore(f, old);
       else if (document.body) document.body.appendChild(f);
     } catch (e) {}
