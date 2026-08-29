@@ -31,6 +31,7 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
 
 .banner{border-radius:12px;padding:13px 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:18px;line-height:1.6}
 .banner.warn{background:rgba(251,146,60,.09);border:1px solid rgba(251,146,60,.35);color:#fed7aa}
+.banner.ok{background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.35);color:#bbf7d0}
 .banner.err{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.4);color:#fecaca}
 
 .tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;width:fit-content;max-width:100%;overflow-x:auto}
@@ -98,12 +99,17 @@ tr:last-child td{border-bottom:none}
       theo phương thức đa cấp chỉ được thực hiện với <b>hàng hoá</b> — khoá học là dịch vụ nên mô hình trả tiền
       từ tầng 2 trở lên bị cấm. Sang tab <b>Cấu hình</b> để chuyển về mô hình 1 cấp bất cứ lúc nào.
     </div></div>
+    <div id="modelbox" class="banner ok hidden"><span>🎟️</span><div>
+      <b>Mô hình: giới thiệu 1 cấp bằng voucher.</b> Mỗi học viên có 3 mã để tặng bạn bè
+      <span id="model-kinds">—</span>. Cả % giảm giá và % hoa hồng đều tính trên <b>giá gốc</b> của gói.
+      Chỉ trả cho <b>người giới thiệu trực tiếp</b> — không có tầng 2.
+    </div></div>
 
     <div class="tabs">
       <button class="tab on" data-t="pay"  onclick="tab(this)">💵 Ghi nhận học phí</button>
       <button class="tab"    data-t="com"  onclick="tab(this)">🧾 Sổ hoa hồng</button>
       <button class="tab"    data-t="po"   onclick="tab(this)">🏦 Lệnh rút tiền</button>
-      <button class="tab"    data-t="tree" onclick="tab(this)">🌳 Cây giới thiệu</button>
+      <button class="tab"    data-t="tree" onclick="tab(this)">🎟️ Voucher</button>
       <button class="tab"    data-t="cfg"  onclick="tab(this)">⚙️ Cấu hình</button>
     </div>
 
@@ -121,12 +127,21 @@ tr:last-child td{border-bottom:none}
           <div class="field"><label>Gói</label>
             <select id="f-plan" onchange="autoAmount()">
               <option value="plus">Plus — 1 năm</option>
-              <option value="pro">Pro — vĩnh viễn</option>
+              <option value="pro">Pro — 2 năm</option>
+              <option value="vip">VIP — vĩnh viễn</option>
               <option value="other">Khác</option>
             </select>
           </div>
+          <div class="field"><label>Giá gốc của gói (VND)</label>
+            <input id="f-list" type="number" min="0" step="1000" value="2388000" oninput="tinhTien()">
+            <div class="hint">Căn cứ tính cả giảm giá lẫn hoa hồng.</div>
+          </div>
+          <div class="field" style="grid-column:span 2"><label>Mã voucher của người giới thiệu (nếu có)</label>
+            <input id="f-voucher" placeholder="13 chữ số, VD: 1040887778123" oninput="checkVoucher()">
+            <div class="hint" id="f-vinfo">Chưa nhập mã.</div>
+          </div>
           <div class="field"><label>Số tiền thực nhận (VND)</label>
-            <input id="f-amount" type="number" min="1" step="1000" value="2388000">
+            <input id="f-amount" type="number" min="1" step="1000" value="2388000" oninput="tinhTien(true)">
             <div class="hint" id="f-amount-txt">2.388.000₫</div>
           </div>
           <div class="field"><label>Nội dung CK / mã giao dịch</label><input id="f-note" placeholder="VD: 0987654321 NAP GOI PLUS"></div>
@@ -136,6 +151,7 @@ tr:last-child td{border-bottom:none}
           <button class="btn btn-primary" id="btn-pay" onclick="addPayment()">Ghi nhận &amp; sinh hoa hồng</button>
           <button class="btn btn-ghost" onclick="document.getElementById('f-search').value='';pickUser()">Xoá form</button>
         </div>
+        <div class="hint" id="f-tomtat" style="margin-top:10px;font-size:13px"></div>
         <div class="msg" id="pay-msg"></div>
         <div class="hint" style="margin-top:8px;color:var(--muted);font-size:12px">
           Việc này <b>không</b> tự nâng gói cho học viên — vẫn vào <a href="accounts.html" style="color:var(--accent)">Quản lý tài khoản</a> để đổi gói như trước.
@@ -189,15 +205,17 @@ tr:last-child td{border-bottom:none}
     <div class="pane" id="pane-tree">
       <div class="sec">
         <div class="toolbar">
-          <div class="field" style="min-width:240px"><label>Tìm theo tên / email</label>
+          <div class="field" style="min-width:240px"><label>Tìm theo mã / tên chủ mã</label>
             <input id="tree-q" placeholder="Để trống = xem tất cả" oninput="renderTree()">
           </div>
           <button class="btn btn-ghost" onclick="loadTree()">🔄 Làm mới</button>
         </div>
         <div class="tblwrap"><table id="tbl-tree">
-          <thead><tr><th>Ngày gắn</th><th>Học viên mới</th><th>Tuyến 1 (F1)</th><th>Tuyến 2 (F2)</th><th>Mã dùng</th></tr></thead>
-          <tbody><tr><td colspan="5" class="empty">Đang tải…</td></tr></tbody>
+          <thead><tr><th>Mã</th><th>Chủ mã</th><th>Loại</th><th class="num">Lượt dùng</th>
+            <th class="num">Doanh thu</th><th class="num">Hoa hồng đã sinh</th><th>Trạng thái</th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Đang tải…</td></tr></tbody>
         </table></div>
+        <div class="hint" style="margin-top:10px">Mã được sinh tự động lần đầu học viên mở trang <b>Giới thiệu bạn bè</b> — không cần tạo tay.</div>
       </div>
     </div>
 
@@ -206,12 +224,6 @@ tr:last-child td{border-bottom:none}
       <div class="sec">
         <h2>Tỉ lệ &amp; quy tắc</h2>
         <div class="grid">
-          <div class="field"><label>Hoa hồng tầng 1 (%)</label><input id="c-t1" type="number" step="0.5" min="0" max="100"></div>
-          <div class="field"><label>Hoa hồng tầng 2 (%)</label><input id="c-t2" type="number" step="0.5" min="0" max="100"></div>
-          <div class="field"><label>Bật tiền mặt tầng 2</label>
-            <select id="c-cash"><option value="true">Bật (⚠️ mô hình đa cấp)</option><option value="false">Tắt — chỉ 1 cấp (hợp pháp)</option></select>
-          </div>
-          <div class="field"><label>Xu thưởng tầng 2 (khi tắt tiền mặt)</label><input id="c-pts" type="number" step="1000" min="0"></div>
           <div class="field"><label>Số ngày treo hoa hồng</label><input id="c-hold" type="number" min="0" max="180"></div>
           <div class="field"><label>Rút tối thiểu (VND)</label><input id="c-min" type="number" step="10000" min="0"></div>
           <div class="field"><label>Khấu trừ thuế TNCN</label>
@@ -222,9 +234,22 @@ tr:last-child td{border-bottom:none}
         </div>
         <div style="margin-top:15px;display:flex;gap:9px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="saveCfg()">Lưu cấu hình</button>
-          <button class="btn btn-ghost" onclick="toLegal()">🛡️ Chuyển về mô hình 1 cấp</button>
         </div>
         <div class="msg" id="cfg-msg"></div>
+      </div>
+
+      <div class="sec">
+        <h2>Ba loại voucher</h2>
+        <div class="tblwrap"><table id="tbl-kinds">
+          <thead><tr><th>Mã đầu</th><th>Tên</th><th class="num">Khách giảm (%)</th>
+            <th class="num">Hoa hồng (%)</th><th class="num">Tổng chi</th><th>Đang dùng</th></tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Đang tải…</td></tr></tbody>
+        </table></div>
+        <div style="margin-top:13px;display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveKinds()">Lưu tỉ lệ voucher</button>
+        </div>
+        <div class="msg" id="kind-msg"></div>
+        <div class="hint" style="margin-top:9px">Đổi tỉ lệ chỉ ảnh hưởng các khoản học phí ghi nhận <b>từ bây giờ</b>; 4 số đầu của mã giữ nguyên để không hỏng mã đã phát.</div>
       </div>
 
       <div class="banner warn"><span>📌</span><div>
@@ -242,7 +267,8 @@ const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
 
 let USERS=[], UMAP={}, CFG=null, TREE=[], PICKED=null;
-const PRICE={ plus:2388000, pro:3790000, other:0 };
+let KINDS=[], VOU=null, VTIMER=null;
+const PRICE={ plus:2388000, pro:3790000, vip:5678999, other:0 };
 
 const vnd = n => (Number(n)||0).toLocaleString('vi-VN')+'₫';
 const dmy = s => { if(!s) return '—'; const d=new Date(s);
@@ -303,8 +329,59 @@ function pickUser(){
 }
 function autoAmount(){
   const p=document.getElementById('f-plan').value;
-  if(PRICE[p]){ document.getElementById('f-amount').value=PRICE[p];
-    document.getElementById('f-amount-txt').textContent=vnd(PRICE[p]); }
+  if(PRICE[p]){ document.getElementById('f-list').value=PRICE[p]; }
+  tinhTien();
+}
+
+/* Giá gốc + mã → số tiền phải thu + hoa hồng.
+   tuTay=true: admin tự sửa ô thực nhận → không ghi đè nữa. */
+function tinhTien(tuTay){
+  const list = parseInt(document.getElementById('f-list').value,10)||0;
+  const gg   = (VOU && VOU.ok) ? Number(VOU.discount_pct)||0 : 0;
+  const hh   = (VOU && VOU.ok) ? Number(VOU.commission_pct)||0 : 0;
+  const canThu = Math.round(list * (100-gg) / 100);
+  if(!tuTay){ document.getElementById('f-amount').value = canThu; }
+  const thuc = parseInt(document.getElementById('f-amount').value,10)||0;
+  document.getElementById('f-amount-txt').textContent = vnd(thuc);
+  const hhTien = Math.floor(list * hh / 100);
+  let txt = 'Giá gốc <b>'+vnd(list)+'</b>';
+  if(VOU && VOU.ok){
+    txt += ' → giảm <b>'+gg+'%</b> = <b>'+vnd(canThu)+'</b> phải thu'
+        +  ' · hoa hồng <b class="c-green">'+vnd(hhTien)+'</b> ('+hh+'%) cho <b>'+esc(VOU.nguoi_gioi_thieu||'—')+'</b>';
+    if(thuc !== canThu) txt += ' · <span class="c-orange">lưu ý: số thực nhận khác số phải thu</span>';
+  } else {
+    txt += ' · không dùng mã → không sinh hoa hồng';
+  }
+  document.getElementById('f-tomtat').innerHTML = txt;
+}
+
+/* Kiểm tra mã voucher (chờ gõ xong 400ms) */
+function checkVoucher(){
+  clearTimeout(VTIMER);
+  VTIMER = setTimeout(doCheckVoucher, 400);
+}
+async function doCheckVoucher(){
+  const el=document.getElementById('f-voucher');
+  const info=document.getElementById('f-vinfo');
+  const code=(el.value||'').replace(/[^0-9]/g,'');
+  if(!code){ VOU=null; info.textContent='Chưa nhập mã.'; info.className='hint'; tinhTien(); return; }
+  info.textContent='Đang kiểm tra…';
+  const { data, error } = await sb.rpc('voucher_check',{ p_code: code });
+  if(error){
+    console.error('Kiểm tra mã lỗi:', error);
+    VOU=null; info.textContent='Không kiểm tra được mã: '+error.message; tinhTien(); return;
+  }
+  if(!data || !data.ok){
+    VOU=null;
+    const ly={ thieu_ma:'Chưa nhập mã.', khong_ton_tai:'❌ Mã không tồn tại.',
+               ma_da_khoa:'❌ Mã đã bị khoá.', het_luot:'❌ Mã đã hết lượt dùng.' };
+    info.innerHTML = ly[data && data.reason] || '❌ Mã không dùng được.';
+    tinhTien(); return;
+  }
+  VOU=data;
+  info.innerHTML = '✅ <b>'+esc(data.label)+'</b> — chủ mã: <b>'+esc(data.nguoi_gioi_thieu||'—')+'</b>';
+  if(PICKED && data.la_ma_cua_toi){ info.innerHTML += ' <span class="c-orange">(mã của chính bạn)</span>'; }
+  tinhTien();
 }
 
 /* -------- ghi nhận thanh toán -------- */
@@ -317,14 +394,25 @@ async function addPayment(){
   const d=document.getElementById('f-date').value;
 
   btn.disabled=true; btn.textContent='Đang ghi…';
+  const list=parseInt(document.getElementById('f-list').value,10)||amount;
   const row={ user_id:PICKED.id, plan:document.getElementById('f-plan').value, amount:amount,
+              list_price:list,
+              discount_pct:(VOU && VOU.ok) ? Number(VOU.discount_pct) : 0,
+              voucher_code:(VOU && VOU.ok) ? VOU.code : null,
               ref_note:document.getElementById('f-note').value.trim()||null,
               status:'confirmed', confirmed_at:new Date().toISOString() };
+  if(row.voucher_code && VOU.la_ma_cua_toi===true && PICKED.id===(await sb.auth.getUser()).data.user.id){
+    row.voucher_code=null; /* tự dùng mã của chính mình: không gắn mã */
+  }
   if(d) row.created_at = new Date(d+'T12:00:00').toISOString();
   const { error } = await sb.from('payments').insert(row);
   btn.disabled=false; btn.textContent='Ghi nhận & sinh hoa hồng';
   if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
-  msg.className='msg ok'; msg.textContent='✅ Đã ghi nhận '+vnd(amount)+' cho '+(PICKED.full_name||PICKED.email)+'. Hoa hồng (nếu có) đã được sinh tự động.';
+  const hhTien = (VOU && VOU.ok) ? Math.floor(list*Number(VOU.commission_pct)/100) : 0;
+  msg.className='msg ok';
+  msg.innerHTML='✅ Đã ghi nhận '+vnd(amount)+' cho '+esc(PICKED.full_name||PICKED.email)+'.'
+    + (hhTien>0 ? ' Hoa hồng <b>'+vnd(hhTien)+'</b> đã sinh cho <b>'+esc(VOU.nguoi_gioi_thieu||'—')+'</b>.'
+                : ' Không có hoa hồng (không dùng mã hoặc mã loại 50%).');
   await loadPayments();
 }
 
@@ -431,47 +519,100 @@ async function settle(id,action){
 
 /* -------- cây giới thiệu -------- */
 async function loadTree(){
-  const { data, error } = await sb.from('referrals').select('*').order('created_at',{ascending:false}).limit(2000);
-  if(error){ document.querySelector('#tbl-tree tbody').innerHTML='<tr><td colspan="5" class="empty">Lỗi: '+esc(error.message)+'</td></tr>'; return; }
-  TREE=data||[]; renderTree();
+  const tb=document.querySelector('#tbl-tree tbody');
+  const [{data:vs, error:e1}, {data:ps, error:e2}] = await Promise.all([
+    sb.from('vouchers').select('code,owner_id,prefix,active,max_uses').limit(2000),
+    sb.from('payments').select('voucher_code,amount,list_price,status').not('voucher_code','is',null).limit(2000)
+  ]);
+  if(e1 || e2){
+    console.error('Tải voucher lỗi:', e1||e2);
+    tb.innerHTML='<tr><td colspan="7" class="empty">Lỗi: '+esc((e1||e2).message)+'</td></tr>'; return;
+  }
+  const gom={};
+  (ps||[]).forEach(function(x){
+    if(x.status!=='confirmed') return;
+    const g = gom[x.voucher_code] || (gom[x.voucher_code]={n:0,dt:0,goc:0});
+    g.n++; g.dt += Number(x.amount)||0; g.goc += Number(x.list_price||x.amount)||0;
+  });
+  const kmap={}; KINDS.forEach(function(k){ kmap[k.prefix]=k; });
+  TREE = (vs||[]).map(function(v){
+    const g = gom[v.code] || {n:0,dt:0,goc:0};
+    const k = kmap[v.prefix] || {label:v.prefix, commission_pct:0};
+    return { code:v.code, owner_id:v.owner_id, prefix:v.prefix, active:v.active, max_uses:v.max_uses,
+             label:k.label, luot:g.n, doanhthu:g.dt,
+             hoahong: Math.floor(g.goc * (Number(k.commission_pct)||0) / 100) };
+  }).sort(function(a,b){ return b.luot-a.luot || a.code.localeCompare(b.code); });
+  renderTree();
 }
 function renderTree(){
   const tb=document.querySelector('#tbl-tree tbody');
   const q=(document.getElementById('tree-q').value||'').trim().toLowerCase();
-  const rows = q ? TREE.filter(r =>
-      [nameOf(r.referee_id),nameOf(r.referrer_id),nameOf(r.upline2_id)].join(' ').toLowerCase().includes(q)) : TREE;
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Không có dòng nào.</td></tr>'; return; }
-  tb.innerHTML=rows.map(r=>
-    '<tr><td class="c-mute">'+dmy(r.created_at)+'</td>'+
-    '<td style="font-weight:600">'+esc(nameOf(r.referee_id))+'</td>'+
-    '<td>'+esc(nameOf(r.referrer_id))+'</td>'+
-    '<td class="c-mute">'+(r.upline2_id?esc(nameOf(r.upline2_id)):'—')+'</td>'+
-    '<td class="mono" style="font-size:12px">'+esc(r.code_used||'—')+'</td></tr>').join('');
+  const rows = q ? TREE.filter(function(r){
+      return (r.code+' '+nameOf(r.owner_id)).toLowerCase().includes(q); }) : TREE;
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Chưa có mã nào.</td></tr>'; return; }
+  tb.innerHTML=rows.map(function(r){
+    return '<tr><td class="mono" style="font-size:12.5px">'+esc(r.code)+'</td>'+
+    '<td style="font-weight:600">'+esc(nameOf(r.owner_id))+'</td>'+
+    '<td class="c-mute">'+esc(r.label)+'</td>'+
+    '<td class="num">'+r.luot+'</td>'+
+    '<td class="num c-mute">'+vnd(r.doanhthu)+'</td>'+
+    '<td class="num '+(r.hoahong>0?'c-green':'c-mute')+'">'+vnd(r.hoahong)+'</td>'+
+    '<td>'+(r.active?'<span class="pill p-green">Đang dùng</span>':'<span class="pill p-mute">Đã khoá</span>')+'</td></tr>';
+  }).join('');
 }
 
-/* -------- cấu hình -------- */
 async function loadCfg(){
-  const { data } = await sb.from('referral_settings').select('*').eq('id',1).maybeSingle();
-  CFG=data||{};
-  document.getElementById('c-t1').value    = CFG.tier1_pct ?? 20;
-  document.getElementById('c-t2').value    = CFG.tier2_pct ?? 5;
-  document.getElementById('c-cash').value  = String(!!CFG.cash_tier2_enabled);
-  document.getElementById('c-pts').value   = CFG.reward_tier2_points ?? 0;
+  const [{data, error}, {data:ks, error:ek}] = await Promise.all([
+    sb.from('referral_settings').select('*').eq('id',1).maybeSingle(),
+    sb.from('voucher_kinds').select('*').order('ord')
+  ]);
+  if(error) console.error('Tải cấu hình lỗi:', error);
+  if(ek)    console.error('Tải loại voucher lỗi:', ek);
+  CFG=data||{}; KINDS=ks||[];
   document.getElementById('c-hold').value  = CFG.hold_days ?? 7;
   document.getElementById('c-min').value   = CFG.min_payout ?? 200000;
   document.getElementById('c-tax').value   = String(!!CFG.withhold_tax);
   document.getElementById('c-taxth').value = CFG.tax_threshold ?? 2000000;
   document.getElementById('c-taxpct').value= CFG.tax_pct ?? 10;
+
+  const voucherMode = (CFG.model || 'voucher') === 'voucher';
   document.getElementById('legal').classList.toggle('hidden',
-    !(CFG.cash_tier2_enabled && Number(CFG.tier2_pct)>0));
+    voucherMode || !(CFG.cash_tier2_enabled && Number(CFG.tier2_pct)>0));
+  document.getElementById('modelbox').classList.toggle('hidden', !voucherMode);
+  document.getElementById('model-kinds').innerHTML = KINDS.map(function(k){
+    return '<b>'+esc(k.prefix)+'</b> (giảm '+Math.round(k.discount_pct)+'% / hoa hồng '+Math.round(k.commission_pct)+'%)';
+  }).join(' · ') || '—';
+  renderKinds();
+}
+function renderKinds(){
+  const tb=document.querySelector('#tbl-kinds tbody');
+  if(!KINDS.length){ tb.innerHTML='<tr><td colspan="6" class="empty">Chưa có loại nào.</td></tr>'; return; }
+  tb.innerHTML = KINDS.map(function(k,i){
+    const tong = Number(k.discount_pct)+Number(k.commission_pct);
+    return '<tr><td class="mono">'+esc(k.prefix)+'</td>'+
+      '<td>'+esc(k.label)+'</td>'+
+      '<td class="num"><input id="k-d-'+i+'" type="number" step="1" min="0" max="100" value="'+Number(k.discount_pct)+'" style="width:80px"></td>'+
+      '<td class="num"><input id="k-c-'+i+'" type="number" step="1" min="0" max="100" value="'+Number(k.commission_pct)+'" style="width:80px"></td>'+
+      '<td class="num '+(tong>50?'c-orange':'c-mute')+'">'+tong+'%</td>'+
+      '<td>'+(k.active?'<span class="pill p-green">Bật</span>':'<span class="pill p-mute">Tắt</span>')+'</td></tr>';
+  }).join('');
+}
+async function saveKinds(){
+  const msg=document.getElementById('kind-msg'); msg.className='msg'; msg.textContent='';
+  for(let i=0;i<KINDS.length;i++){
+    const d=parseFloat(document.getElementById('k-d-'+i).value)||0;
+    const c=parseFloat(document.getElementById('k-c-'+i).value)||0;
+    if(d+c>100){ msg.className='msg err'; msg.textContent='Loại '+KINDS[i].prefix+': giảm + hoa hồng không được vượt 100%.'; return; }
+    const { error } = await sb.from('voucher_kinds')
+      .update({ discount_pct:d, commission_pct:c }).eq('prefix', KINDS[i].prefix);
+    if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
+  }
+  msg.className='msg ok'; msg.textContent='✅ Đã lưu tỉ lệ. Áp dụng cho các khoản học phí ghi nhận từ bây giờ.';
+  await loadCfg();
 }
 async function saveCfg(){
   const msg=document.getElementById('cfg-msg'); msg.className='msg'; msg.textContent='';
   const row={
-    tier1_pct:parseFloat(document.getElementById('c-t1').value)||0,
-    tier2_pct:parseFloat(document.getElementById('c-t2').value)||0,
-    cash_tier2_enabled:document.getElementById('c-cash').value==='true',
-    reward_tier2_points:parseInt(document.getElementById('c-pts').value,10)||0,
     hold_days:parseInt(document.getElementById('c-hold').value,10)||0,
     min_payout:parseInt(document.getElementById('c-min').value,10)||0,
     withhold_tax:document.getElementById('c-tax').value==='true',
@@ -483,12 +624,6 @@ async function saveCfg(){
   if(error){ msg.className='msg err'; msg.textContent='Lỗi: '+error.message; return; }
   msg.className='msg ok'; msg.textContent='✅ Đã lưu. Cấu hình áp dụng cho các khoản học phí ghi nhận từ bây giờ.';
   await loadCfg();
-}
-function toLegal(){
-  if(!confirm('Chuyển về mô hình AFFILIATE 1 CẤP?\n\n• Tắt hoa hồng tiền mặt tầng 2\n• Thay bằng 50.000 xu thưởng\n\nHoa hồng tầng 2 đã phát sinh trước đó vẫn giữ nguyên.')) return;
-  document.getElementById('c-cash').value='false';
-  if(!parseInt(document.getElementById('c-pts').value,10)) document.getElementById('c-pts').value=50000;
-  saveCfg();
 }
 </script>
 <script src="mobile-nav.js"></script>

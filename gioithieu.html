@@ -94,6 +94,24 @@ tr:last-child td{border-bottom:none}
 .skel{color:var(--muted);font-size:13px;padding:14px 0}
 @media(max-width:600px){ .code{font-size:23px;letter-spacing:3px;padding:12px 16px} h1{font-size:20px} }
 </style>
+<style id="eu-voucher-css">
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.vcard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:9px}
+.vcard.v1040{border-color:rgba(52,211,153,.5)}
+.vcard.v2525{border-color:rgba(79,142,247,.5)}
+.vcard.v5000{border-color:rgba(244,114,182,.45)}
+.vhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.vd{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.vcard.v1040 .vd{color:#34d399}.vcard.v2525 .vd{color:#4f8ef7}.vcard.v5000 .vd{color:#f472b6}
+.vc{font-size:12.5px;color:var(--muted);text-align:right}
+.vcode{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:1.5px;background:rgba(255,255,255,.05);
+       border:1px dashed var(--border);border-radius:10px;padding:9px 10px;text-align:center;word-break:break-all}
+.vsub{font-size:12.5px;color:var(--muted);line-height:1.55;min-height:34px}
+.vrow{display:flex;gap:8px;flex-wrap:wrap}
+.vrow .btn{flex:1;min-width:110px;font-size:13px}
+.vstat{font-size:12.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px}
+@media(max-width:520px){.vcode{font-size:17px;letter-spacing:1px}}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -111,18 +129,11 @@ tr:last-child td{border-bottom:none}
 
   <div id="main" class="hidden">
 
-    <!-- ===== MÃ GIỚI THIỆU ===== -->
+    <!-- ===== 3 MÃ VOUCHER ===== -->
     <div class="sec">
-      <h2>🎟️ Mã giới thiệu của bạn</h2>
-      <div class="codebox">
-        <div class="code" id="my-code">·······</div>
-        <div class="linkrow">
-          <input id="my-link" readonly value="">
-          <button class="btn btn-ghost" id="btn-copy" onclick="copyLink()">📋 Sao chép</button>
-          <button class="btn btn-ghost" id="btn-share" onclick="shareLink()">📤 Chia sẻ</button>
-        </div>
-      </div>
-      <div class="note">Người mới đăng ký qua liên kết này sẽ tự động được ghi nhận là tuyến dưới của bạn. Mã chỉ gắn được <b>một lần</b> và trong <b>30 ngày đầu</b> kể từ khi họ tạo tài khoản.</div>
+      <h2>🎟️ Ba mã voucher của bạn</h2>
+      <div class="vgrid" id="vouchers"><div class="skel">Đang tải…</div></div>
+      <div class="note">Gửi mã cho bạn bè: người mới nhập mã khi nâng cấp sẽ được <b>giảm giá ngay</b>, còn bạn nhận <b>hoa hồng</b> tương ứng — cả hai đều tính trên giá gốc của gói. Mỗi mã dùng được <b>không giới hạn số lượt</b>. Tự dùng mã của chính mình thì không có hoa hồng.</div>
     </div>
 
     <!-- ===== VÍ ===== -->
@@ -141,28 +152,16 @@ tr:last-child td{border-bottom:none}
       <div class="note" id="how-note"></div>
     </div>
 
-    <!-- ===== TUYẾN DƯỚI ===== -->
+    <!-- ===== AI ĐÃ DÙNG MÃ ===== -->
     <div class="sec">
-      <h2>👥 Tuyến dưới của bạn</h2>
+      <h2>🧾 Ai đã dùng mã của bạn</h2>
       <div class="tblwrap">
-        <table id="tbl-down">
+        <table id="tbl-uses">
           <thead><tr>
-            <th>Tầng</th><th>Học viên</th><th>Email</th><th>Tham gia</th><th>Đã đóng học phí</th><th class="num">Bạn nhận được</th>
+            <th>Ngày</th><th>Người đăng ký</th><th>Email</th><th>Mã dùng</th><th>Gói</th>
+            <th class="num">Giá gốc</th><th class="num">Bạn nhận</th><th>Trạng thái</th>
           </tr></thead>
-          <tbody><tr><td colspan="6" class="empty">Đang tải…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== SỔ HOA HỒNG ===== -->
-    <div class="sec">
-      <h2>🧾 Sổ hoa hồng</h2>
-      <div class="tblwrap">
-        <table id="tbl-com">
-          <thead><tr>
-            <th>Ngày</th><th>Từ học viên</th><th>Tầng</th><th class="num">Tỉ lệ</th><th class="num">Số tiền</th><th>Trạng thái</th>
-          </tr></thead>
-          <tbody><tr><td colspan="6" class="empty">Đang tải…</td></tr></tbody>
+          <tbody><tr><td colspan="8" class="empty">Đang tải…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -199,7 +198,7 @@ const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
 const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
 
-let ME=null, SETTINGS=null, DOWN=[], WALLET=null;
+let ME=null, SETTINGS=null, VOUCHERS=[], USES=[], WALLET=null;
 
 const vnd = n => (Number(n)||0).toLocaleString('vi-VN') + '₫';
 const dmy = s => { if(!s) return '—'; const d=new Date(s);
@@ -214,40 +213,71 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
   document.getElementById('main').classList.remove('hidden');
 
   try{
-    const [{data:st}, {data:code}] = await Promise.all([
+    const [{data:st}, {data:vch}] = await Promise.all([
       sb.from('referral_settings').select('*').eq('id',1).maybeSingle(),
-      sb.rpc('my_referral_code')
+      sb.rpc('my_vouchers')
     ]);
     SETTINGS = st || { tier1_pct:20, tier2_pct:5, cash_tier2_enabled:true, hold_days:7, min_payout:200000,
                        withhold_tax:true, tax_threshold:2000000, tax_pct:10, reward_tier2_points:0 };
-    showCode(code);
+    renderVouchers(vch);
     renderHow();
   }catch(e){ console.error(e); }
 
-  await Promise.all([ loadWallet(), loadDownline(), loadPayouts() ]);
-  await loadCommissions();
+  await Promise.all([ loadWallet(), loadUses(), loadPayouts() ]);
 })();
 
-/* ---------------- mã + link ---------------- */
-function showCode(code){
-  if(!code){ document.getElementById('my-code').textContent='—'; return; }
-  document.getElementById('my-code').textContent = code;
-  const base = location.origin + location.pathname.replace(/[^/]*$/, '') + 'register.html';
-  document.getElementById('my-link').value = base + '?ref=' + code;
+/* ---------------- 3 mã voucher ---------------- */
+function renderVouchers(list){
+  VOUCHERS = Array.isArray(list) ? list : [];
+  const box = document.getElementById('vouchers');
+  if(!VOUCHERS.length){
+    box.innerHTML = '<div class="skel">Chưa tạo được mã. Tải lại trang giúp mình nhé.</div>';
+    return;
+  }
+  box.innerHTML = VOUCHERS.map(function(v,i){
+    const hh = Number(v.commission_pct)>0
+      ? ('bạn nhận <b class="c-green">'+Math.round(v.commission_pct)+'%</b>')
+      : '<b class="c-pink">lan toả giá trị</b>';
+    return '<div class="vcard v'+esc(v.prefix)+'">'+
+      '<div class="vhead"><span class="vd">−'+Math.round(v.discount_pct)+'%</span><span class="vc">'+hh+'</span></div>'+
+      '<div class="vcode">'+esc(v.code)+'</div>'+
+      '<div class="vsub">'+esc(v.mo_ta||'')+'</div>'+
+      '<div class="vrow">'+
+        '<button class="btn btn-ghost" id="vbtn-'+i+'" onclick="copyVoucher('+i+')">📋 Chép mã</button>'+
+        '<button class="btn btn-ghost" onclick="shareVoucher('+i+')">📤 Chia sẻ</button>'+
+      '</div>'+
+      '<div class="vstat">Đã dùng <b>'+(v.luot_dung||0)+'</b> lượt · hoa hồng <b class="c-green">'+vnd(v.hoa_hong)+'</b></div>'+
+    '</div>';
+  }).join('');
 }
-async function copyLink(){
-  const el=document.getElementById('my-link');
-  try{ await navigator.clipboard.writeText(el.value); }
-  catch(_){ el.select(); document.execCommand('copy'); }
-  const b=document.getElementById('btn-copy');
-  b.textContent='✅ Đã chép'; b.classList.add('btn-ok');
-  setTimeout(()=>{ b.textContent='📋 Sao chép'; b.classList.remove('btn-ok'); },1600);
+function voucherLink(code){
+  return location.origin + location.pathname.replace(/[^/]*$/, '') + 'nangcap.html?ma=' + code;
 }
-async function shareLink(){
-  const url=document.getElementById('my-link').value;
-  const text='Mình đang học tiếng Anh trên EnglishUp, vào học cùng mình nhé!';
-  if(navigator.share){ try{ await navigator.share({title:'EnglishUp', text, url}); return; }catch(_){} }
-  copyLink();
+function voucherText(v){
+  return 'Mình đang học tiếng Anh trên EnglishUp. Tặng bạn mã giảm '+Math.round(v.discount_pct)+'%: '+
+         v.code+'\nDùng khi nâng cấp tại: '+voucherLink(v.code);
+}
+async function copyVoucher(i){
+  const v = VOUCHERS[i]; if(!v) return;
+  const b = document.getElementById('vbtn-'+i);
+  try{
+    await navigator.clipboard.writeText(voucherText(v));
+  }catch(err){
+    const ta=document.createElement('textarea');
+    ta.value=voucherText(v); document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e2){ console.error('Không chép được mã:', e2); }
+    ta.remove();
+  }
+  if(b){ b.textContent='✅ Đã chép'; b.classList.add('btn-ok');
+    setTimeout(function(){ b.textContent='📋 Chép mã'; b.classList.remove('btn-ok'); },1600); }
+}
+async function shareVoucher(i){
+  const v = VOUCHERS[i]; if(!v) return;
+  if(navigator.share){
+    try{ await navigator.share({ title:'EnglishUp', text:voucherText(v), url:voucherLink(v.code) }); return; }
+    catch(err){ if(err && err.name==='AbortError') return; console.error('Chia sẻ không thành:', err); }
+  }
+  copyVoucher(i);
 }
 
 /* ---------------- ví ---------------- */
@@ -260,14 +290,16 @@ async function loadWallet(){
     card('Đang treo',     vnd(data.holding),   'c-orange', (SETTINGS.hold_days||7)+' ngày kể từ khi phát sinh'),
     card('Chờ chi trả',   vnd(data.locked),    'c-blue',   'đang nằm trong lệnh rút'),
     card('Đã nhận',       vnd(data.paid),      'c-purple', 'tổng cộng từ trước tới nay'),
-    card('Tuyến 1',       data.f1 + ' người',  'c-pink',   data.f1_paid + ' người đã đóng học phí'),
-    card('Tuyến 2',       data.f2 + ' người',  'c-mute',   'do tuyến 1 của bạn giới thiệu')
+    card('Lượt dùng mã',  soLuot() + ' lượt',  'c-pink',   'bạn bè đã mua gói bằng mã của bạn'),
+    card('Tổng hoa hồng',  vnd(tongHoaHong()), 'c-mute',   'cộng dồn cả 3 mã')
   ].join('');
   const pts = Number(data.points)||0;
   document.getElementById('wallet-note').innerHTML = pts>0
     ? '🪙 Bạn còn <b>'+pts.toLocaleString('vi-VN')+' xu</b> thưởng cộng đồng (đổi gia hạn gói, mở khoá nội dung).'
     : '';
 }
+function soLuot(){ return VOUCHERS.reduce(function(a,v){ return a + (Number(v.luot_dung)||0); },0); }
+function tongHoaHong(){ return VOUCHERS.reduce(function(a,v){ return a + (Number(v.hoa_hong)||0); },0); }
 function card(lbl,val,cls,sub){
   return '<div class="stat"><div class="lbl">'+esc(lbl)+'</div><div class="val '+cls+'">'+esc(val)+
          '</div><div class="sub">'+esc(sub)+'</div></div>';
@@ -275,22 +307,23 @@ function card(lbl,val,cls,sub){
 
 /* ---------------- cách tính ---------------- */
 function renderHow(){
-  const s=SETTINGS, two = s.cash_tier2_enabled && Number(s.tier2_pct)>0;
-  document.getElementById('model-tag').textContent = two ? '2 tầng' : '1 tầng';
+  const s=SETTINGS;
+  document.getElementById('model-tag').textContent = '1 cấp · voucher';
+  const dong = VOUCHERS.map(function(v){
+    return '<b>'+esc(v.code.slice(0,4))+'…</b> bạn của bạn giảm <b>'+Math.round(v.discount_pct)+'%</b>, bạn nhận <b>'+Math.round(v.commission_pct)+'%</b>';
+  }).join(' · ');
   const steps=[
-    ['Chia sẻ mã','Gửi liên kết giới thiệu cho bạn bè, đồng nghiệp, hội nhóm học tiếng Anh.'],
-    ['Bạn bè đăng ký','Họ đăng ký qua liên kết của bạn và được ghi nhận là <b>tuyến 1</b>.'],
-    ['Họ đóng học phí','Bạn nhận <b class="c-green">'+s.tier1_pct+'%</b> giá trị đơn hàng của họ.'],
+    ['Chọn mã','Bạn có <b>3 mã</b> để tặng: '+(dong||'—')+'. Cả hai tỉ lệ đều tính trên <b>giá gốc</b> của gói.'],
+    ['Gửi cho bạn bè','Gửi mã (hoặc đường dẫn kèm mã) qua Zalo, Facebook, nhóm học… Mỗi mã dùng được không giới hạn lượt.'],
+    ['Họ nhập mã khi nâng cấp','Họ được trừ tiền ngay trên học phí, ghi mã vào nội dung chuyển khoản.'],
+    ['Bạn nhận hoa hồng','Khi quản trị viên xác nhận đã nhận tiền, hoa hồng vào ví của bạn ngay.'],
+    ['Rút tiền','Sau <b>'+s.hold_days+' ngày</b> đối soát, hoa hồng chuyển sang "rút được". Tối thiểu <b>'+vnd(s.min_payout)+'</b>/lần.']
   ];
-  if(two) steps.push(['Tuyến 1 giới thiệu tiếp','Người mà tuyến 1 của bạn giới thiệu là <b>tuyến 2</b>. Họ đóng tiền, bạn nhận thêm <b class="c-orange">'+s.tier2_pct+'%</b>.']);
-  else if(Number(s.reward_tier2_points)>0) steps.push(['Tuyến 1 giới thiệu tiếp','Bạn được thưởng <b class="c-orange">'+Number(s.reward_tier2_points).toLocaleString('vi-VN')+' xu</b> (không phải tiền mặt) khi tuyến 2 đóng học phí.']);
-  steps.push(['Rút tiền','Sau <b>'+s.hold_days+' ngày</b> đối soát, hoa hồng chuyển sang "rút được". Tối thiểu <b>'+vnd(s.min_payout)+'</b>/lần.']);
+  document.getElementById('how').innerHTML = steps.map(function(st,i){
+    return '<div class="step"><div class="n">'+(i+1)+'</div><div class="t">'+st[0]+'</div><div class="d">'+st[1]+'</div></div>';
+  }).join('');
 
-  document.getElementById('how').innerHTML = steps.map((st,i)=>
-    '<div class="step"><div class="n">'+(i+1)+'</div><div class="t">'+st[0]+'</div><div class="d">'+st[1]+'</div></div>'
-  ).join('');
-
-  let note='Hoa hồng chỉ phát sinh khi khoản thanh toán được quản trị viên <b>xác nhận đã nhận tiền</b>. Nếu học viên được hoàn tiền, hoa hồng tương ứng sẽ bị huỷ.';
+  let note='Hoa hồng chỉ phát sinh khi khoản thanh toán được quản trị viên <b>xác nhận đã nhận tiền</b>. Nếu học viên được hoàn tiền, hoa hồng tương ứng sẽ bị huỷ. Chỉ trả hoa hồng cho <b>người giới thiệu trực tiếp</b> — không có tầng thứ hai.';
   if(s.withhold_tax) note += ' Với mỗi lần chi trả từ <b>'+vnd(s.tax_threshold)+'</b> trở lên, EnglishUp khấu trừ <b>'+s.tax_pct+'% thuế TNCN</b> theo quy định.';
   document.getElementById('how-note').innerHTML = note;
   document.getElementById('p-rule').innerHTML =
@@ -298,54 +331,38 @@ function renderHow(){
     'Mỗi lần chỉ có một lệnh đang chờ xử lý.';
 }
 
-/* ---------------- tuyến dưới ---------------- */
-async function loadDownline(){
-  const tb=document.querySelector('#tbl-down tbody');
-  const { data, error } = await sb.rpc('my_downline');
-  if(error){ tb.innerHTML='<tr><td colspan="6" class="empty">Không tải được danh sách.</td></tr>'; return; }
-  DOWN = data||[];
-  if(!DOWN.length){ tb.innerHTML='<tr><td colspan="6" class="empty">Chưa có ai. Hãy chia sẻ mã của bạn ở trên nhé 🚀</td></tr>'; return; }
-  tb.innerHTML = DOWN.map(r =>
-    '<tr>'+
-      '<td><span class="pill '+(r.tier===1?'p-blue':'p-mute')+'">Tầng '+r.tier+'</span></td>'+
-      '<td>'+esc(r.member_name)+'</td>'+
-      '<td style="color:var(--muted);font-family:var(--mono);font-size:12px">'+esc(r.masked)+'</td>'+
-      '<td style="color:var(--muted)">'+dmy(r.joined_at)+'</td>'+
-      '<td>'+(r.has_paid?'<span class="pill p-green">Đã đóng</span>':'<span class="pill p-mute">Chưa</span>')+'</td>'+
-      '<td class="num '+(r.my_earned>0?'c-green':'c-mute')+'">'+vnd(r.my_earned)+'</td>'+
-    '</tr>').join('');
-}
-
-/* ---------------- sổ hoa hồng ---------------- */
-async function loadCommissions(){
-  const tb=document.querySelector('#tbl-com tbody');
-  const { data, error } = await sb.from('commissions')
-    .select('created_at,source_user_id,tier,rate,amount,status,available_at,payout_id')
-    .order('created_at',{ascending:false}).limit(300);
-  if(error){ tb.innerHTML='<tr><td colspan="6" class="empty">Không tải được sổ hoa hồng.</td></tr>'; return; }
-  if(!data || !data.length){ tb.innerHTML='<tr><td colspan="6" class="empty">Chưa phát sinh hoa hồng nào.</td></tr>'; return; }
-
-  // ánh xạ id → tên (RLS không cho đọc hồ sơ người khác, nên lấy tên từ my_downline)
-  const nameOf={}; DOWN.forEach(d=>{ if(d.member_id) nameOf[d.member_id]=d.member_name; });
-  tb.innerHTML = data.map(c=>{
-    const now=Date.now();
-    let pill;
-    if(c.status==='paid')            pill='<span class="pill p-paid">Đã nhận</span>';
-    else if(c.status==='cancelled')  pill='<span class="pill p-red">Đã huỷ</span>';
-    else if(c.payout_id)             pill='<span class="pill p-blue">Chờ chi trả</span>';
-    else if(new Date(c.available_at).getTime()>now) pill='<span class="pill p-orange">Treo đến '+dmy(c.available_at)+'</span>';
-    else                             pill='<span class="pill p-green">Rút được</span>';
+/* ---------------- ai đã dùng mã ---------------- */
+const GOI = { plus:'Plus', pro:'Pro', vip:'VIP', other:'Khác' };
+async function loadUses(){
+  const tb=document.querySelector('#tbl-uses tbody');
+  const { data, error } = await sb.rpc('my_voucher_uses', { p_limit: 200 });
+  if(error){
+    console.error('Không tải được lượt dùng mã:', error);
+    tb.innerHTML='<tr><td colspan="8" class="empty">Không tải được danh sách.</td></tr>'; return;
+  }
+  USES = Array.isArray(data) ? data : [];
+  if(!USES.length){
+    tb.innerHTML='<tr><td colspan="8" class="empty">Chưa ai dùng mã của bạn. Hãy gửi mã cho bạn bè nhé 🚀</td></tr>'; return;
+  }
+  const pill = {
+    'Rút được':'p-green', 'Đang treo':'p-orange', 'Chờ chi trả':'p-blue',
+    'Đã chi trả':'p-paid', 'Đã huỷ':'p-red', 'Đã hoàn tiền':'p-red',
+    'Không có hoa hồng':'p-mute'
+  };
+  tb.innerHTML = USES.map(function(u){
+    const cls = pill[u.trang_thai] || 'p-mute';
     return '<tr>'+
-      '<td style="color:var(--muted)">'+dmy(c.created_at)+'</td>'+
-      '<td>'+esc(nameOf[c.source_user_id] || shortId(c.source_user_id))+'</td>'+
-      '<td><span class="pill '+(c.tier===1?'p-blue':'p-mute')+'">Tầng '+c.tier+'</span></td>'+
-      '<td class="num">'+Number(c.rate)+'%</td>'+
-      '<td class="num" style="font-weight:700">'+vnd(c.amount)+'</td>'+
-      '<td>'+pill+'</td>'+
+      '<td style="color:var(--muted)">'+dmy(u.ngay)+'</td>'+
+      '<td>'+esc(u.nguoi_dung)+'</td>'+
+      '<td style="color:var(--muted);font-family:var(--mono);font-size:12px">'+esc(u.email_che)+'</td>'+
+      '<td style="font-family:var(--mono);font-size:12.5px">'+esc(u.code)+'</td>'+
+      '<td>'+esc(GOI[u.goi]||u.goi)+'</td>'+
+      '<td class="num c-mute">'+vnd(u.gia_goc)+'</td>'+
+      '<td class="num '+(Number(u.hoa_hong)>0?'c-green':'c-mute')+'" style="font-weight:700">'+vnd(u.hoa_hong)+'</td>'+
+      '<td><span class="pill '+cls+'">'+esc(u.trang_thai)+'</span></td>'+
     '</tr>';
   }).join('');
 }
-function shortId(id){ return id ? ('Học viên #'+String(id).slice(0,6).toUpperCase()) : '—'; }
 
 /* ---------------- rút tiền ---------------- */
 async function loadPayouts(){
@@ -393,8 +410,7 @@ async function doPayout(){
   msg.textContent='✅ Đã gửi yêu cầu rút '+vnd(data.amount)+
     (data.tax>0 ? ' (khấu trừ thuế '+vnd(data.tax)+', thực nhận '+vnd(data.net)+')' : '')+
     '. Admin sẽ xử lý trong vài ngày làm việc.';
-  await Promise.all([ loadWallet(), loadPayouts() ]);
-  await loadCommissions();
+  await Promise.all([ loadWallet(), loadPayouts(), loadUses() ]);
 }
 </script>
 <script src="mobile-nav.js"></script>

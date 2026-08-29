@@ -69,6 +69,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .foot{text-align:center;color:var(--muted);font-size:13px;margin-top:24px}
 .foot a{color:var(--accent);text-decoration:none;font-weight:600}
 </style>
+<style id="eu-voucher-css">
+.vbox{max-width:760px;margin:0 auto 22px;background:var(--card,#12161f);border:1px solid var(--border,#1f2937);
+      border-radius:14px;padding:16px 18px}
+.vbox.ok{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.06)}
+.vtitle{font-weight:700;font-size:15px;margin-bottom:10px}
+.vrow{display:flex;gap:9px;flex-wrap:wrap}
+.vrow input{flex:1;min-width:220px;background:#0b0f17;border:1px solid var(--border,#1f2937);border-radius:10px;
+            padding:11px 13px;color:var(--text,#e2e8f0);font-family:var(--mono,monospace);font-size:15px;letter-spacing:1px}
+.vbtn{background:var(--accent,#4f8ef7);color:#fff;border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}
+.vbtn:hover{filter:brightness(1.08)}
+.vmsg{margin-top:9px;font-size:13px;color:var(--muted,#94a3b8);line-height:1.6}
+.vmsg b{color:var(--text,#e2e8f0)}
+.price .old{color:var(--muted,#94a3b8);text-decoration:line-through;font-size:17px;font-weight:600;margin-right:7px}
+.price .new{color:#34d399}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -91,6 +106,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   </div>
 
   <div class="current" id="current">Đang tải thông tin tài khoản…</div>
+
+  <div class="vbox" id="vbox">
+    <div class="vtitle">🎟️ Có mã giới thiệu từ bạn bè?</div>
+    <div class="vrow">
+      <input id="v-code" inputmode="numeric" autocomplete="off" placeholder="Nhập mã 13 chữ số, VD: 1040887778123" oninput="onVoucherInput()">
+      <button class="vbtn" onclick="doCheckVoucher()">Áp dụng</button>
+    </div>
+    <div class="vmsg" id="v-msg">Nhập mã để được giảm giá ngay — mức giảm sẽ hiện luôn trên giá của cả ba gói.</div>
+  </div>
 
   <div class="grid">
     <div class="plan hot" id="plan-plus">
@@ -170,6 +194,59 @@ const SB_URL='https://fyglubimflzsetcovgqx.supabase.co';
 const SB_KEY='sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_';
 const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{lock:(_n,_t,fn)=>fn()}});
 
+const GIA={ plus:2388000, pro:3790000, vip:5678999 };
+let VOU=null, BASE_NOTE='Số điện thoại đăng ký', VTIMER=null;
+const fmtVN = n => (Number(n)||0).toLocaleString('vi-VN');
+const escH = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function onVoucherInput(){ clearTimeout(VTIMER); VTIMER=setTimeout(doCheckVoucher, 500); }
+
+async function doCheckVoucher(){
+  const el=document.getElementById('v-code'), msg=document.getElementById('v-msg'), box=document.getElementById('vbox');
+  const code=(el.value||'').replace(/[^0-9]/g,'');
+  if(!code){ VOU=null; box.classList.remove('ok');
+    msg.textContent='Nhập mã để được giảm giá ngay — mức giảm sẽ hiện luôn trên giá của cả ba gói.';
+    renderPrices(); return; }
+  msg.textContent='Đang kiểm tra mã…';
+  const { data, error } = await sb.rpc('voucher_check',{ p_code: code });
+  if(error){
+    console.error('Kiểm tra mã lỗi:', error);
+    VOU=null; box.classList.remove('ok');
+    msg.textContent='Chưa kiểm tra được mã lúc này, bạn thử lại giúp mình nhé.';
+    renderPrices(); return;
+  }
+  if(!data || !data.ok){
+    VOU=null; box.classList.remove('ok');
+    const ly={ khong_ton_tai:'Mã này không tồn tại. Bạn kiểm tra lại giúp mình nhé.',
+               ma_da_khoa:'Mã này đã ngừng sử dụng.',
+               het_luot:'Mã này đã hết lượt dùng.',
+               thieu_ma:'Bạn chưa nhập mã.' };
+    msg.innerHTML='❌ '+(ly[data && data.reason] || 'Mã không dùng được.');
+    renderPrices(); return;
+  }
+  VOU=data; box.classList.add('ok');
+  msg.innerHTML='✅ Đã áp dụng mã của <b>'+escH(data.nguoi_gioi_thieu)+'</b> — bạn được giảm <b>'+
+    Math.round(data.discount_pct)+'%</b> mọi gói. Nhớ ghi <b>nội dung chuyển khoản</b> đúng như bên dưới để được kích hoạt nhanh.';
+  renderPrices();
+}
+
+function renderPrices(){
+  const gg = (VOU && VOU.ok) ? Number(VOU.discount_pct)||0 : 0;
+  ['plus','pro','vip'].forEach(function(k){
+    const el=document.querySelector('#plan-'+k+' .price'); if(!el) return;
+    const goc=GIA[k], sau=Math.round(goc*(100-gg)/100);
+    el.innerHTML = gg>0
+      ? '<span class="old">'+fmtVN(goc)+'đ</span><span class="new">'+fmtVN(sau)+'đ</span>'
+      : fmtVN(goc)+'đ';
+  });
+  updateNote();
+}
+
+function updateNote(){
+  const pn=document.getElementById('pay-note'); if(!pn) return;
+  pn.textContent = (VOU && VOU.ok) ? (BASE_NOTE+' MA '+VOU.code) : BASE_NOTE;
+}
+
 function copyVal(v,btn){ try{ navigator.clipboard.writeText(v); const t=btn.textContent; btn.textContent='Đã chép ✓'; setTimeout(()=>btn.textContent=t,1500); }catch(e){} }
 function copyNote(btn){ const v=(document.getElementById('pay-note').textContent||'').trim(); copyVal(v,btn); }
 
@@ -189,7 +266,8 @@ async function loadMe(){
     const plan=(prof&&prof.plan)||'free';
     const role=(prof&&prof.role)||'student';
     const phone=(prof&&prof.phone)||'';
-    if(phone){ const pn=document.getElementById('pay-note'); pn.textContent=phone; }
+    if(phone){ BASE_NOTE=phone; }
+    updateNote();
     document.querySelectorAll('.plan').forEach(el=>el.classList.remove('is-current'));
     const exp=prof&&prof.plan_expires_at;
     const conHan = !exp || new Date(exp).getTime()>Date.now();
@@ -213,6 +291,10 @@ async function loadMe(){
     cur.textContent='Không tải được thông tin tài khoản. Thử tải lại trang.';
   }
 }
+(function(){
+  const m=(new URLSearchParams(location.search).get('ma')||'').replace(/[^0-9]/g,'');
+  if(m){ const el=document.getElementById('v-code'); if(el){ el.value=m; doCheckVoucher(); } }
+})();
 loadMe();
 </script>
 <script src="mobile-nav.js"></script>
