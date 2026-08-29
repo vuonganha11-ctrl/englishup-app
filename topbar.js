@@ -576,7 +576,7 @@
       var html =
         '<div class="eu-ct-in">' +
           '<div class="eu-ct-brand"><img src="logo.png?v=20260828" alt="EnglishUp" width="26" height="26">EnglishUp</div>' +
-          '<div class="eu-ct-slogan">Học lại tiếng Anh từ đầu — nghe hiểu → nói → nói sai → nói đúng</div>' +
+          '<div class="eu-ct-slogan">Học lại tiếng Anh từ đầu — Nghe hiểu → Nói → Nói SAI → Nói Đúng → SỬ DỤNG NGÔN NGỮ để giao tiếp</div>' +
           '<div class="eu-ct-links">' +
             '<a href="index.html">🌐 ' + EU_CONTACT.site + '</a>' +
             '<a href="' + EU_CONTACT.fb + '" target="_blank" rel="noopener">📘 Fanpage Facebook</a>' +
