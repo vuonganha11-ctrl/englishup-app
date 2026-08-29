@@ -536,7 +536,7 @@
          và không lặp lại dòng bản quyền. */
   var EU_CONTACT = {
     site: "englishup.xyz",
-    fb:   "https://www.facebook.com/profile.php?id=61593847084067",
+    fb:   "https://www.facebook.com/englishup.xyz/",
     tel:  "0943 887 778",
     telRaw: "0943887778",
     mail: "englishup.xyz@gmail.com"
