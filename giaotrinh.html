@@ -640,9 +640,9 @@ async function loadLessonMap(){
   if(VLESSON) return VLESSON;
   VLESSON = {};
   try{
-    const {data} = await sb.from('video_lessons').select('id,youtube_id').limit(500);
+    const data = await fetchAll(()=>sb.from('video_lessons').select('id,youtube_id'), 'id');
     (data||[]).forEach(v=>{ if(v.youtube_id) VLESSON[v.youtube_id]=v.id; });
-  }catch(e){}
+  }catch(e){ console.warn('loadLessonMap:', (e&&e.message)?e.message:e); }
   return VLESSON;
 }
 
