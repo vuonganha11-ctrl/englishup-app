@@ -208,9 +208,12 @@ h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
 
 <script>
 /* ================= DỮ LIỆU ================= */
-/* Dữ liệu KHÔNG nằm trong file này nữa — nạp từ kichban_data.json lúc mở trang.
+/* Dữ liệu KHÔNG nằm trong file này. Hai tầng:
+     kichban_index.json   — metadata để vẽ màn chọn, tải lúc mở trang
+     kichban_n_<CAT>.json — cây hội thoại từng nhánh, tải khi người học mở một kịch bản
+   Trước đợt 9 là MỘT file 1264 KB, ai mở trang cũng phải tải hết dù chỉ xem một kịch bản.
    Lý do: nhồi hết kịch bản vào HTML thì trang phình quá nhanh (752 KB ở mốc 49 kịch bản). */
-var EU_KB_VER = '202609150717';
+var EU_KB_VER = '202609150748';
 var SCENES = [];
 var CATS = [];
 var CATMAP = {};
@@ -373,9 +376,64 @@ function sceneById(id){
   return null;
 }
 
+/* Cây hội thoại của mỗi nhánh nằm ở file riêng, chỉ tải khi người học mở một kịch bản
+   thuộc nhánh đó. Mỗi nhánh tải đúng một lần rồi nhớ luôn. */
+var NODEREQ = {};
+
+function loadNodes(cat){
+  if (NODEREQ[cat]) return NODEREQ[cat];
+  NODEREQ[cat] = fetch('kichban_n_' + encodeURIComponent(cat) + '.json?v=' + encodeURIComponent(EU_KB_VER),
+                       { cache: 'no-cache' })
+    .then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(d){
+      SCENES.forEach(function(s){
+        if (d[s.id]){ s.start = d[s.id].start; s.nodes = d[s.id].nodes; }
+      });
+      return d;
+    })
+    .catch(function(e){
+      NODEREQ[cat] = null;   /* cho phép thử lại lần sau */
+      throw e;
+    });
+  return NODEREQ[cat];
+}
+
+var LOADING = false;
+function showLoadingScene(on){
+  LOADING = on;
+  var cnt = document.getElementById('cnt');
+  if (cnt) cnt.textContent = on ? 'Đang mở tình huống…' : (filteredScenes().length + '/' + SCENES.length + ' tình huống');
+  document.body.style.cursor = on ? 'progress' : '';
+}
+
 function openScene(id){
   var sc = sceneById(id);
   if (!sc) return;
+
+  /* chưa có cây hội thoại của nhánh này thì tải trước rồi mở lại */
+  if (!sc.nodes){
+    if (LOADING) return;
+    showLoadingScene(true);
+    loadNodes(sc.cat).then(function(){
+      showLoadingScene(false);
+      openScene(id);
+    }).catch(function(e){
+      console.error('[kichban] không tải được cây hội thoại nhánh ' + sc.cat + ':', e);
+      showLoadingScene(false);
+      var grid = document.getElementById('grid');
+      if (grid) grid.insertAdjacentHTML('beforebegin',
+        '<div class="empty" id="loadErr">Chưa mở được tình huống này. Kiểm tra kết nối mạng rồi bấm lại giúp nhé.</div>');
+      setTimeout(function(){
+        var el = document.getElementById('loadErr');
+        if (el) el.parentNode.removeChild(el);
+      }, 6000);
+    });
+    return;
+  }
+
   CUR = sc; NODE = sc.start; LOG = []; USED = []; FLOW = null;
   document.getElementById('pick').classList.add('hide');
   document.getElementById('play').classList.remove('hide');
@@ -544,7 +602,7 @@ function loadData(){
     if (grid) grid.innerHTML = '<div class="empty">Trình duyệt này quá cũ để mở trang. Thử trình duyệt mới hơn nhé.</div>';
     return;
   }
-  fetch('kichban_data.json?v=' + encodeURIComponent(EU_KB_VER), { cache: 'no-cache' })
+  fetch('kichban_index.json?v=' + encodeURIComponent(EU_KB_VER), { cache: 'no-cache' })
     .then(function(r){
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
