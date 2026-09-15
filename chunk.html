@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Kho cụm nói</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- BẮT BUỘC: supabase-js phải nạp TRƯỚC topbar.js, nếu không eu-guard fail-open -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="topbar.js?v=20260915"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.topbar .spacer{flex:1}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+
+.page{max-width:1040px;margin:0 auto;padding:26px 18px 90px}
+.hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px}
+.hero .hico{font-size:40px;line-height:1;flex-shrink:0}
+h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
+.lead{font-size:14.5px;color:var(--muted);margin-top:5px;max-width:720px}
+.lead b{color:var(--text)}
+
+/* ===== thanh tab + bộ lọc (sticky NGAY DƯỚI topbar) =====
+   ⚠️ KHÔNG dùng top:var(--topbar-h): trên điện thoại mobile.css cho .topbar
+   height:auto và nav xuống hàng → header cao hơn 58px, thanh này sẽ chui xuống
+   gầm header. --eu-sticky được JS đo lại theo chiều cao header thật. */
+.bar{position:sticky;top:var(--eu-sticky,58px);z-index:40;background:rgba(8,9,13,.93);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border);margin:0 -18px 18px;padding:10px 18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{background:var(--card);border:1px solid var(--border);color:var(--muted);font:inherit;font-size:13.5px;
+  font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.14s}
+.tab:hover{border-color:var(--border2);color:var(--text)}
+.tab.on{background:rgba(79,142,247,.14);border-color:var(--accent);color:var(--accent)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px}
+input[type=search],select{background:var(--card);border:1px solid var(--border);color:var(--text);font:inherit;
+  font-size:13.5px;padding:7px 11px;border-radius:var(--radius);outline:none}
+input[type=search]{flex:1;min-width:170px}
+input[type=search]:focus,select:focus{border-color:var(--accent)}
+.count{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+/* ===== nhóm + danh sách cụm ===== */
+.grp{margin-bottom:26px}
+.grp-h{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.grp-h .gi{font-size:22px}
+.grp-h h2{font-size:17.5px;font-weight:800;letter-spacing:-.3px}
+.grp-h .n{font-size:11.5px;font-family:var(--mono);color:var(--muted);background:var(--card);
+  border:1px solid var(--border);border-radius:999px;padding:2px 9px}
+.grp-d{font-size:13px;color:var(--muted);margin:0 0 12px 32px;line-height:1.6}
+
+ol.list{list-style:none;counter-reset:ck;display:flex;flex-direction:column;gap:7px}
+li.row{counter-increment:ck;display:flex;gap:11px;align-items:flex-start;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;transition:.14s}
+li.row:hover{border-color:var(--border2)}
+li.row.done{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.05)}
+li.row .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:26px;padding-top:2px}
+li.row .num::before{content:counter(ck) "."}
+li.row .body{flex:1;min-width:0}
+.en{font-size:15px;font-weight:700;letter-spacing:-.2px;line-height:1.45}
+.vi{font-size:13.5px;color:var(--a2);margin-top:2px}
+.ex{font-size:12.5px;color:var(--muted);margin-top:6px;padding-left:9px;border-left:2px solid var(--border2);line-height:1.6;display:none}
+li.row.open .ex{display:block}
+.ex i{color:#94a3b8;font-style:normal}
+.ex .exvi{display:block;color:var(--muted);opacity:.85}
+.tools{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.ib{background:var(--card2);border:1px solid var(--border);color:var(--muted);font:inherit;font-size:13px;
+  width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s}
+.ib:hover{border-color:var(--accent);color:var(--accent)}
+.ib.on{background:rgba(52,211,153,.16);border-color:var(--a3);color:var(--a3)}
+.lv{font-size:10px;font-family:var(--mono);font-weight:700;padding:2px 6px;border-radius:5px;flex-shrink:0;
+  border:1px solid var(--border2);color:var(--muted)}
+.lv.A2{color:var(--a3);border-color:rgba(52,211,153,.4)}
+.lv.B1{color:var(--accent);border-color:rgba(79,142,247,.4)}
+.lv.B2{color:var(--a4);border-color:rgba(251,146,60,.4)}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:50px 0}
+
+/* ===== thẻ lật / nói theo ===== */
+.stage{max-width:620px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 24px;
+  min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}
+.card .side{font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+.card .big{font-size:22px;font-weight:800;letter-spacing:-.4px;line-height:1.4}
+.card .sub{font-size:15px;color:var(--a2)}
+.card .exs{font-size:13.5px;color:var(--muted);line-height:1.7;max-width:480px}
+.card .exs .exvi{display:block;opacity:.85;margin-top:3px}
+.hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6}
+.ctr{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);font:inherit;font-size:13.5px;
+  font-weight:700;padding:9px 16px;border-radius:var(--radius);cursor:pointer;transition:.14s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.pri{background:rgba(79,142,247,.15);border-color:var(--accent);color:var(--accent)}
+.btn.ok{background:rgba(52,211,153,.14);border-color:var(--a3);color:var(--a3)}
+.btn:disabled{opacity:.4;cursor:default}
+.prog{font-size:12.5px;color:var(--muted);font-family:var(--mono);text-align:center;margin-bottom:10px}
+
+/* ===== khối chỉnh giọng đọc ===== */
+.voice{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:18px;
+  font-size:12.5px;color:var(--muted)}
+.voice select{font-size:12.5px;padding:5px 9px;max-width:230px}
+.voice input[type=range]{width:110px;accent-color:var(--accent)}
+
+.note{margin-top:26px;font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  border-left:3px solid var(--a2);border-radius:12px;padding:14px 16px;line-height:1.7}
+.note b{color:var(--text)}
+.hide{display:none!important}
+
+@media(max-width:560px){
+  .page{padding:18px 14px 70px}
+  h1{font-size:21px}
+  .hero .hico{font-size:32px}
+  .bar{margin:0 -14px 16px;padding:9px 14px}
+  .en{font-size:14.5px}
+  li.row{padding:9px 10px;gap:8px}
+  li.row .num{min-width:20px;font-size:11px}
+  .ib{width:28px;height:28px}
+  .card{padding:22px 16px;min-height:200px}
+  .card .big{font-size:19px}
+  .grp-d{margin-left:0}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav"></nav>
+  <div class="spacer"></div>
+  <div class="topbar-right"></div>
+</header>
+
+<div class="page">
+  <div class="hero">
+    <div class="hico">🗣️</div>
+    <div>
+      <h1>Kho cụm nói</h1>
+      <div class="lead">Người bản xứ không ghép từng từ một, họ nói theo <b>cụm có sẵn</b>. Thuộc cụm thì miệng bật ra cả mảng chứ không phải dịch từng chữ. Đây là <b>228 cụm</b> thường dùng nhất, xếp theo <b>việc bạn cần làm</b> khi nói: mở lời, nêu ý kiến, phản đối, kể chuyện, chốt ý…</div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="tabs">
+      <button class="tab on" data-tab="kho" type="button">📋 Kho cụm</button>
+      <button class="tab" data-tab="lat" type="button">🔁 Lật thẻ</button>
+      <button class="tab" data-tab="noi" type="button">🎙️ Nói theo</button>
+      <button class="tab" data-tab="ngay" type="button">🎲 10 cụm hôm nay</button>
+    </div>
+    <div class="filters" id="filters">
+      <input type="search" id="q" placeholder="Tìm cụm tiếng Anh hoặc nghĩa tiếng Việt…" autocomplete="off">
+      <select id="fg"><option value="">Mọi nhóm</option></select>
+      <select id="fl"><option value="">Mọi cấp độ</option><option>A2</option><option>B1</option><option>B2</option></select>
+      <select id="fd">
+        <option value="">Thuộc hay chưa</option>
+        <option value="no">Chưa thuộc</option>
+        <option value="yes">Đã thuộc</option>
+      </select>
+      <span class="count" id="cnt"></span>
+    </div>
+  </div>
+
+  <!-- TAB 1: KHO CỤM -->
+  <div id="pane-kho">
+    <div id="listWrap"></div>
+    <div class="note"><b>Cách dùng cho hiệu quả:</b> bấm vào một dòng để mở câu ví dụ, bấm 🔊 để nghe rồi <b>nói nhại theo ngay</b> — nói to, không nhẩm trong đầu. Cụm nào nói trôi rồi thì bấm ✓ để đánh dấu đã thuộc (lưu trên máy bạn). Mỗi ngày nhặt 5–10 cụm, cố ghép được vào một câu chuyện thật của mình thì mới nhớ lâu.</div>
+  </div>
+
+  <!-- TAB 2: LẬT THẺ -->
+  <div id="pane-lat" class="hide">
+    <div class="stage">
+      <div class="prog" id="latProg"></div>
+      <div class="card" id="latCard"></div>
+      <div class="ctr" id="latCtr"></div>
+      <div class="hint">Nhìn nghĩa tiếng Việt, <b>nói to câu tiếng Anh</b> trước khi lật. Nói sai cũng lật — quan trọng là bạn đã bật thành tiếng.</div>
+    </div>
+  </div>
+
+  <!-- TAB 3: NÓI THEO -->
+  <div id="pane-noi" class="hide">
+    <div class="stage">
+      <div class="prog" id="noiProg"></div>
+      <div class="card" id="noiCard"></div>
+      <div class="ctr" id="noiCtr"></div>
+      <div class="hint">Nghe một lần → nói theo <b>ngay khi máy vừa dứt</b>, bắt chước cả nhịp lên xuống chứ không chỉ chữ. Nghe chậm 2 lần rồi mới nói cũng được.</div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 10 CỤM HÔM NAY -->
+  <div id="pane-ngay" class="hide">
+    <div id="dayWrap"></div>
+    <div class="note"><b>Mười cụm này đổi mỗi ngày</b> và ai vào cũng thấy giống nhau trong ngày hôm đó. Học xong 10 cụm là đủ chỉ tiêu — đừng tham, thuộc chắc 10 cụm hơn là lướt qua 100 cụm.</div>
+  </div>
+
+  <div class="voice">
+    <span>🔊 Giọng đọc</span>
+    <select id="voiceSel"><option>Đang tải giọng…</option></select>
+    <span>Tốc độ <b id="rateVal">0.9</b></span>
+    <input type="range" id="rate" min="0.55" max="1.2" step="0.05" value="0.9">
+  </div>
+</div>
+
+<script>
+/* ================= DỮ LIỆU ================= */
+var GROUPS = [{"id":"mo-dau","icon":"🗣️","name":"Mở đầu & giữ lượt nói","desc":"Câu để bắt đầu nói, câu câu giờ khi chưa nghĩ ra chữ — nói được mấy cụm này là hết ngập ngừng \"ờ… ừm…\".","items":[{"en":"Well, let me think for a second.","vi":"Ừm, để tôi nghĩ một chút đã.","ex":"Well, let me think for a second — I want to give you an honest answer.","exvi":"Ừm, để tôi nghĩ một chút — tôi muốn trả lời cho thật lòng.","lv":"A2"},{"en":"That's a good question.","vi":"Câu hỏi hay đấy. (câu giờ lịch sự)","ex":"That's a good question. Nobody has asked me that before.","exvi":"Câu hỏi hay đấy. Chưa ai hỏi tôi câu đó cả.","lv":"A2"},{"en":"To be honest with you, …","vi":"Thật lòng mà nói thì…","ex":"To be honest with you, I wasn't ready for the interview at all.","exvi":"Thật lòng mà nói thì tôi chẳng chuẩn bị gì cho buổi phỏng vấn.","lv":"A2"},{"en":"The thing is, …","vi":"Vấn đề là… / Chuyện là…","ex":"The thing is, I promised my sister I'd help her that weekend.","exvi":"Vấn đề là tôi đã hứa giúp em gái tôi cuối tuần đó rồi.","lv":"A2"},{"en":"Here's the thing:","vi":"Thế này nhé: (báo hiệu sắp vào ý chính)","ex":"Here's the thing: we only have one week left.","exvi":"Thế này nhé: chúng ta chỉ còn đúng một tuần thôi.","lv":"B1"},{"en":"Let me put it this way.","vi":"Để tôi nói cách khác cho dễ hiểu.","ex":"Let me put it this way — it's cheap, but you get what you pay for.","exvi":"Để tôi nói cách khác — nó rẻ, nhưng tiền nào của nấy.","lv":"B1"},{"en":"Now that you mention it, …","vi":"Bạn nhắc mới nhớ…","ex":"Now that you mention it, I did see him at the station.","exvi":"Bạn nhắc mới nhớ, tôi có thấy anh ấy ở nhà ga thật.","lv":"B1"},{"en":"Speaking of which, …","vi":"Nhân nói chuyện đó…","ex":"Speaking of which, did you ever send that email?","exvi":"Nhân nói chuyện đó, rốt cuộc bạn gửi cái email kia chưa?","lv":"B1"},{"en":"Before I forget, …","vi":"Kẻo tôi quên mất…","ex":"Before I forget, your mother called this morning.","exvi":"Kẻo tôi quên mất, sáng nay mẹ bạn gọi điện đấy.","lv":"A2"},{"en":"Just so you know, …","vi":"Cho bạn biết trước là…","ex":"Just so you know, the shop closes at six.","exvi":"Cho bạn biết trước là cửa hàng đóng cửa lúc sáu giờ.","lv":"B1"},{"en":"I was just about to say that.","vi":"Tôi cũng vừa định nói thế.","ex":"I was just about to say that — we're thinking the same thing.","exvi":"Tôi cũng vừa định nói thế — chúng ta nghĩ giống nhau rồi.","lv":"A2"},{"en":"How do I put this?","vi":"Nói thế nào nhỉ? (đang tìm chữ)","ex":"He's… how do I put this… not the friendliest person here.","exvi":"Anh ta… nói thế nào nhỉ… không phải người dễ gần nhất ở đây.","lv":"B1"},{"en":"What I'm trying to say is …","vi":"Ý tôi muốn nói là…","ex":"What I'm trying to say is that we need more time, not more people.","exvi":"Ý tôi muốn nói là chúng ta cần thêm thời gian, chứ không phải thêm người.","lv":"B1"},{"en":"Can I jump in here?","vi":"Cho tôi chen vào một chút được không? (xin lượt nói)","ex":"Sorry — can I jump in here? I have the numbers.","exvi":"Xin lỗi — cho tôi chen vào một chút nhé? Tôi có số liệu đây.","lv":"B2"},{"en":"Hold that thought.","vi":"Giữ ý đó đã nhé. (để tôi nói nốt)","ex":"Hold that thought — let me finish this part first.","exvi":"Giữ ý đó đã nhé — để tôi nói nốt đoạn này đã.","lv":"B2"},{"en":"Where was I?","vi":"Tôi đang nói đến đâu rồi nhỉ?","ex":"Sorry, where was I? Oh right, the trip.","exvi":"Xin lỗi, tôi đang nói đến đâu rồi nhỉ? À đúng rồi, chuyến đi.","lv":"A2"},{"en":"Long story short, …","vi":"Nói ngắn gọn là…","ex":"Long story short, we missed the flight.","exvi":"Nói ngắn gọn là chúng tôi lỡ chuyến bay.","lv":"B1"},{"en":"Off the top of my head, …","vi":"Nghĩ ngay ra thì… (không tra cứu gì)","ex":"Off the top of my head, I'd say around forty people came.","exvi":"Nghĩ ngay ra thì tôi đoán chừng bốn mươi người đã đến.","lv":"B2"}]},{"id":"y-kien","icon":"💭","name":"Nêu ý kiến","desc":"Nói ra điều mình nghĩ — có cụm chắc nịch, có cụm rào trước để khỏi mất lòng ai.","items":[{"en":"If you ask me, …","vi":"Nếu hỏi tôi thì…","ex":"If you ask me, the old version was easier to use.","exvi":"Nếu hỏi tôi thì bản cũ dùng dễ hơn.","lv":"A2"},{"en":"The way I see it, …","vi":"Theo cách nhìn của tôi thì…","ex":"The way I see it, we have nothing to lose.","exvi":"Theo cách nhìn của tôi thì chúng ta chẳng mất gì cả.","lv":"B1"},{"en":"From my point of view, …","vi":"Từ góc nhìn của tôi…","ex":"From my point of view, the price is fair.","exvi":"Từ góc nhìn của tôi, giá đó là hợp lý.","lv":"B1"},{"en":"I'm not entirely sure, but …","vi":"Tôi không chắc lắm, nhưng…","ex":"I'm not entirely sure, but I think the office moved last year.","exvi":"Tôi không chắc lắm, nhưng hình như văn phòng chuyển đi từ năm ngoái.","lv":"B1"},{"en":"I have a feeling that …","vi":"Tôi có linh cảm rằng…","ex":"I have a feeling that she already knows.","exvi":"Tôi có linh cảm rằng cô ấy biết rồi.","lv":"A2"},{"en":"It seems to me that …","vi":"Tôi thấy hình như là…","ex":"It seems to me that nobody read the message.","exvi":"Tôi thấy hình như chẳng ai đọc cái tin nhắn đó.","lv":"B1"},{"en":"I'd say …","vi":"Tôi thì cho là… (nói nhẹ nhàng)","ex":"I'd say it takes about two hours by bus.","exvi":"Tôi thì cho là đi xe buýt mất khoảng hai tiếng.","lv":"A2"},{"en":"Personally, I'd rather …","vi":"Riêng tôi thì tôi thích… hơn","ex":"Personally, I'd rather stay in and cook.","exvi":"Riêng tôi thì tôi thích ở nhà nấu ăn hơn.","lv":"B1"},{"en":"I'm all for it.","vi":"Tôi hoàn toàn ủng hộ.","ex":"A four-day week? I'm all for it.","exvi":"Tuần làm bốn ngày hả? Tôi hoàn toàn ủng hộ.","lv":"B1"},{"en":"I'm not a big fan of …","vi":"Tôi không khoái… lắm","ex":"I'm not a big fan of long meetings.","exvi":"Tôi không khoái mấy cuộc họp dài lắm.","lv":"B1"},{"en":"It's not my cup of tea.","vi":"Không hợp gu tôi.","ex":"Horror films are just not my cup of tea.","exvi":"Phim kinh dị không hợp gu tôi.","lv":"B2"},{"en":"I feel strongly about this.","vi":"Tôi rất nặng lòng với chuyện này.","ex":"I feel strongly about this, so please hear me out.","exvi":"Tôi rất nặng lòng với chuyện này, nên xin nghe tôi nói hết.","lv":"B2"},{"en":"Correct me if I'm wrong, but …","vi":"Sai thì bạn sửa giúp, nhưng…","ex":"Correct me if I'm wrong, but we already paid for this.","exvi":"Sai thì bạn sửa giúp, nhưng cái này mình trả tiền rồi mà.","lv":"B2"},{"en":"As far as I know, …","vi":"Theo như tôi biết thì…","ex":"As far as I know, the class starts next Monday.","exvi":"Theo như tôi biết thì lớp bắt đầu thứ Hai tới.","lv":"A2"},{"en":"I'm on the fence about it.","vi":"Tôi còn đang lưỡng lự.","ex":"I'm on the fence about moving to another city.","exvi":"Tôi còn đang lưỡng lự chuyện chuyển sang thành phố khác.","lv":"B2"},{"en":"It makes a lot of sense.","vi":"Nghe rất có lý.","ex":"Doing the hard part first makes a lot of sense.","exvi":"Làm phần khó trước nghe rất có lý.","lv":"B1"},{"en":"I can see why you'd think that.","vi":"Tôi hiểu vì sao bạn nghĩ vậy.","ex":"I can see why you'd think that, but the data says otherwise.","exvi":"Tôi hiểu vì sao bạn nghĩ vậy, nhưng số liệu lại nói khác.","lv":"B2"},{"en":"I'd go with the second one.","vi":"Tôi sẽ chọn cái thứ hai.","ex":"Between those two plans, I'd go with the second one.","exvi":"Giữa hai phương án đó, tôi sẽ chọn cái thứ hai.","lv":"B1"}]},{"id":"dong-y","icon":"👍","name":"Đồng ý & phản đối","desc":"Gật đầu cho ra gật đầu, lắc đầu mà vẫn giữ được hoà khí.","items":[{"en":"You've got a point there.","vi":"Bạn nói cũng có lý đấy.","ex":"You've got a point there — it would save us money.","exvi":"Bạn nói cũng có lý đấy — làm vậy đỡ tốn tiền thật.","lv":"B1"},{"en":"That's exactly what I think.","vi":"Đúng y như tôi nghĩ.","ex":"That's exactly what I think, I just couldn't say it.","exvi":"Đúng y như tôi nghĩ, chỉ là tôi không diễn đạt ra được.","lv":"A2"},{"en":"I couldn't agree more.","vi":"Không thể đồng ý hơn được nữa.","ex":"I couldn't agree more — we should start today.","exvi":"Không thể đồng ý hơn được nữa — hôm nay phải bắt đầu thôi.","lv":"B1"},{"en":"Fair enough.","vi":"Cũng được, hợp lý thôi.","ex":"You need more time? Fair enough.","exvi":"Bạn cần thêm thời gian hả? Cũng được, hợp lý thôi.","lv":"B1"},{"en":"That's fair.","vi":"Vậy là công bằng.","ex":"We each pay half — that's fair.","exvi":"Mỗi người trả một nửa — vậy là công bằng.","lv":"A2"},{"en":"I see your point, but …","vi":"Tôi hiểu ý bạn, nhưng…","ex":"I see your point, but we simply can't afford it now.","exvi":"Tôi hiểu ý bạn, nhưng giờ mình không kham nổi.","lv":"B1"},{"en":"I'm afraid I don't agree.","vi":"E là tôi không đồng ý.","ex":"I'm afraid I don't agree with that plan.","exvi":"E là tôi không đồng ý với kế hoạch đó.","lv":"B1"},{"en":"I beg to differ.","vi":"Tôi xin phép nghĩ khác. (trang trọng)","ex":"I beg to differ — the report shows the opposite.","exvi":"Tôi xin phép nghĩ khác — báo cáo cho thấy điều ngược lại.","lv":"B2"},{"en":"That's not quite right.","vi":"Cái đó chưa đúng lắm.","ex":"That's not quite right — the deadline is Friday, not Thursday.","exvi":"Cái đó chưa đúng lắm — hạn là thứ Sáu chứ không phải thứ Năm.","lv":"B1"},{"en":"I'm not so sure about that.","vi":"Cái đó tôi không chắc lắm đâu.","ex":"I'm not so sure about that — have you tried it yourself?","exvi":"Cái đó tôi không chắc lắm đâu — bạn thử chưa?","lv":"A2"},{"en":"Let's agree to disagree.","vi":"Thôi thì mỗi người một ý vậy.","ex":"We've been at this for an hour. Let's agree to disagree.","exvi":"Cãi cả tiếng rồi. Thôi thì mỗi người một ý vậy.","lv":"B2"},{"en":"With all due respect, …","vi":"Nói với tất cả sự tôn trọng thì…","ex":"With all due respect, that has never worked before.","exvi":"Nói với tất cả sự tôn trọng thì cách đó chưa bao giờ hiệu quả.","lv":"B2"},{"en":"You're absolutely right.","vi":"Bạn nói hoàn toàn đúng.","ex":"You're absolutely right, I should have called first.","exvi":"Bạn nói hoàn toàn đúng, đáng lẽ tôi phải gọi trước.","lv":"A2"},{"en":"That works for me.","vi":"Vậy là ổn với tôi.","ex":"Saturday morning? That works for me.","exvi":"Sáng thứ Bảy hả? Vậy là ổn với tôi.","lv":"A2"},{"en":"I'm with you on that.","vi":"Tôi đứng về phía bạn chuyện đó.","ex":"I'm with you on that — the room is far too small.","exvi":"Tôi đứng về phía bạn chuyện đó — phòng nhỏ quá thể.","lv":"B1"},{"en":"It depends on what you mean.","vi":"Còn tuỳ bạn hiểu theo nghĩa nào.","ex":"Is it expensive? It depends on what you mean.","exvi":"Đắt không hả? Còn tuỳ bạn hiểu theo nghĩa nào.","lv":"B1"}]},{"id":"lien-he","icon":"🔗","name":"Liên hệ & dẫn dắt ý","desc":"Nối ý này sang ý kia cho câu chuyện có mạch, không đứt đoạn từng câu rời rạc.","items":[{"en":"This relates closely to …","vi":"Điều này liên quan chặt chẽ đến…","ex":"This relates closely to what we discussed last week.","exvi":"Điều này liên quan chặt chẽ đến chuyện ta bàn tuần trước.","lv":"B2"},{"en":"That reminds me of …","vi":"Cái đó làm tôi nhớ đến…","ex":"That reminds me of my first job in Da Nang.","exvi":"Cái đó làm tôi nhớ đến công việc đầu tiên của tôi ở Đà Nẵng.","lv":"A2"},{"en":"It has a lot to do with …","vi":"Nó dính dáng nhiều đến…","ex":"His success has a lot to do with luck, honestly.","exvi":"Thành công của anh ấy dính dáng nhiều đến may mắn, thật đấy.","lv":"B1"},{"en":"It has nothing to do with …","vi":"Nó chẳng liên quan gì đến…","ex":"The delay has nothing to do with the weather.","exvi":"Chuyện trễ hẹn chẳng liên quan gì đến thời tiết.","lv":"B1"},{"en":"On top of that, …","vi":"Chưa hết, còn…","ex":"The bus was late, and on top of that, it rained.","exvi":"Xe buýt đến muộn, chưa hết, trời còn mưa nữa.","lv":"B1"},{"en":"Not to mention …","vi":"Chưa kể đến…","ex":"It costs a fortune, not to mention the time it takes.","exvi":"Tốn cả đống tiền, chưa kể mất bao nhiêu thời gian.","lv":"B2"},{"en":"As I was saying, …","vi":"Như tôi đang nói dở…","ex":"As I was saying, the results came in yesterday.","exvi":"Như tôi đang nói dở, kết quả có từ hôm qua rồi.","lv":"B1"},{"en":"Going back to your question, …","vi":"Quay lại câu hỏi của bạn,…","ex":"Going back to your question, yes, we do deliver on Sundays.","exvi":"Quay lại câu hỏi của bạn, có, chúng tôi giao cả Chủ nhật.","lv":"B1"},{"en":"That's beside the point.","vi":"Cái đó lạc đề rồi.","ex":"Who paid for it is beside the point right now.","exvi":"Ai trả tiền thì lúc này là chuyện lạc đề.","lv":"B2"},{"en":"Which brings me to …","vi":"Nói vậy dẫn tôi đến…","ex":"Which brings me to the second reason.","exvi":"Nói vậy dẫn tôi đến lý do thứ hai.","lv":"B2"},{"en":"In other words, …","vi":"Nói cách khác là…","ex":"In other words, we start again from zero.","exvi":"Nói cách khác là mình làm lại từ đầu.","lv":"B1"},{"en":"For instance, …","vi":"Ví dụ như…","ex":"Small habits add up — for instance, ten minutes of reading a day.","exvi":"Thói quen nhỏ cộng dồn lại — ví dụ như mười phút đọc mỗi ngày.","lv":"A2"},{"en":"The same goes for …","vi":"Với… cũng vậy","ex":"He never gives up. The same goes for his sister.","exvi":"Anh ấy không bao giờ bỏ cuộc. Với em gái anh ấy cũng vậy.","lv":"B1"},{"en":"That's where … comes in.","vi":"Đó chính là lúc… xuất hiện / phát huy tác dụng","ex":"You can't do everything alone — that's where your team comes in.","exvi":"Bạn không thể tự làm hết — đó chính là lúc đội nhóm phát huy tác dụng.","lv":"B2"},{"en":"One thing leads to another, and …","vi":"Cái này kéo theo cái kia, thế là…","ex":"One thing leads to another, and suddenly it's midnight.","exvi":"Cái này kéo theo cái kia, thế là bỗng dưng đã nửa đêm.","lv":"B2"},{"en":"Either way, …","vi":"Kiểu gì đi nữa thì…","ex":"Either way, we need to tell them today.","exvi":"Kiểu gì đi nữa thì hôm nay cũng phải báo họ.","lv":"B1"}]},{"id":"ke-chuyen","icon":"📖","name":"Kể chuyện & tường thuật","desc":"Kể lại một chuyện đã xảy ra: mở đầu, cao trào, rồi chốt — nghe như người bản xứ kể.","items":[{"en":"You'll never guess what happened.","vi":"Bạn đoán không ra chuyện gì xảy ra đâu.","ex":"You'll never guess what happened on the way home.","exvi":"Bạn đoán không ra chuyện gì xảy ra trên đường về đâu.","lv":"B1"},{"en":"It all started when …","vi":"Mọi chuyện bắt đầu từ lúc…","ex":"It all started when my laptop died the night before.","exvi":"Mọi chuyện bắt đầu từ lúc cái laptop của tôi chết ngắc đêm hôm trước.","lv":"A2"},{"en":"The next thing I knew, …","vi":"Chưa kịp hiểu gì thì…","ex":"The next thing I knew, everyone was looking at me.","exvi":"Chưa kịp hiểu gì thì cả phòng đã nhìn tôi chằm chằm.","lv":"B2"},{"en":"Out of nowhere, …","vi":"Tự dưng đâu ra…","ex":"Out of nowhere, a dog ran across the road.","exvi":"Tự dưng đâu ra một con chó chạy vụt qua đường.","lv":"B1"},{"en":"To make things worse, …","vi":"Tệ hơn nữa là…","ex":"To make things worse, my phone was at two percent.","exvi":"Tệ hơn nữa là điện thoại tôi còn hai phần trăm pin.","lv":"B1"},{"en":"At first … but then …","vi":"Lúc đầu thì… nhưng rồi…","ex":"At first I was angry, but then I understood why.","exvi":"Lúc đầu tôi giận, nhưng rồi tôi hiểu vì sao.","lv":"A2"},{"en":"I ended up …-ing","vi":"Rốt cuộc tôi lại… (ngoài dự tính)","ex":"I ended up walking home in the rain.","exvi":"Rốt cuộc tôi lại đi bộ về nhà dưới mưa.","lv":"B1"},{"en":"I used to … but not anymore.","vi":"Trước tôi hay… nhưng giờ thì không nữa.","ex":"I used to skip breakfast, but not anymore.","exvi":"Trước tôi hay bỏ bữa sáng, nhưng giờ thì không nữa.","lv":"A2"},{"en":"It took me a while to …","vi":"Tôi phải mất một lúc lâu mới…","ex":"It took me a while to get used to the noise.","exvi":"Tôi phải mất một lúc lâu mới quen được tiếng ồn.","lv":"B1"},{"en":"Believe it or not, …","vi":"Tin hay không thì tuỳ, nhưng…","ex":"Believe it or not, I passed the test.","exvi":"Tin hay không thì tuỳ, nhưng tôi đậu rồi đấy.","lv":"B1"},{"en":"Looking back, …","vi":"Nhìn lại thì…","ex":"Looking back, it was the best decision I ever made.","exvi":"Nhìn lại thì đó là quyết định đúng nhất đời tôi.","lv":"B1"},{"en":"Little did I know that …","vi":"Nào ngờ rằng… (lúc đó tôi đâu biết)","ex":"Little did I know that it would change everything.","exvi":"Nào ngờ rằng chuyện đó lại thay đổi tất cả.","lv":"B2"},{"en":"That's when it hit me.","vi":"Đúng lúc đó tôi mới vỡ lẽ ra.","ex":"That's when it hit me — I had left the keys inside.","exvi":"Đúng lúc đó tôi mới vỡ lẽ — tôi bỏ quên chìa khoá bên trong.","lv":"B2"},{"en":"In the end, everything worked out.","vi":"Cuối cùng thì mọi chuyện cũng ổn cả.","ex":"It was a rough week, but in the end everything worked out.","exvi":"Tuần đó vất vả, nhưng cuối cùng mọi chuyện cũng ổn cả.","lv":"B1"},{"en":"I'll never forget the day …","vi":"Tôi không bao giờ quên cái ngày mà…","ex":"I'll never forget the day my son started school.","exvi":"Tôi không bao giờ quên cái ngày con trai tôi vào lớp Một.","lv":"A2"},{"en":"and the rest is history.","vi":"…và phần sau thì ai cũng biết rồi.","ex":"We met at a wedding, and the rest is history.","exvi":"Bọn tôi gặp nhau ở một đám cưới, và phần sau thì ai cũng biết rồi.","lv":"B2"}]},{"id":"cam-xuc","icon":"❤️","name":"Cảm xúc & phản ứng","desc":"Vui, bực, ngạc nhiên, thất vọng — nói cho ra cảm xúc thay vì chỉ \"I'm happy / I'm sad\".","items":[{"en":"I'm so excited about it.","vi":"Tôi háo hức lắm.","ex":"I'm so excited about the trip next month.","exvi":"Tôi háo hức lắm với chuyến đi tháng sau.","lv":"A2"},{"en":"I can't wait to …","vi":"Tôi nóng lòng muốn…","ex":"I can't wait to see my family again.","exvi":"Tôi nóng lòng muốn gặp lại gia đình.","lv":"A2"},{"en":"It made my day.","vi":"Chuyện đó làm tôi vui cả ngày.","ex":"Your message really made my day.","exvi":"Tin nhắn của bạn làm tôi vui cả ngày luôn.","lv":"B1"},{"en":"It drives me crazy.","vi":"Chuyện đó làm tôi phát điên.","ex":"Slow internet drives me crazy.","exvi":"Mạng chậm làm tôi phát điên.","lv":"B1"},{"en":"I was blown away.","vi":"Tôi choáng ngợp luôn. (theo nghĩa quá ấn tượng)","ex":"I was blown away by how well she sang.","exvi":"Tôi choáng ngợp luôn vì cô ấy hát quá hay.","lv":"B2"},{"en":"It caught me off guard.","vi":"Chuyện đó làm tôi trở tay không kịp.","ex":"His question caught me off guard.","exvi":"Câu hỏi của anh ấy làm tôi trở tay không kịp.","lv":"B2"},{"en":"I felt so relieved.","vi":"Tôi thở phào nhẹ cả người.","ex":"When she called, I felt so relieved.","exvi":"Lúc cô ấy gọi, tôi thở phào nhẹ cả người.","lv":"B1"},{"en":"I'm a bit disappointed.","vi":"Tôi hơi thất vọng.","ex":"I'm a bit disappointed with the service.","exvi":"Tôi hơi thất vọng về dịch vụ ở đây.","lv":"A2"},{"en":"It broke my heart.","vi":"Chuyện đó làm tôi đau lòng lắm.","ex":"Saying goodbye to the old house broke my heart.","exvi":"Chia tay căn nhà cũ làm tôi đau lòng lắm.","lv":"B1"},{"en":"I'm fed up with …","vi":"Tôi ngán ngẩm… đến tận cổ","ex":"I'm fed up with all these excuses.","exvi":"Tôi ngán ngẩm mấy cái cớ này đến tận cổ rồi.","lv":"B2"},{"en":"It's such a relief.","vi":"Nhẹ cả người.","ex":"The exam is over — it's such a relief.","exvi":"Thi xong rồi — nhẹ cả người.","lv":"B1"},{"en":"I feel for you.","vi":"Tôi thông cảm với bạn lắm.","ex":"You lost the whole file? I feel for you.","exvi":"Bạn mất cả file luôn hả? Tôi thông cảm với bạn lắm.","lv":"B1"},{"en":"That's such a shame.","vi":"Tiếc thật đấy.","ex":"You can't come? That's such a shame.","exvi":"Bạn không đến được hả? Tiếc thật đấy.","lv":"B1"},{"en":"I'm over the moon.","vi":"Tôi mừng như bắt được vàng.","ex":"She got the scholarship — she's over the moon.","exvi":"Cô ấy được học bổng — mừng như bắt được vàng.","lv":"B2"},{"en":"It gets on my nerves.","vi":"Chuyện đó làm tôi khó chịu.","ex":"People talking during a film gets on my nerves.","exvi":"Người ta nói chuyện trong lúc chiếu phim làm tôi khó chịu.","lv":"B2"},{"en":"I'm proud of you.","vi":"Tôi tự hào về bạn.","ex":"You spoke in English for ten minutes — I'm proud of you.","exvi":"Bạn nói tiếng Anh liền mười phút — tôi tự hào về bạn.","lv":"A2"}]},{"id":"nhan-manh","icon":"💪","name":"Nhấn mạnh & cường điệu","desc":"Đẩy ý lên cho mạnh, cho người nghe thấy bạn nói thật lòng chứ không nói cho có.","items":[{"en":"It's no exaggeration to say that …","vi":"Nói không ngoa rằng…","ex":"It's no exaggeration to say that book changed my life.","exvi":"Nói không ngoa rằng cuốn sách đó đã thay đổi đời tôi.","lv":"B2"},{"en":"It has a significant impact on …","vi":"Nó tác động đáng kể đến…","ex":"Sleep has a significant impact on how you learn.","exvi":"Giấc ngủ tác động đáng kể đến khả năng học của bạn.","lv":"B2"},{"en":"more than anything else","vi":"hơn bất cứ thứ gì khác","ex":"More than anything else, I want my kids to be kind.","exvi":"Hơn bất cứ thứ gì khác, tôi muốn con mình sống tử tế.","lv":"B1"},{"en":"by far the best","vi":"hay nhất, vượt xa mấy cái còn lại","ex":"That was by far the best meal of the trip.","exvi":"Đó là bữa ngon nhất chuyến đi, vượt xa mấy bữa còn lại.","lv":"B1"},{"en":"to be perfectly clear, …","vi":"nói cho thật rõ ràng thì…","ex":"To be perfectly clear, I never agreed to that.","exvi":"Nói cho thật rõ ràng thì tôi chưa bao giờ đồng ý chuyện đó.","lv":"B2"},{"en":"I can't stress this enough:","vi":"Tôi nhấn mạnh bao nhiêu cũng chưa đủ:","ex":"I can't stress this enough: back up your work.","exvi":"Tôi nhấn mạnh bao nhiêu cũng chưa đủ: hãy sao lưu bài của bạn.","lv":"B2"},{"en":"not in the slightest","vi":"không một chút nào","ex":"Was I nervous? Not in the slightest.","exvi":"Tôi có run không hả? Không một chút nào.","lv":"B2"},{"en":"an intense desire to …","vi":"một khao khát mãnh liệt muốn…","ex":"He has an intense desire to prove himself.","exvi":"Anh ấy có một khao khát mãnh liệt muốn chứng minh bản thân.","lv":"B2"},{"en":"way better than I expected","vi":"tốt hơn tôi tưởng nhiều","ex":"The new phone is way better than I expected.","exvi":"Cái điện thoại mới tốt hơn tôi tưởng nhiều.","lv":"B1"},{"en":"It exceeded my expectations.","vi":"Nó vượt quá mong đợi của tôi.","ex":"The course exceeded my expectations.","exvi":"Khoá học đó vượt quá mong đợi của tôi.","lv":"B2"},{"en":"once and for all","vi":"một lần cho xong, dứt điểm","ex":"Let's settle this once and for all.","exvi":"Giải quyết dứt điểm chuyện này một lần cho xong đi.","lv":"B2"},{"en":"to say the least","vi":"nói thế đã là nhẹ rồi","ex":"The result was surprising, to say the least.","exvi":"Kết quả gây bất ngờ, nói thế đã là nhẹ rồi.","lv":"B2"},{"en":"There's no doubt that …","vi":"Không nghi ngờ gì nữa rằng…","ex":"There's no doubt that practice beats talent here.","exvi":"Không nghi ngờ gì nữa, ở đây luyện tập thắng năng khiếu.","lv":"B1"},{"en":"the whole point of it is …","vi":"cái cốt lõi của chuyện này là…","ex":"The whole point of it is to speak, not to memorise.","exvi":"Cái cốt lõi của chuyện này là để nói ra, chứ không phải học thuộc.","lv":"B2"},{"en":"I mean it.","vi":"Tôi nói thật đấy.","ex":"Take a day off. I mean it.","exvi":"Nghỉ một hôm đi. Tôi nói thật đấy.","lv":"A2"},{"en":"nothing short of amazing","vi":"phải nói là tuyệt vời","ex":"Her progress this year is nothing short of amazing.","exvi":"Tiến bộ của cô ấy năm nay phải nói là tuyệt vời.","lv":"B2"}]},{"id":"giai-thich","icon":"🤔","name":"Giải thích & làm rõ","desc":"Khi người nghe chưa hiểu, hoặc chính bạn chưa nghe rõ — cụm nào cũng cứu bạn khỏi im lặng.","items":[{"en":"Sorry, I didn't catch that.","vi":"Xin lỗi, tôi nghe không rõ.","ex":"Sorry, I didn't catch that — could you say it again?","exvi":"Xin lỗi, tôi nghe không rõ — bạn nói lại được không?","lv":"A2"},{"en":"Could you say that more slowly?","vi":"Bạn nói chậm lại được không?","ex":"Could you say that more slowly? My English is still basic.","exvi":"Bạn nói chậm lại được không? Tiếng Anh của tôi còn yếu.","lv":"A2"},{"en":"What do you mean by …?","vi":"Ý bạn là gì khi nói…?","ex":"What do you mean by \"soon\"? Today or next week?","exvi":"Ý bạn là gì khi nói \"soon\"? Hôm nay hay tuần sau?","lv":"A2"},{"en":"Let me explain what I mean.","vi":"Để tôi giải thích rõ ý tôi.","ex":"Let me explain what I mean with an example.","exvi":"Để tôi giải thích rõ ý tôi bằng một ví dụ.","lv":"B1"},{"en":"In simple terms, …","vi":"Nói đơn giản thì…","ex":"In simple terms, the app remembers what you forget.","exvi":"Nói đơn giản thì cái app nhớ giùm những gì bạn quên.","lv":"B1"},{"en":"Does that make sense?","vi":"Vậy bạn hiểu chứ?","ex":"We meet at seven, not eight. Does that make sense?","exvi":"Mình gặp lúc bảy giờ, không phải tám giờ. Vậy bạn hiểu chứ?","lv":"A2"},{"en":"Just to be clear, …","vi":"Nói cho rõ lại là…","ex":"Just to be clear, you're paying online, right?","exvi":"Nói cho rõ lại là bạn trả tiền online, đúng không?","lv":"B1"},{"en":"The reason I say this is …","vi":"Lý do tôi nói vậy là vì…","ex":"The reason I say this is that I made the same mistake.","exvi":"Lý do tôi nói vậy là vì tôi từng mắc đúng lỗi đó.","lv":"B1"},{"en":"It's not that … it's just that …","vi":"Không phải là… mà chỉ là…","ex":"It's not that I don't like it, it's just that I'm tired.","exvi":"Không phải là tôi không thích, mà chỉ là tôi mệt.","lv":"B1"},{"en":"How do you say … in English?","vi":"… tiếng Anh nói thế nào?","ex":"How do you say \"chợ nổi\" in English?","exvi":"\"Chợ nổi\" tiếng Anh nói thế nào?","lv":"A2"},{"en":"I'm not sure I follow.","vi":"Tôi chưa theo kịp ý bạn.","ex":"I'm not sure I follow — could you go back one step?","exvi":"Tôi chưa theo kịp ý bạn — quay lại một bước được không?","lv":"B1"},{"en":"So what you're saying is …","vi":"Vậy ý bạn là…","ex":"So what you're saying is we should wait until Monday.","exvi":"Vậy ý bạn là mình nên đợi đến thứ Hai.","lv":"B1"},{"en":"Let me rephrase that.","vi":"Để tôi diễn đạt lại.","ex":"Let me rephrase that — I didn't mean to be rude.","exvi":"Để tôi diễn đạt lại — tôi không có ý thô lỗ.","lv":"B2"},{"en":"In other words, it comes down to …","vi":"Nói cách khác, rốt cuộc là do…","ex":"In other words, it comes down to money.","exvi":"Nói cách khác, rốt cuộc là do tiền.","lv":"B2"},{"en":"Am I making sense?","vi":"Tôi nói vậy có xuôi không?","ex":"I've said a lot — am I making sense?","exvi":"Tôi nói hơi nhiều — có xuôi không nhỉ?","lv":"B1"},{"en":"For example, take …","vi":"Ví dụ, cứ lấy… mà xem","ex":"For example, take my brother — he studies at night.","exvi":"Ví dụ, cứ lấy anh tôi mà xem — anh ấy học ban đêm.","lv":"B1"}]},{"id":"so-sanh","icon":"⚖️","name":"So sánh & cân nhắc","desc":"Đặt hai thứ lên bàn cân, nói ra được cái hơn cái kém — kiểu câu hay gặp nhất trong phỏng vấn và thi nói.","items":[{"en":"compared with …","vi":"so với…","ex":"Compared with last year, sales are up.","exvi":"So với năm ngoái, doanh số tăng.","lv":"B1"},{"en":"How is X different from Y?","vi":"X khác Y ở chỗ nào?","ex":"How is a flat different from a house here?","exvi":"Ở đây căn hộ khác nhà riêng ở chỗ nào?","lv":"A2"},{"en":"They're similar in some ways.","vi":"Chúng giống nhau ở vài điểm.","ex":"The two courses are similar in some ways.","exvi":"Hai khoá học đó giống nhau ở vài điểm.","lv":"B1"},{"en":"There's a big difference between …","vi":"Có sự khác biệt lớn giữa…","ex":"There's a big difference between knowing and doing.","exvi":"Có sự khác biệt lớn giữa biết và làm.","lv":"B1"},{"en":"On the one hand … on the other hand …","vi":"Một mặt thì… mặt khác thì…","ex":"On the one hand it's cheap; on the other hand it breaks fast.","exvi":"Một mặt thì rẻ; mặt khác thì mau hỏng.","lv":"B1"},{"en":"It's a trade-off.","vi":"Được cái này thì mất cái kia.","ex":"Speed or quality — it's a trade-off.","exvi":"Nhanh hay chất lượng — được cái này thì mất cái kia.","lv":"B2"},{"en":"The pros outweigh the cons.","vi":"Cái lợi nhiều hơn cái hại.","ex":"For me, the pros outweigh the cons.","exvi":"Với tôi thì cái lợi nhiều hơn cái hại.","lv":"B2"},{"en":"It's not as … as I thought.","vi":"Nó không… như tôi tưởng.","ex":"The test wasn't as hard as I thought.","exvi":"Bài kiểm tra không khó như tôi tưởng.","lv":"A2"},{"en":"much the same as …","vi":"gần như y hệt…","ex":"The new menu is much the same as the old one.","exvi":"Thực đơn mới gần như y hệt cái cũ.","lv":"B2"},{"en":"Given the choice, I'd pick …","vi":"Cho chọn thì tôi chọn…","ex":"Given the choice, I'd pick the morning class.","exvi":"Cho chọn thì tôi chọn lớp buổi sáng.","lv":"B2"},{"en":"It depends on the situation.","vi":"Còn tuỳ tình huống.","ex":"Should you rent or buy? It depends on the situation.","exvi":"Nên thuê hay mua? Còn tuỳ tình huống.","lv":"A2"},{"en":"in terms of price / quality","vi":"xét về mặt giá cả / chất lượng","ex":"In terms of price, this one wins.","exvi":"Xét về mặt giá cả, cái này thắng.","lv":"B1"},{"en":"Either one works.","vi":"Cái nào cũng được.","ex":"Tea or coffee? Either one works.","exvi":"Trà hay cà phê? Cái nào cũng được.","lv":"A2"},{"en":"the best of both worlds","vi":"vẹn cả đôi đường","ex":"Working from home twice a week is the best of both worlds.","exvi":"Làm ở nhà hai buổi một tuần là vẹn cả đôi đường.","lv":"B2"},{"en":"It's worth considering.","vi":"Cũng đáng cân nhắc đấy.","ex":"Your idea is worth considering.","exvi":"Ý của bạn cũng đáng cân nhắc đấy.","lv":"B1"},{"en":"What's the catch?","vi":"Có bẫy gì không đấy? / Đằng sau có gì không?","ex":"Free for a year? What's the catch?","exvi":"Miễn phí cả năm hả? Có bẫy gì không đấy?","lv":"B2"}]},{"id":"ke-hoach","icon":"🎯","name":"Mục tiêu, kế hoạch & dự định","desc":"Nói về việc sắp làm, việc muốn làm, việc đang tính — dùng cả ở chỗ làm lẫn lúc trò chuyện.","items":[{"en":"I'm planning to …","vi":"Tôi đang tính…","ex":"I'm planning to take an English test in June.","exvi":"Tôi đang tính thi một kỳ thi tiếng Anh vào tháng Sáu.","lv":"A2"},{"en":"I'm thinking of …-ing","vi":"Tôi đang nghĩ đến chuyện…","ex":"I'm thinking of changing jobs next year.","exvi":"Tôi đang nghĩ đến chuyện đổi việc năm sau.","lv":"A2"},{"en":"I'm eager to …","vi":"Tôi rất háo hức muốn…","ex":"I'm eager to learn how the machine works.","exvi":"Tôi rất háo hức muốn hiểu cái máy đó chạy thế nào.","lv":"B2"},{"en":"I dare to venture into …","vi":"Tôi dám dấn thân vào…","ex":"She dared to venture into a field she knew nothing about.","exvi":"Cô ấy dám dấn thân vào lĩnh vực mình chẳng biết gì.","lv":"B2"},{"en":"My goal is to … by …","vi":"Mục tiêu của tôi là… trước khi…","ex":"My goal is to speak for five minutes without stopping by March.","exvi":"Mục tiêu của tôi là nói liền năm phút không ngắt quãng, trước tháng Ba.","lv":"B1"},{"en":"I'm working on …","vi":"Tôi đang làm / đang cải thiện…","ex":"I'm working on my pronunciation these days.","exvi":"Dạo này tôi đang luyện phát âm.","lv":"A2"},{"en":"I make time for …","vi":"Tôi dành thời gian cho…","ex":"I usually make time for reading before bed.","exvi":"Tôi thường dành thời gian đọc sách trước khi ngủ.","lv":"B1"},{"en":"I'm determined to …","vi":"Tôi quyết tâm…","ex":"I'm determined to finish the course this time.","exvi":"Lần này tôi quyết tâm học hết khoá.","lv":"B2"},{"en":"as soon as I get the chance","vi":"ngay khi có cơ hội","ex":"I'll call the office as soon as I get the chance.","exvi":"Tôi sẽ gọi cho văn phòng ngay khi có cơ hội.","lv":"B1"},{"en":"I haven't decided yet.","vi":"Tôi vẫn chưa quyết.","ex":"Where to live after graduation? I haven't decided yet.","exvi":"Ra trường ở đâu hả? Tôi vẫn chưa quyết.","lv":"A2"},{"en":"Let's play it by ear.","vi":"Cứ tuỳ tình hình rồi tính.","ex":"We don't need a full plan — let's play it by ear.","exvi":"Không cần kế hoạch chi tiết — cứ tuỳ tình hình rồi tính.","lv":"B2"},{"en":"I'm looking forward to …-ing","vi":"Tôi đang mong chờ được…","ex":"I'm looking forward to meeting your family.","exvi":"Tôi đang mong chờ được gặp gia đình bạn.","lv":"B1"},{"en":"in the long run","vi":"về lâu về dài","ex":"In the long run, learning every day wins.","exvi":"Về lâu về dài, học mỗi ngày mới thắng.","lv":"B1"},{"en":"one step at a time","vi":"từng bước một","ex":"Don't rush — one step at a time.","exvi":"Đừng vội — từng bước một thôi.","lv":"B1"},{"en":"I'll keep you posted.","vi":"Có gì tôi báo bạn sau nhé.","ex":"Nothing is final yet — I'll keep you posted.","exvi":"Chưa chốt gì cả — có gì tôi báo bạn sau nhé.","lv":"B2"},{"en":"Let's get the ball rolling.","vi":"Bắt tay vào làm thôi.","ex":"Everyone's here, so let's get the ball rolling.","exvi":"Mọi người đủ cả rồi, bắt tay vào làm thôi.","lv":"B2"}]},{"id":"thoi-quen","icon":"🕒","name":"Thói quen & thời gian","desc":"Kể về nếp sinh hoạt, tần suất, chuyện xảy ra bao lâu rồi — phần hay bị hỏi nhất khi làm quen.","items":[{"en":"for quite a while now","vi":"khá lâu rồi","ex":"I've been learning English for quite a while now.","exvi":"Tôi học tiếng Anh khá lâu rồi.","lv":"B1"},{"en":"every now and then","vi":"thỉnh thoảng","ex":"I still call my old teacher every now and then.","exvi":"Thỉnh thoảng tôi vẫn gọi cho cô giáo cũ.","lv":"B1"},{"en":"most of the time","vi":"phần lớn thời gian","ex":"Most of the time I work from home.","exvi":"Phần lớn thời gian tôi làm việc ở nhà.","lv":"A2"},{"en":"hardly ever","vi":"hầu như không bao giờ","ex":"I hardly ever watch TV these days.","exvi":"Dạo này tôi hầu như không xem TV.","lv":"A2"},{"en":"I tend to …","vi":"Tôi thường hay…","ex":"I tend to wake up early on weekdays.","exvi":"Ngày thường tôi hay dậy sớm.","lv":"B1"},{"en":"the first thing I do is …","vi":"việc đầu tiên tôi làm là…","ex":"The first thing I do is drink a glass of water.","exvi":"Việc đầu tiên tôi làm là uống một cốc nước.","lv":"A2"},{"en":"on and off","vi":"lúc có lúc không, đứt quãng","ex":"I've studied Japanese on and off for years.","exvi":"Tôi học tiếng Nhật đứt quãng nhiều năm rồi.","lv":"B2"},{"en":"around the clock","vi":"suốt ngày suốt đêm","ex":"The shop is open around the clock.","exvi":"Cửa hàng mở suốt ngày suốt đêm.","lv":"B2"},{"en":"in no time","vi":"chỉ trong chớp mắt","ex":"With practice you'll get there in no time.","exvi":"Cứ luyện đi, chỉ trong chớp mắt là bạn tới nơi thôi.","lv":"B1"},{"en":"sooner or later","vi":"sớm muộn gì cũng","ex":"Sooner or later you'll have to speak to a stranger.","exvi":"Sớm muộn gì bạn cũng phải nói chuyện với người lạ.","lv":"B1"},{"en":"It's been ages since …","vi":"Lâu lắm rồi kể từ khi…","ex":"It's been ages since I went to the cinema.","exvi":"Lâu lắm rồi tôi không đi rạp chiếu phim.","lv":"B1"},{"en":"day in, day out","vi":"ngày này qua ngày khác","ex":"He does the same route day in, day out.","exvi":"Anh ấy chạy đúng một tuyến đường ngày này qua ngày khác.","lv":"B2"},{"en":"from time to time","vi":"lâu lâu một lần","ex":"From time to time we eat out together.","exvi":"Lâu lâu một lần cả nhà tôi đi ăn ngoài.","lv":"B1"},{"en":"right off the bat","vi":"ngay từ đầu","ex":"Right off the bat, I knew this job was for me.","exvi":"Ngay từ đầu tôi đã biết công việc này hợp với mình.","lv":"B2"},{"en":"I'm running late.","vi":"Tôi đang bị trễ.","ex":"Start without me, I'm running late.","exvi":"Bắt đầu trước đi, tôi đang bị trễ.","lv":"A2"},{"en":"We're running out of time.","vi":"Chúng ta sắp hết giờ rồi.","ex":"We're running out of time — let's decide now.","exvi":"Chúng ta sắp hết giờ rồi — quyết luôn đi.","lv":"B1"}]},{"id":"lich-su","icon":"🤝","name":"Đề nghị, nhờ vả & lịch sự","desc":"Nhờ người khác, mời, xin lỗi, từ chối — nói sao cho dễ nghe, đây là phần người Việt hay nói cộc.","items":[{"en":"Would you mind …-ing?","vi":"Phiền bạn… được không?","ex":"Would you mind closing the window?","exvi":"Phiền bạn đóng giùm cửa sổ được không?","lv":"B1"},{"en":"Is it okay if I …?","vi":"Tôi… có được không?","ex":"Is it okay if I join you later?","exvi":"Tôi đến sau có được không?","lv":"A2"},{"en":"I was wondering if …","vi":"Không biết liệu…","ex":"I was wondering if you could help me with this form.","exvi":"Không biết bạn giúp tôi cái đơn này được không.","lv":"B2"},{"en":"Could you do me a favour?","vi":"Bạn giúp tôi một việc được không?","ex":"Could you do me a favour and watch my bag?","exvi":"Bạn giúp tôi một việc, trông giùm cái túi nhé?","lv":"B1"},{"en":"Feel free to …","vi":"Cứ tự nhiên…","ex":"Feel free to ask me anything.","exvi":"Cứ tự nhiên hỏi tôi bất cứ điều gì.","lv":"B1"},{"en":"Thanks a lot, I really appreciate it.","vi":"Cảm ơn nhiều, tôi rất trân trọng.","ex":"Thanks a lot, I really appreciate it — you saved me.","exvi":"Cảm ơn nhiều, tôi rất trân trọng — bạn cứu tôi rồi.","lv":"A2"},{"en":"I'm sorry for the trouble.","vi":"Xin lỗi đã làm phiền.","ex":"I'm sorry for the trouble, I'll be quick.","exvi":"Xin lỗi đã làm phiền, tôi sẽ nhanh thôi.","lv":"A2"},{"en":"I'd love to, but …","vi":"Tôi rất muốn, nhưng…","ex":"I'd love to, but I have class that evening.","exvi":"Tôi rất muốn, nhưng tối đó tôi có lớp.","lv":"B1"},{"en":"Maybe some other time.","vi":"Để dịp khác nhé.","ex":"Not tonight, maybe some other time.","exvi":"Tối nay thì không, để dịp khác nhé.","lv":"B1"},{"en":"Let me know if you need anything.","vi":"Cần gì cứ nói tôi nhé.","ex":"I'll be next door — let me know if you need anything.","exvi":"Tôi ở phòng bên — cần gì cứ nói tôi nhé.","lv":"A2"},{"en":"After you.","vi":"Mời bạn trước.","ex":"After you — I'll hold the door.","exvi":"Mời bạn trước — tôi giữ cửa cho.","lv":"A2"},{"en":"No worries at all.","vi":"Không sao đâu.","ex":"You're five minutes late? No worries at all.","exvi":"Bạn trễ năm phút hả? Không sao đâu.","lv":"A2"},{"en":"It's up to you.","vi":"Tuỳ bạn thôi.","ex":"Rice or noodles? It's up to you.","exvi":"Cơm hay phở? Tuỳ bạn thôi.","lv":"A2"},{"en":"I owe you one.","vi":"Tôi nợ bạn một lần đấy.","ex":"You fixed it in ten minutes — I owe you one.","exvi":"Bạn sửa xong trong mười phút — tôi nợ bạn một lần đấy.","lv":"B2"},{"en":"Sorry to bother you, but …","vi":"Xin lỗi làm phiền, nhưng…","ex":"Sorry to bother you, but is this seat free?","exvi":"Xin lỗi làm phiền, nhưng ghế này trống chứ?","lv":"B1"},{"en":"Take your time.","vi":"Cứ từ từ, không vội.","ex":"Take your time, we're not in a hurry.","exvi":"Cứ từ từ, mình không vội.","lv":"A2"}]},{"id":"kho-khan","icon":"🧩","name":"Khó khăn & xử lý vấn đề","desc":"Khi có trục trặc: nói ra vấn đề, xin lỗi, đề xuất cách gỡ — rất hay dùng ở chỗ làm.","items":[{"en":"We've run into a problem.","vi":"Chúng ta gặp phải một vấn đề.","ex":"We've run into a problem with the delivery.","exvi":"Chúng ta gặp phải một vấn đề với chuyện giao hàng.","lv":"B1"},{"en":"Something came up.","vi":"Có việc đột xuất.","ex":"I can't make it tonight — something came up.","exvi":"Tối nay tôi không đến được — có việc đột xuất.","lv":"B1"},{"en":"It's out of my hands.","vi":"Chuyện đó ngoài tầm tay tôi.","ex":"The decision is out of my hands, sorry.","exvi":"Quyết định đó ngoài tầm tay tôi, xin lỗi bạn.","lv":"B2"},{"en":"Let's find a way around it.","vi":"Mình tìm cách lách qua chỗ đó.","ex":"The road is closed — let's find a way around it.","exvi":"Đường bị chặn — mình tìm cách đi vòng vậy.","lv":"B2"},{"en":"I'll look into it.","vi":"Tôi sẽ xem xét việc đó.","ex":"Give me your order number and I'll look into it.","exvi":"Bạn cho tôi mã đơn, tôi sẽ xem xét việc đó.","lv":"B1"},{"en":"It's easier said than done.","vi":"Nói thì dễ, làm mới khó.","ex":"\"Just speak more\" — easier said than done.","exvi":"\"Cứ nói nhiều vào\" — nói thì dễ, làm mới khó.","lv":"B2"},{"en":"We're back to square one.","vi":"Lại quay về vạch xuất phát.","ex":"The file is gone, so we're back to square one.","exvi":"File mất rồi, thế là lại quay về vạch xuất phát.","lv":"B2"},{"en":"It's a bit of a mess.","vi":"Hơi rối một chút.","ex":"The schedule is a bit of a mess this week.","exvi":"Lịch tuần này hơi rối một chút.","lv":"B1"},{"en":"Let's sort it out.","vi":"Mình giải quyết cho xong đi.","ex":"Let's sort it out before the client calls.","exvi":"Mình giải quyết cho xong trước khi khách gọi.","lv":"B1"},{"en":"My mistake, I'll fix it.","vi":"Lỗi của tôi, tôi sẽ sửa.","ex":"Wrong file? My mistake, I'll fix it now.","exvi":"Sai file hả? Lỗi của tôi, tôi sửa ngay.","lv":"A2"},{"en":"It could have been worse.","vi":"May mà chưa tệ hơn.","ex":"We lost one day, but it could have been worse.","exvi":"Mình mất một ngày, nhưng may mà chưa tệ hơn.","lv":"B1"},{"en":"Let's not jump to conclusions.","vi":"Đừng vội kết luận.","ex":"Let's not jump to conclusions before we check.","exvi":"Đừng vội kết luận trước khi kiểm tra.","lv":"B2"},{"en":"I'm doing my best.","vi":"Tôi đang cố hết sức rồi.","ex":"It's slow, but I'm doing my best.","exvi":"Hơi chậm, nhưng tôi đang cố hết sức rồi.","lv":"A2"},{"en":"We'll figure it out.","vi":"Rồi mình sẽ nghĩ ra cách.","ex":"Don't panic — we'll figure it out together.","exvi":"Đừng hoảng — rồi mình sẽ nghĩ ra cách, cùng nhau.","lv":"B1"},{"en":"That's the least of our worries.","vi":"Cái đó là chuyện nhỏ nhất đáng lo.","ex":"The colour? That's the least of our worries.","exvi":"Màu sắc hả? Cái đó là chuyện nhỏ nhất đáng lo.","lv":"B2"},{"en":"Let's take it from here.","vi":"Mình đi tiếp từ chỗ này.","ex":"The hard part is done — let's take it from here.","exvi":"Phần khó xong rồi — mình đi tiếp từ chỗ này.","lv":"B2"}]},{"id":"ket-luan","icon":"🎬","name":"Chốt ý & kết thúc","desc":"Gói lại điều vừa nói và kết thúc cuộc trò chuyện cho gọn gàng, không bỏ lửng.","items":[{"en":"All in all, …","vi":"Nhìn chung thì…","ex":"All in all, it was a good day.","exvi":"Nhìn chung thì đó là một ngày đẹp.","lv":"B1"},{"en":"At the end of the day, …","vi":"Suy cho cùng thì…","ex":"At the end of the day, health comes first.","exvi":"Suy cho cùng thì sức khoẻ là trên hết.","lv":"B1"},{"en":"That's about it.","vi":"Đại khái là vậy.","ex":"Two rules and one exception — that's about it.","exvi":"Hai quy tắc và một ngoại lệ — đại khái là vậy.","lv":"B1"},{"en":"To sum up, …","vi":"Tóm lại là…","ex":"To sum up, we need more practice, not more theory.","exvi":"Tóm lại là mình cần luyện nhiều hơn, chứ không phải lý thuyết nhiều hơn.","lv":"B1"},{"en":"So that's why …","vi":"Thế nên mới có chuyện…","ex":"So that's why I quit my old job.","exvi":"Thế nên mới có chuyện tôi nghỉ việc cũ.","lv":"A2"},{"en":"Let's leave it there for today.","vi":"Hôm nay mình dừng ở đây nhé.","ex":"We're all tired — let's leave it there for today.","exvi":"Ai cũng mệt rồi — hôm nay mình dừng ở đây nhé.","lv":"B2"},{"en":"It was great talking to you.","vi":"Nói chuyện với bạn vui lắm.","ex":"It was great talking to you — see you next week.","exvi":"Nói chuyện với bạn vui lắm — tuần sau gặp lại.","lv":"A2"},{"en":"I'd better get going.","vi":"Tôi phải đi đây.","ex":"Look at the time — I'd better get going.","exvi":"Nhìn giờ kìa — tôi phải đi đây.","lv":"B1"},{"en":"Keep in touch.","vi":"Giữ liên lạc nhé.","ex":"Keep in touch, don't disappear again!","exvi":"Giữ liên lạc nhé, đừng có mất tích nữa đấy!","lv":"A2"},{"en":"Let's pick this up later.","vi":"Chuyện này để lát nữa nói tiếp.","ex":"My next meeting is starting — let's pick this up later.","exvi":"Cuộc họp sau của tôi sắp bắt đầu — chuyện này để lát nữa nói tiếp.","lv":"B2"},{"en":"That's all from me.","vi":"Phần tôi xin hết.","ex":"That's all from me — any questions?","exvi":"Phần tôi xin hết — có ai hỏi gì không?","lv":"B1"},{"en":"Thanks for hearing me out.","vi":"Cảm ơn đã nghe tôi nói hết.","ex":"Thanks for hearing me out, I know it was long.","exvi":"Cảm ơn đã nghe tôi nói hết, tôi biết là hơi dài.","lv":"B2"},{"en":"Have we covered everything?","vi":"Mình nói hết mọi thứ chưa nhỉ?","ex":"Have we covered everything, or is there one more point?","exvi":"Mình nói hết mọi thứ chưa nhỉ, hay còn ý nào nữa?","lv":"B2"},{"en":"I'll leave it up to you.","vi":"Tôi để bạn quyết.","ex":"Both are fine — I'll leave it up to you.","exvi":"Cả hai đều ổn — tôi để bạn quyết.","lv":"B1"},{"en":"Talk soon!","vi":"Nói chuyện sau nhé!","ex":"Got to run — talk soon!","exvi":"Tôi phải chạy đây — nói chuyện sau nhé!","lv":"A2"},{"en":"Long story short, it was worth it.","vi":"Nói ngắn gọn là: đáng công.","ex":"Two years of study — long story short, it was worth it.","exvi":"Hai năm đèn sách — nói ngắn gọn là: đáng công.","lv":"B1"}]},{"id":"dien-thoai","icon":"☎️","name":"Điện thoại & email công việc","desc":"Nghe máy, gọi đi, hẹn họp, viết email — bộ cụm đi làm cần nhất, nói sai một chữ là mất chuyên nghiệp.","items":[{"en":"Hello, this is Anh speaking.","vi":"Alô, Anh nghe đây.","ex":"Hello, this is Anh speaking. How can I help?","exvi":"Alô, Anh nghe đây. Tôi giúp gì được ạ?","lv":"A2"},{"en":"May I ask who's calling?","vi":"Cho hỏi ai đang gọi ạ?","ex":"May I ask who's calling? I'll pass the message on.","exvi":"Cho hỏi ai đang gọi ạ? Tôi sẽ nhắn lại giúp.","lv":"B1"},{"en":"Could you hold on a moment?","vi":"Bạn giữ máy một lát nhé?","ex":"Could you hold on a moment? I'll check for you.","exvi":"Bạn giữ máy một lát nhé? Để tôi kiểm tra giúp bạn.","lv":"A2"},{"en":"I'm calling about …","vi":"Tôi gọi về việc…","ex":"I'm calling about the order we placed last Friday.","exvi":"Tôi gọi về đơn hàng chúng tôi đặt thứ Sáu tuần trước.","lv":"A2"},{"en":"Sorry, the line is breaking up.","vi":"Xin lỗi, đường truyền bị ngắt quãng.","ex":"Sorry, the line is breaking up — can I call you back?","exvi":"Xin lỗi, đường truyền bị ngắt quãng — tôi gọi lại được không?","lv":"B1"},{"en":"Can you hear me okay?","vi":"Bạn nghe tôi rõ không?","ex":"Can you hear me okay, or should I move closer to the window?","exvi":"Bạn nghe tôi rõ không, hay tôi ra gần cửa sổ?","lv":"A2"},{"en":"Let me put you through to …","vi":"Để tôi nối máy với…","ex":"Let me put you through to the technical team.","exvi":"Để tôi nối máy với bộ phận kỹ thuật.","lv":"B2"},{"en":"He's not available right now.","vi":"Hiện anh ấy đang bận / không có mặt.","ex":"He's not available right now. Would you like to leave a message?","exvi":"Hiện anh ấy không có mặt. Bạn có muốn để lại lời nhắn không?","lv":"B1"},{"en":"I'll get back to you by …","vi":"Tôi sẽ phản hồi bạn trước…","ex":"I'll get back to you by Thursday at the latest.","exvi":"Muộn nhất thứ Năm tôi sẽ phản hồi bạn.","lv":"B1"},{"en":"Just following up on my last email.","vi":"Tôi nhắc lại email trước của mình.","ex":"Just following up on my last email — have you had a chance to look?","exvi":"Tôi nhắc lại email trước — bạn xem qua được chưa ạ?","lv":"B2"},{"en":"Please find the file attached.","vi":"File đính kèm bên dưới ạ.","ex":"Please find the quotation attached.","exvi":"Báo giá tôi đính kèm bên dưới ạ.","lv":"B1"},{"en":"Sorry for the late reply.","vi":"Xin lỗi vì trả lời muộn.","ex":"Sorry for the late reply, I was away last week.","exvi":"Xin lỗi vì trả lời muộn, tuần trước tôi đi vắng.","lv":"A2"},{"en":"Could we set up a call?","vi":"Mình sắp xếp một cuộc gọi nhé?","ex":"Could we set up a call sometime this week?","exvi":"Mình sắp xếp một cuộc gọi trong tuần này nhé?","lv":"B1"},{"en":"Does Tuesday morning suit you?","vi":"Sáng thứ Ba bạn tiện không?","ex":"Does Tuesday morning suit you, or is afternoon better?","exvi":"Sáng thứ Ba bạn tiện không, hay chiều thì hơn?","lv":"B1"},{"en":"I'm afraid I have to reschedule.","vi":"E là tôi phải dời lịch.","ex":"I'm afraid I have to reschedule our meeting.","exvi":"E là tôi phải dời lịch cuộc họp của mình.","lv":"B2"},{"en":"Let's keep it short.","vi":"Mình làm nhanh gọn thôi.","ex":"Everyone is busy, so let's keep it short.","exvi":"Ai cũng bận, mình làm nhanh gọn thôi.","lv":"B1"},{"en":"Could you send it over by end of day?","vi":"Bạn gửi trước cuối ngày được không?","ex":"Could you send the numbers over by end of day?","exvi":"Bạn gửi số liệu trước cuối ngày được không?","lv":"B2"},{"en":"I'll copy you in on the email.","vi":"Tôi sẽ CC bạn vào email.","ex":"I'll copy you in on the email so you're in the loop.","exvi":"Tôi sẽ CC bạn vào email để bạn nắm tình hình.","lv":"B2"},{"en":"to keep you in the loop","vi":"để bạn nắm được tình hình","ex":"I'm sending this just to keep you in the loop.","exvi":"Tôi gửi cái này chỉ để bạn nắm được tình hình.","lv":"B2"},{"en":"Looking forward to hearing from you.","vi":"Mong sớm nhận hồi âm của bạn.","ex":"Thanks again — looking forward to hearing from you.","exvi":"Cảm ơn lần nữa — mong sớm nhận hồi âm của bạn.","lv":"B1"},{"en":"Thanks for getting back to me.","vi":"Cảm ơn bạn đã phản hồi.","ex":"Thanks for getting back to me so quickly.","exvi":"Cảm ơn bạn đã phản hồi nhanh như vậy.","lv":"B1"},{"en":"Sorry, I think we got cut off.","vi":"Xin lỗi, hình như cuộc gọi bị rớt.","ex":"Sorry, I think we got cut off — where were we?","exvi":"Xin lỗi, hình như cuộc gọi bị rớt — mình đang nói tới đâu nhỉ?","lv":"B1"},{"en":"Let me check and confirm.","vi":"Để tôi kiểm tra rồi xác nhận lại.","ex":"Let me check the stock and confirm by tomorrow.","exvi":"Để tôi kiểm tra hàng rồi mai xác nhận lại.","lv":"B1"},{"en":"That's noted, thank you.","vi":"Tôi ghi nhận rồi, cảm ơn bạn.","ex":"That's noted, thank you — I'll update the file.","exvi":"Tôi ghi nhận rồi, cảm ơn bạn — tôi sẽ cập nhật hồ sơ.","lv":"B1"},{"en":"Could you spell that for me?","vi":"Bạn đánh vần giúp tôi được không?","ex":"Could you spell that for me? It's a long name.","exvi":"Bạn đánh vần giúp tôi được không? Tên hơi dài.","lv":"A2"},{"en":"I'll send you the details in writing.","vi":"Tôi sẽ gửi chi tiết bằng văn bản.","ex":"I'll send you the details in writing this afternoon.","exvi":"Chiều nay tôi sẽ gửi chi tiết bằng văn bản.","lv":"B2"},{"en":"Sorry to chase you on this.","vi":"Xin lỗi phải giục bạn chuyện này.","ex":"Sorry to chase you on this, but the deadline is tomorrow.","exvi":"Xin lỗi phải giục bạn chuyện này, nhưng mai là hạn rồi.","lv":"B2"},{"en":"Talk to you then.","vi":"Vậy hẹn nói chuyện lúc đó nhé.","ex":"Friday at nine — talk to you then.","exvi":"Chín giờ thứ Sáu — hẹn nói chuyện lúc đó nhé.","lv":"A2"},{"en":"Thanks for your time.","vi":"Cảm ơn bạn đã dành thời gian.","ex":"Thanks for your time, I know you're busy.","exvi":"Cảm ơn bạn đã dành thời gian, tôi biết bạn bận.","lv":"A2"},{"en":"Have a good one.","vi":"Chúc bạn một ngày tốt lành nhé.","ex":"Alright, that's everything — have a good one!","exvi":"Được rồi, vậy là xong — chúc bạn một ngày tốt lành nhé!","lv":"B1"}]},{"id":"du-lich","icon":"✈️","name":"Du lịch, sân bay & khách sạn","desc":"Đi máy bay, nhận phòng, hỏi đường, gọi món — cụm nào cũng dùng được ngay chuyến đi tới.","items":[{"en":"I'd like to check in, please.","vi":"Tôi muốn làm thủ tục, ạ.","ex":"Good morning, I'd like to check in, please.","exvi":"Chào buổi sáng, tôi muốn làm thủ tục ạ.","lv":"A2"},{"en":"Just one bag to check in.","vi":"Tôi chỉ gửi một kiện thôi.","ex":"Just one bag to check in, and this one is carry-on.","exvi":"Tôi chỉ gửi một kiện thôi, còn cái này xách tay.","lv":"B1"},{"en":"Is this the right gate for …?","vi":"Đây có đúng cổng đi… không ạ?","ex":"Excuse me, is this the right gate for Hanoi?","exvi":"Xin lỗi, đây có đúng cổng đi Hà Nội không ạ?","lv":"A2"},{"en":"My flight has been delayed.","vi":"Chuyến bay của tôi bị hoãn.","ex":"My flight has been delayed by two hours.","exvi":"Chuyến bay của tôi bị hoãn hai tiếng.","lv":"B1"},{"en":"I have a connecting flight.","vi":"Tôi có chuyến bay nối chuyến.","ex":"I have a connecting flight in Singapore.","exvi":"Tôi có chuyến bay nối chuyến ở Singapore.","lv":"B1"},{"en":"I'm here on holiday.","vi":"Tôi đến đây du lịch.","ex":"I'm here on holiday for two weeks.","exvi":"Tôi đến đây du lịch hai tuần.","lv":"A2"},{"en":"I have a reservation under …","vi":"Tôi có đặt phòng dưới tên…","ex":"I have a reservation under Pham, for three nights.","exvi":"Tôi có đặt phòng dưới tên Phạm, ba đêm.","lv":"B1"},{"en":"What time is check-out?","vi":"Mấy giờ phải trả phòng ạ?","ex":"What time is check-out, and can I leave my bag here?","exvi":"Mấy giờ phải trả phòng ạ, và tôi gửi hành lý ở đây được không?","lv":"A2"},{"en":"Is breakfast included?","vi":"Có bao gồm bữa sáng không ạ?","ex":"Is breakfast included in the room rate?","exvi":"Giá phòng có bao gồm bữa sáng không ạ?","lv":"A2"},{"en":"Could I get a wake-up call?","vi":"Nhờ gọi báo thức giúp tôi được không?","ex":"Could I get a wake-up call at half past five?","exvi":"Nhờ gọi báo thức giúp tôi lúc năm rưỡi được không?","lv":"B1"},{"en":"The air conditioning isn't working.","vi":"Máy lạnh không chạy.","ex":"Sorry to bother you — the air conditioning isn't working.","exvi":"Xin lỗi làm phiền — máy lạnh không chạy ạ.","lv":"B1"},{"en":"How do I get to …?","vi":"Đi tới… bằng cách nào ạ?","ex":"How do I get to the old town from here?","exvi":"Từ đây đi tới phố cổ bằng cách nào ạ?","lv":"A2"},{"en":"Is it within walking distance?","vi":"Đi bộ tới được không ạ?","ex":"Is the market within walking distance?","exvi":"Đi bộ tới chợ được không ạ?","lv":"B1"},{"en":"Could you show me on the map?","vi":"Bạn chỉ giúp tôi trên bản đồ được không?","ex":"Could you show me on the map where we are now?","exvi":"Bạn chỉ giúp tôi trên bản đồ giờ mình đang ở đâu?","lv":"A2"},{"en":"I think I'm lost.","vi":"Hình như tôi bị lạc.","ex":"Excuse me, I think I'm lost — is this Le Loi street?","exvi":"Xin lỗi, hình như tôi bị lạc — đây có phải đường Lê Lợi không ạ?","lv":"A2"},{"en":"How much is the fare?","vi":"Giá vé / cước bao nhiêu ạ?","ex":"How much is the fare to the airport?","exvi":"Cước ra sân bay bao nhiêu ạ?","lv":"B1"},{"en":"Could you drop me off here?","vi":"Cho tôi xuống ở đây được không ạ?","ex":"Could you drop me off here, at the corner?","exvi":"Cho tôi xuống ở đây, chỗ góc đường, được không ạ?","lv":"B1"},{"en":"A table for two, please.","vi":"Cho bàn hai người ạ.","ex":"Good evening, a table for two, please.","exvi":"Chào buổi tối, cho bàn hai người ạ.","lv":"A2"},{"en":"What do you recommend?","vi":"Ở đây có món gì ngon ạ?","ex":"It's my first time here — what do you recommend?","exvi":"Lần đầu tôi tới đây — có món gì ngon ạ?","lv":"A2"},{"en":"I'd like mine without …","vi":"Cho tôi món đó bỏ…","ex":"I'd like mine without onion, please.","exvi":"Cho tôi món đó bỏ hành ạ.","lv":"B1"},{"en":"Is this dish spicy?","vi":"Món này có cay không ạ?","ex":"Is this dish spicy? I can't eat chilli.","exvi":"Món này có cay không ạ? Tôi không ăn được ớt.","lv":"A2"},{"en":"Could we get the bill, please?","vi":"Cho tôi xin hoá đơn ạ.","ex":"Excuse me, could we get the bill, please?","exvi":"Xin lỗi, cho tôi xin hoá đơn ạ.","lv":"A2"},{"en":"Can I pay by card?","vi":"Tôi trả bằng thẻ được không ạ?","ex":"Can I pay by card, or is it cash only?","exvi":"Tôi trả bằng thẻ được không, hay chỉ nhận tiền mặt ạ?","lv":"A2"},{"en":"Is there Wi-Fi here?","vi":"Ở đây có Wi-Fi không ạ?","ex":"Is there Wi-Fi here? What's the password?","exvi":"Ở đây có Wi-Fi không ạ? Mật khẩu là gì ạ?","lv":"A2"},{"en":"I'd like to change my booking.","vi":"Tôi muốn đổi lịch đặt chỗ.","ex":"I'd like to change my booking to the evening train.","exvi":"Tôi muốn đổi lịch đặt chỗ sang chuyến tàu tối.","lv":"B1"},{"en":"Do I need to book in advance?","vi":"Có cần đặt trước không ạ?","ex":"Do I need to book in advance, or can I just turn up?","exvi":"Có cần đặt trước không, hay cứ đến là được ạ?","lv":"B1"},{"en":"What time does the last bus leave?","vi":"Chuyến xe cuối chạy lúc mấy giờ ạ?","ex":"What time does the last bus leave for the city?","exvi":"Chuyến xe cuối vào thành phố chạy lúc mấy giờ ạ?","lv":"A2"},{"en":"It's a bit out of the way.","vi":"Chỗ đó hơi xa đường đi một chút.","ex":"The temple is lovely, but it's a bit out of the way.","exvi":"Ngôi chùa đẹp lắm, nhưng hơi xa đường đi một chút.","lv":"B2"},{"en":"Is it worth visiting?","vi":"Chỗ đó có đáng đi không ạ?","ex":"Is the museum worth visiting with kids?","exvi":"Bảo tàng đó dẫn trẻ con đi có đáng không ạ?","lv":"B1"},{"en":"Have a safe trip!","vi":"Chúc bạn đi đường bình an!","ex":"See you next month — have a safe trip!","exvi":"Tháng sau gặp lại — chúc bạn đi đường bình an!","lv":"A2"}]},{"id":"mua-ban","icon":"🛒","name":"Mua bán & mặc cả","desc":"Hỏi giá, trả giá, đổi trả, khiếu nại — nói cho khéo thì vừa được giá vừa không mất vui.","items":[{"en":"How much is this one?","vi":"Cái này bao nhiêu ạ?","ex":"Excuse me, how much is this one?","exvi":"Xin lỗi, cái này bao nhiêu ạ?","lv":"A2"},{"en":"I'm just looking, thanks.","vi":"Tôi xem thôi, cảm ơn.","ex":"I'm just looking, thanks — I'll call you if I need help.","exvi":"Tôi xem thôi, cảm ơn — cần gì tôi sẽ gọi.","lv":"A2"},{"en":"Do you have this in another size?","vi":"Cái này có size khác không ạ?","ex":"Do you have this in another size? This one's too tight.","exvi":"Cái này có size khác không ạ? Cái này chật quá.","lv":"A2"},{"en":"Can I try it on?","vi":"Tôi thử được không ạ?","ex":"Can I try it on? Where's the fitting room?","exvi":"Tôi thử được không ạ? Phòng thử ở đâu ạ?","lv":"A2"},{"en":"That's a bit out of my budget.","vi":"Cái đó hơi quá túi tiền của tôi.","ex":"I like it, but it's a bit out of my budget.","exvi":"Tôi thích lắm, nhưng hơi quá túi tiền của tôi.","lv":"B1"},{"en":"Could you give me a better price?","vi":"Bớt cho tôi chút được không ạ?","ex":"If I take two, could you give me a better price?","exvi":"Nếu tôi lấy hai cái, bớt cho tôi chút được không ạ?","lv":"B1"},{"en":"Is that your best price?","vi":"Giá đó là giá chót rồi ạ?","ex":"Is that your best price? I'm paying cash.","exvi":"Giá đó là giá chót rồi ạ? Tôi trả tiền mặt.","lv":"B1"},{"en":"That's a bit steep.","vi":"Giá đó hơi chát.","ex":"Two million for a bag? That's a bit steep.","exvi":"Hai triệu một cái túi? Giá đó hơi chát.","lv":"B2"},{"en":"I'll think about it.","vi":"Để tôi suy nghĩ đã.","ex":"Thanks, I'll think about it and come back.","exvi":"Cảm ơn, để tôi suy nghĩ rồi quay lại.","lv":"A2"},{"en":"It's a good deal.","vi":"Vụ này hời đấy.","ex":"Two for the price of one — it's a good deal.","exvi":"Mua một tặng một — vụ này hời đấy.","lv":"B1"},{"en":"It's not worth the money.","vi":"Không đáng đồng tiền.","ex":"It looks nice, but it's not worth the money.","exvi":"Nhìn thì đẹp, nhưng không đáng đồng tiền.","lv":"B1"},{"en":"Is it on sale?","vi":"Cái này có đang giảm giá không ạ?","ex":"Is this jacket on sale, or is that the full price?","exvi":"Cái áo khoác này đang giảm giá hay là giá gốc vậy ạ?","lv":"A2"},{"en":"Do you offer a discount for …?","vi":"Có giảm giá cho… không ạ?","ex":"Do you offer a discount for students?","exvi":"Có giảm giá cho sinh viên không ạ?","lv":"B1"},{"en":"I'd like a refund, please.","vi":"Tôi muốn hoàn tiền ạ.","ex":"It stopped working after a week — I'd like a refund, please.","exvi":"Dùng một tuần là hỏng — tôi muốn hoàn tiền ạ.","lv":"B1"},{"en":"Can I exchange it?","vi":"Tôi đổi được không ạ?","ex":"Can I exchange it for a bigger one?","exvi":"Tôi đổi sang cái to hơn được không ạ?","lv":"A2"},{"en":"Do you have the receipt?","vi":"Bạn có giữ hoá đơn không?","ex":"Do you have the receipt? We need it for the exchange.","exvi":"Bạn có giữ hoá đơn không? Đổi hàng cần hoá đơn ạ.","lv":"B1"},{"en":"It came damaged.","vi":"Hàng về đã bị hỏng sẵn.","ex":"The box was fine but the item came damaged.","exvi":"Hộp thì nguyên nhưng hàng về đã bị hỏng sẵn.","lv":"B1"},{"en":"This isn't what I ordered.","vi":"Đây không phải thứ tôi đặt.","ex":"Sorry, this isn't what I ordered — I asked for the blue one.","exvi":"Xin lỗi, đây không phải thứ tôi đặt — tôi đặt màu xanh.","lv":"B1"},{"en":"How long is the warranty?","vi":"Bảo hành bao lâu ạ?","ex":"How long is the warranty on this machine?","exvi":"Máy này bảo hành bao lâu ạ?","lv":"B1"},{"en":"Does it come with …?","vi":"Có kèm theo… không ạ?","ex":"Does it come with a charger?","exvi":"Có kèm theo sạc không ạ?","lv":"A2"},{"en":"Could you wrap it up for me?","vi":"Gói giúp tôi được không ạ?","ex":"It's a gift — could you wrap it up for me?","exvi":"Đây là quà — gói giúp tôi được không ạ?","lv":"B1"},{"en":"I'll take it.","vi":"Tôi lấy cái này.","ex":"Alright, I'll take it. Can I pay here?","exvi":"Được rồi, tôi lấy cái này. Trả tiền ở đây ạ?","lv":"A2"},{"en":"Do you deliver?","vi":"Có giao hàng tận nơi không ạ?","ex":"Do you deliver, and how much does it cost?","exvi":"Có giao hàng tận nơi không ạ, phí bao nhiêu?","lv":"A2"},{"en":"When will it arrive?","vi":"Bao giờ hàng tới ạ?","ex":"When will it arrive if I order today?","exvi":"Nếu đặt hôm nay thì bao giờ hàng tới ạ?","lv":"A2"},{"en":"It's out of stock.","vi":"Mặt hàng đó hết rồi.","ex":"Sorry, that colour is out of stock at the moment.","exvi":"Xin lỗi, màu đó hiện đang hết hàng.","lv":"B1"},{"en":"Could you put it aside for me?","vi":"Giữ giùm tôi được không ạ?","ex":"Could you put it aside for me until this evening?","exvi":"Giữ giùm tôi tới tối nay được không ạ?","lv":"B2"},{"en":"I'm on a tight budget.","vi":"Tôi đang phải chi tiêu dè.","ex":"Show me something simpler — I'm on a tight budget.","exvi":"Cho tôi xem cái nào đơn giản hơn — tôi đang phải chi tiêu dè.","lv":"B2"},{"en":"It's a rip-off.","vi":"Giá đó là chặt chém.","ex":"Don't buy it there, it's a rip-off.","exvi":"Đừng mua ở đó, giá đó là chặt chém.","lv":"B2"},{"en":"You get what you pay for.","vi":"Tiền nào của nấy.","ex":"It broke in a month — you get what you pay for.","exvi":"Một tháng là hỏng — tiền nào của nấy thôi.","lv":"B2"},{"en":"Keep the change.","vi":"Khỏi thối lại.","ex":"Here's two hundred — keep the change.","exvi":"Đây hai trăm — khỏi thối lại nhé.","lv":"B1"}]},{"id":"phong-van","icon":"💼","name":"Phỏng vấn xin việc","desc":"Giới thiệu bản thân, kể kinh nghiệm, nói về điểm mạnh điểm yếu và đặt câu hỏi ngược cho nhà tuyển dụng.","items":[{"en":"Thanks for having me today.","vi":"Cảm ơn anh chị đã dành thời gian cho tôi hôm nay.","ex":"Thanks for having me today, it's good to be here.","exvi":"Cảm ơn anh chị đã dành thời gian cho tôi hôm nay, tôi rất vui khi được đến đây.","lv":"B1"},{"en":"Let me tell you a bit about myself.","vi":"Để tôi giới thiệu đôi chút về bản thân.","ex":"Let me tell you a bit about myself and my background.","exvi":"Để tôi giới thiệu đôi chút về bản thân và nền tảng của mình.","lv":"B1"},{"en":"I have five years of experience in …","vi":"Tôi có năm năm kinh nghiệm trong…","ex":"I have five years of experience in industrial equipment.","exvi":"Tôi có năm năm kinh nghiệm trong ngành thiết bị công nghiệp.","lv":"B1"},{"en":"My background is in …","vi":"Chuyên môn / nền tảng của tôi là…","ex":"My background is in mechanical engineering.","exvi":"Nền tảng của tôi là kỹ thuật cơ khí.","lv":"B1"},{"en":"I'm currently responsible for …","vi":"Hiện tôi đang phụ trách…","ex":"I'm currently responsible for a team of eight.","exvi":"Hiện tôi đang phụ trách một đội tám người.","lv":"B2"},{"en":"In my previous role, I …","vi":"Ở vị trí trước, tôi đã…","ex":"In my previous role, I set up the whole reporting system.","exvi":"Ở vị trí trước, tôi đã xây dựng toàn bộ hệ thống báo cáo.","lv":"B2"},{"en":"I'm looking for a new challenge.","vi":"Tôi đang tìm một thử thách mới.","ex":"I've learned a lot there, but I'm looking for a new challenge.","exvi":"Tôi học được nhiều ở đó, nhưng tôi đang tìm một thử thách mới.","lv":"B1"},{"en":"What drew me to this role is …","vi":"Điều cuốn hút tôi ở vị trí này là…","ex":"What drew me to this role is the chance to build something new.","exvi":"Điều cuốn hút tôi ở vị trí này là cơ hội xây dựng cái gì đó mới.","lv":"B2"},{"en":"I'd describe myself as …","vi":"Tôi tự thấy mình là người…","ex":"I'd describe myself as patient and well organised.","exvi":"Tôi tự thấy mình là người kiên nhẫn và ngăn nắp.","lv":"B1"},{"en":"My strongest point is …","vi":"Điểm mạnh nhất của tôi là…","ex":"My strongest point is staying calm under pressure.","exvi":"Điểm mạnh nhất của tôi là giữ được bình tĩnh khi áp lực.","lv":"B1"},{"en":"Something I'm still working on is …","vi":"Điều tôi vẫn đang cải thiện là…","ex":"Something I'm still working on is speaking up in big meetings.","exvi":"Điều tôi vẫn đang cải thiện là dám lên tiếng trong họp đông người.","lv":"B2"},{"en":"I learned that the hard way.","vi":"Tôi học được điều đó bằng trải nghiệm đau thương.","ex":"Always check the contract — I learned that the hard way.","exvi":"Luôn phải đọc kỹ hợp đồng — tôi học được điều đó bằng trải nghiệm đau thương.","lv":"B2"},{"en":"I take ownership of my work.","vi":"Tôi chịu trách nhiệm đến cùng với việc mình làm.","ex":"I take ownership of my work, mistakes included.","exvi":"Tôi chịu trách nhiệm đến cùng với việc mình làm, kể cả khi sai.","lv":"B2"},{"en":"I work well under pressure.","vi":"Tôi làm việc tốt dưới áp lực.","ex":"I work well under pressure, especially with a clear deadline.","exvi":"Tôi làm việc tốt dưới áp lực, nhất là khi có hạn chót rõ ràng.","lv":"B1"},{"en":"I'm a quick learner.","vi":"Tôi học việc nhanh.","ex":"I'm a quick learner — I picked up the software in a week.","exvi":"Tôi học việc nhanh — phần mềm đó tôi nắm trong một tuần.","lv":"B1"},{"en":"Let me give you an example.","vi":"Để tôi lấy một ví dụ cụ thể.","ex":"Let me give you an example from last year.","exvi":"Để tôi lấy một ví dụ cụ thể hồi năm ngoái.","lv":"B1"},{"en":"The result was that …","vi":"Kết quả là…","ex":"The result was that we cut delivery time by half.","exvi":"Kết quả là chúng tôi rút một nửa thời gian giao hàng.","lv":"B1"},{"en":"I was in charge of …","vi":"Tôi là người phụ trách…","ex":"I was in charge of the whole installation process.","exvi":"Tôi là người phụ trách toàn bộ quá trình lắp đặt.","lv":"B1"},{"en":"We worked closely together.","vi":"Chúng tôi phối hợp rất chặt chẽ.","ex":"We worked closely together with the factory team.","exvi":"Chúng tôi phối hợp rất chặt chẽ với đội nhà máy.","lv":"B1"},{"en":"I'm willing to …","vi":"Tôi sẵn sàng…","ex":"I'm willing to travel to sites when needed.","exvi":"Tôi sẵn sàng đi công trình khi cần.","lv":"B1"},{"en":"I see myself …-ing in five years.","vi":"Năm năm nữa tôi hình dung mình đang…","ex":"I see myself leading a small team in five years.","exvi":"Năm năm nữa tôi hình dung mình đang dẫn dắt một đội nhỏ.","lv":"B2"},{"en":"May I ask a question about …?","vi":"Cho tôi hỏi một câu về… được không ạ?","ex":"May I ask a question about the team structure?","exvi":"Cho tôi hỏi một câu về cơ cấu đội ngũ được không ạ?","lv":"B1"},{"en":"What does a typical day look like?","vi":"Một ngày làm việc điển hình ở đây thế nào ạ?","ex":"What does a typical day look like in this position?","exvi":"Một ngày làm việc điển hình ở vị trí này thế nào ạ?","lv":"B2"},{"en":"How would you measure success in this role?","vi":"Anh chị đánh giá thành công ở vị trí này bằng gì ạ?","ex":"How would you measure success in this role after six months?","exvi":"Sau sáu tháng, anh chị đánh giá thành công ở vị trí này bằng gì ạ?","lv":"B2"},{"en":"What are the next steps?","vi":"Các bước tiếp theo là gì ạ?","ex":"Thank you — what are the next steps in the process?","exvi":"Cảm ơn anh chị — các bước tiếp theo là gì ạ?","lv":"B1"},{"en":"I'm flexible on the start date.","vi":"Ngày bắt đầu tôi có thể linh động.","ex":"I'm flexible on the start date, but I need one month's notice.","exvi":"Ngày bắt đầu tôi có thể linh động, nhưng tôi cần báo trước một tháng.","lv":"B2"},{"en":"I'd rather not go into that.","vi":"Chuyện đó tôi xin phép không đi sâu.","ex":"About why I left — I'd rather not go into that in detail.","exvi":"Về lý do tôi nghỉ việc — tôi xin phép không đi sâu chi tiết.","lv":"B2"},{"en":"That's all from my side.","vi":"Phía tôi hết rồi ạ.","ex":"That's all from my side — thank you for your time.","exvi":"Phía tôi hết rồi ạ — cảm ơn anh chị đã dành thời gian.","lv":"B1"},{"en":"I'd be glad to join your team.","vi":"Tôi rất vui nếu được gia nhập đội ngũ.","ex":"I'd be glad to join your team and get started.","exvi":"Tôi rất vui nếu được gia nhập đội ngũ và bắt tay vào việc.","lv":"B1"},{"en":"Thank you for the opportunity.","vi":"Cảm ơn anh chị đã cho tôi cơ hội.","ex":"Thank you for the opportunity, I look forward to hearing from you.","exvi":"Cảm ơn anh chị đã cho tôi cơ hội, tôi mong sớm nhận được phản hồi.","lv":"B1"}]}];
+
+/* ================= PHÁT ÂM ================= */
+/* Web Speech API. Chrome nuốt câu nếu speak() gọi ngay sau cancel() → chờ ~70ms. */
+var VOICES = [], VOICE = null, RATE = 0.9;
+
+function pickVoices(){
+  var all = [];
+  try { all = window.speechSynthesis ? (window.speechSynthesis.getVoices() || []) : []; }
+  catch (e) { all = []; }
+  VOICES = all.filter(function(v){ return (v.lang || '').toLowerCase().indexOf('en') === 0; });
+  VOICES.sort(function(a, b){
+    var sa = score(a), sb = score(b);
+    return sb - sa || (a.name || '').localeCompare(b.name || '');
+  });
+  function score(v){
+    var n = (v.name || '').toLowerCase(), s = 0;
+    if (n.indexOf('google') >= 0) s += 4;
+    if (n.indexOf('us english') >= 0 || (v.lang || '').toLowerCase() === 'en-us') s += 2;
+    if (n.indexOf('natural') >= 0) s += 1;
+    return s;
+  }
+  var sel = document.getElementById('voiceSel');
+  if (!sel) return;
+  if (!VOICES.length){ sel.innerHTML = '<option>Máy chưa có giọng tiếng Anh</option>'; return; }
+  sel.innerHTML = VOICES.map(function(v, i){
+    return '<option value="' + i + '">' + esc(v.name) + ' (' + esc(v.lang) + ')</option>';
+  }).join('');
+  var saved = lsGet('eu_chunk_voice');
+  var idx = 0;
+  if (saved){
+    for (var i = 0; i < VOICES.length; i++){ if (VOICES[i].name === saved){ idx = i; break; } }
+  }
+  sel.value = String(idx);
+  VOICE = VOICES[idx];
+}
+
+function say(text, rate){
+  if (!window.speechSynthesis || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    setTimeout(function(){
+      try {
+        var u = new SpeechSynthesisUtterance(String(text));
+        if (VOICE){ u.voice = VOICE; u.lang = VOICE.lang; } else { u.lang = 'en-US'; }
+        u.rate = Math.max(0.55, rate || RATE);
+        window.speechSynthesis.speak(u);
+      } catch (e) { console.warn('[chunk] speak lỗi:', e); }
+    }, 70);
+  } catch (e) { console.warn('[chunk] cancel lỗi:', e); }
+}
+
+/* ================= TIỆN ÍCH ================= */
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch (e) { /* riêng tư / hết chỗ */ } }
+
+/* làm phẳng: mỗi cụm có key riêng để đánh dấu đã thuộc */
+var ALL = [];
+GROUPS.forEach(function(g, gi){
+  g.items.forEach(function(it, ii){
+    ALL.push({ g: g, gi: gi, ii: ii, key: g.id + '#' + ii,
+               en: it.en, vi: it.vi, ex: it.ex, exvi: it.exvi, lv: it.lv });
+  });
+});
+
+var DONE = {};
+(function loadDone(){
+  var raw = lsGet('eu_chunk_done');
+  if (!raw) return;
+  try { DONE = JSON.parse(raw) || {}; }
+  catch (e) { DONE = {}; console.warn('[chunk] dữ liệu đã thuộc hỏng, bỏ qua:', e); }
+})();
+function saveDone(){ lsSet('eu_chunk_done', JSON.stringify(DONE)); }
+function isDone(k){ return !!DONE[k]; }
+function toggleDone(k){
+  if (DONE[k]) { delete DONE[k]; } else { DONE[k] = 1; }
+  saveDone();
+  return !!DONE[k];
+}
+
+function norm(s){ return String(s || '').toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' '); }
+
+function filtered(){
+  var q = norm(document.getElementById('q').value.trim());
+  var fg = document.getElementById('fg').value;
+  var fl = document.getElementById('fl').value;
+  var fd = document.getElementById('fd').value;
+  return ALL.filter(function(r){
+    if (fg && r.g.id !== fg) return false;
+    if (fl && r.lv !== fl) return false;
+    if (fd === 'yes' && !isDone(r.key)) return false;
+    if (fd === 'no' && isDone(r.key)) return false;
+    if (q){
+      var hay = norm(r.en + ' ' + r.vi + ' ' + r.ex + ' ' + r.exvi);
+      var ok = q.split(/\s+/).every(function(w){ return !w || hay.indexOf(w) >= 0; });
+      if (!ok) return false;
+    }
+    return true;
+  });
+}
+
+/* ================= TAB 1 — KHO CỤM ================= */
+function rowHTML(r){
+  return '<li class="row' + (isDone(r.key) ? ' done' : '') + '" data-k="' + esc(r.key) + '">' +
+    '<span class="num"></span>' +
+    '<div class="body">' +
+      '<div class="en">' + esc(r.en) + '</div>' +
+      '<div class="vi">' + esc(r.vi) + '</div>' +
+      '<div class="ex"><i>' + esc(r.ex) + '</i><span class="exvi">' + esc(r.exvi) + '</span></div>' +
+    '</div>' +
+    '<span class="lv ' + esc(r.lv) + '">' + esc(r.lv) + '</span>' +
+    '<div class="tools">' +
+      '<button class="ib js-say" type="button" title="Nghe cụm">🔊</button>' +
+      '<button class="ib js-done' + (isDone(r.key) ? ' on' : '') + '" type="button" title="Đánh dấu đã thuộc">✓</button>' +
+    '</div></li>';
+}
+
+function renderList(){
+  var rows = filtered();
+  document.getElementById('cnt').textContent = rows.length + '/' + ALL.length + ' cụm · đã thuộc ' + Object.keys(DONE).length;
+  var wrap = document.getElementById('listWrap');
+  if (!rows.length){ wrap.innerHTML = '<div class="empty">Không có cụm nào khớp. Thử bỏ bớt bộ lọc xem.</div>'; return; }
+  var byG = {};
+  rows.forEach(function(r){ (byG[r.g.id] = byG[r.g.id] || []).push(r); });
+  var html = '';
+  GROUPS.forEach(function(g){
+    var rs = byG[g.id];
+    if (!rs || !rs.length) return;
+    html += '<div class="grp"><div class="grp-h"><span class="gi">' + esc(g.icon) + '</span>' +
+      '<h2>' + esc(g.name) + '</h2><span class="n">' + rs.length + '</span></div>' +
+      '<div class="grp-d">' + esc(g.desc) + '</div>' +
+      '<ol class="list">' + rs.map(rowHTML).join('') + '</ol></div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function byKey(k){
+  for (var i = 0; i < ALL.length; i++){ if (ALL[i].key === k) return ALL[i]; }
+  return null;
+}
+
+/* bấm ở danh sách: mở ví dụ / nghe / đánh dấu */
+document.addEventListener('click', function(ev){
+  var li = ev.target.closest ? ev.target.closest('li.row') : null;
+  if (!li) return;
+  var r = byKey(li.getAttribute('data-k'));
+  if (!r) return;
+  if (ev.target.closest('.js-say')){ say(r.en); return; }
+  if (ev.target.closest('.js-done')){
+    var on = toggleDone(r.key);
+    li.classList.toggle('done', on);
+    var b = li.querySelector('.js-done');
+    if (b) b.classList.toggle('on', on);
+    document.getElementById('cnt').textContent =
+      document.getElementById('cnt').textContent.replace(/đã thuộc \d+/, 'đã thuộc ' + Object.keys(DONE).length);
+    return;
+  }
+  li.classList.toggle('open');
+});
+
+/* ================= TAB 2 — LẬT THẺ ================= */
+var latDeck = [], latI = 0, latFlip = false;
+
+function latStart(){
+  latDeck = filtered().slice();
+  for (var i = latDeck.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1)), t = latDeck[i]; latDeck[i] = latDeck[j]; latDeck[j] = t;
+  }
+  latI = 0; latFlip = false;
+  latRender();
+}
+
+function latRender(){
+  var card = document.getElementById('latCard'), ctr = document.getElementById('latCtr'),
+      prog = document.getElementById('latProg');
+  if (!latDeck.length){
+    prog.textContent = '';
+    card.innerHTML = '<div class="sub">Bộ lọc đang không chừa cụm nào.</div>';
+    ctr.innerHTML = '<button class="btn pri" type="button" onclick="latStart()">Thử lại</button>';
+    return;
+  }
+  if (latI >= latDeck.length){
+    prog.textContent = '';
+    card.innerHTML = '<div class="big">🎉 Hết bộ thẻ rồi!</div><div class="sub">Bạn vừa nói qua ' + latDeck.length + ' cụm.</div>';
+    ctr.innerHTML = '<button class="btn pri" type="button" onclick="latStart()">Xáo lại từ đầu</button>';
+    return;
+  }
+  var r = latDeck[latI];
+  prog.textContent = 'Thẻ ' + (latI + 1) + ' / ' + latDeck.length;
+  if (!latFlip){
+    card.innerHTML = '<div class="side">Nói câu này bằng tiếng Anh</div>' +
+      '<div class="big">' + esc(r.vi) + '</div>' +
+      '<div class="sub">' + esc(r.g.icon + ' ' + r.g.name) + '</div>';
+    ctr.innerHTML = '<button class="btn pri" type="button" onclick="latDoFlip()">Lật xem đáp án</button>' +
+      '<button class="btn" type="button" onclick="latNext()">Bỏ qua →</button>';
+  } else {
+    card.innerHTML = '<div class="side">Đáp án</div>' +
+      '<div class="big">' + esc(r.en) + '</div>' +
+      '<div class="sub">' + esc(r.vi) + '</div>' +
+      '<div class="exs"><i>' + esc(r.ex) + '</i><span class="exvi">' + esc(r.exvi) + '</span></div>';
+    ctr.innerHTML = '<button class="btn" type="button" onclick="say(latDeck[latI].en)">🔊 Nghe</button>' +
+      '<button class="btn ok" type="button" onclick="latMark()">✓ Thuộc rồi</button>' +
+      '<button class="btn pri" type="button" onclick="latNext()">Cụm tiếp →</button>';
+    say(r.en);
+  }
+}
+function latDoFlip(){ latFlip = true; latRender(); }
+function latNext(){ latI++; latFlip = false; latRender(); }
+function latMark(){
+  var r = latDeck[latI];
+  if (r && !isDone(r.key)){ toggleDone(r.key); }
+  latNext();
+}
+
+/* ================= TAB 3 — NÓI THEO ================= */
+var noiDeck = [], noiI = 0;
+
+function noiStart(){
+  noiDeck = filtered().slice();
+  noiI = 0;
+  noiRender();
+}
+function noiRender(){
+  var card = document.getElementById('noiCard'), ctr = document.getElementById('noiCtr'),
+      prog = document.getElementById('noiProg');
+  if (!noiDeck.length){
+    prog.textContent = '';
+    card.innerHTML = '<div class="sub">Bộ lọc đang không chừa cụm nào.</div>';
+    ctr.innerHTML = '';
+    return;
+  }
+  if (noiI >= noiDeck.length) noiI = 0;
+  var r = noiDeck[noiI];
+  prog.textContent = 'Cụm ' + (noiI + 1) + ' / ' + noiDeck.length + ' · ' + r.g.icon + ' ' + r.g.name;
+  card.innerHTML = '<div class="side">Nghe rồi nói theo</div>' +
+    '<div class="big">' + esc(r.en) + '</div>' +
+    '<div class="sub">' + esc(r.vi) + '</div>' +
+    '<div class="exs"><i>' + esc(r.ex) + '</i><span class="exvi">' + esc(r.exvi) + '</span></div>';
+  ctr.innerHTML =
+    '<button class="btn pri" type="button" onclick="say(noiDeck[noiI].en)">🔊 Nghe cụm</button>' +
+    '<button class="btn" type="button" onclick="say(noiDeck[noiI].en, 0.6)">🐢 Nghe chậm</button>' +
+    '<button class="btn" type="button" onclick="say(noiDeck[noiI].ex)">📢 Nghe cả câu</button>' +
+    '<button class="btn" type="button" onclick="noiPrev()">← Trước</button>' +
+    '<button class="btn pri" type="button" onclick="noiNext()">Sau →</button>';
+  say(r.en);
+}
+function noiNext(){ noiI++; noiRender(); }
+function noiPrev(){ noiI = (noiI - 1 + noiDeck.length) % noiDeck.length; noiRender(); }
+
+/* ================= TAB 4 — 10 CỤM HÔM NAY ================= */
+function dayPick(){
+  var d = new Date();
+  var seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  var idx = [], n = ALL.length, s = seed;
+  var used = {};
+  while (idx.length < 10 && idx.length < n){
+    s = (s * 1103515245 + 12345) % 2147483648;
+    var k = Math.abs(s) % n;
+    if (!used[k]){ used[k] = 1; idx.push(k); }
+  }
+  return idx.map(function(k){ return ALL[k]; });
+}
+function renderDay(){
+  var rows = dayPick();
+  var d = new Date();
+  var ds = d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();
+  document.getElementById('dayWrap').innerHTML =
+    '<div class="grp"><div class="grp-h"><span class="gi">🎲</span><h2>Mười cụm ngày ' + esc(ds) + '</h2>' +
+    '<span class="n">10</span></div>' +
+    '<div class="grp-d">Nói to từng cụm, rồi tự đặt một câu của riêng mình với mỗi cụm. Làm xong 10 cụm là coi như đủ bài hôm nay.</div>' +
+    '<ol class="list">' + rows.map(rowHTML).join('') + '</ol></div>';
+}
+
+/* ================= TAB & BỘ LỌC ================= */
+function showTab(name){
+  ['kho', 'lat', 'noi', 'ngay'].forEach(function(t){
+    var el = document.getElementById('pane-' + t);
+    if (el) el.classList.toggle('hide', t !== name);
+  });
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-tab') === name);
+  });
+  /* tab "10 cụm hôm nay" không dùng bộ lọc */
+  document.getElementById('filters').classList.toggle('hide', name === 'ngay');
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); }
+  catch (e) { console.warn('[chunk] không dừng được giọng đọc:', e); }
+  if (name === 'lat') latStart();
+  if (name === 'noi') noiStart();
+  if (name === 'ngay') renderDay();
+  lsSet('eu_chunk_tab', name);
+}
+
+document.querySelectorAll('.tab').forEach(function(b){
+  b.addEventListener('click', function(){ showTab(b.getAttribute('data-tab')); });
+});
+
+['q', 'fg', 'fl', 'fd'].forEach(function(id){
+  var el = document.getElementById(id);
+  el.addEventListener('input', function(){
+    renderList();
+    var on = document.querySelector('.tab.on');
+    var t = on ? on.getAttribute('data-tab') : 'kho';
+    if (t === 'lat') latStart();
+    if (t === 'noi') noiStart();
+  });
+});
+
+document.getElementById('voiceSel').addEventListener('change', function(){
+  var i = parseInt(this.value, 10);
+  if (VOICES[i]){ VOICE = VOICES[i]; lsSet('eu_chunk_voice', VOICE.name); }
+});
+document.getElementById('rate').addEventListener('input', function(){
+  RATE = parseFloat(this.value) || 0.9;
+  document.getElementById('rateVal').textContent = RATE.toFixed(2).replace(/0$/, '');
+});
+
+/* ===== đo chiều cao header thật để thanh lọc dính đúng chỗ =====
+   Header xuống 2 hàng trên điện thoại nên 58px cứng là sai. */
+function syncStickyTop(){
+  var h = document.querySelector('.topbar');
+  if (!h) return;
+  var px = Math.round(h.getBoundingClientRect().height);
+  if (px > 0) document.documentElement.style.setProperty('--eu-sticky', px + 'px');
+}
+window.addEventListener('resize', syncStickyTop);
+window.addEventListener('load', syncStickyTop);
+try {
+  if (window.ResizeObserver){
+    var ro = new ResizeObserver(syncStickyTop);
+    var hd = document.querySelector('.topbar');
+    if (hd) ro.observe(hd);
+  }
+} catch (e) { console.warn('[chunk] ResizeObserver lỗi:', e); }
+
+/* ================= KHỞI ĐỘNG ================= */
+(function boot(){
+  syncStickyTop();
+  setTimeout(syncStickyTop, 900);   /* nav do topbar.js dựng sau → đo lại */
+  setTimeout(syncStickyTop, 2500);
+  document.getElementById('fg').innerHTML = '<option value="">Mọi nhóm</option>' +
+    GROUPS.map(function(g){ return '<option value="' + esc(g.id) + '">' + esc(g.icon + ' ' + g.name) + '</option>'; }).join('');
+  renderList();
+  pickVoices();
+  try {
+    if (window.speechSynthesis && typeof window.speechSynthesis.addEventListener === 'function'){
+      window.speechSynthesis.addEventListener('voiceschanged', pickVoices);
+    }
+  } catch (e) { console.warn('[chunk] không gắn được voiceschanged:', e); }
+  var t = lsGet('eu_chunk_tab');
+  if (t && ['kho', 'lat', 'noi', 'ngay'].indexOf(t) >= 0 && t !== 'kho') showTab(t);
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>
