@@ -450,24 +450,44 @@
     } catch (e) {}
   }
 
+  /* ⚠️⚠️ SỰ KIỆN PHIÊN KHÔNG ĐƯỢC GỌI MẠNG LẠI.
+     Đo thật 2026-09-21 trên report.html: topbar bắn ĐỦ 6 lượt hỏi user_profiles mỗi lần mở
+     trang — vì có 2 chỗ gọi (getSession + onAuthStateChange) mà onAuthStateChange lại bắn
+     nhiều lượt (INITIAL_SESSION/SIGNED_IN/TOKEN_REFRESHED), nhân lên vì toàn app có 3
+     GoTrueClient dùng chung một khoá lưu trữ (cảnh báo "Multiple GoTrueClient instances").
+     Nay nhớ hồ sơ theo id + gộp lượt gọi đang bay ⇒ còn ĐÚNG 1 lượt.
+     Bộ nhớ này chỉ sống trong MỘT lần mở trang nên không sợ XP cũ. */
+  var _profId = null, _profData = null, _profWait = null;
+  function resetProfCache() { _profId = null; _profData = null; _profWait = null; }
+  function applyProfile(c, u) {
+    function paint(d) {
+      d = d || {};
+      setAccess(u, d); showLoggedIn(u, d);
+      gateAccountsNav(d.role === "admin");
+    }
+    if (_profId === u.id && _profData) { paint(_profData); return; }          /* đã có sẵn */
+    if (_profId === u.id && _profWait) { _profWait.then(paint); return; }     /* đang bay */
+    _profId = u.id;
+    _profWait = c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
+      .then(function (res) { _profData = res.data || {}; return _profData; })
+      .catch(function () { _profData = {}; return _profData; });
+    _profWait.then(paint);
+  }
+
   function loadAndRender() {
     var c = sb();
     if (!c) return;
     c.auth.getSession().then(function (r) {
       var u = r.data && r.data.session && r.data.session.user;
-      if (!u) { clearAccess(); showLoggedOut(); return; }
+      if (!u) { resetProfCache(); clearAccess(); showLoggedOut(); return; }
       tryAttachRef(c);
-      c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
-        .then(function (res) { setAccess(u, res.data || {}); showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
-        .catch(function () { setAccess(u, {}); showLoggedIn(u, {}); gateAccountsNav(false); });
+      applyProfile(c, u);
     }).catch(function () {});
     c.auth.onAuthStateChange(function (_e, sess) {
       var u = sess && sess.user;
-      if (!u) { clearAccess(); showLoggedOut(); return; }
+      if (!u) { resetProfCache(); clearAccess(); showLoggedOut(); return; }
       tryAttachRef(c);
-      c.from("user_profiles").select("email,full_name,xp,streak,role,status,plan,plan_expires_at").eq("id", u.id).maybeSingle()
-        .then(function (res) { setAccess(u, res.data || {}); showLoggedIn(u, res.data || {}); gateAccountsNav(res.data && res.data.role === "admin"); })
-        .catch(function () { setAccess(u, {}); showLoggedIn(u, {}); gateAccountsNav(false); });
+      applyProfile(c, u);
     });
   }
 
