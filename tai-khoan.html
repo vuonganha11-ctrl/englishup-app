@@ -6,7 +6,7 @@
 <title>EnglishUp — Trang tài khoản</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <script src="topbar.js"></script>
 <style>
 :root{
@@ -190,7 +190,7 @@ a{color:inherit}
   <!-- Đổi mật khẩu -->
   <div class="card" id="card-password">
     <h2>Đổi mật khẩu</h2>
-    <div class="sub">Đặt mật khẩu mới cho tài khoản của bạn (ít nhất 6 ký tự).</div>
+    <div class="sub">Đặt mật khẩu mới cho tài khoản của bạn (ít nhất 8 ký tự).</div>
     <div class="grid2">
       <div class="field">
         <label for="f-pw1">Mật khẩu mới</label>
@@ -345,7 +345,7 @@ async function changePassword(){
   const btn=$('save-pw'), msg=$('pw-msg');
   msg.className='msg'; msg.textContent='';
   const p1=$('f-pw1').value, p2=$('f-pw2').value;
-  if(p1.length<6){ msg.className='msg err'; msg.textContent='Mật khẩu phải có ít nhất 6 ký tự.'; return; }
+  if(p1.length<8){ msg.className='msg err'; msg.textContent='Mật khẩu phải có ít nhất 8 ký tự.'; return; }
   if(p1!==p2){ msg.className='msg err'; msg.textContent='Mật khẩu nhập lại không khớp.'; return; }
   btn.disabled=true; btn.textContent='Đang đổi…';
   try{

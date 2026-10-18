@@ -7,7 +7,7 @@
 <title>EnglishUp — Đăng ký tài khoản</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <script src="topbar.js"></script>
 <style>
 :root{
@@ -128,7 +128,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       </div>
       <div class="field">
         <label>Mật khẩu</label>
-        <input type="password" id="r-pw" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+        <input type="password" id="r-pw" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password">
       </div>
       <div class="field">
         <label>Nhập lại mật khẩu</label>
@@ -286,7 +286,7 @@ async function doRegister(){
   if(!email){ setMsg('Vui lòng nhập email.','err'); return; }
   if(!phone){ setMsg('Vui lòng nhập số điện thoại.','err'); return; }
   if(!/^[0-9+().\s-]{8,15}$/.test(phone)){ setMsg('Số điện thoại không hợp lệ.','err'); return; }
-  if(pw.length<6){ setMsg('Mật khẩu tối thiểu 6 ký tự.','err'); return; }
+  if(pw.length<8){ setMsg('Mật khẩu tối thiểu 8 ký tự.','err'); return; }
   if(pw!==pw2){ setMsg('Mật khẩu nhập lại không khớp.','err'); return; }
 
   /* Độ tuổi + đồng ý — bắt buộc theo Nghị định 13/2023 */

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EnglishUp · Admin Panel</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <script src="topbar.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1202,9 +1202,9 @@ async function loadDashboard(){
   const counts=await Promise.all(tbls.map(t=>_sb.from(t).select('*',{count:'exact',head:true}).then(r=>r.count??0).catch(()=>0)));
   document.getElementById('dash-stats').innerHTML=tbls.map((t,i)=>`<div class="stat-card"><div class="st-val" style="color:${colors[i]}">${icons[i]} ${counts[i]}</div><div class="st-lbl">${labels[i]}</div></div>`).join('');
   const {data:rw}=await _sb.from('words').select('term,definition_vi,level').order('created_at',{ascending:false}).limit(5);
-  document.getElementById('dash-recent-words').innerHTML=(rw||[]).length?rw.map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${w.term}</strong><span style="color:var(--muted);font-size:12px">${w.definition_vi||''}</span><span class="badge badge-blue">${w.level||'—'}</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có từ nào</p></div>';
+  document.getElementById('dash-recent-words').innerHTML=(rw||[]).length?rw.map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${awEsc(w.term)}</strong><span style="color:var(--muted);font-size:12px">${awEsc(w.definition_vi||'')}</span><span class="badge badge-blue">${w.level||'—'}</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có từ nào</p></div>';
   const {data:ru}=await _sb.from('user_profiles').select('display_name,email,level,xp').order('created_at',{ascending:false}).limit(5).catch(()=>({data:[]}));
-  document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${u.display_name||u.email||'—'}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
+  document.getElementById('dash-recent-users').innerHTML=(ru||[]).length?ru.map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);font-size:13px"><strong>${awEsc(u.display_name||u.email||'—')}</strong><span class="badge badge-green">${u.level||'A1'}</span><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${u.xp||0} XP</span></div>`).join(''):'<div class="empty-state" style="padding:20px"><p>Chưa có học viên</p></div>';
 }
 async function loadNavCounts(){
   for(const[tbl,id]of[['words','words'],['courses','courses'],['video_lessons','video'],['user_profiles','users']]){
@@ -1870,7 +1870,7 @@ async function loadUsers(){
 function filterUsers(q){renderUsers(_users.filter(u=>(u.display_name||u.email||'').toLowerCase().includes(q.toLowerCase())));}
 function renderUsers(list){
   if(!list.length){document.getElementById('users-table-body').innerHTML='<div class="empty-state"><div class="es-icon">👥</div><p>Chưa có học viên nào</p></div>';return;}
-  document.getElementById('users-table-body').innerHTML=`<table><thead><tr><th>Tên</th><th>Email</th><th>Level</th><th>XP</th><th>Streak</th><th>Tổng từ</th></tr></thead><tbody>${list.map(u=>`<tr><td><strong>${u.display_name||'—'}</strong></td><td style="color:var(--muted);font-size:12px">${u.email||'—'}</td><td><span class="badge badge-blue">${u.level||'A1'}</span></td><td style="font-family:var(--mono)">${u.xp||0}</td><td style="font-family:var(--mono)">${u.streak||0} 🔥</td><td style="font-family:var(--mono)">${u.total_words||0}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('users-table-body').innerHTML=`<table><thead><tr><th>Tên</th><th>Email</th><th>Level</th><th>XP</th><th>Streak</th><th>Tổng từ</th></tr></thead><tbody>${list.map(u=>`<tr><td><strong>${awEsc(u.display_name||'—')}</strong></td><td style="color:var(--muted);font-size:12px">${awEsc(u.email||'—')}</td><td><span class="badge badge-blue">${u.level||'A1'}</span></td><td style="font-family:var(--mono)">${u.xp||0}</td><td style="font-family:var(--mono)">${u.streak||0} 🔥</td><td style="font-family:var(--mono)">${u.total_words||0}</td></tr>`).join('')}</tbody></table>`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1948,12 +1948,12 @@ function renderTrial(){
       <th>Bấm gói</th><th>Trang mê nhất</th><th>Lần cuối</th>
     </tr></thead><tbody>${list.map(r=>`<tr>
       <td>${trHeatBadge(r.heat)}<div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${r.heat}</div></td>
-      <td><strong>${r.full_name||'—'}</strong>${r.is_minor?' <span class="badge" style="background:#78350f;color:#fde68a">&lt;16 tuổi</span>':''}
-          <div style="color:var(--muted);font-size:11.5px">${r.email||''}</div>
+      <td><strong>${awEsc(r.full_name||'—')}</strong>${r.is_minor?' <span class="badge" style="background:#78350f;color:#fde68a">&lt;16 tuổi</span>':''}
+          <div style="color:var(--muted);font-size:11.5px">${awEsc(r.email||'')}</div>
           ${r.is_minor
-            ? `<div style="font-family:var(--mono);font-size:12px;color:var(--a4)">📞 ${r.guardian_phone||'—'}</div>
-               <div style="font-size:11px;color:var(--a4)">👨‍👩‍👧 gọi ${r.guardian_name||'người giám hộ'}, KHÔNG gọi trực tiếp người học</div>`
-            : (r.phone?`<div style="font-family:var(--mono);font-size:12px;color:var(--accent)">📞 ${r.phone}</div>`:'')}</td>
+            ? `<div style="font-family:var(--mono);font-size:12px;color:var(--a4)">📞 ${awEsc(r.guardian_phone||'—')}</div>
+               <div style="font-size:11px;color:var(--a4)">👨‍👩‍👧 gọi ${awEsc(r.guardian_name||'người giám hộ')}, KHÔNG gọi trực tiếp người học</div>`
+            : (r.phone?`<div style="font-family:var(--mono);font-size:12px;color:var(--accent)">📞 ${awEsc(r.phone)}</div>`:'')}</td>
       <td style="font-size:12px">${trConLai(r.expires_at)}
           <div style="color:var(--muted);font-size:11px">ĐK ${new Date(r.signed_up).toLocaleDateString('vi-VN')}</div></td>
       <td style="font-family:var(--mono)">${r.mins||0}′</td>
@@ -1961,8 +1961,8 @@ function renderTrial(){
       <td style="font-family:var(--mono)">${r.words_learned||0}</td>
       <td style="font-family:var(--mono)">${r.videos_watched||0}</td>
       <td>${r.saw_price?`<span class="badge badge-green">${r.price_views}×</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-      <td style="font-size:11.5px;max-width:150px">${r.cta_last?`<span title="${(r.cta_last||'').replace(/"/g,'&quot;')}">${(r.cta_last||'').slice(0,40)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-      <td style="font-size:12px;color:var(--muted)">${r.top_page||'—'}</td>
+      <td style="font-size:11.5px;max-width:150px">${r.cta_last?`<span title="${awEsc(r.cta_last||'')}">${awEsc((r.cta_last||'').slice(0,40))}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${awEsc(r.top_page||'—')}</td>
       <td style="font-size:12px;color:var(--muted)">${trKhiNao(r.last_seen)}${(r.lock_hits>0)?`<div style="font-size:11px;color:#f87171">🔒 quay lại ${r.lock_hits}× sau khi hết hạn</div>`:''}</td>
     </tr>`).join('')}</tbody></table>`;
 }
@@ -2793,7 +2793,7 @@ function renderExamplesPreview(data, term) {
     const opps = (r.opposites||'').split('•').map(p=>p.trim()).filter(Boolean).map(p=>`<div style="margin-bottom:2px;color:var(--a5)">${p}</div>`).join('');
     return `<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:9px 10px;white-space:nowrap;vertical-align:top"><span style="display:inline-block;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;${st}">${em} ${r.type}</span></td>
-      <td style="padding:9px 10px;vertical-align:top;min-width:180px"><div style="font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.5">${sentHL}</div><div style="color:var(--muted);font-size:11px;font-style:italic">${r.meaning||''}</div></td>
+      <td style="padding:9px 10px;vertical-align:top;min-width:180px"><div style="font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.5">${sentHL}</div><div style="color:var(--muted);font-size:11px;font-style:italic">${awEsc(r.meaning||'')}</div></td>
       <td style="padding:9px 10px;vertical-align:top;color:var(--muted);font-size:11px;min-width:140px;line-height:1.7">${alts||'—'}</td>
       <td style="padding:9px 10px;vertical-align:top;font-size:11px;min-width:120px;line-height:1.7">${opps||'—'}</td>
     </tr>`;
@@ -2929,7 +2929,7 @@ function renderExImportPreview() {
         <span style="display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;${TYPE_BADGE_STYLE[r.type]||''}">${r.type}</span>
       </td>
       <td style="padding:7px 10px;vertical-align:top;color:var(--text);line-height:1.5;max-width:200px">${r.sentence||'—'}</td>
-      <td style="padding:7px 10px;vertical-align:top;color:var(--muted);font-style:italic;font-size:11px;max-width:160px">${r.meaning||'—'}</td>
+      <td style="padding:7px 10px;vertical-align:top;color:var(--muted);font-style:italic;font-size:11px;max-width:160px">${awEsc(r.meaning||'—')}</td>
     </tr>`)
   ).join('');
 

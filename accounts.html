@@ -6,7 +6,7 @@
 <title>EnglishUp — Quản lý tài khoản</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 <script src="topbar.js"></script>
 <style>
 :root{
@@ -164,7 +164,7 @@ table.tbl tbody tr:hover{background:var(--card2)}
     <div class="sub">Admin tạo trực tiếp tài khoản học viên hoặc giáo viên.</div>
     <div class="field"><label>Họ và tên</label><input type="text" id="c-name" placeholder="Nguyễn Văn A"></div>
     <div class="field"><label>Email</label><input type="email" id="c-email" placeholder="email@example.com"></div>
-    <div class="field"><label>Mật khẩu</label><input type="password" id="c-pw" placeholder="Tối thiểu 6 ký tự"></div>
+    <div class="field"><label>Mật khẩu</label><input type="password" id="c-pw" placeholder="Tối thiểu 8 ký tự"></div>
     <div class="field"><label>Vai trò</label>
       <select id="c-role"><option value="student">Học viên</option><option value="teacher">Giáo viên</option><option value="admin">Admin</option></select>
     </div>
@@ -210,7 +210,7 @@ table.tbl tbody tr:hover{background:var(--card2)}
     <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px">
       <div style="font-size:13px;font-weight:700;margin-bottom:4px">② Đặt mật khẩu mới trực tiếp</div>
       <div class="muted" style="font-size:12px;margin-bottom:10px">Cần triển khai Edge Function <b>admin-set-password</b> (xem file hướng dẫn). Sau khi triển khai, admin nhập mật khẩu mới ở đây.</div>
-      <div class="field" style="margin-bottom:8px"><input type="text" id="pw-new" placeholder="Mật khẩu mới (≥ 6 ký tự)" autocomplete="off"></div>
+      <div class="field" style="margin-bottom:8px"><input type="text" id="pw-new" placeholder="Mật khẩu mới (≥ 8 ký tự)" autocomplete="off"></div>
       <button class="btn btn-ok btn-sm" id="pw-set-btn" onclick="setPwDirect()">🔑 Đặt mật khẩu</button>
     </div>
 
@@ -429,7 +429,7 @@ async function doCreate(){
   const pw=document.getElementById('c-pw').value;
   const role=document.getElementById('c-role').value;
   const err=document.getElementById('c-err');
-  if(!email||pw.length<6){ err.textContent='Email hợp lệ và mật khẩu ≥ 6 ký tự.'; return; }
+  if(!email||pw.length<8){ err.textContent='Email hợp lệ và mật khẩu ≥ 8 ký tự.'; return; }
   const btn=document.getElementById('c-save'); btn.disabled=true; btn.textContent='Đang tạo…'; err.textContent='';
   try{
     // signUp role mặc định student/teacher; admin được nâng quyền ngay sau khi tạo
@@ -526,7 +526,7 @@ async function setPwDirect(){
   const pw=document.getElementById('pw-new').value;
   const btn=document.getElementById('pw-set-btn'), err=document.getElementById('pw-err');
   err.textContent='';
-  if((pw||'').length<6){ err.textContent='Mật khẩu phải có ít nhất 6 ký tự.'; return; }
+  if((pw||'').length<8){ err.textContent='Mật khẩu phải có ít nhất 8 ký tự.'; return; }
   if(!confirm(`Đặt mật khẩu mới cho ${_pwTarget.email}?`)) return;
   btn.disabled=true; btn.textContent='Đang đặt…';
   try{
