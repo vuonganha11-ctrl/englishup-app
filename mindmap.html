@@ -3106,11 +3106,11 @@ async function addToSRS(){
 async function awardXP(n){
   if (!currentUser) return;
   try {
-    const { data } = await sb.from('user_profiles').select('xp').eq('id', currentUser.id).single();
-    const xp = ((data && data.xp) || 0) + n;
-    await sb.from('user_profiles').update({ xp }).eq('id', currentUser.id);
-    const el = document.getElementById('xp-val'); if (el) el.textContent = xp;
-  } catch(e) {}
+    /* Cộng XP qua RPC eu_award_xp — cột xp đã khoá, ghi thẳng sẽ không có tác dụng */
+    const { data, error } = await sb.rpc('eu_award_xp', { p_xp: n, p_source: 'mindmap' });
+    if (error || !data || !data.ok) { console.warn('[XP] eu_award_xp', error || data); return; }
+    const el = document.getElementById('xp-val'); if (el) el.textContent = data.xp_total;
+  } catch(e) { console.warn('[XP]', e); }
 }
 </script>
 </body>

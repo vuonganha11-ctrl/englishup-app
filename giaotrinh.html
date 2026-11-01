@@ -917,11 +917,12 @@ function finishLesson(){
 async function awardXP(amount){
   if(!currentUser) return;
   try{
-    const {data} = await sb.from('user_profiles').select('xp').eq('id',currentUser.id).maybeSingle();
-    const newXP=(data&&data.xp?data.xp:0)+amount;
-    await sb.from('user_profiles').upsert({id:currentUser.id,email:currentUser.email,xp:newXP,last_study:new Date().toISOString()});
-    el('xp-val').textContent=newXP; el('xp-display').style.display='flex';
-  }catch(e){}
+    /* Cộng XP qua RPC eu_award_xp — cột xp đã khoá, ghi thẳng sẽ không có tác dụng */
+    const {data,error} = await sb.rpc('eu_award_xp',{p_xp:amount,p_source:'giaotrinh'});
+    if(error||!data||!data.ok){ console.warn('[XP] eu_award_xp',error||data); return; }
+    try{ await sb.from('user_profiles').update({last_study:new Date().toISOString()}).eq('id',currentUser.id); }catch(e){ console.warn('[last_study]',e); }
+    el('xp-val').textContent=data.xp_total; el('xp-display').style.display='flex';
+  }catch(e){ console.warn('[XP]',e); }
 }
 
 // ══════════════ THÊM GIÁO TRÌNH ══════════════
