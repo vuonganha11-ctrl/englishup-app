@@ -17,7 +17,8 @@
 
   function here() {
     var p = (location.pathname || "").split("/").pop().toLowerCase();
-    return p || "index.html";
+    if (!p) return "index.html";
+    return /\.html?$/.test(p) ? p : p + ".html";   /* URL gọn /baitap */
   }
   /* Không bao giờ tự khoá chính trang bài tập */
   if (here() === "baitap.html" || here() === "admin-baitap.html") return;

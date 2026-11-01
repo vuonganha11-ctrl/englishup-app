@@ -49,6 +49,7 @@
   ];
 
   var here = (location.pathname.split("/").pop() || "").toLowerCase();
+  if (!here) here = "index.html"; else if (!/\.html?$/.test(here)) here += ".html";   /* URL gọn /vocab */
   var isOpenPage = EU_OPEN_PAGES.indexOf(here) !== -1;
   var isAnonPage = EU_ANON_PAGES.indexOf(here) !== -1;
   /* Trang quản trị tự có guard riêng, và staff thì luôn mở */

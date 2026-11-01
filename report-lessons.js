@@ -10,7 +10,7 @@
 (function () {
   "use strict";
   if (window.__LX_LESSONS_LOADED) return;            // chống nạp trùng
-  if (!/report\.html$/.test((location.pathname || "").toLowerCase())) return;
+  if (!/\/report(\.html)?$/.test((location.pathname || "").toLowerCase())) return;
   window.__LX_LESSONS_LOADED = true;
 
   var SB_URL = "https://fyglubimflzsetcovgqx.supabase.co";

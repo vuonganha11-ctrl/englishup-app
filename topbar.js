@@ -9,6 +9,19 @@
   var _fullName = "";
   var _hasWidget = false;   /* trang có .topbar-right → topbar.js dựng luôn user bar */
 
+  /* ── URL gọn: englishup.xyz/vocab.html → englishup.xyz/vocab (02/11/2026) ──
+     GitHub Pages tự phục vụ /vocab = vocab.html nên tải lại/chia sẻ link gọn vẫn chạy.
+     Chỉ đổi thanh địa chỉ (replaceState), không tải lại trang; giữ nguyên ?query và #hash.
+     Mọi chỗ dò "đang ở trang nào" (topbar, eu-guard, hw-guard, report-lessons) đã nhận cả 2 dạng. */
+  (function cleanUrl() {
+    try {
+      var p = location.pathname, q = p.replace(/\/index\.html?$/i, "/").replace(/\.html?$/i, "");
+      if (q !== p && window.history && history.replaceState) {
+        history.replaceState(history.state, "", q + location.search + location.hash);
+      }
+    } catch (e) { console.warn("[cleanUrl]", e); }
+  })();
+
   /* ── Tự nạp gói tối ưu điện thoại (mobile.css + mobile-nav.js) ──
      Nhờ vậy mọi trang đã gắn topbar.js đều có ☰ + responsive mà KHÔNG
      phải sửa HTML. Có khoá chống nạp trùng. */
@@ -149,7 +162,8 @@
 
   function curPage() {
     var p = (location.pathname || "").split("/").pop().toLowerCase();
-    return p || "index.html";
+    if (!p) return "index.html";
+    return /\.html?$/.test(p) ? p : p + ".html";   /* /vocab và /vocab.html là một */
   }
   function headerEl() {
     return document.querySelector(".topbar") || document.querySelector("header.top") ||
@@ -539,7 +553,7 @@
         }
       }
       var path = (location.pathname || "").toLowerCase();
-      if (/report\.html$/.test(path) && !document.getElementById("eu-report-lessons-js")) {
+      if (/\/report(\.html)?$/.test(path) && !document.getElementById("eu-report-lessons-js")) {
         var s = document.createElement("script");
         s.id = "eu-report-lessons-js"; s.src = "report-lessons.js";
         (document.head || document.documentElement).appendChild(s);
