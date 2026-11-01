@@ -1,0 +1,26 @@
+name: Supabase keep-alive
+
+# Goi Free cua Supabase tu tam dung du an neu 7 ngay khong co hoat dong.
+# Workflow nay goi 1 truy van nho toi Supabase moi 2 ngay de du an luon "song".
+# Chi dung anon/publishable key (da cong khai trong topbar.js), khong can secret.
+
+on:
+  schedule:
+    - cron: '17 1 */2 * *'   # 01:17 UTC (08:17 gio VN), 2 ngay/lan
+  workflow_dispatch: {}      # cho phep bam chay tay
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          set -e
+          URL="https://fyglubimflzsetcovgqx.supabase.co"
+          KEY=$(curl -fsSL "https://englishup.xyz/topbar.js" | grep -o 'sb_publishable_[A-Za-z0-9_-]*' | head -1)
+          if [ -z "$KEY" ]; then echo "Khong tim thay anon key trong topbar.js"; exit 1; fi
+          for P in "auth/v1/health" "rest/v1/curricula?select=code&limit=1"; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "apikey: $KEY" "$URL/$P")
+            echo "$P -> HTTP $CODE"
+            if [ "$CODE" -ge 400 ]; then echo "Supabase khong tra loi binh thuong (co the da bi pause)"; exit 1; fi
+          done
