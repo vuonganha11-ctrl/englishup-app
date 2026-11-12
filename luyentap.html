@@ -75,6 +75,12 @@ h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
   </div>
 
   <div class="grid">
+    <a class="tile" id="pva-tile" href="mylifestory.html" style="--tint:rgba(29,111,95,.16);display:none">
+      <span class="tag">Riêng tư</span><div class="ico">🎧</div>
+      <div class="tt">My Life Story — Luyện nghe</div>
+      <div class="ds">15 bài kể chuyện đời mình, nghe và nói theo từng câu. Chỉ hiện với tài khoản chủ.</div>
+      <div class="go">Mở bài nghe <span aria-hidden="true">&rarr;</span></div>
+    </a>
     <a class="tile" href="chunk.html" style="--tint:rgba(52,211,153,.12)">
       <span class="tag">Mới</span><div class="ico">🗣️</div>
       <div class="tt">Kho cụm nói</div>
@@ -134,6 +140,19 @@ h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
   <div class="note"><b>Nên bắt đầu từ Flashcard:</b> hệ thống lặp lại ngắt quãng (SRS) chỉ đưa ra những thẻ <i>sắp quên</i>, nên ôn 10 phút mỗi ngày hiệu quả hơn ngồi 2 tiếng cuối tuần. Các mục còn lại là để đổi vị cho đỡ chán.</div>
 </div>
 
+<script>
+/* Thẻ My Life Story chỉ hiện cho tài khoản chủ. Đây chỉ là ẩn/hiện giao diện —
+   quyền thật nằm ở RLS bucket pva-private (xem mylifestory.html). */
+(function () {
+  try {
+    var t = JSON.parse(localStorage.getItem('sb-fyglubimflzsetcovgqx-auth-token') || 'null');
+    var e = t && t.user && t.user.email;
+    if ((e || '').toLowerCase() === 'vuonganha11@gmail.com') {
+      var el = document.getElementById('pva-tile'); if (el) el.style.display = '';
+    }
+  } catch (err) { console.warn('[pva-tile]', err); }
+})();
+</script>
 <script src="mobile-nav.js"></script>
 </body>
 </html>
