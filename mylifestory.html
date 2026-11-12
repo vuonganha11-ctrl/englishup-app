@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>My Life Story — Luyện nghe</title>
+<style>
+  html,body{margin:0;height:100%;background:#16181b;color:#e8e6e3;font:16px/1.6 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+  .box{max-width:420px;margin:18vh auto 0;padding:28px 24px;background:#1f2226;border:1px solid #30343a;border-radius:14px;text-align:center}
+  .box h1{font-size:20px;margin:0 0 10px}
+  .box p{color:#9a9ea5;margin:8px 0}
+  .box a{display:inline-block;margin-top:14px;padding:9px 18px;border-radius:8px;background:#4fbfa6;color:#0d1f1b;text-decoration:none;font-weight:600}
+  .spin{width:28px;height:28px;margin:6px auto 12px;border:3px solid #30343a;border-top-color:#4fbfa6;border-radius:50%;animation:s 1s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="box" id="pva-box"><div class="spin"></div><h1>My Life Story</h1><p id="pva-msg">Đang kiểm tra quyền truy cập…</p></div>
+<script>
+/* Trang RIÊNG TƯ — chỉ tài khoản vuonganha11@gmail.com.
+   File này chỉ là vỏ: nội dung (content.html) + 31 file mp3 nằm trong bucket Supabase
+   RIÊNG TƯ "pva-private", RLS chỉ cho đúng email trên đọc. Ai khác có link cũng không lấy được gì.
+   Không khai báo biến toàn cục ở đây: trang thật được document.write đè lên và có const riêng. */
+(function () {
+  var OWNER = 'vuonganha11@gmail.com';
+  var BUCKET = 'pva-private';
+  var AUDIO = ['tu-vung.mp3'];
+  for (var i = 1; i <= 15; i++) { var n = (i < 10 ? '0' : '') + i; AUDIO.push('bai-' + n + '.mp3', 'bai-' + n + '-hoi-dap.mp3'); }
+
+  function show(title, msg, link) {
+    document.getElementById('pva-box').innerHTML =
+      '<h1>' + title + '</h1><p>' + msg + '</p>' +
+      (link ? '<a href="' + link.href + '">' + link.text + '</a>' : '');
+  }
+
+  async function run() {
+    if (!window.supabase) { show('Không tải được', 'Không nạp được thư viện đăng nhập. Kiểm tra mạng rồi tải lại trang.'); return; }
+    var sb = window.supabase.createClient('https://fyglubimflzsetcovgqx.supabase.co',
+      'sb_publishable_3h3EQvxWr0kba8Tyq5RNbQ_driFn_G_', { auth: { lock: function (_n, _t, fn) { return fn(); } } });
+    var s = await sb.auth.getSession();
+    var user = s && s.data && s.data.session && s.data.session.user;
+    if (!user) { show('Cần đăng nhập', 'Trang này riêng tư. Hãy đăng nhập rồi mở lại englishup.xyz/mylifestory.', { href: 'tai-khoan.html', text: 'Đăng nhập' }); return; }
+    if ((user.email || '').toLowerCase() !== OWNER) { show('Không có quyền', 'Tài khoản này không được cấp quyền xem trang.', { href: 'index.html', text: 'Về trang chủ' }); return; }
+
+    document.getElementById('pva-msg').textContent = 'Đang tải bài học…';
+    var st = sb.storage.from(BUCKET);
+    var r = await Promise.all([
+      st.download('content.html'),
+      st.createSignedUrls(AUDIO, 86400)
+    ]);
+    if (r[0].error || !r[0].data) throw r[0].error || new Error('Không tải được nội dung');
+    if (r[1].error) throw r[1].error;
+    var map = {};
+    (r[1].data || []).forEach(function (x) { if (x.signedUrl) map['audio/' + x.path] = x.signedUrl; });
+    var html = await r[0].data.text();
+    var inject = '<script>window.__PVA_AU=' + JSON.stringify(map) + ';<\/script>';
+    html = html.replace(/<head[^>]*>/i, function (m) { return m + inject; });
+    document.open(); document.write(html); document.close();
+  }
+
+  run().catch(function (e) {
+    console.error('[mylifestory]', e);
+    show('Lỗi tải trang', (e && e.message) ? e.message : String(e), { href: 'mylifestory.html', text: 'Thử lại' });
+  });
+})();
+</script>
+</body>
+</html>
