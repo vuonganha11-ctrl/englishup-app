@@ -47,14 +47,16 @@
     document.getElementById('pva-msg').textContent = 'Đang tải bài học…';
     var st = sb.storage.from(BUCKET);
     var r = await Promise.all([
-      st.download('content.html'),
+      st.createSignedUrl('content.html', 120),
       st.createSignedUrls(AUDIO, 86400)
     ]);
     if (r[0].error || !r[0].data) throw r[0].error || new Error('Không tải được nội dung');
     if (r[1].error) throw r[1].error;
     var map = {};
     (r[1].data || []).forEach(function (x) { if (x.signedUrl) map['audio/' + x.path] = x.signedUrl; });
-    var html = await r[0].data.text();
+    var cr = await fetch(r[0].data.signedUrl, { cache: 'no-store' });   /* luôn lấy bản mới nhất, không dùng bản cache */
+    if (!cr.ok) throw new Error('Không tải được nội dung (' + cr.status + ')');
+    var html = await cr.text();
     var inject = '<script>window.__PVA_AU=' + JSON.stringify(map) + ';<\/script>';
     html = html.replace(/<head[^>]*>/i, function (m) { return m + inject; });
     var home = '<a href="/" title="Về trang chủ EnglishUp" style="position:fixed;left:14px;bottom:14px;z-index:9999;padding:9px 15px;border-radius:999px;background:#1d6f5f;color:#fff;font:600 14px/1 system-ui,-apple-system,Segoe UI,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.28)">🏠 Trang chủ</a>';
