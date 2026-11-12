@@ -57,6 +57,8 @@
     var html = await r[0].data.text();
     var inject = '<script>window.__PVA_AU=' + JSON.stringify(map) + ';<\/script>';
     html = html.replace(/<head[^>]*>/i, function (m) { return m + inject; });
+    var home = '<a href="/" title="Về trang chủ EnglishUp" style="position:fixed;left:14px;bottom:14px;z-index:9999;padding:9px 15px;border-radius:999px;background:#1d6f5f;color:#fff;font:600 14px/1 system-ui,-apple-system,Segoe UI,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.28)">🏠 Trang chủ</a>';
+    html = html.replace(/<\/body>/i, function (m) { return home + m; });
     document.open(); document.write(html); document.close();
   }
 
