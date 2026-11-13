@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="mobile.css">
+<title>EnglishUp — Luật phát âm &amp; chính tả</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- BẮT BUỘC: supabase-js phải nạp TRƯỚC topbar.js, nếu không eu-guard fail-open -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
+<script src="topbar.js?v=20261113"></script>
+<style>
+:root{
+  --bg:#08090d;--surface:#0e1018;--card:#151a25;--card2:#1b2133;
+  --border:#232d42;--border2:#2e3a55;
+  --accent:#4f8ef7;--a2:#a78bfa;--a3:#34d399;--a4:#fb923c;--a5:#f472b6;
+  --danger:#f87171;--text:#dde3f0;--muted:#64748b;
+  --mono:'JetBrains Mono',monospace;--radius:10px;--radius-lg:16px;--topbar-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh}
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar .logo{font-weight:700;font-size:18px;color:var(--accent);letter-spacing:-.4px;text-decoration:none}
+.topbar .logo span{color:var(--a2)}
+.topbar .spacer{flex:1}
+.top-nav{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+a{color:var(--accent)}
+
+.page{max-width:1040px;margin:0 auto;padding:26px 18px 90px}
+.hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:14px}
+.hero .hico{font-size:40px;line-height:1;flex-shrink:0}
+h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
+.lead{font-size:14.5px;color:var(--muted);margin-top:5px;max-width:760px}
+.lead b{color:var(--text)}
+
+/* thanh tab + lọc — sticky dưới header; --eu-sticky do JS đo (header 2 hàng trên điện thoại) */
+.bar{position:sticky;top:var(--eu-sticky,58px);z-index:40;background:rgba(8,9,13,.93);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border);margin:0 -18px 18px;padding:10px 18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{background:var(--card);border:1px solid var(--border);color:var(--muted);font:inherit;font-size:13.5px;
+  font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.14s}
+.tab:hover{border-color:var(--border2);color:var(--text)}
+.tab.on{background:rgba(79,142,247,.14);border-color:var(--accent);color:var(--accent)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px}
+input[type=search],select{background:var(--card);border:1px solid var(--border);color:var(--text);font:inherit;
+  font-size:13.5px;padding:7px 11px;border-radius:var(--radius);outline:none}
+input[type=search]{flex:1;min-width:170px}
+input[type=search]:focus,select:focus{border-color:var(--accent)}
+.count{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+.lnk{background:none;border:none;color:var(--accent);font:inherit;font-size:12.5px;cursor:pointer;padding:4px 2px}
+
+/* nhóm phần */
+.part{margin-bottom:30px}
+.part-h{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+.part-h .pi{font-size:22px}
+.part-h h2{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.part-h .n{font-size:11.5px;font-family:var(--mono);color:var(--muted);background:var(--card);
+  border:1px solid var(--border);border-radius:999px;padding:2px 9px}
+.part-d{font-size:13px;color:var(--muted);margin:0 0 12px 32px}
+
+/* thẻ luật */
+.rule{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;transition:.14s;scroll-margin-top:185px}
+.rule:hover{border-color:var(--border2)}
+.rule.done{border-color:rgba(52,211,153,.45)}
+.rule.flash{box-shadow:0 0 0 2px var(--accent)}
+.rh{display:flex;gap:12px;align-items:flex-start;padding:13px 15px;cursor:pointer}
+.rh .ri{font-size:22px;line-height:1.2;flex-shrink:0}
+.rh .rt{flex:1;min-width:0}
+.rh h3{font-size:15.5px;font-weight:800;letter-spacing:-.2px;line-height:1.35}
+.rh .rd{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.6}
+.rh .rd b{color:var(--text)}
+.rh .chev{color:var(--muted);font-size:13px;padding-top:3px;transition:.15s}
+.rule.open .rh .chev{transform:rotate(90deg)}
+.badge{font-size:10px;font-family:var(--mono);font-weight:700;padding:2px 6px;border-radius:5px;
+  border:1px solid var(--border2);color:var(--muted);margin-left:6px;vertical-align:2px;white-space:nowrap}
+.badge.l1{color:var(--a3);border-color:rgba(52,211,153,.4)}
+.badge.l2{color:var(--a4);border-color:rgba(251,146,60,.4)}
+.badge.ok{color:var(--a3);border-color:var(--a3);background:rgba(52,211,153,.1)}
+.rb{display:none;padding:0 15px 15px 49px}
+.rule.open .rb{display:block}
+
+table.rt{width:100%;border-collapse:collapse;font-size:13.5px}
+table.rt td{border-top:1px solid var(--border);padding:8px 8px;vertical-align:top}
+table.rt td.c{font-family:var(--mono);font-weight:700;color:var(--a4);white-space:nowrap;width:1%}
+table.rt td.s{font-family:var(--mono);color:var(--a2);white-space:nowrap;width:1%}
+table.rt td.s.long{white-space:normal;font-family:inherit;font-size:12.5px;min-width:130px;max-width:230px}
+table.rt td.nt{font-size:12px;color:var(--muted);width:24%}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{background:var(--card2);border:1px solid var(--border);color:var(--text);font:inherit;font-size:13.5px;
+  font-weight:600;padding:3px 9px 4px;border-radius:8px;cursor:pointer;text-align:left;line-height:1.3;transition:.12s}
+.chip:hover{border-color:var(--accent)}
+.chip.play{border-color:var(--a3);background:rgba(52,211,153,.12)}
+.chip mark{background:none;color:var(--a4);font-weight:800;text-decoration:underline;text-underline-offset:2px}
+.chip .ip{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400}
+
+.box{margin-top:10px;font-size:13px;line-height:1.65;border-radius:10px;padding:9px 12px;border:1px solid var(--border)}
+.box b{color:var(--text)}
+.box.st{border-left:3px solid var(--accent);background:rgba(79,142,247,.06)}
+.box.ex{border-left:3px solid var(--a4);background:rgba(251,146,60,.06)}
+.box.tp{border-left:3px solid var(--a3);background:rgba(52,211,153,.06)}
+.rfoot{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);font:inherit;font-size:13.5px;
+  font-weight:700;padding:8px 15px;border-radius:var(--radius);cursor:pointer;transition:.14s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.pri{background:rgba(79,142,247,.15);border-color:var(--accent);color:var(--accent)}
+.btn.ok{background:rgba(52,211,153,.14);border-color:var(--a3);color:var(--a3)}
+.btn.sm{font-size:12.5px;padding:6px 11px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:50px 0}
+
+/* lộ trình */
+ol.path{list-style:none;counter-reset:pp;display:flex;flex-direction:column;gap:8px;max-width:760px}
+ol.path li{counter-increment:pp;display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px 13px;cursor:pointer}
+ol.path li:hover{border-color:var(--accent)}
+ol.path li.done{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.05)}
+ol.path li::before{content:counter(pp);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);
+  width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+ol.path li.done::before{content:"✓";color:var(--a3);border-color:var(--a3)}
+ol.path .pt{flex:1;font-weight:700;font-size:14px}
+ol.path .pp{font-size:12px;color:var(--muted)}
+
+/* đố nhanh */
+.stage{max-width:620px;margin:0 auto}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 22px;text-align:center}
+.qcard .side{font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:.6px}
+.qcard .qw{font-size:40px;font-weight:800;letter-spacing:-.5px;margin:10px 0 6px}
+.qcard .qw mark{background:none;color:var(--a4);text-decoration:underline;text-underline-offset:5px}
+.qcard .qh{font-size:13.5px;color:var(--muted)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.opt{background:var(--card2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:18px;
+  font-weight:700;padding:12px;border-radius:12px;cursor:pointer;transition:.12s}
+.opt:hover{border-color:var(--accent)}
+.opt.right{border-color:var(--a3);background:rgba(52,211,153,.15);color:var(--a3)}
+.opt.wrong{border-color:var(--danger);background:rgba(248,113,113,.12);color:var(--danger)}
+.opt:disabled{cursor:default}
+.qfb{margin-top:14px;font-size:13.5px;line-height:1.65;color:var(--muted);min-height:22px}
+.qfb b{color:var(--text)}
+.prog{font-size:12.5px;color:var(--muted);font-family:var(--mono);text-align:center;margin-bottom:10px}
+.ctr{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+
+.voice{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:26px;font-size:12.5px;color:var(--muted)}
+.voice select{font-size:12.5px;padding:5px 9px;max-width:230px}
+.voice input[type=range]{width:110px;accent-color:var(--accent)}
+.note{margin-top:22px;font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  border-left:3px solid var(--a2);border-radius:12px;padding:13px 16px;line-height:1.7}
+.note b{color:var(--text)}
+.hide{display:none!important}
+
+@media(max-width:640px){
+  .page{padding:18px 14px 70px}
+  h1{font-size:21px}
+  .hero .hico{font-size:32px}
+  /* điện thoại: bộ lọc chiếm 1/3 màn hình nếu dính → để trôi theo trang */
+  .bar{position:static;margin:0 -14px 16px;padding:9px 14px}
+  .rb{padding:0 12px 13px 12px}
+  .rh{padding:12px}
+  .part-d{margin-left:0}
+  /* bảng thành từng khối dọc trên điện thoại */
+  table.rt,table.rt tbody,table.rt tr,table.rt td{display:block;width:auto!important}
+  table.rt tr{border-top:1px solid var(--border);padding:8px 0}
+  table.rt td{border:none;padding:2px 0}
+  table.rt td.c,table.rt td.s{display:inline-block;margin-right:10px}
+  table.rt td.s.long{display:block;max-width:none}
+  .qcard .qw{font-size:32px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">English<span>Up</span></a>
+  <nav class="top-nav"></nav>
+  <div class="spacer"></div>
+  <div class="topbar-right"></div>
+</header>
+
+<div class="page">
+  <div class="hero">
+    <div class="hico">📐</div>
+    <div>
+      <h1>Luật phát âm &amp; chính tả</h1>
+      <div class="lead">Tiếng Anh viết một đằng đọc một nẻo, nhưng <b>không phải ngẫu nhiên</b>. Đây là <b id="nRule">0</b> luật giúp nhìn chữ đoán được cách đọc, nghe âm đoán được cách viết. Mỗi luật có <b>tỉ lệ đúng đo thật</b> trên 4.918 từ trong kho EnglishUp, để bạn biết luật nào tin được, luật nào phải nhớ ngoại lệ. Bấm vào từ bất kỳ để nghe.</div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="tabs">
+      <button class="tab on" data-tab="luat" type="button">📚 Các luật</button>
+      <button class="tab" data-tab="lotrinh" type="button">🧭 Học theo thứ tự</button>
+      <button class="tab" data-tab="do" type="button">🧪 Đố nhanh</button>
+    </div>
+    <div class="filters" id="filters">
+      <input type="search" id="q" placeholder="Tìm chữ, âm hoặc từ… (vd: ea, /ʃ/, knife)" autocomplete="off">
+      <select id="fp"><option value="">Mọi phần</option></select>
+      <select id="fl"><option value="">Mọi mức</option><option value="1">Cơ bản</option><option value="2">Nâng cao</option></select>
+      <select id="fd"><option value="">Đã học + chưa học</option><option value="no">Chưa học</option><option value="yes">Đã học</option></select>
+      <span class="count" id="cnt"></span>
+      <button class="lnk" id="openAll" type="button">Mở hết</button>
+    </div>
+  </div>
+
+  <div id="pane-luat"><div id="listWrap"></div></div>
+
+  <div id="pane-lotrinh" class="hide">
+    <div class="part-h"><span class="pi">🧭</span><h2>Học theo thứ tự này</h2></div>
+    <div class="part-d">Đi từ luật đúng nhiều nhất, gặp nhiều nhất tới luật khó. Mỗi ngày 1–2 luật: đọc, bấm nghe hết từ ví dụ, rồi làm Đố nhanh. Bấm vào một bước để mở luật đó.</div>
+    <ol class="path" id="pathList"></ol>
+  </div>
+
+  <div id="pane-do" class="hide">
+    <div class="stage">
+      <div class="prog" id="qProg"></div>
+      <div class="qcard" id="qCard"></div>
+      <div class="ctr" id="qCtr"></div>
+      <div class="hint" style="font-size:12.5px;color:var(--muted);text-align:center;margin-top:12px">Đố lấy câu theo bộ lọc Phần và Mức đang chọn. Chữ <b style="color:var(--a4)">tô màu cam</b> là chỗ cần đoán âm.</div>
+    </div>
+  </div>
+
+  <div class="voice">
+    🔊 Giọng đọc dự phòng:
+    <select id="voiceSel"><option>Đang tải giọng…</option></select>
+    tốc độ <input type="range" id="rate" min="0.55" max="1.2" step="0.05" value="0.9"> <span id="rateVal">0.9</span>
+  </div>
+
+  <div class="note">
+    <b>Cách đọc số liệu.</b> Tỉ lệ đúng đo trên kho từ EnglishUp (Oxford 3000 + Oxford 5000, 4.918 từ). Phần lớn luật nguyên âm đo trên <b>1.379 từ 1 âm tiết</b> để chữ và âm khớp nhau chắc chắn. Phiên âm theo <b>giọng Mỹ</b>, cùng quy cách cả app: không ghi dấu dài ː, ký hiệu ə dùng chung cho ʌ.<br>
+    <b>Âm thanh.</b> Từ có bản thu người bản ngữ thì phát bản thu; chưa có thì máy đọc thay, giọng chọn ở ô phía trên.<br>
+    Muốn luyện ghép vần, xem <a href="danhvan.html">Bảng vần tiếng Anh</a>.
+  </div>
+</div>
+
+<script>
+/* ================= DỮ LIỆU ================= */
+var DATA = {"parts":[{"id":"nguyenam","ic":"🅰️","name":"Nguyên âm","desc":"Một chữ nguyên âm có thể đọc 3–4 cách. Chữ đứng quanh nó quyết định cách đọc."},{"id":"phuam","ic":"🅱️","name":"Phụ âm","desc":"Phụ âm ghép, chữ câm và những phụ âm đổi âm theo chữ đứng sau."},{"id":"amtiet","ic":"🧩","name":"Âm tiết & đuôi từ","desc":"Đọc được từ dài: chia âm tiết, đọc đuôi, chỗ nhấn."},{"id":"chinhta","ic":"✍️","name":"Chính tả","desc":"Nghe ra âm rồi thì viết bằng chữ nào. Phần này giúp viết đúng hơn là đọc đúng."},{"id":"noilien","ic":"🗣️","name":"Nói liền & giọng","desc":"Âm thay đổi khi nói nhanh. Không nằm trên mặt chữ nhưng quyết định bạn có nghe ra không."}],"rules":[{"id":"dong","p":"nguyenam","ic":"🚪","q":true,"t":"Âm tiết đóng → nguyên âm NGẮN","d":"Nguyên âm bị <b>một phụ âm chặn phía sau</b> (mẫu phụ âm – nguyên âm – phụ âm) thì đọc ngắn, gọn. Đây là luật đầu tiên nên học.","rows":[["a","/æ/","cat map bag hand","miệng mở rộng, giữa a và e"],["e","/ɛ/","bed pen red desk",""],["i","/ɪ/","sit pig fish milk","ngắn hơn i tiếng Việt"],["o","/ɑ/","hot top box stop","giọng Mỹ: gần 'a' mở"],["u","/ə/","cup sun bus run","kho ghi ə (nhiều sách ghi ʌ)"]],"stat":"Đo trên từ 1 âm tiết của kho: i 100% (107/107) · e 98% · a 93% · u 91% · o chỉ 55%.","exc":"Giọng Mỹ: <b>o trước g, ng, ss, th, f</b> hay đọc /ɔ/ — dog, song, boss, cloth, off. Chữ u đọc /ʊ/ trong put, push, bush.","tip":"Thấy một nguyên âm bị kẹp giữa hai phụ âm, đừng đọc tên chữ cái — đọc âm ngắn.","lv":1},{"id":"ecam","p":"nguyenam","ic":"🪄","q":true,"t":"e câm cuối từ → nguyên âm DÀI (a_e, i_e…)","d":"Mẫu <b>nguyên âm + 1 phụ âm + e</b>. Chữ e cuối không đọc, nhưng nó làm nguyên âm phía trước đọc dài — thường đúng bằng <b>tên chữ cái</b>.","rows":[["a_e","/eɪ/","cake name game late",""],["i_e","/aɪ/","bike time five ride",""],["o_e","/oʊ/","home nose rope bone",""],["u_e","/ju/","cute cube huge use","/ju/ = /j/ lướt nhanh + /u/"],["u_e","/u/","rule rude June flute","sau r, l, j: mất /j/"],["e_e","/i/","these theme scene","ít từ"]],"stat":"Đo trên kho: a_e 99% (67/68) · i_e 93% · o_e 75% · u_e sau r, l, j, t, d, n đọc /u/ 6/9 từ.","exc":"<b>-ve</b>: have, give, live (đọc ngắn). <b>o_e đọc /ə/</b>: love, come, some, done, none, one. move, lose, prove đọc /u/. Tiếng Anh–Anh đọc tube, tune có /j/ (/tjub/), giọng Mỹ thì không (/tub/).","tip":"So cặp: cap → cape, kit → kite, hop → hope, cut → cute. Thêm e là nguyên âm 'nói tên mình'.","lv":1},{"id":"mo","p":"nguyenam","ic":"🔓","q":true,"t":"Âm tiết mở → nguyên âm DÀI","d":"Nguyên âm <b>đứng cuối âm tiết</b>, không có phụ âm chặn sau, thì cũng đọc dài như tên chữ cái.","rows":[["o","/oʊ/","go no so",""],["e","/i/","me he she we",""],["i","/aɪ/","hi ti·ger",""],["a","/eɪ/","ba·by pa·per",""],["u","/ju/","mu·sic hu·man",""]],"tip":"Từ dài: chia âm tiết trước (xem luật Chia âm tiết), âm tiết nào kết thúc bằng nguyên âm thì đọc dài.","lv":1,"stat":"","exc":""},{"id":"doi1","p":"nguyenam","ic":"👯","q":true,"t":"Nhóm nguyên âm đáng tin (2 chữ, 1 âm)","d":"Hai chữ đi liền đọc thành <b>một âm</b>. Nhóm này gần như luôn đọc một cách — học một lần là dùng được.","rows":[["ai","/eɪ/","rain wait train paint","giữa từ"],["ay","/eɪ/","day play say stay","cuối từ"],["ee","/i/","see tree green sleep",""],["oa","/oʊ/","boat road coat soap",""],["oi","/ɔɪ/","coin oil point","giữa từ"],["oy","/ɔɪ/","boy toy enjoy","cuối từ"],["au","/ɔ/","sauce cause August","giữa từ"],["aw","/ɔ/","saw draw law","cuối từ"],["igh","/aɪ/","night light high right",""]],"stat":"Đo trên từ 1 âm tiết: ai 100% (36/36) · ee 100% (48/48) · oi/oy 100% (16/16) · ay 94% · oa 93% · au/aw 89% · igh 76%.","exc":"<b>eigh</b> đọc /eɪ/: eight, weigh, weight, straight. broad /ɔ/, laugh /æ/.","tip":"Cặp <b>ai/ay · oi/oy · au/aw</b>: chữ có i/u đứng GIỮA từ, chữ có y/w đứng CUỐI từ.","lv":1},{"id":"doi2","p":"nguyenam","ic":"🎭","q":true,"t":"Nhóm nguyên âm hai mặt (phải nhớ từng từ)","d":"Những nhóm này đọc <b>hai hoặc ba cách</b>, gần như chia đôi. Học cách đọc phổ biến trước, rồi gom các từ ngoại lệ thành nhóm nhỏ.","rows":[["ea","/i/","eat sea tea clean","77%"],["ea","/ɛ/","head bread health dead","18% — hay trước d, th"],["ea","/eɪ/","great break steak","rất ít"],["ow","/aʊ/","cow town brown down","52%"],["ow","/oʊ/","snow slow grow show","48%"],["oo","/u/","moon food school room","68%"],["oo","/ʊ/","book look good foot","26% — hay trước k, d"],["ou","/aʊ/","out house cloud mouth","55%"],["ou","/u/","soup group youth","19%"],["ou","/ə/","touch young tough","10%"],["ie","/i/","field chief piece","44%"],["ie","/aɪ/","pie tie lie","39%"],["ew","/u/","new grew drew","sau r, l, n"],["ew","/ju/","few view",""]],"stat":"Đo trên từ 1 âm tiết: ea 77% /i/ · ow 52% /aʊ/ – 48% /oʊ/ · oo 68% /u/ · ou 55% /aʊ/ · ie 44% /i/ – 39% /aɪ/.","exc":"blood, flood đọc /ə/. could, would, should đọc /ʊ/ (l câm). friend đọc /ɛ/.","tip":"Câu thần chú cũ <i>'hai nguyên âm đi cùng, chữ đầu đọc tên'</i> chỉ đúng chưa tới một nửa — đừng dựa vào nó, học theo từng nhóm ở đây.","lv":1},{"id":"r","p":"nguyenam","ic":"🌀","q":true,"t":"Vần R (nguyên âm + r)","d":"Chữ r đi sau làm nguyên âm <b>đổi hẳn âm</b>. Giọng Mỹ luôn phát âm chữ r này (cong lưỡi).","rows":[["ar","/ɑr/","car park star farm",""],["or","/ɔr/","fork sport horn north",""],["er","/ər/","her term verb","er · ir · ur đọc như nhau"],["ir","/ər/","bird girl first",""],["ur","/ər/","turn hurt burn",""],["air","/ɛr/","hair chair fair",""],["are","/ɛr/","care share rare",""],["ear","/ɪr/","ear hear near",""],["eer","/ɪr/","deer beer cheer",""],["wor","/wər/","word work world worse","w làm or → /ər/"],["war","/wɔr/","war warm warn","w làm ar → /ɔr/"]],"stat":"Đo trên từ 1 âm tiết: ar 100% (30/30) · ir 100% · ur 100% · er 95% · or 86%.","exc":"<b>ear + phụ âm</b> đọc /ər/: learn, earth, early, heard. for, or khi đọc nhanh thành /fər/, /ər/.","tip":"er, ir, ur viết khác nhưng đọc y hệt — khi viết phải nhớ mặt chữ.","lv":1},{"id":"y","p":"nguyenam","ic":"🔱","q":true,"t":"Chữ y: lúc nguyên âm, lúc phụ âm","d":"Chữ y đổi âm theo <b>vị trí</b> trong từ.","rows":[["y","/aɪ/","my fly sky try","cuối từ 1 âm tiết"],["y","/i/","happy baby city funny","cuối từ nhiều âm tiết"],["y","/aɪ/","apply reply deny","động từ đuôi -fy, -ply, -ny"],["y","/ɪ/","gym myth system","giữa từ"],["y","/j/","yes yellow young","đầu từ = phụ âm"]],"stat":"Đo trên kho: y cuối từ 1 âm tiết → /aɪ/ 100% (11/11) · cuối từ nhiều âm tiết → /i/ 94% (492/521), ngoại lệ gần như toàn là động từ -fy/-ply.","lv":1,"exc":"","tip":""},{"id":"dai","p":"nguyenam","ic":"📏","q":true,"lv":2,"t":"Nguyên âm dài 'trái luật'","d":"Theo luật âm tiết đóng thì có 2 phụ âm phía sau phải đọc ngắn — nhưng <b>mấy vần này vẫn đọc dài</b>.","rows":[["ild","/aɪ/","wild child mild",""],["ind","/aɪ/","kind find mind",""],["old","/oʊ/","cold gold old hold",""],["ost","/oʊ/","most post host",""],["aste","/eɪ/","taste waste paste",""],["ange","/eɪ/","change range strange",""]],"stat":"Đo trên kho: 79% (19/24 từ 1 âm tiết).","exc":"wind (gió) /wɪnd/, build /bɪld/, cost, lost /ɔ/ đọc ngắn.","tip":""},{"id":"chua","p":"nguyenam","ic":"🅰","q":true,"lv":2,"t":"Chữ a bị chữ bên cạnh đổi âm","d":"Chữ a đi với <b>l</b> phía sau hoặc <b>w, qu</b> phía trước thì không còn đọc /æ/.","rows":[["al","/ɔ/","ball talk walk salt","al + l, k, t"],["wa","/ɔ/","want watch wash water","kho ghi ɔ, giọng Mỹ nhiều người đọc ɑ"],["qua","/ɑ/","quality quantity",""]],"stat":"Đo trên kho: al → /ɔ/ 82% (14/17).","exc":"shall /æ/. health, wealth thuộc nhóm ea, không phải al.","tip":""},{"id":"bay","p":"nguyenam","ic":"🪤","q":true,"lv":2,"t":"Những cách viết hay đánh bẫy","d":"Không theo luật nào ở trên nhưng gặp rất nhiều — gom lại cho dễ nhớ.","rows":[["o","/ə/","son come love month mother","o trước m, n, v, th"],["ought","/ɔt/","bought thought brought",""],["aught","/ɔt/","caught taught daughter",""],["ough","/oʊ/","though although","ough có 5–6 cách đọc"],["ough","/u/","through",""],["ough","/əf/","tough rough enough",""],["ough","/ɔf/","cough",""],["our","/aʊr/","hour our flour",""],["our","/ɔr/","four your pour",""],["ie / ei","i trước e, trừ sau c","believe piece receive ceiling","luật có nhiều ngoại lệ: weird, their, science"]],"stat":"","exc":"","tip":""},{"id":"ho","p":"nguyenam","ic":"🌳","lv":2,"t":"Từ cùng họ đổi âm (giúp nhớ chữ câm)","d":"Từ gốc ngắn đọc nguyên âm dài; thêm đuôi thì thường <b>chuyển sang nguyên âm ngắn</b>. Từ cùng họ còn làm <b>lộ ra chữ câm</b>.","rows":[["nation → national","/eɪ/ → /æ/","nation national",""],["nature → natural","/eɪ/ → /æ/","nature natural",""],["please → pleasant","/i/ → /ɛ/","please pleasant",""],["wise → wisdom","/aɪ/ → /ɪ/","wise wisdom",""],["sign → signature","g câm → g đọc","sign signature",""],["bomb → bombard","b câm → b đọc","bomb bombard",""],["muscle → muscular","c câm → c đọc","muscle muscular",""]],"tip":"Quên sign có chữ g? Nghĩ tới signature. Quên muscle có chữ c? Nghĩ tới muscular.","q":false,"stat":"","exc":""},{"id":"ghep","p":"phuam","ic":"🔗","q":true,"t":"Phụ âm ghép (2 chữ, 1 âm)","d":"Hai phụ âm đứng cạnh nhau tạo ra <b>một âm mới</b>, không đọc từng chữ.","rows":[["sh","/ʃ/","ship fish shop",""],["ch","/ʧ/","chair lunch much","70%"],["ch","/k/","school chemistry stomach","28% — từ gốc Hy Lạp"],["ch","/ʃ/","chef machine","từ gốc Pháp"],["th","/θ/","think three bath","thổi hơi, không rung"],["th","/ð/","this that mother","rung cổ họng"],["ph","/f/","phone photo graph",""],["wh","/w/","what when white",""],["wh","/h/","who whole whose","trước o"],["ng","/ŋ/","sing long ring",""],["nk","/ŋk/","pink think bank",""],["qu","/kw/","queen quick quiz","q luôn đi với u"],["gh","câm","night high",""],["gh","/f/","laugh enough",""]],"stat":"Đo trên kho: ph đầu từ → /f/ 100% (14/14) · wh đầu từ → /w/ 76%, còn lại /h/ (who, whole…) · ch → /ʧ/ 70%, /k/ 28%, /ʃ/ 3%.","tip":"th có 2 âm: từ chức năng (the, this, that, they, there, with) đọc /ð/; danh từ, động từ (think, thing, three, bath) phần nhiều đọc /θ/.","lv":1,"exc":""},{"id":"mem","p":"phuam","ic":"🧈","q":true,"t":"c mềm, g mềm","d":"c và g <b>đọc mềm khi đứng trước e, i, y</b>; trước a, o, u hoặc phụ âm thì đọc cứng.","rows":[["c","/s/","city rice cycle cent","trước e, i, y","c(?=[eiy])"],["c","/k/","cat cold cup clean","trước a, o, u, phụ âm","c(?=[aoulr])"],["g","/ʤ/","gem giant gym page","trước e, i, y","g(?=[eiy])"],["g","/g/","game go gun glad","trước a, o, u, phụ âm","g(?=[aoul])"]],"stat":"Đo trên kho (đầu từ): c + e/i/y → /s/ 100% (33/33) · c + a/o/u → /k/ 100% (361/361) · g + e/i/y → /ʤ/ chỉ 70%.","exc":"g cứng dù đứng trước e, i: <b>get, give, girl, gift, gear, begin</b>. Chữ u câm sau g giữ g cứng: guest, guess, guitar.","lv":1,"tip":""},{"id":"cam","p":"phuam","ic":"🤫","q":true,"t":"Chữ câm","d":"Viết mà <b>không đọc</b>. Đa số đến từ cách đọc cổ, chữ còn lại trên giấy.","rows":[["kn","k câm","know knife knee","đầu từ","k(?=n)"],["wr","w câm","write wrong wrap","đầu từ","w(?=r)"],["mb","b câm","lamb climb comb","cuối từ","(?<=m)b"],["gn","g câm","sign design foreign","","g(?=n)"],["mn","n câm","autumn column","cuối từ","(?<=m)n"],["l","l câm","walk talk half could","","l(?=[kfd])"],["t","t câm","listen castle often","","t(?=[el])"],["h","h câm","hour honest","","^h"],["b","b câm","doubt debt","","b(?=t)"],["w","w câm","two answer","","w"]],"stat":"Đo trên kho: kn- → /n/ 100% (5/5) · wr- → /r/ 100% (7/7) · -mb → /m/ 100% (5/5).","lv":1,"exc":"","tip":""},{"id":"vitri","p":"phuam","ic":"🧭","q":true,"lv":2,"t":"Phụ âm đổi âm theo vị trí","d":"Cùng một chữ nhưng <b>chỗ đứng</b> trong từ làm nó đọc khác.","rows":[["s","/z/","rose music busy visit","giữa 2 nguyên âm","(?<=[aeiou])s(?=[aeiouy])"],["ex","/gz/","exam exact example","ex + nguyên âm","x"],["x","/ks/","box six taxi","các chỗ khác","x"],["ci / ti","/ʃ/","special social patient","ci, ti + nguyên âm","[ct]i(?=[aeiou])"],["sc","/s/","science scene","sc + e, i","sc(?=[ei])"],["ng","/ŋg/","finger longer","giữa từ đôi khi thêm g","ng"]],"stat":"Đo trên kho: s giữa 2 nguyên âm → /z/ 72% (196/273) · ex + nguyên âm → /gz/ 82% (14/17).","exc":"house, base, purchase: s giữa nguyên âm vẫn đọc /s/. exercise, execute: ex đọc /ks/ vì ex mang trọng âm.","tip":""},{"id":"goc","p":"phuam","ic":"🌍","lv":2,"t":"Cách viết của từ gốc Hy Lạp, Pháp","d":"Từ mượn giữ <b>cách viết của tiếng gốc</b>. Nhận ra gốc là đoán được cách đọc.","rows":[["ph","/f/","photo phone","Hy Lạp"],["ch","/k/","chemistry chorus","Hy Lạp"],["y","/ɪ/","system rhythm","Hy Lạp"],["ps","/s/","psychology","Hy Lạp, p câm"],["rh","/r/","rhythm","Hy Lạp, h câm"],["que","/k/","unique technique","Pháp"],["gue","/g/","league tongue","Pháp"],["et","/eɪ/","ballet","Pháp, t câm"],["ch","/ʃ/","chef machine","Pháp"]],"tip":"Từ khoa học, y học (psychology, chemistry, rhythm) thường là gốc Hy Lạp; từ ẩm thực, nghệ thuật (chef, ballet, unique) thường là gốc Pháp.","q":false,"stat":"","exc":""},{"id":"chia","p":"amtiet","ic":"✂️","t":"Chia âm tiết để đọc từ dài","d":"Từ dài đọc từng âm tiết. Cắt sai chỗ là đọc sai nguyên âm, vì âm tiết <b>đóng</b> thì đọc ngắn, âm tiết <b>mở</b> thì đọc dài.","rows":[["VC/CV","cắt giữa 2 phụ âm → ngắn","rab·bit nap·kin hap·pen",""],["V/CV","cắt trước phụ âm → dài","ti·ger mu·sic pa·per",""],["VC/V","cắt sau phụ âm → ngắn","cab·in lem·on vis·it",""],["VCCCV","giữ cụm phụ âm đi liền","hun·dred mon·ster",""],["V/V","2 nguyên âm không ghép","li·on di·et",""]],"tip":"Gặp nguyên âm – 1 phụ âm – nguyên âm: thử đọc <b>V/CV (dài)</b> trước; nghe không ra từ quen thì đổi sang VC/V (ngắn). Hai kiểu này gần như chia đôi số từ.","lv":1,"q":false,"stat":"","exc":""},{"id":"duoi","p":"amtiet","ic":"🔚","q":true,"t":"Đuôi từ đọc cố định","d":"Đuôi từ gần như <b>luôn đọc một cách</b> — học thuộc đuôi là đọc được hàng trăm từ dài.","rows":[["tion","/ʃən/","nation station action",""],["sion","/ʒən/","vision decision","sau nguyên âm"],["sion","/ʃən/","tension mission","sau phụ âm, ss"],["ture","/ʧər/","picture future nature",""],["ous","/əs/","famous dangerous",""],["age","/ɪʤ/","village message","từ nhiều âm tiết"],["le","/əl/","table little apple","phụ âm + le"],["cian","/ʃən/","musician magician","chỉ người"]],"stat":"Đo trên kho: -tion 99% (246/248) · -sion 100% (47/47) · -le 100% (104/104) · -ture 97% · -ous 97% · -age 96%.","exc":"garage /gərɑʒ/, mature /mətʊr/.","lv":1,"tip":""},{"id":"ed","p":"amtiet","ic":"⏮️","q":true,"t":"Đuôi -ed và -s","d":"Đọc theo <b>âm cuối của từ gốc</b>: âm vô thanh (không rung cổ: p, k, f, s, sh, ch) hay hữu thanh (rung cổ).","rows":[["ed","/t/","jumped watched laughed","sau âm vô thanh"],["ed","/d/","played opened lived","sau âm hữu thanh"],["ed","/ɪd/","wanted needed started","sau t, d"],["s","/s/","cats books stops","sau âm vô thanh","s$"],["s","/z/","dogs bags plays","sau âm hữu thanh","s$"],["es","/ɪz/","buses boxes watches","sau s, z, sh, ch, x","es$"]],"tip":"Chỉ đuôi -ed sau t, d mới thêm một âm tiết. 'walked' là 1 âm tiết (/wɔkt/), không phải 'wal-ked'.","lv":1,"stat":"","exc":""},{"id":"schwa","p":"amtiet","ic":"😶","t":"Âm /ə/ ở âm tiết không nhấn","d":"Âm tiết <b>không được nhấn</b> thì hầu như mọi nguyên âm đều đọc lướt thành /ə/. Đây là âm gặp nhiều nhất trong tiếng Anh.","rows":[["a","/ə/","a·bout a·go ba·nan·a","","^a"],["e","/ə/","pen·cil prob·lem","","e(?=[a-z]$)"],["o","/ə/","lem·on sec·ond","","o(?=[a-z]+$)"],["er","/ər/","teacher water","cuối từ"],["or","/ər/","doctor actor","cuối từ"],["ar","/ər/","dollar sugar","cuối từ"]],"stat":"Đo trên kho: đuôi -er/-or/-ar ở từ nhiều âm tiết → /ər/ 95% (292/308).","exc":"Đuôi được nhấn thì không đọc /ər/: guitar, career, engineer, appear.","tip":"Ba đuôi -er, -or, -ar đọc giống nhau, nên khi viết phải nhớ mặt chữ.","lv":1,"q":false},{"id":"trongam","p":"amtiet","ic":"🎵","t":"Trọng âm (đọc kỹ ở trang Bảng vần)","d":"Trang <b>Bảng vần tiếng Anh</b> có hẳn tab Trọng âm với 1.713 từ và tỉ lệ đúng đo thật. Đây là bốn luật quan trọng nhất.","rows":[["danh từ 2 âm tiết","nhấn âm đầu (88%)","TA·ble WA·ter",""],["động từ 2 âm tiết","nhấn âm sau (78%)","be·GIN re·LAX",""],["cùng chữ, khác loại từ","đổi chỗ nhấn","REcord reCORD","danh từ / động từ"],["-tion -ic -ity","nhấn ngay trước đuôi (98–100%)","na·TION·al e·CO·nom·ic",""],["danh từ ghép","nhấn chữ đầu","BLACKboard GREENhouse","khác cụm black BOARD"]],"tip":"<a href='danhvan.html'>Mở Bảng vần → tab Trọng âm</a>","lv":1,"q":false,"stat":"","exc":""},{"id":"chon","p":"chinhta","ic":"🔀","t":"Chọn chữ viết theo nguyên âm ngắn hay dài","d":"Cùng một âm cuối nhưng <b>viết khác nhau tuỳ nguyên âm phía trước ngắn hay dài</b>.","rows":[["-ck / -k","ck sau nguyên âm ngắn · k sau nguyên âm dài hoặc phụ âm","back duck bake milk",""],["-tch / -ch","tch sau ngắn · ch sau dài hoặc phụ âm","catch kitchen teach lunch",""],["-dge / -ge","dge sau ngắn · ge sau dài hoặc phụ âm","badge bridge page huge",""],["FLOSS","gấp đôi f, l, s, z sau nguyên âm ngắn","off bell miss buzz",""],["c / k đầu âm tiết","c trước a, o, u · k trước e, i, y","cat cot cut kite key",""]],"stat":"Đo trên kho (từ 1 âm tiết): -ck sau nguyên âm ngắn 100% (31/31) · FLOSS 85% · -tch 69%.","exc":"rich, much, such, which viết -ch dù nguyên âm ngắn. bus, gas, plus, yes, this, if không gấp đôi.","lv":1,"q":false,"tip":""},{"id":"ecam5","p":"chinhta","ic":"5️⃣","t":"Năm việc của chữ e câm","d":"Không phải cứ có e cuối là đọc dài. Chữ e câm có <b>năm việc</b>, chỉ việc ① là kéo dài nguyên âm.","rows":[["①","kéo dài nguyên âm","cake time home",""],["②","làm c, g đọc mềm","rice page",""],["③","không cho từ kết thúc bằng v, u","have give blue",""],["④","không để từ trông như số nhiều","house please","không viết hous"],["⑤","cho âm tiết -le có nguyên âm","table little",""]],"lv":1,"q":false,"stat":"","exc":"","tip":""},{"id":"them","p":"chinhta","ic":"➕","t":"Đổi chữ khi thêm đuôi","d":"Thêm -ing, -ed, -er, -est thì chữ gốc có thể <b>đổi một chút</b> để giữ nguyên cách đọc.","rows":[["gấp đôi phụ âm","sau nguyên âm ngắn, giữ âm ngắn","hop→hopping big→bigger","khác hope → hoping"],["bỏ e câm","trước đuôi bắt đầu bằng nguyên âm","make→making hope→hoped",""],["y → i","phụ âm + y","happy→happier cry→cried",""],["giữ y","nguyên âm + y, hoặc đuôi -ing","play→played cry→crying",""],["-ie → -y","trước -ing","lie→lying die→dying",""]],"lv":1,"q":false,"stat":"","exc":"","tip":""},{"id":"nham","p":"chinhta","ic":"⚖️","lv":2,"t":"Đuôi đọc giống nhau, hay viết nhầm","d":"Nghe giống hệt nhau, chỉ khác mặt chữ.","rows":[["-able / -ible","-able thường gắn với từ gốc đứng riêng được","readable comfortable visible possible",""],["-ant / -ent","gần như phải học thuộc","important different",""],["-cian / -tion","-cian chỉ người làm nghề","musician station",""],["-ice / -ise","Anh–Anh: -ice danh từ, -ise động từ","advice advise",""],["-le gấp đôi","sau nguyên âm ngắn gấp đôi phụ âm","little apple title table",""]],"q":false,"stat":"","exc":"","tip":""},{"id":"sonhieu","p":"chinhta","ic":"👥","t":"Số nhiều đặc biệt","d":"Hầu hết chỉ thêm -s. Đây là các trường hợp phải đổi chữ.","rows":[["-f / -fe → -ves","","leaf→leaves knife→knives","trừ roof → roofs"],["phụ âm + y → -ies","","baby→babies city→cities",""],["nguyên âm + y → -ys","","boy→boys day→days",""],["phụ âm + o → -oes","","potato→potatoes hero→heroes","nhưng photo → photos, piano → pianos"],["s, x, sh, ch → -es","","bus→buses box→boxes",""],["bất quy tắc","","man→men child→children mouse→mice foot→feet",""]],"lv":1,"q":false,"stat":"","exc":"","tip":""},{"id":"dongam","p":"chinhta","ic":"🪞","t":"Đồng âm khác nghĩa","d":"Đọc <b>giống hệt nhau</b>, viết và nghĩa khác nhau. Nghe thì phải đoán theo ngữ cảnh.","rows":[["there / their / they're","/ðɛr/","there their","ở đó · của họ · họ là"],["to / too / two","/tu/","to too two","đến · cũng · số 2"],["know / no","/noʊ/","know no",""],["right / write","/raɪt/","right write",""],["hear / here","/hɪr/","hear here",""],["see / sea","/si/","see sea",""],["flour / flower","/flaʊər/","flour flower","bột · hoa"]],"lv":1,"q":false,"stat":"","exc":"","tip":""},{"id":"sight","p":"chinhta","ic":"👀","t":"Từ không theo luật (học thuộc mặt chữ)","d":"Những từ <b>gặp rất nhiều mà không đánh vần theo luật</b> được. Cách học: nhìn cả từ, nghe, nói lại cho tới khi quen mặt.","rows":[["nhóm 1","","said says was were does",""],["nhóm 2","","of two one once eye",""],["nhóm 3","","friend people women busy",""],["nhóm 4","","could would should laugh",""]],"lv":1,"q":false,"stat":"","exc":"","tip":""},{"id":"flap","p":"noilien","ic":"💨","t":"T giọng Mỹ: đọc nhẹ, nuốt mất","d":"Chữ t (và d) <b>ở giữa hai nguyên âm</b> giọng Mỹ đọc rất nhanh, gần như /d/ nhẹ. Sau n thì hay bị nuốt luôn.","rows":[["t giữa 2 nguyên âm","gần như /d/ nhẹ","water better city",""],["t sau n","thường bị nuốt","internet twenty center","'inner-net', 'twenny'"],["nuốt âm tiết","bỏ hẳn một âm tiết","chocolate family every","/ˈʧɑklət/ /ˈfæmli/ /ˈɛvri/"]],"lv":1,"q":false,"stat":"","exc":"","tip":""},{"id":"noi","p":"noilien","ic":"🔗","t":"Nối âm và dạng yếu","d":"Nói liền thì <b>âm cuối từ trước nối sang từ sau</b>, và các từ nhỏ đọc rất nhẹ.","rows":[["phụ âm + nguyên âm","nối sang từ sau","pick‿it‿up turn‿off","'pi-ki-tup'"],["-s / -ed + nguyên âm","nối sang từ sau","walked‿in it's‿a","'walk-tin'"],["to","/tə/","to","dạng yếu"],["and","/ən/","and",""],["can","/kən/","can","đọc mạnh /kæn/ khi nhấn"],["of","/əv/","of",""]],"tip":"Dạng yếu chỉ đọc mạnh khi được nhấn hoặc đứng cuối câu: 'Yes, I <b>can</b>.'","lv":1,"q":false,"stat":"","exc":""},{"id":"anhmy","p":"noilien","ic":"🇺🇸","lv":2,"t":"Khác nhau giữa Anh–Anh và Anh–Mỹ","d":"EnglishUp dùng <b>giọng Mỹ</b>. Sách và từ điển Anh–Anh ghi khác, gặp thì đừng hoang mang.","rows":[["r cuối từ","Mỹ đọc · Anh không đọc","car far",""],["/j/ sau t, d, n","Mỹ bỏ · Anh giữ","tube new student","Mỹ /tub/, Anh /tjub/"],["t giữa nguyên âm","Mỹ đọc nhẹ thành d","water better",""],["o ngắn","Mỹ /ɑ/ · Anh /ɒ/","hot top",""],["a trước f, s, th","Mỹ /æ/ · Anh /ɑ/","bath can't",""],["chính tả","Mỹ -or -er -ize · Anh -our -re -ise","color center organize","colour centre organise"]],"q":false,"stat":"","exc":"","tip":""},{"id":"ngudieu","p":"noilien","ic":"📈","t":"Ngữ điệu câu","d":"Giọng <b>lên hay xuống ở cuối câu</b> cho biết đây là câu hỏi hay câu kể.","rows":[["câu hỏi Có/Không","lên giọng ↗","Are you OK?",""],["câu hỏi Wh-","xuống giọng ↘","Where are you going?",""],["câu kể","xuống giọng ↘","I like it.",""],["từ được nhấn","danh từ, động từ chính, tính từ","I WANT a NEW CAR.","từ chức năng đọc yếu"]],"lv":1,"q":false,"stat":"","exc":"","tip":""}],"path":["dong","ecam","mo","doi1","r","mem","ghep","y","chia","ecam5","doi2","duoi","ed","schwa","chon","flap","noi"],"ipa":{"about":"əˈbaʊt","action":"ˈækʃən","actor":"ˈæktər","advice":"ədˈvaɪs","advise":"ədˈvaɪz","ago":"əˈgoʊ","although":"ˌɔlˈðoʊ","and":"ənd","answer":"ˈænsər","apple":"ˈæpəl","apply":"əˈplaɪ","august":"ˈɔgəst","autumn":"ˈɔtəm","baby":"ˈbeɪbi","back":"bæk","badge":"bæʤ","bag":"bæg","bags":"bægz","bake":"beɪk","ball":"bɔl","ballet":"bæˈleɪ","banana":"bəˈnænə","bank":"bæŋk","bath":"bæθ","bed":"bɛd","beer":"bɪr","begin":"bɪˈgɪn","believe":"bɪˈliv","bell":"bɛl","better":"ˈbɛtər","bike":"baɪk","bird":"bərd","blackboard":"ˈblækbɔrd","blue":"blu","boat":"boʊt","bomb":"bɔm","bombard":"bɑmˈbɑrd","bone":"boʊn","book":"bʊk","books":"bʊks","bought":"bɔt","box":"bɑks","boxes":"ˈbɑksɪz","boy":"bɔɪ","bread":"brɛd","break":"breɪk","bridge":"brɪʤ","brought":"brɔt","brown":"braʊn","burn":"bərn","bus":"bəs","buses":"ˈbəsɪz","busy":"ˈbɪzi","buzz":"bəz","cabin":"ˈkæbən","cake":"keɪk","can":"kən","can't":"kænt","car":"kɑr","care":"kɛr","castle":"ˈkæsəl","cat":"kæt","catch":"kæʧ","cats":"kæts","caught":"kɔt","cause":"kɔz","ceiling":"ˈsilɪŋ","cent":"sɛnt","center":"ˈsɛntər","chair":"ʧɛr","change":"ʧeɪnʤ","cheer":"ʧɪr","chef":"ʃɛf","chemistry":"ˈkɛmɪstri","chief":"ʧif","child":"ʧaɪld","chocolate":"ˈʧɔklət","chorus":"ˈkɔrəs","city":"ˈsɪti","clean":"klin","climb":"klaɪm","cloud":"klaʊd","coat":"koʊt","coin":"kɔɪn","cold":"koʊld","color":"ˈkələr","column":"ˈkɑləm","comb":"koʊm","come":"kəm","comfortable":"ˈkəmfərtəbəl","cot":"kɑt","cough":"kɔf","could":"kʊd","cow":"kaʊ","cube":"kjub","cup":"kəp","cut":"kət","cute":"kjut","cycle":"ˈsaɪkəl","dangerous":"ˈdeɪnʤərəs","daughter":"ˈdɔtər","day":"deɪ","dead":"dɛd","debt":"dɛt","decision":"dɪˈsɪʒən","deer":"dɪr","deny":"dɪˈnaɪ","design":"dɪˈzaɪn","desk":"dɛsk","diet":"daɪət","different":"ˈdɪfərənt","doctor":"ˈdɔktər","does":"dəz","dogs":"dɔgz","dollar":"ˈdɔlər","doubt":"daʊt","down":"daʊn","draw":"drɔ","drew":"dru","duck":"dək","ear":"ɪr","eat":"it","economic":"ˌɛkəˈnɑmɪk","enjoy":"ˌɛnˈʤɔɪ","enough":"ɪˈnəf","every":"ˈɛvəri","exact":"ɪgˈzækt","exam":"ɪgˈzæm","example":"ɪgˈzæmpəl","eye":"aɪ","fair":"fɛr","family":"ˈfæməli","famous":"ˈfeɪməs","far":"fɑr","farm":"fɑrm","few":"fju","field":"fild","find":"faɪnd","finger":"ˈfɪŋgər","first":"fərst","fish":"fɪʃ","five":"faɪv","flour":"flaʊər","flower":"flaʊər","flute":"flut","fly":"flaɪ","food":"fud","foot":"fʊt","foreign":"ˈfɔrən","fork":"fɔrk","four":"fɔr","friend":"frɛnd","funny":"ˈfəni","future":"fˈjuʧər","game":"geɪm","gem":"ʤɛm","giant":"ʤaɪənt","girl":"gərl","give":"gɪv","glad":"glæd","go":"goʊ","gold":"goʊld","good":"gʊd","graph":"græf","great":"greɪt","green":"grin","greenhouse":"ˈgrinˌhaʊs","grew":"gru","group":"grup","grow":"groʊ","gun":"gən","gym":"ʤɪm","hair":"hɛr","half":"hæf","hand":"hænd","happen":"ˈhæpən","happy":"ˈhæpi","have":"hæv","he":"hi","head":"hɛd","health":"hɛlθ","hear":"hir","her":"hər","here":"hir","hi":"haɪ","high":"haɪ","hold":"hoʊld","home":"hoʊm","honest":"ˈɑnəst","horn":"hɔrn","host":"hoʊst","hot":"hɑt","hour":"aʊər","house":"haʊs","huge":"juʤ","human":"ˈjumən","hundred":"ˈhənərd","hurt":"hərt","important":"ˌɪmˈpɔrtənt","internet":"ˈɪntərˌnɛt","jumped":"ʤəmpt","june":"ʤun","key":"ki","kind":"kaɪnd","kitchen":"ˈkɪʧən","kite":"kaɪt","knee":"ni","knife":"naɪf","know":"noʊ","lamb":"læm","late":"leɪt","laugh":"læf","laughed":"læft","law":"lɔ","league":"lig","lemon":"ˈlɛmən","lie":"laɪ","light":"laɪt","lion":"laɪən","listen":"ˈlɪsən","little":"ˈlɪtəl","lived":"lɪvd","long":"lɔŋ","longer":"ˈlɔŋgər","look":"lʊk","love":"ləv","lunch":"lənʧ","machine":"məˈʃin","magician":"məˈʤɪʃən","map":"mæp","me":"mi","message":"ˈmɛsɪʤ","mild":"maɪld","milk":"mɪlk","mind":"maɪnd","miss":"mɪs","mission":"ˈmɪʃən","monster":"ˈmɑnstər","month":"mənθ","moon":"mun","most":"moʊst","mother":"ˈməðər","mouth":"maʊθ","much":"məʧ","muscle":"ˈməsəl","muscular":"ˈməskjələr","music":"mˈjuzɪk","musician":"mjuˈzɪʃən","my":"maɪ","myth":"mɪθ","name":"neɪm","napkin":"ˈnæpkɪn","nation":"ˈneɪʃən","national":"ˈnæʃənəl","natural":"ˈnæʧərəl","nature":"ˈneɪʧər","near":"nɪr","needed":"ˈnidɪd","new":"nu","night":"naɪt","no":"noʊ","north":"nɔrθ","nose":"noʊz","of":"əv","off":"ɔf","often":"ˈɔfən","oil":"ɔɪl","old":"oʊld","once":"wəns","one":"wən","opened":"ˈoʊpənd","organize":"ˈɔrgəˌnaɪz","our":"ɑr","out":"aʊt","page":"peɪʤ","paint":"peɪnt","paper":"ˈpeɪpər","park":"pɑrk","paste":"peɪst","patient":"ˈpeɪʃənt","pen":"pɛn","pencil":"ˈpɛnsəl","people":"ˈpipəl","phone":"foʊn","photo":"ˈfoʊˌtoʊ","picture":"ˈpɪkʧər","pie":"paɪ","piece":"pis","pig":"pɪg","pink":"pɪŋk","play":"pleɪ","played":"pleɪd","plays":"pleɪz","pleasant":"ˈplɛzənt","please":"pliz","point":"pɔɪnt","possible":"ˈpɑsəbəl","post":"poʊst","pour":"pɔr","problem":"ˈprɑbləm","psychology":"saɪˈkɑləʤi","quality":"kˈwɑləti","quantity":"kˈwɑntəti","queen":"kwin","quick":"kwɪk","quiz":"kwɪz","rabbit":"ˈræbɪt","rain":"reɪn","range":"reɪnʤ","rare":"rɛr","readable":"ˈridəbəl","receive":"rɪˈsiv","record":"ˈrɛkərd","red":"rɛd","relax":"rɪˈlæks","reply":"rɪˈplaɪ","rhythm":"ˈrɪðəm","rice":"raɪs","ride":"raɪd","right":"raɪt","ring":"rɪŋ","road":"roʊd","room":"rum","rope":"roʊp","rose":"roʊz","rough":"rəf","rude":"rud","rule":"rul","run":"rən","said":"sɛd","salt":"sɔlt","sauce":"sɔs","saw":"sɔ","say":"seɪ","says":"sɛz","scene":"sin","school":"skul","science":"saɪəns","sea":"si","second":"ˈsɛkənd","see":"si","share":"ʃɛr","she":"ʃi","ship":"ʃɪp","shop":"ʃɑp","should":"ʃʊd","show":"ʃoʊ","sign":"saɪn","signature":"ˈsɪgnəʧər","sing":"sɪŋ","sit":"sɪt","six":"sɪks","sky":"skaɪ","sleep":"slip","slow":"sloʊ","snow":"snoʊ","so":"soʊ","soap":"soʊp","social":"ˈsoʊʃəl","son":"sən","soup":"sup","special":"ˈspɛʃəl","sport":"spɔrt","star":"stɑr","started":"ˈstɑrtɪd","station":"ˈsteɪʃən","stay":"steɪ","steak":"steɪk","stomach":"ˈstəmək","stop":"stɑp","stops":"stɑps","strange":"streɪnʤ","student":"ˈstudənt","sugar":"ˈʃʊgər","sun":"sən","system":"ˈsɪstəm","table":"ˈteɪbəl","talk":"tɔk","taste":"teɪst","taught":"tɔt","taxi":"ˈtæksi","tea":"ti","teach":"tiʧ","teacher":"ˈtiʧər","technique":"tɛkˈnik","tension":"ˈtɛnʃən","term":"tərm","that":"ðət","their":"ðɛr","theme":"θim","there":"ðɛr","these":"ðiz","think":"θɪŋk","this":"ðɪs","though":"ðoʊ","thought":"θɔt","three":"θri","through":"θru","tie":"taɪ","tiger":"ˈtaɪgər","time":"taɪm","title":"ˈtaɪtəl","to":"tɪ","tongue":"təŋ","too":"tu","top":"tɔp","touch":"təʧ","tough":"təf","town":"taʊn","toy":"tɔɪ","train":"treɪn","tree":"tri","try":"traɪ","tube":"tub","turn":"tərn","twenty":"tˈwɛnti","two":"tu","unique":"juˈnik","use":"juz","verb":"vərb","view":"vju","village":"ˈvɪlɪʤ","visible":"ˈvɪzəbəl","vision":"ˈvɪʒən","visit":"ˈvɪzɪt","wait":"weɪt","walk":"wɔk","want":"wɔnt","wanted":"ˈwɔntɪd","war":"wɔr","warm":"wɔrm","warn":"wɔrn","was":"wəz","wash":"wɑʃ","waste":"weɪst","watch":"wɔʧ","watched":"wɔʧt","watches":"ˈwɔʧɪz","water":"ˈwɔtər","we":"wi","were":"wər","what":"wət","when":"wɪn","white":"waɪt","who":"hu","whole":"hoʊl","whose":"huz","wild":"waɪld","wisdom":"ˈwɪzdəm","wise":"waɪz","women":"ˈwɪmɪn","word":"wərd","work":"wərk","world":"wərld","worse":"wərs","would":"wʊd","wrap":"ræp","write":"raɪt","wrong":"rɔŋ","yellow":"ˈjɛloʊ","yes":"jɛs","young":"jəŋ","your":"jʊr","youth":"juθ"}};
+
+/* ================= TIỆN ÍCH ================= */
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch (e) { /* riêng tư / hết chỗ */ } }
+function plain(w){ return String(w).replace(/[·‿]/g, '').replace(/[?.!,]/g, '').toLowerCase(); }
+function spoken(w){ return String(w).replace(/·/g, '').replace(/‿/g, ' ').replace(/→/g, ', '); }
+
+var PART = {}; DATA.parts.forEach(function(p){ PART[p.id] = p; });
+var RULE = {}; DATA.rules.forEach(function(r, i){ r.no = i + 1; RULE[r.id] = r; });
+
+/* tách chuỗi từ ví dụ thành các "chip" — câu có dấu ?.! giữ nguyên một chip */
+function tokens(ws){
+  ws = String(ws || '');
+  if (/[?.!]$/.test(ws)) return [ws];
+  return ws.split(/\s+/).filter(Boolean);
+}
+function rowPat(row){
+  if (row[4]) return row[4];
+  if (/^[a-z_]+$/.test(row[0])) return row[0].replace(/_/g, '[a-z]');
+  return null;
+}
+/* tô màu đoạn khớp regex trong từ, giữ nguyên dấu · chia âm tiết */
+function hiWord(w, pat, split){
+  if (!pat || /[→‿ ]/.test(w)) return esc(w);
+  var map = [], st = '';
+  for (var i = 0; i < w.length; i++){ if (w[i] !== '·'){ map.push(i); st += w[i]; } }
+  var m;
+  try { m = new RegExp(pat).exec(st.toLowerCase()); } catch (e) { console.warn('[quytac] regex lỗi', pat, e); return esc(w); }
+  if (!m || !m[0].length) return esc(w);
+  var a = map[m.index], b = map[m.index + m[0].length - 1] + 1;
+  /* vần tách kiểu a_e: chỉ tô nguyên âm và chữ e câm, chừa phụ âm ở giữa */
+  if (split && m[0].length === 3){
+    var mid = map[m.index + 1];
+    return esc(w.slice(0, a)) + '<mark>' + esc(w.slice(a, mid)) + '</mark>' + esc(w.slice(mid, b - 1)) +
+      '<mark>' + esc(w.slice(b - 1, b)) + '</mark>' + esc(w.slice(b));
+  }
+  return esc(w.slice(0, a)) + '<mark>' + esc(w.slice(a, b)) + '</mark>' + esc(w.slice(b));
+}
+function ipaOf(w){ return DATA.ipa[plain(w)] || ''; }
+
+/* ================= ĐÃ HỌC ================= */
+var DONE = {};
+(function(){
+  var raw = lsGet('eu_quytac_done');
+  if (!raw) return;
+  try { DONE = JSON.parse(raw) || {}; } catch (e) { DONE = {}; console.warn('[quytac] dữ liệu đã học hỏng, bỏ qua:', e); }
+})();
+function toggleDone(id){
+  if (DONE[id]) delete DONE[id]; else DONE[id] = 1;
+  lsSet('eu_quytac_done', JSON.stringify(DONE));
+  return !!DONE[id];
+}
+
+/* ================= PHÁT ÂM =================
+   Tầng ①: bản thu người bản ngữ dictionaryapi.dev (ưu tiên -us), timeout 2,5 giây.
+   Tầng ②: speechSynthesis. Chrome nuốt câu nếu speak() ngay sau cancel() → chờ 70ms. */
+var VOICES = [], VOICE = null, RATE = 0.9;
+function pickVoices(){
+  var all = [];
+  try { all = window.speechSynthesis ? (window.speechSynthesis.getVoices() || []) : []; } catch (e) { all = []; }
+  VOICES = all.filter(function(v){ return (v.lang || '').toLowerCase().indexOf('en') === 0; });
+  function score(v){
+    var n = (v.name || '').toLowerCase(), s = 0;
+    if (n.indexOf('google') >= 0) s += 4;
+    if (n.indexOf('us english') >= 0 || (v.lang || '').toLowerCase() === 'en-us') s += 2;
+    if (n.indexOf('natural') >= 0) s += 1;
+    return s;
+  }
+  VOICES.sort(function(a, b){ return score(b) - score(a) || (a.name || '').localeCompare(b.name || ''); });
+  var sel = document.getElementById('voiceSel');
+  if (!VOICES.length){ sel.innerHTML = '<option>Máy chưa có giọng tiếng Anh</option>'; return; }
+  sel.innerHTML = VOICES.map(function(v, i){ return '<option value="' + i + '">' + esc(v.name) + ' (' + esc(v.lang) + ')</option>'; }).join('');
+  var saved = lsGet('eu_quytac_voice'), idx = 0;
+  if (saved){ for (var i = 0; i < VOICES.length; i++){ if (VOICES[i].name === saved){ idx = i; break; } } }
+  sel.value = String(idx); VOICE = VOICES[idx];
+}
+function say(text, rate){
+  if (!window.speechSynthesis || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    setTimeout(function(){
+      try {
+        var u = new SpeechSynthesisUtterance(String(text));
+        if (VOICE){ u.voice = VOICE; u.lang = VOICE.lang; } else { u.lang = 'en-US'; }
+        u.rate = Math.max(0.55, rate || RATE);
+        window.speechSynthesis.speak(u);
+      } catch (e) { console.warn('[quytac] speak lỗi:', e); }
+    }, 70);
+  } catch (e) { console.warn('[quytac] cancel lỗi:', e); }
+}
+var AUD_URL = {}, AUD_MISS = {}, curAudio = null;
+function dictAudio(word){
+  if (AUD_URL[word]) return Promise.resolve(AUD_URL[word]);
+  if (AUD_MISS[word] || !window.fetch) return Promise.resolve(null);
+  var done = false;
+  return new Promise(function(res){
+    var t = setTimeout(function(){ if (!done){ done = true; res(null); } }, 2500);
+    fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(word))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        var urls = [];
+        (j || []).forEach(function(e){ (e.phonetics || []).forEach(function(p){ if (p.audio) urls.push(p.audio); }); });
+        var u = urls.filter(function(x){ return /-us\.mp3$/.test(x); })[0] || urls[0] || null;
+        if (u) AUD_URL[word] = u; else AUD_MISS[word] = 1;
+        if (!done){ done = true; clearTimeout(t); res(u); }
+      })
+      .catch(function(e){ AUD_MISS[word] = 1; console.warn('[quytac] không lấy được bản thu', word, e); if (!done){ done = true; clearTimeout(t); res(null); } });
+  });
+}
+function play(w, chipEl){
+  var text = spoken(w), word = plain(w);
+  document.querySelectorAll('.chip.play').forEach(function(c){ c.classList.remove('play'); });
+  if (chipEl) chipEl.classList.add('play');
+  try { if (curAudio){ curAudio.pause(); } } catch (e) { console.warn('[quytac] dừng audio lỗi', e); }
+  /* chỉ tra bản thu cho TỪ ĐƠN; cụm, câu, cặp từ → máy đọc */
+  if (!/^[a-z']+$/.test(word) || /[ ,]/.test(text)){ say(text); return; }
+  dictAudio(word).then(function(u){
+    if (!u){ say(text); return; }
+    try {
+      var a = new Audio(u); curAudio = a;
+      a.onerror = function(){ AUD_MISS[word] = 1; delete AUD_URL[word]; say(text); };
+      var p = a.play();
+      if (p && p.catch) p.catch(function(e){ console.warn('[quytac] audio bị chặn, dùng máy đọc', e); say(text); });
+    } catch (e) { console.warn('[quytac] Audio lỗi', e); say(text); }
+  });
+}
+
+/* ================= TAB LUẬT ================= */
+function hay(r){
+  var s = [r.t, r.d, r.exc, r.tip, r.stat, PART[r.p].name];
+  r.rows.forEach(function(row){ s.push(row[0], row[1], row[2], row[3]); });
+  return s.join(' ').replace(/<[^>]+>/g, ' ').replace(/[·‿]/g, '').toLowerCase();
+}
+DATA.rules.forEach(function(r){ r.hay = hay(r); });
+
+function filtered(){
+  var q = document.getElementById('q').value.trim().toLowerCase().replace(/[\/·]/g, ' ');
+  var fp = document.getElementById('fp').value, fl = document.getElementById('fl').value, fd = document.getElementById('fd').value;
+  return DATA.rules.filter(function(r){
+    if (fp && r.p !== fp) return false;
+    if (fl && String(r.lv) !== fl) return false;
+    if (fd === 'yes' && !DONE[r.id]) return false;
+    if (fd === 'no' && DONE[r.id]) return false;
+    if (q && !q.split(/\s+/).every(function(w){ return !w || r.hay.indexOf(w) >= 0; })) return false;
+    return true;
+  });
+}
+
+function ruleHTML(r, open){
+  var rows = r.rows.map(function(row){
+    var pat = rowPat(row);
+    var chips = tokens(row[2]).map(function(w){
+      var ip = ipaOf(w);
+      return '<button class="chip" type="button" data-w="' + esc(w) + '">' + hiWord(w, pat, row[0].indexOf('_') > 0) +
+        (ip ? '<span class="ip">/' + esc(ip) + '/</span>' : '') + '</button>';
+    }).join('');
+    var isIpa = /^\/[^\/]+\/$/.test(row[1]) || row[1] === '';
+    return '<tr><td class="c">' + esc(row[0]) + '</td>' +
+      '<td class="s' + (isIpa ? '' : ' long') + '">' + esc(row[1]) + '</td>' +
+      '<td><div class="chips">' + chips + '</div></td>' +
+      '<td class="nt">' + esc(row[3] || '') + '</td></tr>';
+  }).join('');
+  return '<div class="rule' + (DONE[r.id] ? ' done' : '') + (open ? ' open' : '') + '" id="r-' + r.id + '" data-id="' + r.id + '">' +
+    '<div class="rh"><div class="ri">' + r.ic + '</div><div class="rt"><h3>' + esc(r.t) +
+      '<span class="badge l' + r.lv + '">' + (r.lv === 1 ? 'Cơ bản' : 'Nâng cao') + '</span>' +
+      (DONE[r.id] ? '<span class="badge ok">✓ đã học</span>' : '') + '</h3>' +
+      '<div class="rd">' + r.d + '</div></div><div class="chev">▶</div></div>' +
+    '<div class="rb"><table class="rt"><tbody>' + rows + '</tbody></table>' +
+      (r.stat ? '<div class="box st">📊 ' + esc(r.stat) + '</div>' : '') +
+      (r.exc ? '<div class="box ex">⚠️ <b>Ngoại lệ:</b> ' + r.exc + '</div>' : '') +
+      (r.tip ? '<div class="box tp">💡 ' + r.tip + '</div>' : '') +
+      '<div class="rfoot"><button class="btn sm js-done' + (DONE[r.id] ? ' ok' : '') + '" type="button">' +
+        (DONE[r.id] ? '✓ Đã học' : 'Đánh dấu đã học') + '</button>' +
+        (r.q ? '<button class="btn sm js-quiz" type="button">🧪 Đố luật này</button>' : '') + '</div>' +
+    '</div></div>';
+}
+
+var openAll = false;
+function renderList(){
+  var rs = filtered(), q = document.getElementById('q').value.trim();
+  document.getElementById('cnt').textContent = rs.length + '/' + DATA.rules.length + ' luật · đã học ' + Object.keys(DONE).length;
+  var wrap = document.getElementById('listWrap');
+  if (!rs.length){ wrap.innerHTML = '<div class="empty">Không có luật nào khớp. Thử bỏ bớt bộ lọc xem.</div>'; return; }
+  var html = '';
+  DATA.parts.forEach(function(p){
+    var g = rs.filter(function(r){ return r.p === p.id; });
+    if (!g.length) return;
+    html += '<div class="part"><div class="part-h"><span class="pi">' + p.ic + '</span><h2>' + esc(p.name) +
+      '</h2><span class="n">' + g.length + '</span></div><div class="part-d">' + esc(p.desc) + '</div>' +
+      g.map(function(r){ return ruleHTML(r, openAll || !!q); }).join('') + '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+document.addEventListener('click', function(ev){
+  var t = ev.target;
+  var chip = t.closest && t.closest('.chip');
+  if (chip){ play(chip.getAttribute('data-w'), chip); return; }
+  var ruleEl = t.closest && t.closest('.rule');
+  if (ruleEl){
+    var id = ruleEl.getAttribute('data-id');
+    if (t.closest('a')) return;
+    if (t.closest('.js-done')){
+      toggleDone(id);
+      var html = ruleHTML(RULE[id], true);
+      ruleEl.outerHTML = html;
+      document.getElementById('cnt').textContent = document.getElementById('cnt').textContent.replace(/đã học \d+/, 'đã học ' + Object.keys(DONE).length);
+      return;
+    }
+    if (t.closest('.js-quiz')){ quizOnly = id; showTab('do'); return; }
+    if (t.closest('.rh')) ruleEl.classList.toggle('open');
+    return;
+  }
+  var li = t.closest && t.closest('ol.path li');
+  if (li) jumpTo(li.getAttribute('data-id'));
+});
+
+function jumpTo(id){
+  ['fp', 'fl', 'fd'].forEach(function(k){ document.getElementById(k).value = ''; });
+  document.getElementById('q').value = '';
+  showTab('luat');
+  var el = document.getElementById('r-' + id);
+  if (!el) return;
+  el.classList.add('open', 'flash');
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function(){ el.classList.remove('flash'); }, 1600);
+}
+
+/* ================= TAB LỘ TRÌNH ================= */
+function renderPath(){
+  document.getElementById('pathList').innerHTML = DATA.path.map(function(id){
+    var r = RULE[id]; if (!r) return '';
+    return '<li data-id="' + id + '"' + (DONE[id] ? ' class="done"' : '') + '><span class="pt">' + r.ic + ' ' + esc(r.t) +
+      '</span><span class="pp">' + esc(PART[r.p].name) + '</span></li>';
+  }).join('');
+}
+
+/* ================= TAB ĐỐ NHANH =================
+   Mỗi câu: 1 từ ví dụ có đoạn tô màu, chọn âm đúng. Đáp án nhiễu lấy từ các dòng
+   khác của CÙNG luật trước, thiếu thì lấy từ kho âm cùng loại (nguyên âm / phụ âm). */
+var quizOnly = null, QZ = [], qi = 0, qScore = 0, qAns = false;
+function isIpa(s){ return /^\/[^\/]+\/$/.test(s); }
+var VOW = /[æɛɪɑɔʊəaeiouɜ]/;
+function poolAll(){
+  var items = [];
+  DATA.rules.forEach(function(r){
+    if (!r.q) return;
+    r.rows.forEach(function(row, ri){
+      if (!isIpa(row[1])) return;
+      var pat = rowPat(row); if (!pat) return;
+      tokens(row[2]).forEach(function(w){
+        if (/[→‿ ]/.test(w)) return;
+        var h = hiWord(w, pat, row[0].indexOf('_') > 0);
+        if (h.indexOf('<mark>') < 0) return;
+        items.push({ r: r, ri: ri, w: w, h: h, s: row[1] });
+      });
+    });
+  });
+  return items;
+}
+var ALLS = null;
+function soundsOf(kindVowel){
+  if (!ALLS){
+    ALLS = {};
+    DATA.rules.forEach(function(r){ r.rows.forEach(function(row){ if (isIpa(row[1])) ALLS[row[1]] = 1; }); });
+  }
+  return Object.keys(ALLS).filter(function(s){ return VOW.test(s.charAt(1)) === kindVowel; });
+}
+function shuffle(a){ for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function quizStart(){
+  var fp = document.getElementById('fp').value, fl = document.getElementById('fl').value;
+  var items = poolAll().filter(function(it){
+    if (quizOnly) return it.r.id === quizOnly;
+    if (fp && it.r.p !== fp) return false;
+    if (fl && String(it.r.lv) !== fl) return false;
+    return true;
+  });
+  QZ = shuffle(items).slice(0, 10); qi = 0; qScore = 0; qAns = false;
+  quizRender();
+}
+function options(it){
+  var opts = [it.s], seen = {}; seen[it.s] = 1;
+  shuffle(it.r.rows.slice()).forEach(function(row){
+    if (opts.length < 4 && isIpa(row[1]) && !seen[row[1]]){ seen[row[1]] = 1; opts.push(row[1]); }
+  });
+  var pool = shuffle(soundsOf(VOW.test(it.s.charAt(1))));
+  for (var i = 0; i < pool.length && opts.length < 4; i++){ if (!seen[pool[i]]){ seen[pool[i]] = 1; opts.push(pool[i]); } }
+  return shuffle(opts);
+}
+function quizRender(){
+  var card = document.getElementById('qCard'), ctr = document.getElementById('qCtr'), prog = document.getElementById('qProg');
+  var tag = quizOnly ? ' · chỉ luật "' + RULE[quizOnly].t + '"' : '';
+  if (!QZ.length){
+    prog.textContent = '';
+    card.innerHTML = '<div class="qh">Bộ lọc đang không chừa câu đố nào. Chọn "Mọi phần" thử lại.</div>';
+    ctr.innerHTML = quizOnly ? '<button class="btn" type="button" onclick="quizOnly=null;quizStart()">Đố mọi luật</button>' : '';
+    return;
+  }
+  if (qi >= QZ.length){
+    prog.textContent = '';
+    var pct = Math.round(100 * qScore / QZ.length);
+    card.innerHTML = '<div class="qw" style="font-size:30px">' + (pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪') + ' ' + qScore + ' / ' + QZ.length + '</div>' +
+      '<div class="qh">' + (pct >= 80 ? 'Rất chắc tay! Thử phần khác xem.' : 'Mở lại các luật vừa sai, bấm nghe từng từ ví dụ rồi đố lại.') + '</div>';
+    ctr.innerHTML = '<button class="btn pri" type="button" onclick="quizStart()">Đố lượt mới</button>' +
+      (quizOnly ? '<button class="btn" type="button" onclick="quizOnly=null;quizStart()">Đố mọi luật</button>' : '');
+    return;
+  }
+  var it = QZ[qi]; qAns = false;
+  prog.textContent = 'Câu ' + (qi + 1) + ' / ' + QZ.length + ' · đúng ' + qScore + tag;
+  card.innerHTML = '<div class="side">PHẦN TÔ MÀU ĐỌC LÀ ÂM NÀO?</div><div class="qw">' + it.h + '</div>' +
+    '<div class="opts">' + options(it).map(function(o){ return '<button class="opt" type="button" data-o="' + esc(o) + '">' + esc(o) + '</button>'; }).join('') + '</div>' +
+    '<div class="qfb" id="qFb"></div>';
+  ctr.innerHTML = '';
+  card.querySelectorAll('.opt').forEach(function(b){ b.addEventListener('click', function(){ answer(b); }); });
+}
+function answer(b){
+  if (qAns) return; qAns = true;
+  var it = QZ[qi], ok = b.getAttribute('data-o') === it.s;
+  if (ok) qScore++;
+  document.querySelectorAll('#qCard .opt').forEach(function(x){
+    x.disabled = true;
+    if (x.getAttribute('data-o') === it.s) x.classList.add('right');
+    else if (x === b) x.classList.add('wrong');
+  });
+  var row = it.r.rows[it.ri], ip = ipaOf(it.w);
+  document.getElementById('qFb').innerHTML = (ok ? '✅ <b>Đúng.</b> ' : '❌ <b>Chưa đúng.</b> ') +
+    '<b>' + esc(row[0]) + '</b> → <b>' + esc(it.s) + '</b>' + (row[3] ? ' (' + esc(row[3]) + ')' : '') +
+    (ip ? ' · ' + esc(it.w.replace(/·/g, '')) + ' /' + esc(ip) + '/' : '') +
+    '<br>Luật: ' + esc(it.r.ic + ' ' + it.r.t);
+  play(it.w);
+  document.getElementById('qCtr').innerHTML =
+    '<button class="btn" type="button" onclick="play(QZ[qi].w)">🔊 Nghe lại</button>' +
+    '<button class="btn" type="button" onclick="jumpTo(QZ[qi].r.id)">📖 Xem luật</button>' +
+    '<button class="btn pri" type="button" onclick="qi++;quizRender()">Câu tiếp →</button>';
+}
+
+/* ================= TAB & BỘ LỌC ================= */
+function showTab(name){
+  ['luat', 'lotrinh', 'do'].forEach(function(t){ document.getElementById('pane-' + t).classList.toggle('hide', t !== name); });
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-tab') === name); });
+  /* lộ trình không dùng bộ lọc; đố chỉ dùng Phần + Mức */
+  document.getElementById('filters').classList.toggle('hide', name === 'lotrinh');
+  ['q', 'fd', 'cnt', 'openAll'].forEach(function(k){ document.getElementById(k).classList.toggle('hide', name === 'do'); });
+  if (name === 'lotrinh') renderPath();
+  if (name === 'do') quizStart();
+  if (name === 'luat') renderList();
+  if (name !== 'do') quizOnly = null;
+  lsSet('eu_quytac_tab', name);
+}
+document.querySelectorAll('.tab').forEach(function(b){
+  b.addEventListener('click', function(){ if (b.getAttribute('data-tab') === 'do') quizOnly = null; showTab(b.getAttribute('data-tab')); });
+});
+['q', 'fp', 'fl', 'fd'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    var on = document.querySelector('.tab.on'), t = on ? on.getAttribute('data-tab') : 'luat';
+    if (t === 'do'){ quizOnly = null; quizStart(); } else renderList();
+  });
+});
+document.getElementById('openAll').addEventListener('click', function(){
+  openAll = !openAll;
+  this.textContent = openAll ? 'Gập hết' : 'Mở hết';
+  renderList();
+});
+document.getElementById('voiceSel').addEventListener('change', function(){
+  var i = parseInt(this.value, 10);
+  if (VOICES[i]){ VOICE = VOICES[i]; lsSet('eu_quytac_voice', VOICE.name); }
+});
+document.getElementById('rate').addEventListener('input', function(){
+  RATE = parseFloat(this.value) || 0.9;
+  document.getElementById('rateVal').textContent = RATE.toFixed(2).replace(/0$/, '');
+});
+
+/* đo chiều cao header thật để thanh lọc dính đúng chỗ (header 2 hàng trên điện thoại) */
+function syncStickyTop(){
+  var h = document.querySelector('.topbar'); if (!h) return;
+  var px = Math.round(h.getBoundingClientRect().height);
+  if (px > 0) document.documentElement.style.setProperty('--eu-sticky', px + 'px');
+}
+window.addEventListener('resize', syncStickyTop);
+window.addEventListener('load', syncStickyTop);
+try {
+  if (window.ResizeObserver){ var hd = document.querySelector('.topbar'); if (hd) new ResizeObserver(syncStickyTop).observe(hd); }
+} catch (e) { console.warn('[quytac] ResizeObserver lỗi:', e); }
+
+/* ================= KHỞI ĐỘNG ================= */
+(function boot(){
+  syncStickyTop(); setTimeout(syncStickyTop, 900); setTimeout(syncStickyTop, 2500);
+  document.getElementById('nRule').textContent = DATA.rules.length;
+  document.getElementById('fp').innerHTML = '<option value="">Mọi phần</option>' +
+    DATA.parts.map(function(p){ return '<option value="' + p.id + '">' + p.ic + ' ' + esc(p.name) + '</option>'; }).join('');
+  renderList();
+  pickVoices();
+  try {
+    if (window.speechSynthesis && typeof window.speechSynthesis.addEventListener === 'function')
+      window.speechSynthesis.addEventListener('voiceschanged', pickVoices);
+  } catch (e) { console.warn('[quytac] không gắn được voiceschanged:', e); }
+  var t = lsGet('eu_quytac_tab');
+  if (t && t !== 'luat' && ['lotrinh', 'do'].indexOf(t) >= 0) showTab(t);
+  /* mở thẳng 1 luật qua #r-<id> */
+  var m = /^#r-([a-z0-9]+)$/.exec(location.hash || '');
+  if (m && RULE[m[1]]) setTimeout(function(){ jumpTo(m[1]); }, 300);
+})();
+</script>
+<script src="mobile-nav.js"></script>
+</body>
+</html>
