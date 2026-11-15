@@ -170,6 +170,8 @@
   #vframe.tt-native #sh-shield{bottom:52px}
   #vframe.tt-native #sh-playicon{display:none}
   #vframe.tt-native .navbtn{bottom:52px}
+  /* Reel Facebook: Chrome chặn play có tiếng gửi từ trang ngoài -> bỏ lớp che, người học bấm nút play gốc của FB */
+  #vframe.fb-native #sh-shield,#vframe.fb-native #sh-playicon{display:none}
   #sh-playicon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;padding-left:4px;pointer-events:none;transition:opacity .2s}
   #pmount .fb-video,#pmount .fb-video>span{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important}
   #pmount .fb-video iframe{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
@@ -441,7 +443,7 @@ function detectSrc(v){
 function mountPlayer(raw){
   const src=detectSrc(raw); SRCTYPE=src.type;
   const sp=document.getElementById('sh-speed'); if(sp) sp.style.display=(src.type==='yt')?'':'none';
-  var _vf=document.getElementById('vframe'); if(_vf) _vf.classList.toggle('tt-native', src.type==='tiktok');
+  var _vf=document.getElementById('vframe'); if(_vf) _vf.classList.toggle('tt-native', src.type==='tiktok'); if(_vf) _vf.classList.toggle('fb-native', src.type==='fb');
   if(player && player._type && player._type!==src.type){ try{ player.destroy&&player.destroy(); }catch(e){} player=null; ytReady=false; }
   if(src.type==='yt') mountYT(src.id); else if(src.type==='tiktok') mountTT(src.id); else mountFB(src.url);
 }
