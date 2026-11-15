@@ -771,6 +771,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     </div>
 
     <div class="wm-body" id="wm-body">
+      <style>
+        #wm-pron-section { margin:0 0 16px; padding:12px 14px; border-radius:12px;
+          background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.30); }
+        #wm-pron-section .pv-title { font-weight:700; margin-bottom:2px; }
+        #wm-pron-section .pv-note { font-size:12px; color:var(--muted,#8b93a7); margin-bottom:8px; line-height:1.45; }
+        #wm-pron-section .pv-row { display:flex; gap:10px; align-items:flex-start; padding:8px 0;
+          border-top:1px dashed rgba(255,255,255,.10); }
+        #wm-pron-section .pv-row:first-of-type { border-top:none; }
+        #wm-pron-section .pv-play { flex:none; width:38px; height:38px; border-radius:50%; cursor:pointer;
+          border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:inherit; font-size:17px; }
+        #wm-pron-section .pv-play.rec { border-color:rgba(46,204,113,.55); }
+        #wm-pron-section .pv-play.playing { background:var(--accent,#4f8ef7); }
+        #wm-pron-section .pv-main { flex:1; min-width:0; line-height:1.5; }
+        #wm-pron-section .pv-pos { display:inline-block; font-size:11px; padding:1px 7px; border-radius:6px;
+          background:rgba(255,255,255,.10); margin-right:6px; vertical-align:1px; }
+        #wm-pron-section .pv-ipa { font-family:'Noto Sans','Segoe UI',sans-serif; font-weight:700;
+          color:var(--accent,#4f8ef7); margin-right:8px; }
+        #wm-pron-section .pv-vi { color:var(--text,#e6e9f0); }
+        #wm-pron-section .pv-cx { font-size:13px; font-style:italic; color:var(--muted,#8b93a7); }
+      </style>
+      <!-- ── Một chữ — hai cách đọc (pron_variants) ───────── -->
+      <div id="wm-pron-section" style="display:none"></div>
       <!-- Definitions -->
       <div class="wm-section">
         <div class="wm-defs">
@@ -1555,6 +1577,7 @@ function openWord(w) {
   // Term + phonetic
   document.getElementById('wm-term').textContent = w.term;
   document.getElementById('wm-phonetic').textContent = w.phonetic ? `/${w.phonetic}/` : '';
+  try { renderPronVariants(w); } catch(err){ console.error('renderPronVariants:', err); }
 
   // Audio btn state
   const audioBtn = document.getElementById('wm-audio-btn');
@@ -1782,6 +1805,103 @@ function renderQA5W1H(w){
   if (cnt) cnt.textContent = qa.length + ' câu';
   if (btn) { btn.setAttribute('data-open','0'); btn.textContent = 'Mở hết'; }
   sec.style.display = 'block';
+}
+
+/* ══ Một chữ — hai cách đọc (words.pron_variants) ══════════════════════
+   Dữ liệu: words.pron_variants (jsonb, mặc định '[]') =
+     [{pos, ipa, vi, carrier, audio?}]  — audio là đường dẫn trong
+     upload.wikimedia.org/wikipedia/commons/ (bản thu người thật).
+   Chỉ ~110 từ có dữ liệu → nạp lười theo id khi mở popup, có cache.
+   Phát âm: bản thu (fetch→decodeAudioData) → dự phòng TTS đọc CỤM NGỮ CẢNH
+   bằng giọng Google (giọng Microsoft David/Zira không phân biệt được). */
+var _PV_CACHE = {};
+var _pvTok = null;
+var _PV_CTX = null, _PV_BUF = {};
+function _pvClient(){
+  try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e){}
+  try { if (typeof euClient === 'function') return euClient(); } catch(e){}
+  return null;
+}
+function _pvEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+async function _pvGet(w){
+  if (Array.isArray(w.pron_variants)) return w.pron_variants;
+  if (w.id != null && _PV_CACHE[w.id]) return _PV_CACHE[w.id];
+  var c = _pvClient(); if (!c || w.id == null) return [];
+  try {
+    var r = await c.from('words').select('pron_variants').eq('id', w.id).maybeSingle();
+    if (r.error) throw r.error;
+    var v = (r.data && Array.isArray(r.data.pron_variants)) ? r.data.pron_variants : [];
+    _PV_CACHE[w.id] = v; return v;
+  } catch(e){ console.warn('pron_variants:', e && e.message ? e.message : e); return []; }
+}
+async function renderPronVariants(w){
+  var box = document.getElementById('wm-pron-section');
+  if (!box || !w) return;
+  box.style.display = 'none'; box.innerHTML = '';
+  var tok = {}; _pvTok = tok;
+  var vs = await _pvGet(w);
+  if (_pvTok !== tok) return;                 // đã chuyển sang từ khác
+  if (!vs || vs.length < 2) return;
+  var ph = document.getElementById('wm-phonetic');
+  if (ph) ph.textContent = '/' + vs.map(function(v){ return v.ipa; }).join(' · ') + '/';
+  var rows = vs.map(function(v, i){
+    var rec = !!v.audio;
+    return '<div class="pv-row">' +
+      '<button class="pv-play' + (rec ? ' rec' : '') + '" data-i="' + i + '" ' +
+        'title="' + (rec ? 'Bản thu người thật (Wikimedia Commons)' : 'Máy đọc cả cụm để rõ ngữ cảnh') + '">' +
+        (rec ? '🎙' : '🔊') + '</button>' +
+      '<div class="pv-main">' +
+        '<div><span class="pv-pos">' + _pvEsc(v.pos) + '</span>' +
+        '<span class="pv-ipa">/' + _pvEsc(v.ipa) + '/</span>' +
+        '<span class="pv-vi">' + _pvEsc(v.vi) + '</span></div>' +
+        (v.carrier ? '<div class="pv-cx">“' + _pvEsc(v.carrier) + '”</div>' : '') +
+      '</div></div>';
+  }).join('');
+  box.innerHTML =
+    '<div class="pv-title">🔀 Một chữ — ' + vs.length + ' cách đọc</div>' +
+    '<div class="pv-note">Cùng cách viết nhưng đọc khác nhau theo nghĩa / từ loại. Bấm loa để nghe trong ngữ cảnh.</div>' +
+    rows;
+  box.querySelectorAll('.pv-play').forEach(function(b){
+    b.onclick = function(ev){ ev.stopPropagation(); pvPlay(vs[+b.dataset.i], b); };
+  });
+  box.style.display = '';
+}
+function _pvSpeak(text, btn){
+  if (!('speechSynthesis' in window)) { btn.classList.remove('playing'); return; }
+  speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.9;
+  var vv = speechSynthesis.getVoices().filter(function(v){ return /^en/i.test(v.lang); });
+  var pick = vv.find(function(v){ return /Google US English/i.test(v.name); }) ||
+             vv.find(function(v){ return /Natural/i.test(v.name); }) ||
+             vv.find(function(v){ return /Google/i.test(v.name); });
+  if (pick) u.voice = pick;
+  u.onend = u.onerror = function(){ btn.classList.remove('playing'); };
+  speechSynthesis.speak(u);
+}
+async function pvPlay(v, btn){
+  if (!v) return;
+  document.querySelectorAll('#wm-pron-section .pv-play').forEach(function(x){ x.classList.remove('playing'); });
+  btn.classList.add('playing');
+  try { if (typeof stopAudio === 'function') stopAudio(); } catch(e){}
+  if (v.audio) {
+    try {
+      var url = 'https://upload.wikimedia.org/wikipedia/commons/' + v.audio;
+      _PV_CTX = _PV_CTX || new (window.AudioContext || window.webkitAudioContext)();
+      if (_PV_CTX.state === 'suspended') await _PV_CTX.resume();
+      if (!_PV_BUF[url]) {
+        var ab = await (await fetch(url)).arrayBuffer();
+        _PV_BUF[url] = await _PV_CTX.decodeAudioData(ab);
+      }
+      var src = _PV_CTX.createBufferSource();
+      src.buffer = _PV_BUF[url]; src.connect(_PV_CTX.destination);
+      src.onended = function(){ btn.classList.remove('playing'); };
+      src.start(0);
+      return;
+    } catch(e){ console.warn('pvPlay audio → TTS:', e && e.message ? e.message : e); }
+  }
+  _pvSpeak(v.carrier || '', btn);
 }
 
 function renderWordExamples(w) {
